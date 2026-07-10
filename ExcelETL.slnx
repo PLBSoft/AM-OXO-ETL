@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ExcelETL.Application/ExcelETL.Application.csproj" />
+    <Project Path="src/ExcelETL.BlazorAdmin/ExcelETL.BlazorAdmin.csproj" />
+    <Project Path="src/ExcelETL.Domain/ExcelETL.Domain.csproj" />
+    <Project Path="src/ExcelETL.Infrastructure/ExcelETL.Infrastructure.csproj" />
+    <Project Path="src/ExcelETL.WebAPI/ExcelETL.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ExcelETL.Domain.Tests/ExcelETL.Domain.Tests.csproj" />
+  </Folder>
+</Solution>

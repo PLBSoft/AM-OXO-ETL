@@ -1,0 +1,45 @@
+# Build results
+bin/
+obj/
+out/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# ASP.NET Core secrets / config
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+secrets.json
+
+# Rider / ReSharper
+*.DotSettings.user
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json
+
+# Logs
+*.log
+
+# Local archive/output folder for processed Excel workbooks (runtime data, not source)
+archive/

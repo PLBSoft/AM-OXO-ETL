@@ -1,0 +1,6 @@
+@ExcelETL.WebAPI_HostAddress = http://localhost:5112
+
+GET {{ExcelETL.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
