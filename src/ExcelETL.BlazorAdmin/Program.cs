@@ -1,7 +1,9 @@
+using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
+using ExcelETL.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -16,11 +18,15 @@ builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
 
 // Interactive Server components share a circuit across multiple renders, so a directly
-// injected scoped DbContext would be used concurrently/beyond its intended lifetime; the
-// factory pattern is the Microsoft-documented way to keep this "direct DbContext access"
-// while creating a short-lived context per operation.
+// injected scoped DbContext would be used concurrently/beyond its intended lifetime. This
+// factory registration is consumed exclusively by the repositories below -- Razor components
+// and endpoints in this app talk to ExtractionConfig/ExtractionHistory only through
+// IExtractionConfigRepository/IExtractionHistoryRepository, never through EF Core directly.
 builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
+
+builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
+builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

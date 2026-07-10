@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
+using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Persistence;
@@ -36,7 +37,7 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
             {
                 services.RemoveAll<DbContextOptions<ExcelEtlDbContext>>();
                 services.RemoveAll<IDbContextOptionsConfiguration<ExcelEtlDbContext>>();
-                services.AddDbContext<ExcelEtlDbContext>(options => options.UseInMemoryDatabase(databaseName));
+                services.AddDbContextFactory<ExcelEtlDbContext>(options => options.UseInMemoryDatabase(databaseName));
             });
         });
     }
@@ -114,7 +115,7 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
     private async Task<Guid> SeedExtractionConfigAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ExcelEtlDbContext>();
+        var repository = scope.ServiceProvider.GetRequiredService<IExtractionConfigRepository>();
 
         var config = new ExtractionConfig("Purchase Order Template");
         for (var i = 0; i < SheetNames.Length; i++)
@@ -124,8 +125,7 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
             config.AddSheet(sheet);
         }
 
-        dbContext.ExtractionConfigs.Add(config);
-        await dbContext.SaveChangesAsync();
+        await repository.AddAsync(config);
 
         return config.Id;
     }

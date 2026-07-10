@@ -29,7 +29,9 @@ builder.Services.AddRequestTimeouts(options =>
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-builder.Services.AddDbContext<ExcelEtlDbContext>(options =>
+// Registered as a factory (not AddDbContext) so the repositories in Infrastructure can use
+// the same short-lived-context-per-operation pattern regardless of host (WebAPI or BlazorAdmin).
+builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
 
 builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));

@@ -29,7 +29,10 @@ public class ProcessExcelFileServiceTests
             .Setup(r => r.AddAsync(It.IsAny<ExtractionHistory>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _historyRepository
-            .Setup(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .Setup(r => r.MarkCompletedAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _historyRepository
+            .Setup(r => r.MarkFailedAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
     }
 
@@ -77,10 +80,14 @@ public class ProcessExcelFileServiceTests
 
         capturedHistory.Should().NotBeNull();
         capturedHistory!.SourceFileName.Should().Be("invoice.xlsx");
-        capturedHistory.Status.Should().Be(ExtractionStatus.Completed);
-        capturedHistory.StoredFilePath.Should().Be(storedPath);
+        capturedHistory.Status.Should().Be(ExtractionStatus.Pending);
 
-        _historyRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _historyRepository.Verify(
+            r => r.MarkCompletedAsync(capturedHistory.Id, storedPath, It.IsAny<CancellationToken>()),
+            Times.Once);
+        _historyRepository.Verify(
+            r => r.MarkFailedAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
@@ -129,12 +136,15 @@ public class ProcessExcelFileServiceTests
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("corrupt file");
 
         capturedHistory.Should().NotBeNull();
-        capturedHistory!.Status.Should().Be(ExtractionStatus.Failed);
-        capturedHistory.StoredFilePath.Should().BeNull();
 
         _fileStorageService.Verify(
             s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
-        _historyRepository.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _historyRepository.Verify(
+            r => r.MarkFailedAsync(capturedHistory!.Id, It.IsAny<CancellationToken>()),
+            Times.Once);
+        _historyRepository.Verify(
+            r => r.MarkCompletedAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

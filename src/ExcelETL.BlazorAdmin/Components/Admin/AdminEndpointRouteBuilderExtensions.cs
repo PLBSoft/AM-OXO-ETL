@@ -1,5 +1,4 @@
-using ExcelETL.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using ExcelETL.Application.Extraction;
 
 namespace Microsoft.AspNetCore.Routing;
 
@@ -13,10 +12,9 @@ internal static class AdminEndpointRouteBuilderExtensions
         ArgumentNullException.ThrowIfNull(endpoints);
 
         return endpoints.MapGet("/history/{id:guid}/download", async (
-            Guid id, IDbContextFactory<ExcelEtlDbContext> dbContextFactory) =>
+            Guid id, IExtractionHistoryRepository extractionHistoryRepository) =>
         {
-            await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-            var history = await dbContext.ExtractionHistories.FirstOrDefaultAsync(h => h.Id == id);
+            var history = await extractionHistoryRepository.GetByIdAsync(id);
 
             if (history?.StoredFilePath is null || !File.Exists(history.StoredFilePath))
             {

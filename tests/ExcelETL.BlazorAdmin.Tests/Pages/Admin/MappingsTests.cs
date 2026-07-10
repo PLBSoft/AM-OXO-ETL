@@ -1,8 +1,11 @@
 using Bunit;
+using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
+using ExcelETL.BlazorAdmin.Tests;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Persistence;
+using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,16 +17,15 @@ public class MappingsTests : BunitContext
 {
     public MappingsTests()
     {
-        Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
-            options.UseInMemoryDatabase("MappingsTests_" + Guid.NewGuid()));
+        var dbContextFactory = new TestDbContextFactory("MappingsTests_" + Guid.NewGuid());
+        Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
+        Services.AddSingleton<IExtractionConfigRepository, ExtractionConfigRepository>();
     }
 
     private async Task SeedConfigAsync(ExtractionConfig config)
     {
-        var factory = Services.GetRequiredService<IDbContextFactory<ExcelEtlDbContext>>();
-        await using var context = await factory.CreateDbContextAsync();
-        context.ExtractionConfigs.Add(config);
-        await context.SaveChangesAsync();
+        var repository = Services.GetRequiredService<IExtractionConfigRepository>();
+        await repository.AddAsync(config);
     }
 
     private static ExtractionConfig BuildConfigWithOneSheetAndMapping()
@@ -71,6 +73,20 @@ public class MappingsTests : BunitContext
     }
 
     [Fact]
+    public async Task AddSheet_WithValidInput_PersistsAndDisplaysNewSheet()
+    {
+        await SeedConfigAsync(new ExtractionConfig("Purchase Order Template"));
+        var cut = Render<Mappings>();
+        cut.Find("li.list-group-item").Click();
+
+        cut.Find("#new-sheet-name-input").Change("Summary");
+        cut.Find("#new-sheet-index-input").Change("0");
+        cut.Find("#add-sheet-button").Click();
+
+        cut.Markup.Should().Contain("Summary (index 0)");
+    }
+
+    [Fact]
     public async Task AddSheet_BeyondFiveSheets_DisplaysDomainValidationError()
     {
         var config = new ExtractionConfig("Full Template");
@@ -88,6 +104,23 @@ public class MappingsTests : BunitContext
         cut.Find("#add-sheet-button").Click();
 
         cut.Markup.Should().Contain("cannot add more than 5");
+    }
+
+    [Fact]
+    public async Task AddCellMapping_WithValidInput_PersistsAndDisplaysNewMapping()
+    {
+        var config = new ExtractionConfig("Purchase Order Template");
+        config.AddSheet(new SheetConfig("Summary", sheetIndex: 0));
+        await SeedConfigAsync(config);
+
+        var cut = Render<Mappings>();
+        cut.Find("li.list-group-item").Click();
+
+        cut.Find(".mapping-source-cell-input").Change("B2");
+        cut.Find(".mapping-target-property-input").Change("SupplierName");
+        cut.Find(".add-mapping-button").Click();
+
+        cut.Markup.Should().Contain("SupplierName");
     }
 
     [Fact]

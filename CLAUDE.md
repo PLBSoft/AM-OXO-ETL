@@ -45,10 +45,10 @@ The generated workbook is returned synchronously in the HTTP response body.
 
 ### Core Frameworks
 - ASP.NET Core Web API
-- Blazor Web App (Server Interactivity model with direct DbContext access)
+- Blazor Web App (Server Interactivity model)
 
 ### Architecture
-Clean Architecture (Onion Pattern)
+Clean Architecture (Onion Pattern). **Both the Web API and the Blazor admin app access data exclusively through the Application-layer services/repositories** — never by talking to each other over HTTP, and never by injecting `DbContext` (or any Infrastructure type) directly into a controller or a Razor component. All EF Core access lives behind repository interfaces defined in `Application` and implemented in `Infrastructure`. This is a strict rule, not a suggestion — short-circuiting the service/repository layer for convenience is exactly the kind of violation to flag rather than implement (see "Architectural Oversight" below).
 
 ### Database
 - Microsoft SQL Server (Local on-premise)
@@ -77,3 +77,15 @@ Apply a strict Test-First (Red-Green-Refactor) lifecycle:
 2. Use xUnit/NUnit, Moq, FluentAssertions
 3. Explicitly test reading values from merged range coordinates in Excel
 4. Ensure all business logic is test-covered before deployment
+
+---
+
+## ARCHITECTURAL OVERSIGHT (CRITICAL)
+
+The user is not a professional software architect and expects to make mistakes in architectural or strategic direction from time to time. **Proactively flag it** — before implementing — whenever a requested change, an instruction in this file, or an existing pattern in the codebase:
+- Contradicts Clean Architecture, SOLID, or another established best practice
+- Contradicts the architecture already in place elsewhere in this solution (e.g. one app going through repositories while another talks to EF Core directly)
+- Introduces inconsistency between the Web API and the Blazor admin app's data-access patterns
+- Trades away testability, layering, or maintainability for short-term convenience without the user asking for that trade-off explicitly
+
+Say so directly, explain the concrete downside, and propose the alternative — then wait for a decision rather than silently complying or silently "fixing" it. Do not assume a past instruction (including one written in this file) is correct just because it's already written down; instructions can contain mistakes too.

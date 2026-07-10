@@ -1,7 +1,10 @@
 using Bunit;
+using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
+using ExcelETL.BlazorAdmin.Tests;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Infrastructure.Persistence;
+using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,16 +14,18 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
 public class HistoryTests : BunitContext
 {
+    private readonly IDbContextFactory<ExcelEtlDbContext> _dbContextFactory =
+        new TestDbContextFactory("HistoryTests_" + Guid.NewGuid());
+
     public HistoryTests()
     {
-        Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
-            options.UseInMemoryDatabase("HistoryTests_" + Guid.NewGuid()));
+        Services.AddSingleton(_dbContextFactory);
+        Services.AddSingleton<IExtractionHistoryRepository, ExtractionHistoryRepository>();
     }
 
     private async Task SeedHistoryAsync(ExtractionHistory history)
     {
-        var factory = Services.GetRequiredService<IDbContextFactory<ExcelEtlDbContext>>();
-        await using var context = await factory.CreateDbContextAsync();
+        await using var context = _dbContextFactory.CreateDbContext();
         context.ExtractionHistories.Add(history);
         await context.SaveChangesAsync();
     }

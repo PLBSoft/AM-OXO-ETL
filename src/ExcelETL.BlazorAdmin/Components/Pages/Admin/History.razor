@@ -1,11 +1,10 @@
 @page "/history"
 
+@using ExcelETL.Application.Extraction
 @using ExcelETL.Domain.Entities
 @using ExcelETL.Domain.Enums
-@using ExcelETL.Infrastructure.Persistence
-@using Microsoft.EntityFrameworkCore
 
-@inject IDbContextFactory<ExcelEtlDbContext> DbContextFactory
+@inject IExtractionHistoryRepository ExtractionHistoryRepository
 
 <PageTitle>Extraction History</PageTitle>
 
@@ -56,10 +55,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await using var context = await DbContextFactory.CreateDbContextAsync();
-        _history = await context.ExtractionHistories
-            .OrderByDescending(h => h.JobTimestamp)
-            .ToListAsync();
+        _history = (await ExtractionHistoryRepository.GetAllOrderedByDateDescendingAsync()).ToList();
     }
 
     private static string StatusBadgeClass(ExtractionStatus status) => status switch

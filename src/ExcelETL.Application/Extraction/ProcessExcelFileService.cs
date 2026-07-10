@@ -17,7 +17,6 @@ public sealed class ProcessExcelFileService(
 
         var history = new ExtractionHistory(DateTimeOffset.UtcNow, command.SourceFileName);
         await extractionHistoryRepository.AddAsync(history, cancellationToken);
-        await extractionHistoryRepository.SaveChangesAsync(cancellationToken);
 
         try
         {
@@ -28,15 +27,13 @@ public sealed class ProcessExcelFileService(
             var storedPath = await fileStorageService.SaveAsync(generatedStream, generatedFileName, cancellationToken);
             generatedStream.Position = 0;
 
-            history.MarkCompleted(storedPath);
-            await extractionHistoryRepository.SaveChangesAsync(cancellationToken);
+            await extractionHistoryRepository.MarkCompletedAsync(history.Id, storedPath, cancellationToken);
 
             return new ProcessExcelFileResult(generatedStream, generatedFileName);
         }
         catch
         {
-            history.MarkFailed();
-            await extractionHistoryRepository.SaveChangesAsync(cancellationToken);
+            await extractionHistoryRepository.MarkFailedAsync(history.Id, cancellationToken);
             throw;
         }
     }
