@@ -112,4 +112,29 @@ public class ExtractionConfigRepositoryTests
         var reloaded = await repository.GetByIdAsync(config.Id);
         reloaded!.Sheets.Single().CellMappings.Should().ContainSingle(m => m.TargetPropertyName == "SupplierName");
     }
+
+    [Fact]
+    public async Task AddCellMappingAsync_WithUnknownConfigId_ThrowsExtractionConfigNotFoundException()
+    {
+        var repository = CreateRepository();
+
+        var act = async () => await repository.AddCellMappingAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new CellMapping("B2", "SupplierName", CellDataType.Text));
+
+        await act.Should().ThrowAsync<ExtractionConfigNotFoundException>();
+    }
+
+    [Fact]
+    public async Task AddCellMappingAsync_WithUnknownSheetId_ThrowsInvalidOperationException()
+    {
+        var config = new ExtractionConfig("Purchase Order Template");
+        config.AddSheet(new SheetConfig("Summary", sheetIndex: 0));
+        var repository = CreateRepository();
+        await repository.AddAsync(config);
+
+        var act = async () => await repository.AddCellMappingAsync(
+            config.Id, Guid.NewGuid(), new CellMapping("B2", "SupplierName", CellDataType.Text));
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
 }
