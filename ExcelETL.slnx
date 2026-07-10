@@ -1,4 +1,10 @@
 <Solution>
+  <Folder Name="/legacy/">
+    <Project Path="legacy/NewApiPingService/NewApiPingService.csproj" />
+  </Folder>
+  <Folder Name="/legacy/NewApiPingService.Tests/">
+    <Project Path="legacy/NewApiPingService.Tests/Legacy.NewApiPingService.Tests.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/ExcelETL.Application/ExcelETL.Application.csproj" />
     <Project Path="src/ExcelETL.BlazorAdmin/ExcelETL.BlazorAdmin.csproj" />
