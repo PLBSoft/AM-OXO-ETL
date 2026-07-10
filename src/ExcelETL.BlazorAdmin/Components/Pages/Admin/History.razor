@@ -1,0 +1,72 @@
+@page "/history"
+
+@using ExcelETL.Domain.Entities
+@using ExcelETL.Domain.Enums
+@using ExcelETL.Infrastructure.Persistence
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<ExcelEtlDbContext> DbContextFactory
+
+<PageTitle>Extraction History</PageTitle>
+
+<h1>Extraction History</h1>
+
+@if (_history is null)
+{
+    <p>Loading...</p>
+}
+else if (_history.Count == 0)
+{
+    <p>No extraction jobs have run yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date (UTC)</th>
+                <th>Source file</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in _history)
+            {
+                <tr>
+                    <td>@entry.JobTimestamp.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@entry.SourceFileName</td>
+                    <td><span class="badge @StatusBadgeClass(entry.Status)">@entry.Status</span></td>
+                    <td>
+                        @if (entry.Status == ExtractionStatus.Completed && !string.IsNullOrEmpty(entry.StoredFilePath))
+                        {
+                            <a class="btn btn-sm btn-outline-primary" href="@($"/history/{entry.Id}/download")">
+                                Download
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ExtractionHistory>? _history;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        _history = await context.ExtractionHistories
+            .OrderByDescending(h => h.JobTimestamp)
+            .ToListAsync();
+    }
+
+    private static string StatusBadgeClass(ExtractionStatus status) => status switch
+    {
+        ExtractionStatus.Completed => "bg-success",
+        ExtractionStatus.Failed => "bg-danger",
+        ExtractionStatus.Processing => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}

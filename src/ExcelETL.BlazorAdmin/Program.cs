@@ -15,7 +15,11 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
 
-builder.Services.AddDbContext<ExcelEtlDbContext>(options =>
+// Interactive Server components share a circuit across multiple renders, so a directly
+// injected scoped DbContext would be used concurrently/beyond its intended lifetime; the
+// factory pattern is the Microsoft-documented way to keep this "direct DbContext access"
+// while creating a short-lived context per operation.
+builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -62,5 +66,8 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapAdditionalIdentityEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();
+
+public partial class Program;

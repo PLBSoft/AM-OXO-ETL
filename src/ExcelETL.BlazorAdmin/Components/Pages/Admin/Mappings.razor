@@ -1,0 +1,238 @@
+@page "/mappings"
+
+@using ExcelETL.Domain.Entities
+@using ExcelETL.Domain.Enums
+@using ExcelETL.Infrastructure.Persistence
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<ExcelEtlDbContext> DbContextFactory
+
+<PageTitle>Extraction Mappings</PageTitle>
+
+<h1>Extraction Mappings</h1>
+
+@if (_configs is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <h3>Configurations</h3>
+            <ul class="list-group">
+                @foreach (var config in _configs)
+                {
+                    <li class="list-group-item @(config.Id == _selectedConfigId ? "active" : "")"
+                        style="cursor:pointer" @onclick="() => SelectConfig(config.Id)">
+                        @config.Name (@config.Sheets.Count sheet(s))
+                    </li>
+                }
+            </ul>
+
+            <h4 class="mt-3">New configuration</h4>
+            <div class="input-group">
+                <input id="new-config-name-input" class="form-control" @bind="_newConfigName" placeholder="Configuration name" />
+                <button id="create-config-button" class="btn btn-primary" @onclick="CreateConfigAsync">Create</button>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            @if (_selectedConfig is not null)
+            {
+                <h3>@_selectedConfig.Name</h3>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="alert alert-danger">@_errorMessage</div>
+                }
+
+                @foreach (var sheet in _selectedConfig.Sheets.OrderBy(s => s.SheetIndex))
+                {
+                    <div class="card mb-3">
+                        <div class="card-header">@sheet.SheetName (index @sheet.SheetIndex)</div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Source cell</th>
+                                        <th>Target property</th>
+                                        <th>Data type</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var mapping in sheet.CellMappings)
+                                    {
+                                        <tr>
+                                            <td>@mapping.SourceCell</td>
+                                            <td>@mapping.TargetPropertyName</td>
+                                            <td>@mapping.DataType</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input class="form-control mapping-source-cell-input" @bind="_newMapping.SourceCell" placeholder="e.g. B2 or B2:D4" />
+                                </div>
+                                <div class="col">
+                                    <input class="form-control mapping-target-property-input" @bind="_newMapping.TargetPropertyName" placeholder="Property name" />
+                                </div>
+                                <div class="col">
+                                    <select class="form-select mapping-data-type-select" @bind="_newMapping.DataType">
+                                        @foreach (var type in Enum.GetValues<CellDataType>())
+                                        {
+                                            <option value="@type">@type</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-secondary add-mapping-button" @onclick="() => AddCellMappingAsync(sheet.Id)">
+                                        Add mapping
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <h4>Add sheet</h4>
+                <div class="row g-2">
+                    <div class="col">
+                        <input id="new-sheet-name-input" class="form-control" @bind="_newSheet.SheetName" placeholder="Sheet name" />
+                    </div>
+                    <div class="col">
+                        <input id="new-sheet-index-input" type="number" class="form-control" @bind="_newSheet.SheetIndex" placeholder="Index" />
+                    </div>
+                    <div class="col-auto">
+                        <button id="add-sheet-button" class="btn btn-primary" @onclick="AddSheetAsync">Add sheet</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p>Select a configuration to view its sheets and cell mappings.</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<ExtractionConfig>? _configs;
+    private ExtractionConfig? _selectedConfig;
+    private Guid? _selectedConfigId;
+    private string _newConfigName = string.Empty;
+    private string? _errorMessage;
+
+    private NewSheetModel _newSheet = new();
+    private NewMappingModel _newMapping = new();
+
+    protected override async Task OnInitializedAsync() => await LoadConfigsAsync();
+
+    private async Task LoadConfigsAsync()
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        _configs = await context.ExtractionConfigs
+            .Include(c => c.Sheets)
+            .ThenInclude(s => s.CellMappings)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        _selectedConfig = _selectedConfigId is { } id
+            ? _configs.FirstOrDefault(c => c.Id == id)
+            : null;
+    }
+
+    private void SelectConfig(Guid configId)
+    {
+        _selectedConfigId = configId;
+        _errorMessage = null;
+        _selectedConfig = _configs?.FirstOrDefault(c => c.Id == configId);
+    }
+
+    private async Task CreateConfigAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newConfigName))
+        {
+            return;
+        }
+
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        context.ExtractionConfigs.Add(new ExtractionConfig(_newConfigName));
+        await context.SaveChangesAsync();
+
+        _newConfigName = string.Empty;
+        await LoadConfigsAsync();
+    }
+
+    private async Task AddSheetAsync()
+    {
+        if (_selectedConfigId is not { } configId)
+        {
+            return;
+        }
+
+        _errorMessage = null;
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var config = await context.ExtractionConfigs
+            .Include(c => c.Sheets)
+            .FirstAsync(c => c.Id == configId);
+
+        try
+        {
+            config.AddSheet(new SheetConfig(_newSheet.SheetName, _newSheet.SheetIndex));
+            await context.SaveChangesAsync();
+            _newSheet = new NewSheetModel();
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            _errorMessage = ex.Message;
+        }
+
+        await LoadConfigsAsync();
+    }
+
+    private async Task AddCellMappingAsync(Guid sheetId)
+    {
+        if (_selectedConfigId is not { } configId)
+        {
+            return;
+        }
+
+        _errorMessage = null;
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var config = await context.ExtractionConfigs
+            .Include(c => c.Sheets)
+            .ThenInclude(s => s.CellMappings)
+            .FirstAsync(c => c.Id == configId);
+
+        var sheet = config.Sheets.First(s => s.Id == sheetId);
+
+        try
+        {
+            sheet.AddCellMapping(new CellMapping(_newMapping.SourceCell, _newMapping.TargetPropertyName, _newMapping.DataType));
+            await context.SaveChangesAsync();
+            _newMapping = new NewMappingModel();
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            _errorMessage = ex.Message;
+        }
+
+        await LoadConfigsAsync();
+    }
+
+    private sealed class NewSheetModel
+    {
+        public string SheetName { get; set; } = string.Empty;
+        public int SheetIndex { get; set; }
+    }
+
+    private sealed class NewMappingModel
+    {
+        public string SourceCell { get; set; } = string.Empty;
+        public string TargetPropertyName { get; set; } = string.Empty;
+        public CellDataType DataType { get; set; } = CellDataType.Text;
+    }
+}
