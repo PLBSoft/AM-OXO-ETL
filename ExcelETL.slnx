@@ -15,6 +15,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ExcelETL.BlazorAdmin.Tests/ExcelETL.BlazorAdmin.Tests.csproj" />
     <Project Path="tests/ExcelETL.Domain.Tests/ExcelETL.Domain.Tests.csproj" />
+    <Project Path="tests/ExcelETL.Infrastructure.Tests/ExcelETL.Infrastructure.Tests.csproj" />
     <Project Path="tests/ExcelETL.WebAPI.Tests/ExcelETL.WebAPI.Tests.csproj" />
   </Folder>
 </Solution>

@@ -1,3 +1,5 @@
+using ExcelETL.Application.Extraction;
+using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.WebAPI.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +30,9 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+builder.Services.AddScoped<IExcelExtractionService, ClosedXmlExtractionService>();
+builder.Services.AddScoped<IExcelGeneratorService, ClosedXmlGeneratorService>();
 
 // Add services to the container.
 
