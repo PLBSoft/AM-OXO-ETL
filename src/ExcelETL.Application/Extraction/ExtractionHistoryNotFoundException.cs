@@ -4,11 +4,13 @@ namespace ExcelETL.Application.Extraction;
 
 // Derives from InvalidOperationException -- see SheetNotFoundInExtractionConfigException for why.
 public sealed class ExtractionHistoryNotFoundException(Guid extractionHistoryId)
-    : InvalidOperationException($"Extraction history '{extractionHistoryId}' was not found.")
+    : InvalidOperationException($"Extraction history '{extractionHistoryId}' was not found."), IHasApplicationErrorCode
 {
     public Guid ExtractionHistoryId { get; } = extractionHistoryId;
 
     public ApplicationErrorCode ErrorCode => ApplicationErrorCode.ExtractionHistoryNotFound;
 
     public IReadOnlyList<object?> Args => [ExtractionHistoryId];
+
+    public string ResourceKey => ErrorCode.ToString();
 }

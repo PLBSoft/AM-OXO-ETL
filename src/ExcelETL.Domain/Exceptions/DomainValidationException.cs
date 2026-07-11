@@ -5,9 +5,11 @@ namespace ExcelETL.Domain.Exceptions;
 // interpolated into it. WebAPI/BlazorAdmin re-format the localized DomainErrorMessages resource
 // string using ErrorCode and Args instead of parsing Message.
 public class DomainValidationException(string message, string paramName, DomainErrorCode errorCode, params object?[] args)
-    : ArgumentException(message, paramName)
+    : ArgumentException(message, paramName), IHasDomainErrorCode
 {
     public DomainErrorCode ErrorCode { get; } = errorCode;
 
     public IReadOnlyList<object?> Args { get; } = args;
+
+    public string ResourceKey => ErrorCode.ToString();
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Text.Json;
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
@@ -67,6 +68,35 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
+    public async Task Process_WithUnknownExtractionConfigId_ReturnsEnglishDetailByDefault()
+    {
+        var client = CreateAuthenticatedClient();
+        var configId = Guid.NewGuid();
+        using var sourceWorkbook = BuildSourceWorkbook();
+        using var content = BuildMultipartContent(configId, sourceWorkbook);
+
+        var response = await client.PostAsync("/api/excel/process", content);
+        var detail = await ReadProblemDetailAsync(response);
+
+        detail.Should().Be($"Extraction config '{configId}' was not found.");
+    }
+
+    [Fact]
+    public async Task Process_WithUnknownExtractionConfigId_AndFrenchAcceptLanguage_ReturnsFrenchDetail()
+    {
+        var client = CreateAuthenticatedClient();
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("fr-FR"));
+        var configId = Guid.NewGuid();
+        using var sourceWorkbook = BuildSourceWorkbook();
+        using var content = BuildMultipartContent(configId, sourceWorkbook);
+
+        var response = await client.PostAsync("/api/excel/process", content);
+        var detail = await ReadProblemDetailAsync(response);
+
+        detail.Should().Be($"La configuration d'extraction '{configId}' est introuvable.");
+    }
+
+    [Fact]
     public async Task Process_WithEmptyFile_ReturnsBadRequest()
     {
         var client = CreateAuthenticatedClient();
@@ -81,6 +111,54 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
         var response = await client.PostAsync("/api/excel/process", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Process_WithEmptyFile_AndFrenchAcceptLanguage_ReturnsFrenchDetail()
+    {
+        var client = CreateAuthenticatedClient();
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("fr-FR"));
+        var configId = await SeedExtractionConfigAsync();
+
+        using var content = new MultipartFormDataContent
+        {
+            { new StringContent(configId.ToString()), "ExtractionConfigId" },
+            { new ByteArrayContent([]), "File", "empty.xlsx" }
+        };
+
+        var response = await client.PostAsync("/api/excel/process", content);
+        var detail = await ReadProblemDetailAsync(response);
+
+        detail.Should().Be("Un fichier .xlsx non vide doit être envoyé.");
+    }
+
+    [Fact]
+    public async Task Process_WithWorkbookMissingConfiguredSheet_ReturnsBadRequestWithLocalizedDetail()
+    {
+        var client = CreateAuthenticatedClient();
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue("fr-FR"));
+        var configId = await SeedExtractionConfigAsync();
+
+        using var workbook = new XLWorkbook();
+        workbook.Worksheets.Add("NotTheRightSheet").Cell("B2").Value = "irrelevant";
+        var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+
+        using var content = BuildMultipartContent(configId, stream);
+
+        var response = await client.PostAsync("/api/excel/process", content);
+        var detail = await ReadProblemDetailAsync(response);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        detail.Should().Be("La feuille 'Summary' est introuvable dans le classeur envoyé.");
+    }
+
+    private static async Task<string?> ReadProblemDetailAsync(HttpResponseMessage response)
+    {
+        await using var stream = await response.Content.ReadAsStreamAsync();
+        using var document = await JsonDocument.ParseAsync(stream);
+        return document.RootElement.GetProperty("detail").GetString();
     }
 
     [Fact]

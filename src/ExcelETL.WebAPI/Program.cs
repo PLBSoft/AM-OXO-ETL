@@ -5,6 +5,7 @@ using ExcelETL.Infrastructure.Persistence.Repositories;
 using ExcelETL.Infrastructure.Storage;
 using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
+using ExcelETL.WebAPI.ExceptionHandling;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,9 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
     options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider()];
 });
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -120,8 +124,16 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// UseRequestLocalization runs before UseExceptionHandler so the resolved culture is set in the
+// execution context ExceptionHandlerMiddleware captures at pipeline start. ExceptionHandler
+// restores that captured context around its handlers when an exception unwinds a request, so if
+// it ran first, the culture set later by RequestLocalization would be invisible to
+// GlobalExceptionHandler and every localized error would fall back to the process's default
+// (OS) culture instead of the request's negotiated one.
 app.UseRequestLocalization();
+app.UseExceptionHandler();
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();

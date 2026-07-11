@@ -52,4 +52,7 @@
   <data name="GeneratedWorkbookSheetCountOutOfRange" xml:space="preserve">
     <value>Le classeur généré doit contenir entre {0} et {1} feuilles ; il en contient {2}.</value>
   </data>
+  <data name="EmptyFileUploadRequired" xml:space="preserve">
+    <value>Un fichier .xlsx non vide doit être envoyé.</value>
+  </data>
 </root>

@@ -52,4 +52,7 @@
   <data name="GeneratedWorkbookSheetCountOutOfRange" xml:space="preserve">
     <value>Generated workbook must contain {0}-{1} sheets; got {2}.</value>
   </data>
+  <data name="EmptyFileUploadRequired" xml:space="preserve">
+    <value>A non-empty .xlsx file must be uploaded.</value>
+  </data>
 </root>

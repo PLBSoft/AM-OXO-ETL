@@ -6,7 +6,8 @@ namespace ExcelETL.Application.Extraction;
 // `catch (Exception ex) when (ex is ... or InvalidOperationException ...)` clauses in BlazorAdmin
 // that were written against the plain InvalidOperationException this replaces.
 public sealed class SheetNotFoundInExtractionConfigException(Guid extractionConfigId, Guid sheetId)
-    : InvalidOperationException($"Sheet '{sheetId}' was not found in extraction config '{extractionConfigId}'.")
+    : InvalidOperationException($"Sheet '{sheetId}' was not found in extraction config '{extractionConfigId}'."),
+        IHasApplicationErrorCode
 {
     public Guid ExtractionConfigId { get; } = extractionConfigId;
 
@@ -15,4 +16,6 @@ public sealed class SheetNotFoundInExtractionConfigException(Guid extractionConf
     public ApplicationErrorCode ErrorCode => ApplicationErrorCode.SheetNotFoundInExtractionConfig;
 
     public IReadOnlyList<object?> Args => [SheetId, ExtractionConfigId];
+
+    public string ResourceKey => ErrorCode.ToString();
 }

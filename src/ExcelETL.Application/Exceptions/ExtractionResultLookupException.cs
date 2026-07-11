@@ -4,9 +4,11 @@ namespace ExcelETL.Application.Exceptions;
 // localized ApplicationMessages resource string using ErrorCode instead of parsing Message --
 // same convention as the Domain layer's DomainRuleViolationException.
 public sealed class ExtractionResultLookupException(string message, ApplicationErrorCode errorCode, params object?[] args)
-    : KeyNotFoundException(message)
+    : KeyNotFoundException(message), IHasApplicationErrorCode
 {
     public ApplicationErrorCode ErrorCode { get; } = errorCode;
 
     public IReadOnlyList<object?> Args { get; } = args;
+
+    public string ResourceKey => ErrorCode.ToString();
 }
