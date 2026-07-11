@@ -151,4 +151,37 @@
   <data name="Dashboard_Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="History_PageTitle" xml:space="preserve">
+    <value>Historique d'extraction</value>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="History_NoEntries" xml:space="preserve">
+    <value>Aucun travail d'extraction n'a encore été exécuté.</value>
+  </data>
+  <data name="History_DateUtc" xml:space="preserve">
+    <value>Date (UTC)</value>
+  </data>
+  <data name="History_SourceFile" xml:space="preserve">
+    <value>Fichier source</value>
+  </data>
+  <data name="History_Status" xml:space="preserve">
+    <value>Statut</value>
+  </data>
+  <data name="History_Download" xml:space="preserve">
+    <value>Télécharger</value>
+  </data>
+  <data name="History_Status_Pending" xml:space="preserve">
+    <value>En attente</value>
+  </data>
+  <data name="History_Status_Processing" xml:space="preserve">
+    <value>En cours</value>
+  </data>
+  <data name="History_Status_Completed" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="History_Status_Failed" xml:space="preserve">
+    <value>Échoué</value>
+  </data>
 </root>

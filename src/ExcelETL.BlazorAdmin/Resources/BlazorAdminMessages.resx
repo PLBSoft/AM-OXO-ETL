@@ -151,4 +151,37 @@
   <data name="Dashboard_Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="History_PageTitle" xml:space="preserve">
+    <value>Extraction History</value>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="History_NoEntries" xml:space="preserve">
+    <value>No extraction jobs have run yet.</value>
+  </data>
+  <data name="History_DateUtc" xml:space="preserve">
+    <value>Date (UTC)</value>
+  </data>
+  <data name="History_SourceFile" xml:space="preserve">
+    <value>Source file</value>
+  </data>
+  <data name="History_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="History_Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="History_Status_Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="History_Status_Processing" xml:space="preserve">
+    <value>Processing</value>
+  </data>
+  <data name="History_Status_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="History_Status_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
 </root>

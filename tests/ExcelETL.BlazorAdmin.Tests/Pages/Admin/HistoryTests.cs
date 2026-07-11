@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bunit;
 using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
@@ -21,6 +22,37 @@ public class HistoryTests : BunitContext
     {
         Services.AddSingleton(_dbContextFactory);
         Services.AddSingleton<IExtractionHistoryRepository, ExtractionHistoryRepository>();
+        Services.AddLocalization();
+    }
+
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    private static async Task WithCultureAsync(string cultureName, Func<Task> action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
     }
 
     private async Task SeedHistoryAsync(ExtractionHistory history)
@@ -31,15 +63,24 @@ public class HistoryTests : BunitContext
     }
 
     [Fact]
-    public void History_WithNoEntries_DisplaysEmptyMessage()
+    public void History_WithNoEntries_DisplaysEmptyMessage() => WithCulture("en-US", () =>
     {
         var cut = Render<History>();
 
         cut.Markup.Should().Contain("No extraction jobs have run yet.");
-    }
+    });
 
     [Fact]
-    public async Task History_WithCompletedEntry_DisplaysDownloadLink()
+    public void History_WithFrenchCulture_DisplaysFrenchLabels() => WithCulture("fr-FR", () =>
+    {
+        var cut = Render<History>();
+
+        cut.Markup.Should().Contain("Historique d'extraction");
+        cut.Markup.Should().Contain("Aucun travail d'extraction n'a encore été exécuté.");
+    });
+
+    [Fact]
+    public async Task History_WithCompletedEntry_DisplaysDownloadLink() => await WithCultureAsync("en-US", async () =>
     {
         var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice.xlsx");
         history.MarkCompleted(@"C:\archive\invoice-processed.xlsx");
@@ -49,10 +90,26 @@ public class HistoryTests : BunitContext
 
         cut.Markup.Should().Contain("invoice.xlsx");
         cut.Markup.Should().Contain($"/history/{history.Id}/download");
-    }
+        cut.Markup.Should().Contain("Download");
+        cut.Markup.Should().Contain("Completed");
+    });
 
     [Fact]
-    public async Task History_WithFailedEntry_DoesNotDisplayDownloadLink()
+    public async Task History_WithCompletedEntry_AndFrenchCulture_DisplaysFrenchDownloadAndStatus() =>
+        await WithCultureAsync("fr-FR", async () =>
+        {
+            var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice.xlsx");
+            history.MarkCompleted(@"C:\archive\invoice-processed.xlsx");
+            await SeedHistoryAsync(history);
+
+            var cut = Render<History>();
+
+            cut.Markup.Should().Contain("Télécharger");
+            cut.Markup.Should().Contain("Terminé");
+        });
+
+    [Fact]
+    public async Task History_WithFailedEntry_DoesNotDisplayDownloadLink() => await WithCultureAsync("en-US", async () =>
     {
         var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice.xlsx");
         history.MarkFailed();
@@ -62,10 +119,10 @@ public class HistoryTests : BunitContext
 
         cut.Markup.Should().Contain("invoice.xlsx");
         cut.Markup.Should().NotContain($"/history/{history.Id}/download");
-    }
+    });
 
     [Fact]
-    public async Task History_OrdersEntriesByJobTimestampDescending()
+    public async Task History_OrdersEntriesByJobTimestampDescending() => await WithCultureAsync("en-US", async () =>
     {
         var older = new ExtractionHistory(DateTimeOffset.UtcNow.AddHours(-1), "older.xlsx");
         var newer = new ExtractionHistory(DateTimeOffset.UtcNow, "newer.xlsx");
@@ -77,5 +134,5 @@ public class HistoryTests : BunitContext
         var indexOfNewer = cut.Markup.IndexOf("newer.xlsx", StringComparison.Ordinal);
         var indexOfOlder = cut.Markup.IndexOf("older.xlsx", StringComparison.Ordinal);
         indexOfNewer.Should().BeLessThan(indexOfOlder);
-    }
+    });
 }
