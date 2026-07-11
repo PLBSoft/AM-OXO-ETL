@@ -43,6 +43,9 @@
   <data name="NavMenu_ExtractionHistory" xml:space="preserve">
     <value>Historique d'extraction</value>
   </data>
+  <data name="NavMenu_Logs" xml:space="preserve">
+    <value>Journaux</value>
+  </data>
   <data name="NavMenu_Logout" xml:space="preserve">
     <value>Déconnexion</value>
   </data>
@@ -133,28 +136,28 @@
   <data name="Dashboard_NotAvailable" xml:space="preserve">
     <value>N/D</value>
   </data>
-  <data name="Dashboard_RecentLogs" xml:space="preserve">
+  <data name="Logs_PageTitle" xml:space="preserve">
     <value>Journaux récents</value>
   </data>
-  <data name="Dashboard_NoLogEntries" xml:space="preserve">
+  <data name="Logs_NoLogEntries" xml:space="preserve">
     <value>Aucune entrée de journal enregistrée pour l'instant.</value>
   </data>
-  <data name="Dashboard_TimeUtc" xml:space="preserve">
+  <data name="Logs_TimeUtc" xml:space="preserve">
     <value>Heure (UTC)</value>
   </data>
-  <data name="Dashboard_Level" xml:space="preserve">
+  <data name="Logs_Level" xml:space="preserve">
     <value>Niveau</value>
   </data>
-  <data name="Dashboard_Message" xml:space="preserve">
+  <data name="Logs_Message" xml:space="preserve">
     <value>Message</value>
   </data>
-  <data name="Dashboard_AllLevels" xml:space="preserve">
+  <data name="Logs_AllLevels" xml:space="preserve">
     <value>Tous les niveaux</value>
   </data>
-  <data name="Dashboard_SearchPlaceholder" xml:space="preserve">
+  <data name="Logs_SearchPlaceholder" xml:space="preserve">
     <value>Rechercher dans les journaux...</value>
   </data>
-  <data name="Dashboard_NoMatchingLogEntries" xml:space="preserve">
+  <data name="Logs_NoMatchingLogEntries" xml:space="preserve">
     <value>Aucune entrée de journal ne correspond au filtre actuel.</value>
   </data>
   <data name="History_PageTitle" xml:space="preserve">

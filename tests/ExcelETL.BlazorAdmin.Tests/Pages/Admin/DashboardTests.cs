@@ -1,11 +1,9 @@
 using System.Globalization;
 using Bunit;
-using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
 using ExcelETL.Domain.Entities;
-using ExcelETL.Infrastructure.Diagnostics;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
@@ -20,15 +18,10 @@ public class DashboardTests : BunitContext
     private readonly IDbContextFactory<ExcelEtlDbContext> _dbContextFactory =
         new TestDbContextFactory("DashboardTests_" + Guid.NewGuid());
 
-    private readonly IDbContextFactory<SystemLogsDbContext> _systemLogsDbContextFactory =
-        new TestSystemLogsDbContextFactory("DashboardTests_SystemLogs_" + Guid.NewGuid());
-
     public DashboardTests()
     {
         Services.AddSingleton(_dbContextFactory);
         Services.AddSingleton<IExtractionHistoryRepository, ExtractionHistoryRepository>();
-        Services.AddSingleton(_systemLogsDbContextFactory);
-        Services.AddSingleton<ISystemLogRepository, SystemLogRepository>();
         Services.AddLocalization();
     }
 
@@ -54,15 +47,8 @@ public class DashboardTests : BunitContext
         await context.SaveChangesAsync();
     }
 
-    private async Task SeedLogAsync(SystemLogEntry entry)
-    {
-        await using var context = _systemLogsDbContextFactory.CreateDbContext();
-        context.SystemLogs.Add(entry);
-        await context.SaveChangesAsync();
-    }
-
     [Fact]
-    public void Dashboard_WithNoHistoryOrLogs_DisplaysZeroesAndEmptyMessages() => WithCulture("en-US", () =>
+    public void Dashboard_WithNoHistory_DisplaysZeroes() => WithCulture("en-US", () =>
     {
         var cut = Render<Dashboard>();
 
@@ -70,7 +56,6 @@ public class DashboardTests : BunitContext
         cut.Find("#stat-completed-jobs").TextContent.Should().Be("0");
         cut.Find("#stat-failed-jobs").TextContent.Should().Be("0");
         cut.Find("#stat-average-duration").TextContent.Should().Be("N/A");
-        cut.Markup.Should().Contain("No log entries recorded yet.");
     });
 
     [Fact]
@@ -84,8 +69,6 @@ public class DashboardTests : BunitContext
         cut.Markup.Should().Contain("Échoués");
         cut.Markup.Should().Contain("Durée moyenne");
         cut.Find("#stat-average-duration").TextContent.Should().Be("N/D");
-        cut.Markup.Should().Contain("Journaux récents");
-        cut.Markup.Should().Contain("Aucune entrée de journal enregistrée pour l'instant.");
     });
 
     [Fact]
@@ -119,23 +102,6 @@ public class DashboardTests : BunitContext
         var cut = Render<Dashboard>();
 
         cut.Find("#stat-average-duration").TextContent.Should().Be(completed.Duration!.Value.ToString(@"hh\:mm\:ss"));
-    });
-
-    [Fact]
-    public async Task Dashboard_DisplaysRecentLogEntriesNewestFirst() => await WithCultureAsync("en-US", async () =>
-    {
-        await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow.AddMinutes(-1), "Information", "Older entry", null));
-        await SeedLogAsync(new SystemLogEntry(2, DateTime.UtcNow, "Error", "Newer entry", "System.Exception: boom"));
-
-        var cut = Render<Dashboard>();
-
-        cut.Markup.Should().Contain("Newer entry");
-        cut.Markup.Should().Contain("Older entry");
-        cut.Markup.Should().Contain("System.Exception: boom");
-
-        var indexOfNewer = cut.Markup.IndexOf("Newer entry", StringComparison.Ordinal);
-        var indexOfOlder = cut.Markup.IndexOf("Older entry", StringComparison.Ordinal);
-        indexOfNewer.Should().BeLessThan(indexOfOlder);
     });
 
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)

@@ -43,6 +43,9 @@
   <data name="NavMenu_ExtractionHistory" xml:space="preserve">
     <value>Extraction History</value>
   </data>
+  <data name="NavMenu_Logs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
   <data name="NavMenu_Logout" xml:space="preserve">
     <value>Logout</value>
   </data>
@@ -133,28 +136,28 @@
   <data name="Dashboard_NotAvailable" xml:space="preserve">
     <value>N/A</value>
   </data>
-  <data name="Dashboard_RecentLogs" xml:space="preserve">
+  <data name="Logs_PageTitle" xml:space="preserve">
     <value>Recent logs</value>
   </data>
-  <data name="Dashboard_NoLogEntries" xml:space="preserve">
+  <data name="Logs_NoLogEntries" xml:space="preserve">
     <value>No log entries recorded yet.</value>
   </data>
-  <data name="Dashboard_TimeUtc" xml:space="preserve">
+  <data name="Logs_TimeUtc" xml:space="preserve">
     <value>Time (UTC)</value>
   </data>
-  <data name="Dashboard_Level" xml:space="preserve">
+  <data name="Logs_Level" xml:space="preserve">
     <value>Level</value>
   </data>
-  <data name="Dashboard_Message" xml:space="preserve">
+  <data name="Logs_Message" xml:space="preserve">
     <value>Message</value>
   </data>
-  <data name="Dashboard_AllLevels" xml:space="preserve">
+  <data name="Logs_AllLevels" xml:space="preserve">
     <value>All levels</value>
   </data>
-  <data name="Dashboard_SearchPlaceholder" xml:space="preserve">
+  <data name="Logs_SearchPlaceholder" xml:space="preserve">
     <value>Search logs...</value>
   </data>
-  <data name="Dashboard_NoMatchingLogEntries" xml:space="preserve">
+  <data name="Logs_NoMatchingLogEntries" xml:space="preserve">
     <value>No log entries match the current filter.</value>
   </data>
   <data name="History_PageTitle" xml:space="preserve">

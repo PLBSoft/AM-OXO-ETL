@@ -2,11 +2,9 @@
 @page "/dashboard"
 @implements IAsyncDisposable
 
-@using ExcelETL.Application.Diagnostics
 @using ExcelETL.Application.Extraction
 
 @inject IExtractionHistoryRepository ExtractionHistoryRepository
-@inject ISystemLogRepository SystemLogRepository
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
 <PageTitle>@Loc["Dashboard_PageTitle"]</PageTitle>
@@ -55,112 +53,13 @@ else
     </div>
 }
 
-<h2>@Loc["Dashboard_RecentLogs"]</h2>
-
-@if (_logs is null)
-{
-    <p>@Loc["Dashboard_Loading"]</p>
-}
-else if (_logs.Count == 0)
-{
-    <p>@Loc["Dashboard_NoLogEntries"]</p>
-}
-else
-{
-    <div class="row g-2 mb-3">
-        <div class="col-md-3">
-            <select class="form-select" id="log-level-filter" @bind="_levelFilter">
-                <option value="">@Loc["Dashboard_AllLevels"]</option>
-                @foreach (var level in AvailableLevels)
-                {
-                    <option value="@level">@level</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-5">
-            <input type="search" class="form-control" id="log-search" placeholder="@Loc["Dashboard_SearchPlaceholder"]"
-                   @bind="_searchText" @bind:event="oninput" />
-        </div>
-    </div>
-
-    var filteredLogs = FilteredLogs;
-
-    if (filteredLogs.Count == 0)
-    {
-        <p>@Loc["Dashboard_NoMatchingLogEntries"]</p>
-    }
-    else
-    {
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>@Loc["Dashboard_TimeUtc"]</th>
-                    <th>@Loc["Dashboard_Level"]</th>
-                    <th>@Loc["Dashboard_Message"]</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var entry in filteredLogs)
-                {
-                    <tr class="@LevelRowClass(entry.Level)">
-                        <td>@entry.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
-                        <td>@entry.Level</td>
-                        <td>
-                            @entry.Message
-                            @if (!string.IsNullOrEmpty(entry.Exception))
-                            {
-                                <pre class="mb-0 small text-muted">@entry.Exception</pre>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
-}
-
 @code {
-    private const int RecentLogCount = 50;
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(4);
 
     private ExtractionHistoryStatistics? _statistics;
-    private IReadOnlyList<SystemLogEntry>? _logs;
     private PeriodicTimer? _timer;
     private CancellationTokenSource? _refreshCts;
     private Task? _refreshLoop;
-    private string _levelFilter = string.Empty;
-    private string _searchText = string.Empty;
-
-    private IReadOnlyList<string> AvailableLevels =>
-        _logs?.Select(e => e.Level).Distinct().OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
-        ?? [];
-
-    private IReadOnlyList<SystemLogEntry> FilteredLogs
-    {
-        get
-        {
-            if (_logs is null)
-            {
-                return [];
-            }
-
-            IEnumerable<SystemLogEntry> query = _logs;
-
-            if (!string.IsNullOrEmpty(_levelFilter))
-            {
-                query = query.Where(e => e.Level == _levelFilter);
-            }
-
-            if (!string.IsNullOrWhiteSpace(_searchText))
-            {
-                query = query.Where(e =>
-                    e.Message.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
-                    || (e.Exception?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false));
-            }
-
-            return query.ToList();
-        }
-    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -189,18 +88,10 @@ else
     private async Task RefreshAsync()
     {
         _statistics = await ExtractionHistoryRepository.GetStatisticsAsync();
-        _logs = await SystemLogRepository.GetRecentAsync(RecentLogCount);
     }
 
     private string FormatDuration(TimeSpan? duration) =>
         duration is null ? Loc["Dashboard_NotAvailable"] : duration.Value.ToString(@"hh\:mm\:ss");
-
-    private static string LevelRowClass(string level) => level switch
-    {
-        "Error" or "Fatal" => "table-danger",
-        "Warning" => "table-warning",
-        _ => ""
-    };
 
     public async ValueTask DisposeAsync()
     {
