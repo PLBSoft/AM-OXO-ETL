@@ -52,9 +52,6 @@
   <data name="NavMenu_Login" xml:space="preserve">
     <value>Login</value>
   </data>
-  <data name="MainLayout_About" xml:space="preserve">
-    <value>About</value>
-  </data>
   <data name="MainLayout_UnhandledError" xml:space="preserve">
     <value>An unhandled error has occurred.</value>
   </data>
@@ -150,6 +147,15 @@
   </data>
   <data name="Dashboard_Message" xml:space="preserve">
     <value>Message</value>
+  </data>
+  <data name="Dashboard_AllLevels" xml:space="preserve">
+    <value>All levels</value>
+  </data>
+  <data name="Dashboard_SearchPlaceholder" xml:space="preserve">
+    <value>Search logs...</value>
+  </data>
+  <data name="Dashboard_NoMatchingLogEntries" xml:space="preserve">
+    <value>No log entries match the current filter.</value>
   </data>
   <data name="History_PageTitle" xml:space="preserve">
     <value>Extraction History</value>
