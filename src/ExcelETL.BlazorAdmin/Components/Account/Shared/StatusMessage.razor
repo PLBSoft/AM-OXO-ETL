@@ -1,7 +1,6 @@
 @if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass" role="alert">
+    <div class="alert alert-@AlertCssClass" role="alert">
         @DisplayMessage
     </div>
 }
@@ -12,10 +11,20 @@
     [Parameter]
     public string? Message { get; set; }
 
+    // Whether Message is an error (vs. a success confirmation) -- callers must say so explicitly.
+    // The alert's color used to be picked by checking whether the (English) text started with
+    // "Error", which silently mis-colors every localized message once Message is no longer English.
+    [Parameter]
+    public bool IsError { get; set; }
+
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
     private string? DisplayMessage => Message ?? messageFromCookie;
+
+    private string AlertCssClass => Message is not null
+        ? (IsError ? "danger" : "success")
+        : (messageFromCookie?.StartsWith("Error", StringComparison.Ordinal) == true ? "danger" : "success");
 
     protected override void OnInitialized()
     {

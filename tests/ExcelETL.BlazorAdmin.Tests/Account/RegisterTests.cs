@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.BlazorAdmin.Components.Account.Pages;
@@ -38,12 +39,28 @@ public class RegisterTests : BunitContext
         Services.AddSingleton(_signInManagerMock.Object);
         Services.AddSingleton<ILogger<Register>>(NullLogger<Register>.Instance);
         Services.AddScoped<IdentityRedirectManager>();
+        Services.AddLocalization();
 
         RenderTree.Add<CascadingValue<HttpContext>>(p => p.Add(c => c.Value, new DefaultHttpContext()));
     }
 
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
     [Fact]
-    public void RegisterUser_WithValidInput_CreatesUserAndSignsIn()
+    public void RegisterUser_WithValidInput_CreatesUserAndSignsIn() => WithCulture("en-US", () =>
     {
         _userManagerMock
             .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Str0ngPwd!"))
@@ -57,10 +74,10 @@ public class RegisterTests : BunitContext
 
         _userManagerMock.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), "Str0ngPwd!"), Times.Once);
         _signInManagerMock.Verify(s => s.SignInAsync(It.IsAny<ApplicationUser>(), false, null), Times.Once);
-    }
+    });
 
     [Fact]
-    public void RegisterUser_WhenCreateFails_DisplaysIdentityErrorsAndDoesNotSignIn()
+    public void RegisterUser_WhenCreateFails_DisplaysIdentityErrorsAndDoesNotSignIn() => WithCulture("en-US", () =>
     {
         _userManagerMock
             .Setup(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
@@ -73,11 +90,12 @@ public class RegisterTests : BunitContext
         cut.Find("form").Submit();
 
         cut.Markup.Should().Contain("is already taken");
+        cut.Find(".alert").ClassList.Should().Contain("alert-danger");
         _signInManagerMock.Verify(s => s.SignInAsync(It.IsAny<ApplicationUser>(), It.IsAny<bool>(), It.IsAny<string>()), Times.Never);
-    }
+    });
 
     [Fact]
-    public void RegisterUser_WithMismatchedPasswords_DoesNotCallCreateAsync()
+    public void RegisterUser_WithMismatchedPasswords_DoesNotCallCreateAsync() => WithCulture("en-US", () =>
     {
         var cut = Render<Register>();
         cut.Find("#Input\\.Email").Change("newuser@example.com");
@@ -86,5 +104,5 @@ public class RegisterTests : BunitContext
         cut.Find("form").Submit();
 
         _userManagerMock.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
-    }
+    });
 }
