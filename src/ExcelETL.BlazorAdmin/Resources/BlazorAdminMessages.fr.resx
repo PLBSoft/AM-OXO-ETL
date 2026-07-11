@@ -184,4 +184,73 @@
   <data name="History_Status_Failed" xml:space="preserve">
     <value>Échoué</value>
   </data>
+  <data name="Mappings_PageTitle" xml:space="preserve">
+    <value>Mappages d'extraction</value>
+  </data>
+  <data name="Mappings_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="Mappings_Configurations" xml:space="preserve">
+    <value>Configurations</value>
+  </data>
+  <data name="Mappings_SheetCount" xml:space="preserve">
+    <value>{0} feuille(s)</value>
+  </data>
+  <data name="Mappings_NewConfiguration" xml:space="preserve">
+    <value>Nouvelle configuration</value>
+  </data>
+  <data name="Mappings_ConfigurationNamePlaceholder" xml:space="preserve">
+    <value>Nom de la configuration</value>
+  </data>
+  <data name="Mappings_Create" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="Mappings_SheetHeader" xml:space="preserve">
+    <value>{0} (index {1})</value>
+  </data>
+  <data name="Mappings_SourceCell" xml:space="preserve">
+    <value>Cellule source</value>
+  </data>
+  <data name="Mappings_TargetProperty" xml:space="preserve">
+    <value>Propriété cible</value>
+  </data>
+  <data name="Mappings_DataType" xml:space="preserve">
+    <value>Type de donnée</value>
+  </data>
+  <data name="Mappings_SourceCellPlaceholder" xml:space="preserve">
+    <value>ex. B2 ou B2:D4</value>
+  </data>
+  <data name="Mappings_PropertyNamePlaceholder" xml:space="preserve">
+    <value>Nom de la propriété</value>
+  </data>
+  <data name="Mappings_AddMapping" xml:space="preserve">
+    <value>Ajouter un mappage</value>
+  </data>
+  <data name="Mappings_AddSheet" xml:space="preserve">
+    <value>Ajouter une feuille</value>
+  </data>
+  <data name="Mappings_SheetNamePlaceholder" xml:space="preserve">
+    <value>Nom de la feuille</value>
+  </data>
+  <data name="Mappings_IndexPlaceholder" xml:space="preserve">
+    <value>Index</value>
+  </data>
+  <data name="Mappings_SelectConfigPrompt" xml:space="preserve">
+    <value>Sélectionnez une configuration pour afficher ses feuilles et ses mappages de cellules.</value>
+  </data>
+  <data name="Mappings_DataType_Text" xml:space="preserve">
+    <value>Texte</value>
+  </data>
+  <data name="Mappings_DataType_Number" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="Mappings_DataType_Decimal" xml:space="preserve">
+    <value>Décimal</value>
+  </data>
+  <data name="Mappings_DataType_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Mappings_DataType_Boolean" xml:space="preserve">
+    <value>Booléen</value>
+  </data>
 </root>
