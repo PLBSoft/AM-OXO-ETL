@@ -1,6 +1,7 @@
 @implements IDisposable
 
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer<BlazorAdminMessages> Loc
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -8,25 +9,25 @@
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<input type="checkbox" title="@Loc["NavMenu_ToggleTitle"]" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> Dashboard
+                <span class="bi bi-speedometer2-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Dashboard"]
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="mappings">
-                <span class="bi bi-table-nav-menu" aria-hidden="true"></span> Extraction Mappings
+                <span class="bi bi-table-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExtractionMappings"]
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="history">
-                <span class="bi bi-clock-history-nav-menu" aria-hidden="true"></span> Extraction History
+                <span class="bi bi-clock-history-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExtractionHistory"]
             </NavLink>
         </div>
 
@@ -42,7 +43,7 @@
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Logout"]
                         </button>
                     </form>
                 </div>
@@ -50,12 +51,12 @@
             <NotAuthorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Register"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Login"]
                     </NavLink>
                 </div>
             </NotAuthorized>

@@ -31,4 +31,88 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="NavMenu_ToggleTitle" xml:space="preserve">
+    <value>Navigation menu</value>
+  </data>
+  <data name="NavMenu_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="NavMenu_ExtractionMappings" xml:space="preserve">
+    <value>Extraction Mappings</value>
+  </data>
+  <data name="NavMenu_ExtractionHistory" xml:space="preserve">
+    <value>Extraction History</value>
+  </data>
+  <data name="NavMenu_Logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="NavMenu_Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="NavMenu_Login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="MainLayout_About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MainLayout_UnhandledError" xml:space="preserve">
+    <value>An unhandled error has occurred.</value>
+  </data>
+  <data name="MainLayout_Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="ReconnectModal_Rejoining" xml:space="preserve">
+    <value>Rejoining the server...</value>
+  </data>
+  <data name="ReconnectModal_RejoinFailedRetrying" xml:space="preserve">
+    <value>Rejoin failed... trying again in</value>
+  </data>
+  <data name="ReconnectModal_Seconds" xml:space="preserve">
+    <value>seconds.</value>
+  </data>
+  <data name="ReconnectModal_FailedToRejoin" xml:space="preserve">
+    <value>Failed to rejoin.</value>
+  </data>
+  <data name="ReconnectModal_RetryOrReload" xml:space="preserve">
+    <value>Please retry or reload the page.</value>
+  </data>
+  <data name="ReconnectModal_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="ReconnectModal_SessionPaused" xml:space="preserve">
+    <value>The session has been paused by the server.</value>
+  </data>
+  <data name="ReconnectModal_FailedToResume" xml:space="preserve">
+    <value>Failed to resume the session.</value>
+  </data>
+  <data name="ReconnectModal_Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="Error_PageTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Error_Heading" xml:space="preserve">
+    <value>Error.</value>
+  </data>
+  <data name="Error_Subheading" xml:space="preserve">
+    <value>An error occurred while processing your request.</value>
+  </data>
+  <data name="Error_RequestIdLabel" xml:space="preserve">
+    <value>Request ID:</value>
+  </data>
+  <data name="Error_DevelopmentModeHeading" xml:space="preserve">
+    <value>Development Mode</value>
+  </data>
+  <data name="Error_DevelopmentModeExplanation" xml:space="preserve">
+    <value>Swapping to &lt;strong&gt;Development&lt;/strong&gt; environment will display more detailed information about the error that occurred.</value>
+  </data>
+  <data name="Error_DevelopmentModeWarningDetail" xml:space="preserve">
+    <value>&lt;strong&gt;The Development environment shouldn't be enabled for deployed applications.&lt;/strong&gt; It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the &lt;strong&gt;Development&lt;/strong&gt; environment by setting the &lt;strong&gt;ASPNETCORE_ENVIRONMENT&lt;/strong&gt; environment variable to &lt;strong&gt;Development&lt;/strong&gt; and restarting the app.</value>
+  </data>
+  <data name="NotFound_Heading" xml:space="preserve">
+    <value>Not Found</value>
+  </data>
+  <data name="NotFound_Message" xml:space="preserve">
+    <value>Sorry, the content you are looking for does not exist.</value>
+  </data>
 </root>

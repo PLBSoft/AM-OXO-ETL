@@ -31,4 +31,88 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="NavMenu_ToggleTitle" xml:space="preserve">
+    <value>Menu de navigation</value>
+  </data>
+  <data name="NavMenu_Dashboard" xml:space="preserve">
+    <value>Tableau de bord</value>
+  </data>
+  <data name="NavMenu_ExtractionMappings" xml:space="preserve">
+    <value>Mappages d'extraction</value>
+  </data>
+  <data name="NavMenu_ExtractionHistory" xml:space="preserve">
+    <value>Historique d'extraction</value>
+  </data>
+  <data name="NavMenu_Logout" xml:space="preserve">
+    <value>Déconnexion</value>
+  </data>
+  <data name="NavMenu_Register" xml:space="preserve">
+    <value>S'inscrire</value>
+  </data>
+  <data name="NavMenu_Login" xml:space="preserve">
+    <value>Connexion</value>
+  </data>
+  <data name="MainLayout_About" xml:space="preserve">
+    <value>À propos</value>
+  </data>
+  <data name="MainLayout_UnhandledError" xml:space="preserve">
+    <value>Une erreur non gérée s'est produite.</value>
+  </data>
+  <data name="MainLayout_Reload" xml:space="preserve">
+    <value>Recharger</value>
+  </data>
+  <data name="ReconnectModal_Rejoining" xml:space="preserve">
+    <value>Reconnexion au serveur...</value>
+  </data>
+  <data name="ReconnectModal_RejoinFailedRetrying" xml:space="preserve">
+    <value>Échec de la reconnexion... nouvelle tentative dans</value>
+  </data>
+  <data name="ReconnectModal_Seconds" xml:space="preserve">
+    <value>secondes.</value>
+  </data>
+  <data name="ReconnectModal_FailedToRejoin" xml:space="preserve">
+    <value>Échec de la reconnexion.</value>
+  </data>
+  <data name="ReconnectModal_RetryOrReload" xml:space="preserve">
+    <value>Veuillez réessayer ou recharger la page.</value>
+  </data>
+  <data name="ReconnectModal_Retry" xml:space="preserve">
+    <value>Réessayer</value>
+  </data>
+  <data name="ReconnectModal_SessionPaused" xml:space="preserve">
+    <value>La session a été suspendue par le serveur.</value>
+  </data>
+  <data name="ReconnectModal_FailedToResume" xml:space="preserve">
+    <value>Échec de la reprise de la session.</value>
+  </data>
+  <data name="ReconnectModal_Resume" xml:space="preserve">
+    <value>Reprendre</value>
+  </data>
+  <data name="Error_PageTitle" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="Error_Heading" xml:space="preserve">
+    <value>Erreur.</value>
+  </data>
+  <data name="Error_Subheading" xml:space="preserve">
+    <value>Une erreur s'est produite lors du traitement de votre requête.</value>
+  </data>
+  <data name="Error_RequestIdLabel" xml:space="preserve">
+    <value>ID de requête :</value>
+  </data>
+  <data name="Error_DevelopmentModeHeading" xml:space="preserve">
+    <value>Mode Développement</value>
+  </data>
+  <data name="Error_DevelopmentModeExplanation" xml:space="preserve">
+    <value>Passer à l'environnement &lt;strong&gt;Développement&lt;/strong&gt; affichera des informations plus détaillées sur l'erreur survenue.</value>
+  </data>
+  <data name="Error_DevelopmentModeWarningDetail" xml:space="preserve">
+    <value>&lt;strong&gt;L'environnement Développement ne doit pas être activé pour les applications déployées.&lt;/strong&gt; Cela peut entraîner l'affichage d'informations sensibles issues des exceptions aux utilisateurs finaux. Pour le débogage local, activez l'environnement &lt;strong&gt;Développement&lt;/strong&gt; en définissant la variable d'environnement &lt;strong&gt;ASPNETCORE_ENVIRONMENT&lt;/strong&gt; sur &lt;strong&gt;Development&lt;/strong&gt; et en redémarrant l'application.</value>
+  </data>
+  <data name="NotFound_Heading" xml:space="preserve">
+    <value>Introuvable</value>
+  </data>
+  <data name="NotFound_Message" xml:space="preserve">
+    <value>Désolé, le contenu que vous recherchez n'existe pas.</value>
+  </data>
 </root>

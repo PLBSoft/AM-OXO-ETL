@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -7,7 +9,7 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">@Loc["MainLayout_About"]</a>
         </div>
 
         <article class="content px-4">
@@ -17,7 +19,7 @@
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
+    @Loc["MainLayout_UnhandledError"]
+    <a href="." class="reload">@Loc["MainLayout_Reload"]</a>
     <span class="dismiss">🗙</span>
 </div>
