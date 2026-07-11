@@ -32,6 +32,7 @@ public class HistoryDownloadEndpointTests : IClassFixture<WebApplicationFactory<
         _baseFactory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
+            builder.UseSetting("IdentitySeeding:Enabled", "false");
 
             builder.ConfigureServices(services =>
             {

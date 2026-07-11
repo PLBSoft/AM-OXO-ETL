@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\ExcelETL.Application\ExcelETL.Application.csproj" />
@@ -15,6 +15,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>8a20d217-0693-442e-a749-a8fdf4a56bd1</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

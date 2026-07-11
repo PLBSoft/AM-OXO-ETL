@@ -73,6 +73,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<IdentitySeeder>();
+
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -111,6 +113,22 @@ app.MapRazorComponents<App>()
 
 app.MapAdditionalIdentityEndpoints();
 app.MapAdminEndpoints();
+
+// Ensures the fixed set of administrator accounts this deployment relies on exists on every
+// startup (local or a fresh server) -- idempotent, so restarts and redeploys are safe. See
+// IdentitySeeder for why passwords are never read from a committed configuration file.
+//
+// WebApplicationFactory-based integration tests spin up this Program against the real Identity
+// database (only ExcelEtlDbContext is swapped for an in-memory one in those tests), and xUnit
+// runs test classes in parallel -- multiple hosts seeding concurrently race on the same rows.
+// Tests disable seeding via this switch rather than each one stubbing IdentitySeeder out.
+var enableIdentitySeeding = builder.Configuration.GetValue("IdentitySeeding:Enabled", defaultValue: true);
+if (enableIdentitySeeding)
+{
+    using var scope = app.Services.CreateScope();
+    var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
+    await identitySeeder.SeedAsync();
+}
 
 app.Run();
 
