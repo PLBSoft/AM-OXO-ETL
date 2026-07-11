@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bunit;
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Extraction;
@@ -28,6 +29,22 @@ public class DashboardTests : BunitContext
         Services.AddSingleton<IExtractionHistoryRepository, ExtractionHistoryRepository>();
         Services.AddSingleton(_systemLogsDbContextFactory);
         Services.AddSingleton<ISystemLogRepository, SystemLogRepository>();
+        Services.AddLocalization();
+    }
+
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
     }
 
     private async Task SeedHistoryAsync(ExtractionHistory history)
@@ -45,7 +62,7 @@ public class DashboardTests : BunitContext
     }
 
     [Fact]
-    public void Dashboard_WithNoHistoryOrLogs_DisplaysZeroesAndEmptyMessages()
+    public void Dashboard_WithNoHistoryOrLogs_DisplaysZeroesAndEmptyMessages() => WithCulture("en-US", () =>
     {
         var cut = Render<Dashboard>();
 
@@ -54,10 +71,25 @@ public class DashboardTests : BunitContext
         cut.Find("#stat-failed-jobs").TextContent.Should().Be("0");
         cut.Find("#stat-average-duration").TextContent.Should().Be("N/A");
         cut.Markup.Should().Contain("No log entries recorded yet.");
-    }
+    });
 
     [Fact]
-    public async Task Dashboard_DisplaysJobCountsByStatus()
+    public void Dashboard_WithFrenchCulture_DisplaysFrenchLabels() => WithCulture("fr-FR", () =>
+    {
+        var cut = Render<Dashboard>();
+
+        cut.Markup.Should().Contain("Tableau de bord");
+        cut.Markup.Should().Contain("Total des travaux");
+        cut.Markup.Should().Contain("Terminés");
+        cut.Markup.Should().Contain("Échoués");
+        cut.Markup.Should().Contain("Durée moyenne");
+        cut.Find("#stat-average-duration").TextContent.Should().Be("N/D");
+        cut.Markup.Should().Contain("Journaux récents");
+        cut.Markup.Should().Contain("Aucune entrée de journal enregistrée pour l'instant.");
+    });
+
+    [Fact]
+    public async Task Dashboard_DisplaysJobCountsByStatus() => await WithCultureAsync("en-US", async () =>
     {
         var pending = new ExtractionHistory(DateTimeOffset.UtcNow, "pending.xlsx");
         await SeedHistoryAsync(pending);
@@ -75,10 +107,10 @@ public class DashboardTests : BunitContext
         cut.Find("#stat-total-jobs").TextContent.Should().Be("3");
         cut.Find("#stat-completed-jobs").TextContent.Should().Be("1");
         cut.Find("#stat-failed-jobs").TextContent.Should().Be("1");
-    }
+    });
 
     [Fact]
-    public async Task Dashboard_DisplaysAverageDurationForCompletedJobs()
+    public async Task Dashboard_DisplaysAverageDurationForCompletedJobs() => await WithCultureAsync("en-US", async () =>
     {
         var completed = new ExtractionHistory(DateTimeOffset.UtcNow.AddMinutes(-10), "completed.xlsx");
         completed.MarkCompleted(@"C:\archive\completed.xlsx");
@@ -87,10 +119,10 @@ public class DashboardTests : BunitContext
         var cut = Render<Dashboard>();
 
         cut.Find("#stat-average-duration").TextContent.Should().Be(completed.Duration!.Value.ToString(@"hh\:mm\:ss"));
-    }
+    });
 
     [Fact]
-    public async Task Dashboard_DisplaysRecentLogEntriesNewestFirst()
+    public async Task Dashboard_DisplaysRecentLogEntriesNewestFirst() => await WithCultureAsync("en-US", async () =>
     {
         await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow.AddMinutes(-1), "Information", "Older entry", null));
         await SeedLogAsync(new SystemLogEntry(2, DateTime.UtcNow, "Error", "Newer entry", "System.Exception: boom"));
@@ -104,5 +136,20 @@ public class DashboardTests : BunitContext
         var indexOfNewer = cut.Markup.IndexOf("Newer entry", StringComparison.Ordinal);
         var indexOfOlder = cut.Markup.IndexOf("Older entry", StringComparison.Ordinal);
         indexOfNewer.Should().BeLessThan(indexOfOlder);
+    });
+
+    private static async Task WithCultureAsync(string cultureName, Func<Task> action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
     }
 }

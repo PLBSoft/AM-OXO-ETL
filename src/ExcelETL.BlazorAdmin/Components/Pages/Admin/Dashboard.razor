@@ -7,14 +7,15 @@
 
 @inject IExtractionHistoryRepository ExtractionHistoryRepository
 @inject ISystemLogRepository SystemLogRepository
+@inject IStringLocalizer<BlazorAdminMessages> Loc
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>@Loc["Dashboard_PageTitle"]</PageTitle>
 
-<h1>Dashboard</h1>
+<h1>@Loc["Dashboard_PageTitle"]</h1>
 
 @if (_statistics is null)
 {
-    <p>Loading...</p>
+    <p>@Loc["Dashboard_Loading"]</p>
 }
 else
 {
@@ -22,7 +23,7 @@ else
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Total jobs</h5>
+                    <h5 class="card-title">@Loc["Dashboard_TotalJobs"]</h5>
                     <p class="display-6" id="stat-total-jobs">@_statistics.TotalJobs</p>
                 </div>
             </div>
@@ -30,7 +31,7 @@ else
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Completed</h5>
+                    <h5 class="card-title">@Loc["Dashboard_Completed"]</h5>
                     <p class="display-6 text-success" id="stat-completed-jobs">@_statistics.CompletedJobs</p>
                 </div>
             </div>
@@ -38,7 +39,7 @@ else
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Failed</h5>
+                    <h5 class="card-title">@Loc["Dashboard_Failed"]</h5>
                     <p class="display-6 text-danger" id="stat-failed-jobs">@_statistics.FailedJobs</p>
                 </div>
             </div>
@@ -46,7 +47,7 @@ else
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
-                    <h5 class="card-title">Avg. duration</h5>
+                    <h5 class="card-title">@Loc["Dashboard_AverageDuration"]</h5>
                     <p class="display-6" id="stat-average-duration">@FormatDuration(_statistics.AverageCompletedDuration)</p>
                 </div>
             </div>
@@ -54,24 +55,24 @@ else
     </div>
 }
 
-<h2>Recent logs</h2>
+<h2>@Loc["Dashboard_RecentLogs"]</h2>
 
 @if (_logs is null)
 {
-    <p>Loading...</p>
+    <p>@Loc["Dashboard_Loading"]</p>
 }
 else if (_logs.Count == 0)
 {
-    <p>No log entries recorded yet.</p>
+    <p>@Loc["Dashboard_NoLogEntries"]</p>
 }
 else
 {
     <table class="table table-sm">
         <thead>
             <tr>
-                <th>Time (UTC)</th>
-                <th>Level</th>
-                <th>Message</th>
+                <th>@Loc["Dashboard_TimeUtc"]</th>
+                <th>@Loc["Dashboard_Level"]</th>
+                <th>@Loc["Dashboard_Message"]</th>
             </tr>
         </thead>
         <tbody>
@@ -133,8 +134,8 @@ else
         _logs = await SystemLogRepository.GetRecentAsync(RecentLogCount);
     }
 
-    private static string FormatDuration(TimeSpan? duration) =>
-        duration is null ? "N/A" : duration.Value.ToString(@"hh\:mm\:ss");
+    private string FormatDuration(TimeSpan? duration) =>
+        duration is null ? Loc["Dashboard_NotAvailable"] : duration.Value.ToString(@"hh\:mm\:ss");
 
     private static string LevelRowClass(string level) => level switch
     {

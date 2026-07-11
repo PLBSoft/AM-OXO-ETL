@@ -115,4 +115,40 @@
   <data name="NotFound_Message" xml:space="preserve">
     <value>Sorry, the content you are looking for does not exist.</value>
   </data>
+  <data name="Dashboard_PageTitle" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Dashboard_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Dashboard_TotalJobs" xml:space="preserve">
+    <value>Total jobs</value>
+  </data>
+  <data name="Dashboard_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="Dashboard_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="Dashboard_AverageDuration" xml:space="preserve">
+    <value>Avg. duration</value>
+  </data>
+  <data name="Dashboard_NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Dashboard_RecentLogs" xml:space="preserve">
+    <value>Recent logs</value>
+  </data>
+  <data name="Dashboard_NoLogEntries" xml:space="preserve">
+    <value>No log entries recorded yet.</value>
+  </data>
+  <data name="Dashboard_TimeUtc" xml:space="preserve">
+    <value>Time (UTC)</value>
+  </data>
+  <data name="Dashboard_Level" xml:space="preserve">
+    <value>Level</value>
+  </data>
+  <data name="Dashboard_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
 </root>
