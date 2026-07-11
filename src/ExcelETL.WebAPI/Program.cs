@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
@@ -92,6 +93,9 @@ builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigReposito
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IProcessExcelFileService, ProcessExcelFileService>();
+// Singleton: GlobalExceptionHandler is registered as a singleton by AddExceptionHandler<T>(), and
+// this has no state of its own beyond the two singleton IStringLocalizer<T> it wraps.
+builder.Services.AddSingleton<BusinessExceptionLocalizer>();
 
 builder.Services.AddLocalization();
 builder.Services.Configure<RequestLocalizationOptions>(options =>

@@ -1,4 +1,5 @@
 using ExcelETL.Application.Diagnostics;
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
@@ -66,6 +67,7 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
 
 builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
+builder.Services.AddSingleton<BusinessExceptionLocalizer>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

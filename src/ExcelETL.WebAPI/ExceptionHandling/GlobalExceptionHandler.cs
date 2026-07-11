@@ -1,10 +1,8 @@
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
-using ExcelETL.Application.Resources;
 using ExcelETL.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Localization;
 
 namespace ExcelETL.WebAPI.ExceptionHandling;
 
@@ -14,33 +12,23 @@ namespace ExcelETL.WebAPI.ExceptionHandling;
 // else falls through (returns false) to the default developer/problem-details middleware: this
 // handler is deliberately narrow to exception types that actually carry a resource key.
 public sealed class GlobalExceptionHandler(
-    IStringLocalizer<DomainErrorMessages> domainLocalizer,
-    IStringLocalizer<ApplicationMessages> applicationLocalizer,
+    BusinessExceptionLocalizer businessExceptionLocalizer,
     IProblemDetailsService problemDetailsService,
     ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (resourceKey, args, localizer) = exception switch
-        {
-            IHasDomainErrorCode domainError =>
-                (domainError.ResourceKey, domainError.Args, (IStringLocalizer)domainLocalizer),
-            IHasApplicationErrorCode applicationError =>
-                (applicationError.ResourceKey, applicationError.Args, (IStringLocalizer)applicationLocalizer),
-            _ => (null, null, null)
-        };
-
-        if (resourceKey is null)
+        var detail = businessExceptionLocalizer.TryLocalize(exception);
+        if (detail is null)
         {
             return false;
         }
 
         var statusCode = StatusCodeFor(exception);
-        var detail = localizer![resourceKey, (object[])args!.ToArray()].Value;
 
-        logger.LogWarning(exception, "Handled {ExceptionType} ({ResourceKey}), mapped to HTTP {StatusCode}",
-            exception.GetType().Name, resourceKey, statusCode);
+        logger.LogWarning(exception, "Handled {ExceptionType}, mapped to HTTP {StatusCode}",
+            exception.GetType().Name, statusCode);
 
         httpContext.Response.StatusCode = statusCode;
 
