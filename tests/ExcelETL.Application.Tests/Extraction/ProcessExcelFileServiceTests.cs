@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
@@ -106,7 +107,8 @@ public class ProcessExcelFileServiceTests
         var act = async () => await _sut.ProcessAsync(command);
 
         (await act.Should().ThrowAsync<ExtractionConfigNotFoundException>())
-            .Which.ExtractionConfigId.Should().Be(configId);
+            .Which.Should().Match<ExtractionConfigNotFoundException>(ex =>
+                ex.ExtractionConfigId == configId && ex.ErrorCode == ApplicationErrorCode.ExtractionConfigNotFound);
 
         _historyRepository.Verify(
             r => r.AddAsync(It.IsAny<ExtractionHistory>(), It.IsAny<CancellationToken>()),
