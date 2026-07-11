@@ -265,6 +265,12 @@
   <data name="Account_PasswordPlaceholder" xml:space="preserve">
     <value>password</value>
   </data>
+  <data name="Login_UsernameLabel" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Login_UsernamePlaceholder" xml:space="preserve">
+    <value>username</value>
+  </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Log in</value>
   </data>
