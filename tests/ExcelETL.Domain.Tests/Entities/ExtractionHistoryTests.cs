@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
+using ExcelETL.Domain.Exceptions;
 using FluentAssertions;
 using Xunit;
 
@@ -31,7 +32,9 @@ public class ExtractionHistoryTests
     {
         var act = () => new ExtractionHistory(DateTimeOffset.UtcNow, invalidFileName!);
 
-        act.Should().Throw<ArgumentException>().WithParameterName("sourceFileName");
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("sourceFileName")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionHistory_EmptySourceFileName);
     }
 
     [Fact]
@@ -90,6 +93,31 @@ public class ExtractionHistoryTests
 
         var act = () => history.MarkCompleted(@"C:\archive\file2.xlsx");
 
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionHistory_CannotCompleteFromStatus);
+    }
+
+    [Fact]
+    public void MarkCompleted_WithEmptyStoredFilePath_ThrowsDomainValidationException()
+    {
+        var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice-2026-001.xlsx");
+
+        var act = () => history.MarkCompleted(" ");
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("storedFilePath")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionHistory_EmptyStoredFilePath);
+    }
+
+    [Fact]
+    public void MarkFailed_WhenAlreadyTerminal_ThrowsDomainRuleViolationException()
+    {
+        var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice-2026-001.xlsx");
+        history.MarkFailed();
+
+        var act = () => history.MarkFailed();
+
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionHistory_CannotFailFromStatus);
     }
 }

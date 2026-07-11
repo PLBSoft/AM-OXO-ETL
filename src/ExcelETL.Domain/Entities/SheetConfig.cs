@@ -1,4 +1,5 @@
 using ExcelETL.Domain.Common;
+using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Entities;
 
@@ -14,12 +15,15 @@ public class SheetConfig : Entity
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
-            throw new ArgumentException("Sheet name must not be empty.", nameof(sheetName));
+            throw new DomainValidationException(
+                "Sheet name must not be empty.", nameof(sheetName), DomainErrorCode.SheetConfig_EmptySheetName);
         }
 
         if (sheetIndex < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(sheetIndex), sheetIndex, "Sheet index must not be negative.");
+            throw new DomainArgumentOutOfRangeException(
+                nameof(sheetIndex), sheetIndex, "Sheet index must not be negative.",
+                DomainErrorCode.SheetConfig_NegativeSheetIndex);
         }
 
         SheetName = sheetName;
@@ -32,8 +36,10 @@ public class SheetConfig : Entity
 
         if (_cellMappings.Any(m => m.TargetPropertyName == cellMapping.TargetPropertyName))
         {
-            throw new InvalidOperationException(
-                $"A cell mapping targeting property '{cellMapping.TargetPropertyName}' already exists on sheet '{SheetName}'.");
+            throw new DomainRuleViolationException(
+                $"A cell mapping targeting property '{cellMapping.TargetPropertyName}' already exists on sheet '{SheetName}'.",
+                DomainErrorCode.SheetConfig_DuplicateCellMapping,
+                cellMapping.TargetPropertyName, SheetName);
         }
 
         _cellMappings.Add(cellMapping);

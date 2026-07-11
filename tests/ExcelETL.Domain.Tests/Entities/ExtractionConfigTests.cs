@@ -1,4 +1,5 @@
 using ExcelETL.Domain.Entities;
+using ExcelETL.Domain.Exceptions;
 using FluentAssertions;
 using Xunit;
 
@@ -24,7 +25,9 @@ public class ExtractionConfigTests
     {
         var act = () => new ExtractionConfig(invalidName!);
 
-        act.Should().Throw<ArgumentException>().WithParameterName("name");
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("name")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionConfig_EmptyName);
     }
 
     [Fact]
@@ -46,8 +49,9 @@ public class ExtractionConfigTests
 
         var act = () => config.AddSheet(new SheetConfig("Details", sheetIndex: 0));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*index 0*");
+        act.Should().Throw<DomainRuleViolationException>()
+            .WithMessage("*index 0*")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionConfig_DuplicateSheetIndex);
     }
 
     [Fact]
@@ -71,7 +75,8 @@ public class ExtractionConfigTests
 
         var act = () => config.AddSheet(new SheetConfig("SixthSheet", sheetIndex: 5));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*4-5*");
+        act.Should().Throw<DomainRuleViolationException>()
+            .WithMessage("*4-5*")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExtractionConfig_TooManySheets);
     }
 }

@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
+using ExcelETL.Domain.Exceptions;
 using FluentAssertions;
 using Xunit;
 
@@ -34,7 +35,9 @@ public class CellMappingTests
     {
         var act = () => new CellMapping(invalidSourceCell!, "TargetProperty", CellDataType.Text);
 
-        act.Should().Throw<ArgumentException>().WithParameterName("sourceCell");
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("sourceCell")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.CellMapping_InvalidSourceCell);
     }
 
     [Theory]
@@ -45,6 +48,8 @@ public class CellMappingTests
     {
         var act = () => new CellMapping("B4", invalidTargetPropertyName!, CellDataType.Text);
 
-        act.Should().Throw<ArgumentException>().WithParameterName("targetPropertyName");
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("targetPropertyName")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.CellMapping_EmptyTargetPropertyName);
     }
 }

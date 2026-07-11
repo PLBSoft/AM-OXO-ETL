@@ -1,4 +1,5 @@
 using ExcelETL.Domain.Common;
+using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Entities;
 
@@ -15,7 +16,8 @@ public class ExtractionConfig : Entity
     {
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentException("Name must not be empty.", nameof(name));
+            throw new DomainValidationException(
+                "Name must not be empty.", nameof(name), DomainErrorCode.ExtractionConfig_EmptyName);
         }
 
         Name = name;
@@ -27,14 +29,18 @@ public class ExtractionConfig : Entity
 
         if (_sheets.Count >= MaxSheets)
         {
-            throw new InvalidOperationException(
-                $"An extraction config must produce exactly 4-5 sheets; cannot add more than {MaxSheets}.");
+            throw new DomainRuleViolationException(
+                $"An extraction config must produce exactly 4-5 sheets; cannot add more than {MaxSheets}.",
+                DomainErrorCode.ExtractionConfig_TooManySheets,
+                MaxSheets);
         }
 
         if (_sheets.Any(s => s.SheetIndex == sheet.SheetIndex))
         {
-            throw new InvalidOperationException(
-                $"A sheet with index {sheet.SheetIndex} already exists in extraction config '{Name}'.");
+            throw new DomainRuleViolationException(
+                $"A sheet with index {sheet.SheetIndex} already exists in extraction config '{Name}'.",
+                DomainErrorCode.ExtractionConfig_DuplicateSheetIndex,
+                sheet.SheetIndex, Name);
         }
 
         _sheets.Add(sheet);

@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Enums;
+using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Entities;
 
@@ -16,7 +17,9 @@ public class ExtractionHistory : Entity
     {
         if (string.IsNullOrWhiteSpace(sourceFileName))
         {
-            throw new ArgumentException("Source file name must not be empty.", nameof(sourceFileName));
+            throw new DomainValidationException(
+                "Source file name must not be empty.", nameof(sourceFileName),
+                DomainErrorCode.ExtractionHistory_EmptySourceFileName);
         }
 
         JobTimestamp = jobTimestamp;
@@ -28,12 +31,17 @@ public class ExtractionHistory : Entity
     {
         if (string.IsNullOrWhiteSpace(storedFilePath))
         {
-            throw new ArgumentException("Stored file path must not be empty.", nameof(storedFilePath));
+            throw new DomainValidationException(
+                "Stored file path must not be empty.", nameof(storedFilePath),
+                DomainErrorCode.ExtractionHistory_EmptyStoredFilePath);
         }
 
         if (Status is ExtractionStatus.Completed or ExtractionStatus.Failed)
         {
-            throw new InvalidOperationException($"Cannot complete an extraction history entry already in status '{Status}'.");
+            throw new DomainRuleViolationException(
+                $"Cannot complete an extraction history entry already in status '{Status}'.",
+                DomainErrorCode.ExtractionHistory_CannotCompleteFromStatus,
+                Status);
         }
 
         StoredFilePath = storedFilePath;
@@ -45,7 +53,10 @@ public class ExtractionHistory : Entity
     {
         if (Status is ExtractionStatus.Completed or ExtractionStatus.Failed)
         {
-            throw new InvalidOperationException($"Cannot fail an extraction history entry already in status '{Status}'.");
+            throw new DomainRuleViolationException(
+                $"Cannot fail an extraction history entry already in status '{Status}'.",
+                DomainErrorCode.ExtractionHistory_CannotFailFromStatus,
+                Status);
         }
 
         Status = ExtractionStatus.Failed;

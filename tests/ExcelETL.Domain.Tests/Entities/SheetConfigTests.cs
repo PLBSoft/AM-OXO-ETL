@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
+using ExcelETL.Domain.Exceptions;
 using FluentAssertions;
 using Xunit;
 
@@ -26,7 +27,9 @@ public class SheetConfigTests
     {
         var act = () => new SheetConfig(invalidSheetName!, sheetIndex: 0);
 
-        act.Should().Throw<ArgumentException>().WithParameterName("sheetName");
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("sheetName")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetConfig_EmptySheetName);
     }
 
     [Fact]
@@ -34,7 +37,9 @@ public class SheetConfigTests
     {
         var act = () => new SheetConfig("Summary", sheetIndex: -1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("sheetIndex");
+        act.Should().Throw<DomainArgumentOutOfRangeException>()
+            .WithParameterName("sheetIndex")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetConfig_NegativeSheetIndex);
     }
 
     [Fact]
@@ -56,8 +61,9 @@ public class SheetConfigTests
 
         var act = () => sheet.AddCellMapping(new CellMapping("C4", "InvoiceNumber", CellDataType.Text));
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*InvoiceNumber*");
+        act.Should().Throw<DomainRuleViolationException>()
+            .WithMessage("*InvoiceNumber*")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetConfig_DuplicateCellMapping);
     }
 
     [Fact]

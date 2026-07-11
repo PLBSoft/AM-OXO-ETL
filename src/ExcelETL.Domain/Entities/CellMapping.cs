@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Enums;
+using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Entities;
 
@@ -14,14 +15,18 @@ public partial class CellMapping : Entity
     {
         if (string.IsNullOrWhiteSpace(sourceCell) || !ExcelCellReferencePattern().IsMatch(sourceCell))
         {
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 "Source cell must be a valid Excel cell reference (e.g. 'B4') or merged range (e.g. 'B4:D4').",
-                nameof(sourceCell));
+                nameof(sourceCell),
+                DomainErrorCode.CellMapping_InvalidSourceCell);
         }
 
         if (string.IsNullOrWhiteSpace(targetPropertyName))
         {
-            throw new ArgumentException("Target property name must not be empty.", nameof(targetPropertyName));
+            throw new DomainValidationException(
+                "Target property name must not be empty.",
+                nameof(targetPropertyName),
+                DomainErrorCode.CellMapping_EmptyTargetPropertyName);
         }
 
         SourceCell = sourceCell;
