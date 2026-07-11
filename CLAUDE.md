@@ -80,6 +80,34 @@ Apply a strict Test-First (Red-Green-Refactor) lifecycle:
 
 ---
 
+## I18N (ENGLISH/FRENCH) STRATEGY
+
+The solution is being incrementally refactored to support en-US (default) and fr-FR, one Clean Architecture layer at a time (Domain → Application → Infrastructure → WebAPI → BlazorAdmin). Resource format is `.resx`.
+
+### Scope: user-facing business errors only
+Only translate messages a **user or admin actually sees** (validation failures, business-rule violations, HTTP error payloads, UI text). Do **not** touch developer-facing invariant violations — `ArgumentNullException.ThrowIfNull`, assertion/guard-clause messages, log-only diagnostic text aimed at engineers. Those stay in plain English BCL exceptions; they are out of i18n scope entirely.
+
+### Domain layer stays framework-free
+`ExcelETL.Domain` must never reference `Microsoft.Extensions.Localization` or any other localization package — that would put a framework dependency in the innermost layer, violating Clean Architecture. Instead:
+- Domain throws `DomainValidationException` / `DomainArgumentOutOfRangeException` / `DomainRuleViolationException` (in `ExcelETL.Domain/Exceptions`), each carrying a `DomainErrorCode` enum value plus the raw `Args` that were interpolated into the (English) `Message`.
+- The `DomainErrorCode` member name doubles as the resource key.
+
+### Application layer owns the resource tables
+`ExcelETL.Application/Resources/` holds the `.resx` files, resolved via `IStringLocalizer<T>` marker classes (no generated designer — resolution is by naming convention, so no Visual Studio tooling is required):
+- `DomainErrorMessages.resx` / `.fr.resx` — the single translation table for every `DomainErrorCode`, shared by both WebAPI and BlazorAdmin so the mapping is never duplicated between the two hosts.
+- `ApplicationMessages.resx` / `.fr.resx` — Application-owned messages (service results, Data Annotations validation text via `ErrorMessageResourceType`/`ErrorMessageResourceName`).
+
+`Microsoft.Extensions.Localization.Abstractions` (interfaces only, no ASP.NET Core coupling) is an accepted Application-layer dependency, consistent with the existing `Microsoft.Extensions.Logging.Abstractions` reference.
+
+### Host wiring
+- **WebAPI**: `RequestLocalizationOptions` negotiates culture from `Accept-Language` only (it's M2M — no cookie/query-string relevance). The `GlobalExceptionHandler` resolves a thrown `DomainErrorCode` + `Args` against `DomainErrorMessages` to build the localized HTTP error payload.
+- **BlazorAdmin**: default provider order (query string, then culture cookie, then `Accept-Language`) so an admin's language choice persists. A circuit is long-lived, so switching language requires a real navigation — done via the `/culture/set` minimal API endpoint (`CultureEndpointRouteBuilderExtensions`), not a component re-render.
+
+### Workflow
+Work proceeds milestone by milestone (one Clean Architecture layer, or one batch of Razor components, at a time). At the end of each milestone: stop, summarize, and wait for validation plus the next milestone's files before continuing. Each milestone's deliverable includes an EN/FR resource key table.
+
+---
+
 ## ARCHITECTURAL OVERSIGHT (CRITICAL)
 
 The user is not a professional software architect and expects to make mistakes in architectural or strategic direction from time to time. **Proactively flag it** — before implementing — whenever a requested change, an instruction in this file, or an existing pattern in the codebase:
