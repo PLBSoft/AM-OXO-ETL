@@ -26,5 +26,9 @@ public class ExtractionHistoryConfiguration : IEntityTypeConfiguration<Extractio
             .IsRequired()
             .HasConversion<string>()
             .HasMaxLength(20);
+
+        builder.Property(h => h.CompletedAtUtc);
+
+        builder.Ignore(h => h.Duration);
     }
 }

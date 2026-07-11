@@ -79,4 +79,61 @@ public class ExtractionHistoryRepositoryTests
 
         result.Select(h => h.SourceFileName).Should().Equal("newer.xlsx", "older.xlsx");
     }
+
+    [Fact]
+    public async Task GetStatisticsAsync_WithNoEntries_ReturnsAllZeroesAndNullAverageDuration()
+    {
+        var repository = CreateRepository();
+
+        var result = await repository.GetStatisticsAsync();
+
+        result.TotalJobs.Should().Be(0);
+        result.PendingJobs.Should().Be(0);
+        result.CompletedJobs.Should().Be(0);
+        result.FailedJobs.Should().Be(0);
+        result.AverageCompletedDuration.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetStatisticsAsync_CountsJobsByStatus()
+    {
+        var repository = CreateRepository();
+
+        var pending = new ExtractionHistory(DateTimeOffset.UtcNow, "pending.xlsx");
+        await repository.AddAsync(pending);
+
+        var completed = new ExtractionHistory(DateTimeOffset.UtcNow, "completed.xlsx");
+        await repository.AddAsync(completed);
+        await repository.MarkCompletedAsync(completed.Id, @"C:\archive\completed.xlsx");
+
+        var failed = new ExtractionHistory(DateTimeOffset.UtcNow, "failed.xlsx");
+        await repository.AddAsync(failed);
+        await repository.MarkFailedAsync(failed.Id);
+
+        var result = await repository.GetStatisticsAsync();
+
+        result.TotalJobs.Should().Be(3);
+        result.PendingJobs.Should().Be(1);
+        result.CompletedJobs.Should().Be(1);
+        result.FailedJobs.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetStatisticsAsync_AveragesDurationAcrossCompletedJobsOnly()
+    {
+        var repository = CreateRepository();
+
+        var completed = new ExtractionHistory(DateTimeOffset.UtcNow.AddMinutes(-10), "completed.xlsx");
+        await repository.AddAsync(completed);
+        await repository.MarkCompletedAsync(completed.Id, @"C:\archive\completed.xlsx");
+
+        var failed = new ExtractionHistory(DateTimeOffset.UtcNow.AddHours(-1), "failed.xlsx");
+        await repository.AddAsync(failed);
+        await repository.MarkFailedAsync(failed.Id);
+
+        var result = await repository.GetStatisticsAsync();
+
+        result.AverageCompletedDuration.Should().NotBeNull();
+        result.AverageCompletedDuration!.Value.Should().BeCloseTo(TimeSpan.FromMinutes(10), TimeSpan.FromSeconds(5));
+    }
 }

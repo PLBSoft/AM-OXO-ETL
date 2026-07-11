@@ -9,6 +9,8 @@ public class ExtractionHistory : Entity
     public string SourceFileName { get; }
     public string? StoredFilePath { get; private set; }
     public ExtractionStatus Status { get; private set; }
+    public DateTimeOffset? CompletedAtUtc { get; private set; }
+    public TimeSpan? Duration => CompletedAtUtc.HasValue ? CompletedAtUtc.Value - JobTimestamp : null;
 
     public ExtractionHistory(DateTimeOffset jobTimestamp, string sourceFileName)
     {
@@ -36,6 +38,7 @@ public class ExtractionHistory : Entity
 
         StoredFilePath = storedFilePath;
         Status = ExtractionStatus.Completed;
+        CompletedAtUtc = DateTimeOffset.UtcNow;
     }
 
     public void MarkFailed()
@@ -46,5 +49,6 @@ public class ExtractionHistory : Entity
         }
 
         Status = ExtractionStatus.Failed;
+        CompletedAtUtc = DateTimeOffset.UtcNow;
     }
 }

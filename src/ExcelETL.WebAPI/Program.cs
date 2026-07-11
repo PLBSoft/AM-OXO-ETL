@@ -7,6 +7,9 @@ using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.MSSqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +31,33 @@ builder.Services.AddRequestTimeouts(options =>
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+// Both hosts (WebAPI and BlazorAdmin) write to the same SystemLogs table so the BlazorAdmin
+// dashboard can show a unified view; the Application property distinguishes which process
+// emitted a given entry. Serilog owns and auto-creates this table's schema -- it is
+// intentionally outside the EF Core Code-First migrations used for the domain database.
+//
+// AutoCreateSqlTable makes the sink open a real connection during host startup, which would
+// otherwise break WebApplicationFactory-based integration tests that never point at a real SQL
+// Server. Tests disable the sink via this switch instead of stubbing out Serilog entirely.
+var enableMsSqlServerLogSink = builder.Configuration.GetValue("Serilog:EnableMsSqlServerSink", defaultValue: true);
+
+builder.Host.UseSerilog((_, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("Application", "ExcelETL.WebAPI")
+        .WriteTo.Console();
+
+    if (enableMsSqlServerLogSink)
+    {
+        loggerConfiguration.WriteTo.MSSqlServer(
+            connectionString: connectionString,
+            sinkOptions: new MSSqlServerSinkOptions { TableName = "SystemLogs", AutoCreateSqlTable = true });
+    }
+});
 
 // Registered as a factory (not AddDbContext) so the repositories in Infrastructure can use
 // the same short-lived-context-per-operation pattern regardless of host (WebAPI or BlazorAdmin).

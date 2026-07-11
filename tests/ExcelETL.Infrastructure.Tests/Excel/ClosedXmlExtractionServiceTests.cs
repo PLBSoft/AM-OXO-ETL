@@ -3,13 +3,14 @@ using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
 public class ClosedXmlExtractionServiceTests
 {
-    private readonly ClosedXmlExtractionService _service = new();
+    private readonly ClosedXmlExtractionService _service = new(NullLogger<ClosedXmlExtractionService>.Instance);
 
     [Fact]
     public void Extract_WithMergedCellRange_ReadsValueFromTopLeftCell()

@@ -32,6 +32,7 @@ public class ExcelProcessEndpointTests : IClassFixture<WebApplicationFactory<Pro
         {
             builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
             builder.UseSetting("FileStorage:ArchiveDirectory", _archiveDirectory);
+            builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
 
             builder.ConfigureServices(services =>
             {

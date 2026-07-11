@@ -14,4 +14,6 @@ public interface IExtractionHistoryRepository
 
     Task<IReadOnlyList<ExtractionHistory>> GetAllOrderedByDateDescendingAsync(
         CancellationToken cancellationToken = default);
+
+    Task<ExtractionHistoryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default);
 }

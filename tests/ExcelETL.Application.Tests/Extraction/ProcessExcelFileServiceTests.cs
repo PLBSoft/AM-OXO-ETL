@@ -2,6 +2,7 @@ using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -23,7 +24,8 @@ public class ProcessExcelFileServiceTests
             _extractionService.Object,
             _generatorService.Object,
             _fileStorageService.Object,
-            _historyRepository.Object);
+            _historyRepository.Object,
+            NullLogger<ProcessExcelFileService>.Instance);
 
         _historyRepository
             .Setup(r => r.AddAsync(It.IsAny<ExtractionHistory>(), It.IsAny<CancellationToken>()))

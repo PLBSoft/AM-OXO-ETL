@@ -15,7 +15,10 @@ public class HealthPingTests : IClassFixture<WebApplicationFactory<Program>>
     public HealthPingTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory.WithWebHostBuilder(builder =>
-            builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey));
+        {
+            builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
+            builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
+        });
     }
 
     [Fact]

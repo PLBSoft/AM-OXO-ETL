@@ -15,7 +15,10 @@ public class ApiKeyAuthenticationTests : IClassFixture<WebApplicationFactory<Pro
     public ApiKeyAuthenticationTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory.WithWebHostBuilder(builder =>
-            builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey));
+        {
+            builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
+            builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
+        });
     }
 
     [Fact]

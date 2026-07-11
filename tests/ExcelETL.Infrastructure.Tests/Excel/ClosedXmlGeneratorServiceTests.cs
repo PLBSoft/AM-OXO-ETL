@@ -3,13 +3,14 @@ using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
 public class ClosedXmlGeneratorServiceTests
 {
-    private readonly ClosedXmlGeneratorService _service = new();
+    private readonly ClosedXmlGeneratorService _service = new(NullLogger<ClosedXmlGeneratorService>.Instance);
 
     [Fact]
     public void Generate_WithFourSheets_ProducesWorkbookWithFourSheets()

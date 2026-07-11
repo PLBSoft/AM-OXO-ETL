@@ -1,9 +1,10 @@
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Infrastructure.Excel;
 
-public class ClosedXmlGeneratorService : IExcelGeneratorService
+public class ClosedXmlGeneratorService(ILogger<ClosedXmlGeneratorService> logger) : IExcelGeneratorService
 {
     private const int MinSheets = 4;
     private const int MaxSheets = 5;
@@ -27,11 +28,16 @@ public class ClosedXmlGeneratorService : IExcelGeneratorService
         var stream = new MemoryStream();
         workbook.SaveAs(stream);
         stream.Position = 0;
+
+        logger.LogInformation("Generated workbook with {SheetCount} sheet(s)", result.Sheets.Count);
+
         return stream;
     }
 
-    private static void WriteSheet(XLWorkbook workbook, ExtractedSheet sheet)
+    private void WriteSheet(XLWorkbook workbook, ExtractedSheet sheet)
     {
+        logger.LogDebug("Writing sheet {SheetName} ({ValueCount} value(s))", sheet.SheetName, sheet.Values.Count);
+
         var worksheet = workbook.Worksheets.Add(sheet.SheetName);
         worksheet.Cell(1, 1).Value = "Property";
         worksheet.Cell(1, 2).Value = "Value";

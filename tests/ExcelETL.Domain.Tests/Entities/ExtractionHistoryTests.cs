@@ -19,6 +19,8 @@ public class ExtractionHistoryTests
         history.SourceFileName.Should().Be("invoice-2026-001.xlsx");
         history.Status.Should().Be(ExtractionStatus.Pending);
         history.StoredFilePath.Should().BeNull();
+        history.CompletedAtUtc.Should().BeNull();
+        history.Duration.Should().BeNull();
     }
 
     [Theory]
@@ -44,6 +46,19 @@ public class ExtractionHistoryTests
     }
 
     [Fact]
+    public void MarkCompleted_SetsCompletedAtUtcAndDuration()
+    {
+        var jobTimestamp = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var history = new ExtractionHistory(jobTimestamp, "invoice-2026-001.xlsx");
+
+        history.MarkCompleted(@"C:\archive\invoice-2026-001-processed.xlsx");
+
+        history.CompletedAtUtc.Should().NotBeNull();
+        history.Duration.Should().NotBeNull();
+        history.Duration!.Value.Should().BeCloseTo(TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
     public void MarkFailed_UpdatesStatusToFailed()
     {
         var history = new ExtractionHistory(DateTimeOffset.UtcNow, "invoice-2026-001.xlsx");
@@ -52,6 +67,19 @@ public class ExtractionHistoryTests
 
         history.Status.Should().Be(ExtractionStatus.Failed);
         history.StoredFilePath.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkFailed_SetsCompletedAtUtcAndDuration()
+    {
+        var jobTimestamp = DateTimeOffset.UtcNow.AddMinutes(-2);
+        var history = new ExtractionHistory(jobTimestamp, "invoice-2026-001.xlsx");
+
+        history.MarkFailed();
+
+        history.CompletedAtUtc.Should().NotBeNull();
+        history.Duration.Should().NotBeNull();
+        history.Duration!.Value.Should().BeCloseTo(TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(2));
     }
 
     [Fact]

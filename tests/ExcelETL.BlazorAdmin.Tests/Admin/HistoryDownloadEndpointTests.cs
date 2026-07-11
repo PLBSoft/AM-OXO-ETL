@@ -31,6 +31,8 @@ public class HistoryDownloadEndpointTests : IClassFixture<WebApplicationFactory<
 
         _baseFactory = factory.WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
+
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<DbContextOptions<ExcelEtlDbContext>>();
