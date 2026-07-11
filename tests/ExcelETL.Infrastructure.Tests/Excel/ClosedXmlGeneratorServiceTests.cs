@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Excel;
@@ -39,13 +40,19 @@ public class ClosedXmlGeneratorServiceTests
     [InlineData(1)]
     [InlineData(3)]
     [InlineData(6)]
-    public void Generate_WithSheetCountOutsideFourToFiveRange_ThrowsInvalidOperationException(int sheetCount)
+    public void Generate_WithSheetCountOutsideFourToFiveRange_ThrowsInvalidGeneratedWorkbookSheetCountException(
+        int sheetCount)
     {
         var result = BuildExtractionResult(sheetCount);
 
         var act = () => _service.Generate(result);
 
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().Throw<InvalidGeneratedWorkbookSheetCountException>()
+            .Which.Should().Match<InvalidGeneratedWorkbookSheetCountException>(ex =>
+                ex.SheetCount == sheetCount
+                && ex.MinSheets == 4
+                && ex.MaxSheets == 5
+                && ex.ErrorCode == ApplicationErrorCode.GeneratedWorkbookSheetCountOutOfRange);
     }
 
     [Fact]

@@ -67,7 +67,7 @@ public class ExtractionConfigRepository(IDbContextFactory<ExcelEtlDbContext> dbC
             ?? throw new ExtractionConfigNotFoundException(configId);
 
         var sheet = config.Sheets.FirstOrDefault(s => s.Id == sheetId)
-            ?? throw new InvalidOperationException($"Sheet '{sheetId}' was not found in extraction config '{configId}'.");
+            ?? throw new SheetNotFoundInExtractionConfigException(configId, sheetId);
 
         sheet.AddCellMapping(mapping);
 

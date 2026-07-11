@@ -1,3 +1,5 @@
+using ExcelETL.Application.Exceptions;
+using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Persistence;
@@ -57,13 +59,31 @@ public class ExtractionHistoryRepositoryTests
     }
 
     [Fact]
-    public async Task MarkCompletedAsync_WithUnknownId_ThrowsInvalidOperationException()
+    public async Task MarkCompletedAsync_WithUnknownId_ThrowsExtractionHistoryNotFoundException()
     {
         var repository = CreateRepository();
+        var unknownId = Guid.NewGuid();
 
-        var act = async () => await repository.MarkCompletedAsync(Guid.NewGuid(), @"C:\archive\file.xlsx");
+        var act = async () => await repository.MarkCompletedAsync(unknownId, @"C:\archive\file.xlsx");
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        (await act.Should().ThrowAsync<ExtractionHistoryNotFoundException>())
+            .Which.Should().Match<ExtractionHistoryNotFoundException>(ex =>
+                ex.ExtractionHistoryId == unknownId
+                && ex.ErrorCode == ApplicationErrorCode.ExtractionHistoryNotFound);
+    }
+
+    [Fact]
+    public async Task MarkFailedAsync_WithUnknownId_ThrowsExtractionHistoryNotFoundException()
+    {
+        var repository = CreateRepository();
+        var unknownId = Guid.NewGuid();
+
+        var act = async () => await repository.MarkFailedAsync(unknownId);
+
+        (await act.Should().ThrowAsync<ExtractionHistoryNotFoundException>())
+            .Which.Should().Match<ExtractionHistoryNotFoundException>(ex =>
+                ex.ExtractionHistoryId == unknownId
+                && ex.ErrorCode == ApplicationErrorCode.ExtractionHistoryNotFound);
     }
 
     [Fact]

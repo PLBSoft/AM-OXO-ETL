@@ -30,8 +30,7 @@ public class ClosedXmlExtractionService(ILogger<ClosedXmlExtractionService> logg
     {
         if (!workbook.Worksheets.TryGetWorksheet(sheetConfig.SheetName, out var worksheet))
         {
-            throw new InvalidOperationException(
-                $"Worksheet '{sheetConfig.SheetName}' was not found in the uploaded workbook.");
+            throw new WorksheetNotFoundInWorkbookException(sheetConfig.SheetName);
         }
 
         logger.LogDebug(

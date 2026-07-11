@@ -1,4 +1,6 @@
 using ClosedXML.Excel;
+using ExcelETL.Application.Exceptions;
+using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
 using ExcelETL.Infrastructure.Excel;
@@ -95,7 +97,7 @@ public class ClosedXmlExtractionServiceTests
     }
 
     [Fact]
-    public void Extract_WhenConfiguredSheetIsMissingFromWorkbook_ThrowsInvalidOperationException()
+    public void Extract_WhenConfiguredSheetIsMissingFromWorkbook_ThrowsWorksheetNotFoundInWorkbookException()
     {
         using var workbookStream = BuildWorkbook(ws => ws.Cell("A1").Value = "irrelevant");
 
@@ -106,7 +108,9 @@ public class ClosedXmlExtractionServiceTests
 
         var act = () => _service.Extract(workbookStream, config);
 
-        act.Should().Throw<InvalidOperationException>().WithMessage("*DoesNotExist*");
+        act.Should().Throw<WorksheetNotFoundInWorkbookException>()
+            .WithMessage("*DoesNotExist*")
+            .Which.ErrorCode.Should().Be(ApplicationErrorCode.WorksheetNotFoundInUploadedWorkbook);
     }
 
     private static MemoryStream BuildWorkbook(Action<IXLWorksheet> configureSheet)

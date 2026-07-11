@@ -23,7 +23,7 @@ public class ExtractionHistoryRepository(IDbContextFactory<ExcelEtlDbContext> db
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var history = await context.ExtractionHistories
             .FirstOrDefaultAsync(h => h.Id == historyId, cancellationToken)
-            ?? throw new InvalidOperationException($"Extraction history '{historyId}' was not found.");
+            ?? throw new ExtractionHistoryNotFoundException(historyId);
 
         history.MarkCompleted(storedFilePath);
         await context.SaveChangesAsync(cancellationToken);
@@ -34,7 +34,7 @@ public class ExtractionHistoryRepository(IDbContextFactory<ExcelEtlDbContext> db
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var history = await context.ExtractionHistories
             .FirstOrDefaultAsync(h => h.Id == historyId, cancellationToken)
-            ?? throw new InvalidOperationException($"Extraction history '{historyId}' was not found.");
+            ?? throw new ExtractionHistoryNotFoundException(historyId);
 
         history.MarkFailed();
         await context.SaveChangesAsync(cancellationToken);

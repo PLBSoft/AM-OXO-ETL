@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Enums;
@@ -125,16 +126,21 @@ public class ExtractionConfigRepositoryTests
     }
 
     [Fact]
-    public async Task AddCellMappingAsync_WithUnknownSheetId_ThrowsInvalidOperationException()
+    public async Task AddCellMappingAsync_WithUnknownSheetId_ThrowsSheetNotFoundInExtractionConfigException()
     {
         var config = new ExtractionConfig("Purchase Order Template");
         config.AddSheet(new SheetConfig("Summary", sheetIndex: 0));
         var repository = CreateRepository();
         await repository.AddAsync(config);
+        var unknownSheetId = Guid.NewGuid();
 
         var act = async () => await repository.AddCellMappingAsync(
-            config.Id, Guid.NewGuid(), new CellMapping("B2", "SupplierName", CellDataType.Text));
+            config.Id, unknownSheetId, new CellMapping("B2", "SupplierName", CellDataType.Text));
 
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        (await act.Should().ThrowAsync<SheetNotFoundInExtractionConfigException>())
+            .Which.Should().Match<SheetNotFoundInExtractionConfigException>(ex =>
+                ex.ExtractionConfigId == config.Id
+                && ex.SheetId == unknownSheetId
+                && ex.ErrorCode == ApplicationErrorCode.SheetNotFoundInExtractionConfig);
     }
 }

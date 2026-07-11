@@ -15,8 +15,7 @@ public class ClosedXmlGeneratorService(ILogger<ClosedXmlGeneratorService> logger
 
         if (result.Sheets.Count is < MinSheets or > MaxSheets)
         {
-            throw new InvalidOperationException(
-                $"Generated workbook must contain {MinSheets}-{MaxSheets} sheets; got {result.Sheets.Count}.");
+            throw new InvalidGeneratedWorkbookSheetCountException(result.Sheets.Count, MinSheets, MaxSheets);
         }
 
         using var workbook = new XLWorkbook();

@@ -7,5 +7,9 @@ public enum ApplicationErrorCode
 {
     ExtractionConfigNotFound,
     ExtractionResult_SheetNotFound,
-    ExtractionResult_PropertyNotFound
+    ExtractionResult_PropertyNotFound,
+    SheetNotFoundInExtractionConfig,
+    ExtractionHistoryNotFound,
+    WorksheetNotFoundInUploadedWorkbook,
+    GeneratedWorkbookSheetCountOutOfRange
 }
