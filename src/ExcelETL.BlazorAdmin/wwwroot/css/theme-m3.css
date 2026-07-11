@@ -1,0 +1,401 @@
+/* Material Design 3 palette bridged onto Bootstrap 5.3 CSS custom properties.
+   --m3-* tokens hold the raw palette; --bs-* remaps make Bootstrap consume them.
+   Component blocks below read var(--m3-*) directly so they work unchanged in
+   both themes instead of being duplicated per [data-bs-theme]. */
+
+:root,
+[data-bs-theme="light"] {
+  --m3-primary: #D81F11;
+  --m3-primary-rgb: 216, 31, 17;
+  --m3-on-primary: #FFFFFF;
+
+  --m3-secondary: #775652;
+  --m3-secondary-rgb: 119, 86, 82;
+  --m3-on-secondary: #FFFFFF;
+
+  --m3-success: #2E7D32;
+  --m3-success-rgb: 46, 125, 50;
+  --m3-on-success: #FFFFFF;
+
+  --m3-danger: #BA1A1A;
+  --m3-danger-rgb: 186, 26, 26;
+  --m3-on-danger: #FFFFFF;
+
+  --m3-warning: #ff7518;
+  --m3-warning-rgb: 255, 117, 24;
+  --m3-on-warning: #000000;
+
+  --m3-info: #008c94;
+  --m3-info-rgb: 0, 140, 148;
+  --m3-on-info: #FFFFFF;
+
+  --m3-background: #FFFBFF;
+  --m3-on-background: #201A19;
+  --m3-surface: #F5DDDA;
+  --m3-on-surface: var(--m3-on-background);
+  --m3-border: #857371;
+
+  --bs-primary: var(--m3-primary);
+  --bs-primary-rgb: var(--m3-primary-rgb);
+  --bs-secondary: var(--m3-secondary);
+  --bs-secondary-rgb: var(--m3-secondary-rgb);
+  --bs-success: var(--m3-success);
+  --bs-success-rgb: var(--m3-success-rgb);
+  --bs-danger: var(--m3-danger);
+  --bs-danger-rgb: var(--m3-danger-rgb);
+  --bs-warning: var(--m3-warning);
+  --bs-warning-rgb: var(--m3-warning-rgb);
+  --bs-info: var(--m3-info);
+  --bs-info-rgb: var(--m3-info-rgb);
+
+  --bs-body-bg: var(--m3-background);
+  --bs-body-color: var(--m3-on-background);
+  --bs-emphasis-color: var(--m3-on-background);
+
+  --bs-border-color: var(--m3-border);
+  --bs-border-color-translucent: var(--m3-border);
+
+  --bs-link-color: var(--m3-primary);
+  --bs-link-color-rgb: var(--m3-primary-rgb);
+  --bs-link-hover-color: color-mix(in srgb, var(--m3-primary) 80%, black);
+  --bs-link-hover-color-rgb: var(--m3-primary-rgb);
+
+  --bs-focus-ring-color: rgba(var(--m3-primary-rgb), 0.25);
+
+  --bs-form-valid-color: var(--m3-success);
+  --bs-form-valid-border-color: var(--m3-success);
+  --bs-form-invalid-color: var(--m3-danger);
+  --bs-form-invalid-border-color: var(--m3-danger);
+
+  --bs-card-bg: var(--m3-surface);
+  --bs-card-color: var(--m3-on-surface);
+  --bs-card-border-color: var(--m3-border);
+  --bs-card-cap-bg: color-mix(in srgb, var(--m3-surface) 92%, black);
+
+  --bs-modal-bg: var(--m3-surface);
+  --bs-modal-color: var(--m3-on-surface);
+  --bs-modal-border-color: var(--m3-border);
+  --bs-modal-header-border-color: var(--m3-border);
+  --bs-modal-footer-border-color: var(--m3-border);
+
+  --bs-dropdown-bg: var(--m3-surface);
+  --bs-dropdown-color: var(--m3-on-surface);
+  --bs-dropdown-border-color: var(--m3-border);
+  --bs-dropdown-link-color: var(--m3-on-surface);
+  --bs-dropdown-link-hover-color: var(--m3-on-surface);
+  --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--m3-surface) 85%, black);
+
+  --bs-popover-bg: var(--m3-surface);
+  --bs-popover-border-color: var(--m3-border);
+  --bs-popover-header-bg: color-mix(in srgb, var(--m3-surface) 92%, black);
+
+  --bs-toast-bg: color-mix(in srgb, var(--m3-surface) 95%, transparent);
+  --bs-toast-border-color: var(--m3-border);
+
+  --bs-list-group-bg: var(--m3-surface);
+  --bs-list-group-color: var(--m3-on-surface);
+  --bs-list-group-border-color: var(--m3-border);
+}
+
+[data-bs-theme="dark"] {
+  --m3-primary: #FFB4AB;
+  --m3-primary-rgb: 255, 180, 171;
+  --m3-on-primary: #690100;
+
+  --m3-secondary: #E7BDB8;
+  --m3-secondary-rgb: 231, 189, 184;
+  --m3-on-secondary: #442925;
+
+  --m3-success: #81C784;
+  --m3-success-rgb: 129, 199, 132;
+  --m3-on-success: #1B5E20;
+
+  --m3-danger: #FFB4AB;
+  --m3-danger-rgb: 255, 180, 171;
+  --m3-on-danger: #690002;
+
+  --m3-warning: #edb050;
+  --m3-warning-rgb: 237, 176, 80;
+  --m3-on-warning: #442925;
+
+  --m3-info: #13d9e3;
+  --m3-info-rgb: 19, 217, 227;
+  --m3-on-info: #003333;
+
+  --m3-background: #201A19;
+  --m3-on-background: #EDE0DE;
+  --m3-surface: #534341;
+  --m3-on-surface: var(--m3-on-background);
+  --m3-border: #A08C8A;
+
+  --bs-primary: var(--m3-primary);
+  --bs-primary-rgb: var(--m3-primary-rgb);
+  --bs-secondary: var(--m3-secondary);
+  --bs-secondary-rgb: var(--m3-secondary-rgb);
+  --bs-success: var(--m3-success);
+  --bs-success-rgb: var(--m3-success-rgb);
+  --bs-danger: var(--m3-danger);
+  --bs-danger-rgb: var(--m3-danger-rgb);
+  --bs-warning: var(--m3-warning);
+  --bs-warning-rgb: var(--m3-warning-rgb);
+  --bs-info: var(--m3-info);
+  --bs-info-rgb: var(--m3-info-rgb);
+
+  --bs-body-bg: var(--m3-background);
+  --bs-body-color: var(--m3-on-background);
+  --bs-emphasis-color: var(--m3-on-background);
+
+  --bs-border-color: var(--m3-border);
+  --bs-border-color-translucent: var(--m3-border);
+
+  --bs-link-color: var(--m3-primary);
+  --bs-link-color-rgb: var(--m3-primary-rgb);
+  --bs-link-hover-color: color-mix(in srgb, var(--m3-primary) 80%, white);
+  --bs-link-hover-color-rgb: var(--m3-primary-rgb);
+
+  --bs-focus-ring-color: rgba(var(--m3-primary-rgb), 0.25);
+
+  --bs-form-valid-color: var(--m3-success);
+  --bs-form-valid-border-color: var(--m3-success);
+  --bs-form-invalid-color: var(--m3-danger);
+  --bs-form-invalid-border-color: var(--m3-danger);
+
+  --bs-card-bg: var(--m3-surface);
+  --bs-card-color: var(--m3-on-surface);
+  --bs-card-border-color: var(--m3-border);
+  --bs-card-cap-bg: color-mix(in srgb, var(--m3-surface) 92%, white);
+
+  --bs-modal-bg: var(--m3-surface);
+  --bs-modal-color: var(--m3-on-surface);
+  --bs-modal-border-color: var(--m3-border);
+  --bs-modal-header-border-color: var(--m3-border);
+  --bs-modal-footer-border-color: var(--m3-border);
+
+  --bs-dropdown-bg: var(--m3-surface);
+  --bs-dropdown-color: var(--m3-on-surface);
+  --bs-dropdown-border-color: var(--m3-border);
+  --bs-dropdown-link-color: var(--m3-on-surface);
+  --bs-dropdown-link-hover-color: var(--m3-on-surface);
+  --bs-dropdown-link-hover-bg: color-mix(in srgb, var(--m3-surface) 85%, white);
+
+  --bs-popover-bg: var(--m3-surface);
+  --bs-popover-border-color: var(--m3-border);
+  --bs-popover-header-bg: color-mix(in srgb, var(--m3-surface) 92%, white);
+
+  --bs-toast-bg: color-mix(in srgb, var(--m3-surface) 95%, transparent);
+  --bs-toast-border-color: var(--m3-border);
+
+  --bs-list-group-bg: var(--m3-surface);
+  --bs-list-group-color: var(--m3-on-surface);
+  --bs-list-group-border-color: var(--m3-border);
+}
+
+/* -------------------------------------------------------------------------
+   Component-level overrides.
+   Bootstrap's compiled CSS bakes some component colors in as literal hex
+   rather than deriving them from the --bs-primary/etc. root variables above,
+   so those components need an explicit rule. Written once (not duplicated
+   per theme) because every value below resolves through var(--m3-*), which
+   already carries the correct light/dark value for the active theme.
+   ------------------------------------------------------------------------- */
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--m3-primary);
+  box-shadow: 0 0 0 0.25rem rgba(var(--m3-primary-rgb), 0.25);
+}
+
+.form-check-input:focus {
+  border-color: var(--m3-primary);
+  box-shadow: 0 0 0 0.25rem rgba(var(--m3-primary-rgb), 0.25);
+}
+
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate {
+  background-color: var(--m3-primary);
+  border-color: var(--m3-primary);
+}
+
+.btn-primary {
+  --bs-btn-color: var(--m3-on-primary);
+  --bs-btn-bg: var(--m3-primary);
+  --bs-btn-border-color: var(--m3-primary);
+  --bs-btn-hover-color: var(--m3-on-primary);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-primary) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-primary) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-primary-rgb);
+  --bs-btn-active-color: var(--m3-on-primary);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-primary) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-primary) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-primary);
+  --bs-btn-disabled-bg: var(--m3-primary);
+  --bs-btn-disabled-border-color: var(--m3-primary);
+}
+
+.btn-secondary {
+  --bs-btn-color: var(--m3-on-secondary);
+  --bs-btn-bg: var(--m3-secondary);
+  --bs-btn-border-color: var(--m3-secondary);
+  --bs-btn-hover-color: var(--m3-on-secondary);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-secondary) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-secondary) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-secondary-rgb);
+  --bs-btn-active-color: var(--m3-on-secondary);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-secondary) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-secondary) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-secondary);
+  --bs-btn-disabled-bg: var(--m3-secondary);
+  --bs-btn-disabled-border-color: var(--m3-secondary);
+}
+
+.btn-success {
+  --bs-btn-color: var(--m3-on-success);
+  --bs-btn-bg: var(--m3-success);
+  --bs-btn-border-color: var(--m3-success);
+  --bs-btn-hover-color: var(--m3-on-success);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-success) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-success) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-success-rgb);
+  --bs-btn-active-color: var(--m3-on-success);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-success) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-success) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-success);
+  --bs-btn-disabled-bg: var(--m3-success);
+  --bs-btn-disabled-border-color: var(--m3-success);
+}
+
+.btn-danger {
+  --bs-btn-color: var(--m3-on-danger);
+  --bs-btn-bg: var(--m3-danger);
+  --bs-btn-border-color: var(--m3-danger);
+  --bs-btn-hover-color: var(--m3-on-danger);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-danger) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-danger) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-danger-rgb);
+  --bs-btn-active-color: var(--m3-on-danger);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-danger) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-danger) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-danger);
+  --bs-btn-disabled-bg: var(--m3-danger);
+  --bs-btn-disabled-border-color: var(--m3-danger);
+}
+
+.btn-warning {
+  --bs-btn-color: var(--m3-on-warning);
+  --bs-btn-bg: var(--m3-warning);
+  --bs-btn-border-color: var(--m3-warning);
+  --bs-btn-hover-color: var(--m3-on-warning);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-warning) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-warning) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-warning-rgb);
+  --bs-btn-active-color: var(--m3-on-warning);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-warning) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-warning) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-warning);
+  --bs-btn-disabled-bg: var(--m3-warning);
+  --bs-btn-disabled-border-color: var(--m3-warning);
+}
+
+.btn-info {
+  --bs-btn-color: var(--m3-on-info);
+  --bs-btn-bg: var(--m3-info);
+  --bs-btn-border-color: var(--m3-info);
+  --bs-btn-hover-color: var(--m3-on-info);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-info) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-info) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-info-rgb);
+  --bs-btn-active-color: var(--m3-on-info);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-info) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-info) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-info);
+  --bs-btn-disabled-bg: var(--m3-info);
+  --bs-btn-disabled-border-color: var(--m3-info);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--m3-primary);
+  --bs-btn-border-color: var(--m3-primary);
+  --bs-btn-hover-color: var(--m3-on-primary);
+  --bs-btn-hover-bg: var(--m3-primary);
+  --bs-btn-hover-border-color: var(--m3-primary);
+  --bs-btn-focus-shadow-rgb: var(--m3-primary-rgb);
+  --bs-btn-active-color: var(--m3-on-primary);
+  --bs-btn-active-bg: var(--m3-primary);
+  --bs-btn-active-border-color: var(--m3-primary);
+  --bs-btn-disabled-color: var(--m3-primary);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--m3-secondary);
+  --bs-btn-border-color: var(--m3-secondary);
+  --bs-btn-hover-color: var(--m3-on-secondary);
+  --bs-btn-hover-bg: var(--m3-secondary);
+  --bs-btn-hover-border-color: var(--m3-secondary);
+  --bs-btn-focus-shadow-rgb: var(--m3-secondary-rgb);
+  --bs-btn-active-color: var(--m3-on-secondary);
+  --bs-btn-active-bg: var(--m3-secondary);
+  --bs-btn-active-border-color: var(--m3-secondary);
+  --bs-btn-disabled-color: var(--m3-secondary);
+}
+
+.btn-outline-success {
+  --bs-btn-color: var(--m3-success);
+  --bs-btn-border-color: var(--m3-success);
+  --bs-btn-hover-color: var(--m3-on-success);
+  --bs-btn-hover-bg: var(--m3-success);
+  --bs-btn-hover-border-color: var(--m3-success);
+  --bs-btn-focus-shadow-rgb: var(--m3-success-rgb);
+  --bs-btn-active-color: var(--m3-on-success);
+  --bs-btn-active-bg: var(--m3-success);
+  --bs-btn-active-border-color: var(--m3-success);
+  --bs-btn-disabled-color: var(--m3-success);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--m3-danger);
+  --bs-btn-border-color: var(--m3-danger);
+  --bs-btn-hover-color: var(--m3-on-danger);
+  --bs-btn-hover-bg: var(--m3-danger);
+  --bs-btn-hover-border-color: var(--m3-danger);
+  --bs-btn-focus-shadow-rgb: var(--m3-danger-rgb);
+  --bs-btn-active-color: var(--m3-on-danger);
+  --bs-btn-active-bg: var(--m3-danger);
+  --bs-btn-active-border-color: var(--m3-danger);
+  --bs-btn-disabled-color: var(--m3-danger);
+}
+
+.btn-outline-warning {
+  --bs-btn-color: var(--m3-warning);
+  --bs-btn-border-color: var(--m3-warning);
+  --bs-btn-hover-color: var(--m3-on-warning);
+  --bs-btn-hover-bg: var(--m3-warning);
+  --bs-btn-hover-border-color: var(--m3-warning);
+  --bs-btn-focus-shadow-rgb: var(--m3-warning-rgb);
+  --bs-btn-active-color: var(--m3-on-warning);
+  --bs-btn-active-bg: var(--m3-warning);
+  --bs-btn-active-border-color: var(--m3-warning);
+  --bs-btn-disabled-color: var(--m3-warning);
+}
+
+.btn-outline-info {
+  --bs-btn-color: var(--m3-info);
+  --bs-btn-border-color: var(--m3-info);
+  --bs-btn-hover-color: var(--m3-on-info);
+  --bs-btn-hover-bg: var(--m3-info);
+  --bs-btn-hover-border-color: var(--m3-info);
+  --bs-btn-focus-shadow-rgb: var(--m3-info-rgb);
+  --bs-btn-active-color: var(--m3-on-info);
+  --bs-btn-active-bg: var(--m3-info);
+  --bs-btn-active-border-color: var(--m3-info);
+  --bs-btn-disabled-color: var(--m3-info);
+}
+
+/* .text-bg-* utilities hardcode #fff/#000 text; the M3 "on-*" colors differ
+   per theme (e.g. dark-mode containers are light fills with dark text), so
+   text color needs to track var(--m3-on-*) instead. */
+.text-bg-primary { color: var(--m3-on-primary) !important; }
+.text-bg-secondary { color: var(--m3-on-secondary) !important; }
+.text-bg-success { color: var(--m3-on-success) !important; }
+.text-bg-danger { color: var(--m3-on-danger) !important; }
+.text-bg-warning { color: var(--m3-on-warning) !important; }
+.text-bg-info { color: var(--m3-on-info) !important; }
