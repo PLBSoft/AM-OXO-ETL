@@ -6,6 +6,7 @@ using ExcelETL.Infrastructure.Storage;
 using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Events;
@@ -91,6 +92,20 @@ builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryReposi
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IProcessExcelFileService, ProcessExcelFileService>();
 
+builder.Services.AddLocalization();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { "en-US", "fr-FR" };
+    options.SetDefaultCulture(supportedCultures[0])
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+
+    // This is an M2M endpoint with no browser session, so cookie/query-string culture negotiation
+    // (the ASP.NET Core default providers) would be dead weight. The legacy client is the only
+    // caller and negotiates culture the same way any HTTP client would: the Accept-Language header.
+    options.RequestCultureProviders = [new AcceptLanguageHeaderRequestCultureProvider()];
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -106,6 +121,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRequestLocalization();
 
 app.UseAuthentication();
 app.UseAuthorization();

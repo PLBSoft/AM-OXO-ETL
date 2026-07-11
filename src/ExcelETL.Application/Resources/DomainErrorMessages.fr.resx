@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="CellMapping_InvalidSourceCell" xml:space="preserve">
+    <value>La cellule source doit être une référence Excel valide (ex. 'B4') ou une plage fusionnée (ex. 'B4:D4').</value>
+  </data>
+  <data name="CellMapping_EmptyTargetPropertyName" xml:space="preserve">
+    <value>Le nom de la propriété cible ne doit pas être vide.</value>
+  </data>
+  <data name="SheetConfig_EmptySheetName" xml:space="preserve">
+    <value>Le nom de la feuille ne doit pas être vide.</value>
+  </data>
+  <data name="SheetConfig_NegativeSheetIndex" xml:space="preserve">
+    <value>L'index de la feuille ne doit pas être négatif.</value>
+  </data>
+  <data name="SheetConfig_DuplicateCellMapping" xml:space="preserve">
+    <value>Un mappage de cellule ciblant la propriété '{0}' existe déjà sur la feuille '{1}'.</value>
+  </data>
+  <data name="ExtractionConfig_EmptyName" xml:space="preserve">
+    <value>Le nom ne doit pas être vide.</value>
+  </data>
+  <data name="ExtractionConfig_TooManySheets" xml:space="preserve">
+    <value>Une configuration d'extraction doit produire exactement 4 à 5 feuilles ; impossible d'en ajouter plus de {0}.</value>
+  </data>
+  <data name="ExtractionConfig_DuplicateSheetIndex" xml:space="preserve">
+    <value>Une feuille avec l'index {0} existe déjà dans la configuration d'extraction '{1}'.</value>
+  </data>
+  <data name="ExtractionHistory_EmptySourceFileName" xml:space="preserve">
+    <value>Le nom du fichier source ne doit pas être vide.</value>
+  </data>
+  <data name="ExtractionHistory_EmptyStoredFilePath" xml:space="preserve">
+    <value>Le chemin du fichier archivé ne doit pas être vide.</value>
+  </data>
+  <data name="ExtractionHistory_CannotCompleteFromStatus" xml:space="preserve">
+    <value>Impossible de terminer une entrée d'historique d'extraction déjà au statut '{0}'.</value>
+  </data>
+  <data name="ExtractionHistory_CannotFailFromStatus" xml:space="preserve">
+    <value>Impossible de marquer en échec une entrée d'historique d'extraction déjà au statut '{0}'.</value>
+  </data>
+</root>
