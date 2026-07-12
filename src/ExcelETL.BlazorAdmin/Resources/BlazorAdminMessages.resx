@@ -160,6 +160,30 @@
   <data name="Logs_NoMatchingLogEntries" xml:space="preserve">
     <value>No log entries match the current filter.</value>
   </data>
+  <data name="Logs_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Logs_LoadMore" xml:space="preserve">
+    <value>Load more</value>
+  </data>
+  <data name="Logs_TimeAll" xml:space="preserve">
+    <value>All time</value>
+  </data>
+  <data name="Logs_TimeLastHour" xml:space="preserve">
+    <value>Last hour</value>
+  </data>
+  <data name="Logs_TimeToday" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Logs_TimeYesterday" xml:space="preserve">
+    <value>Yesterday</value>
+  </data>
+  <data name="Logs_CopyMessage" xml:space="preserve">
+    <value>Copy message</value>
+  </data>
+  <data name="Logs_Copied" xml:space="preserve">
+    <value>Copied!</value>
+  </data>
   <data name="History_PageTitle" xml:space="preserve">
     <value>Extraction History</value>
   </data>

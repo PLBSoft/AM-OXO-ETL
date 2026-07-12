@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "blazor-admin",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/ExcelETL.BlazorAdmin/ExcelETL.BlazorAdmin.csproj", "--launch-profile", "https"],
+      "port": 7013
+    }
+  ]
+}

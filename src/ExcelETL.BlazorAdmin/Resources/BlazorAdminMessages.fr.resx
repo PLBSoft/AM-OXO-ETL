@@ -160,6 +160,30 @@
   <data name="Logs_NoMatchingLogEntries" xml:space="preserve">
     <value>Aucune entrée de journal ne correspond au filtre actuel.</value>
   </data>
+  <data name="Logs_Refresh" xml:space="preserve">
+    <value>Rafraîchir</value>
+  </data>
+  <data name="Logs_LoadMore" xml:space="preserve">
+    <value>Afficher les suivants</value>
+  </data>
+  <data name="Logs_TimeAll" xml:space="preserve">
+    <value>Tout</value>
+  </data>
+  <data name="Logs_TimeLastHour" xml:space="preserve">
+    <value>Dernière heure</value>
+  </data>
+  <data name="Logs_TimeToday" xml:space="preserve">
+    <value>Aujourd'hui</value>
+  </data>
+  <data name="Logs_TimeYesterday" xml:space="preserve">
+    <value>Hier</value>
+  </data>
+  <data name="Logs_CopyMessage" xml:space="preserve">
+    <value>Copier le message</value>
+  </data>
+  <data name="Logs_Copied" xml:space="preserve">
+    <value>Copié !</value>
+  </data>
   <data name="History_PageTitle" xml:space="preserve">
     <value>Historique d'extraction</value>
   </data>
