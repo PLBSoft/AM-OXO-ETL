@@ -394,4 +394,49 @@
   <data name="Upload_SelectConfigPrompt" xml:space="preserve">
     <value>Sélectionnez une configuration d'extraction.</value>
   </data>
+  <data name="NavMenu_Profile" xml:space="preserve">
+    <value>Mon Profil</value>
+  </data>
+  <data name="Profile_PageTitle" xml:space="preserve">
+    <value>Mon Profil</value>
+  </data>
+  <data name="Profile_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="Profile_InfoHeading" xml:space="preserve">
+    <value>Informations générales</value>
+  </data>
+  <data name="Profile_FirstNameLabel" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="Profile_LastNameLabel" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="Profile_UpdateInfoButton" xml:space="preserve">
+    <value>Mettre à jour les informations</value>
+  </data>
+  <data name="Profile_UpdateInfoSuccess" xml:space="preserve">
+    <value>Vos informations ont été mises à jour.</value>
+  </data>
+  <data name="Profile_SecurityHeading" xml:space="preserve">
+    <value>Sécurité / Mot de passe</value>
+  </data>
+  <data name="Profile_CurrentPasswordLabel" xml:space="preserve">
+    <value>Mot de passe actuel</value>
+  </data>
+  <data name="Profile_NewPasswordLabel" xml:space="preserve">
+    <value>Nouveau mot de passe</value>
+  </data>
+  <data name="Profile_ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Confirmer le nouveau mot de passe</value>
+  </data>
+  <data name="Profile_ChangePasswordButton" xml:space="preserve">
+    <value>Changer le mot de passe</value>
+  </data>
+  <data name="Profile_PasswordChangedLoggedOut" xml:space="preserve">
+    <value>Votre mot de passe a été modifié. Pour des raisons de sécurité, vous avez été déconnecté -- veuillez vous reconnecter.</value>
+  </data>
+  <data name="Profile_ReloginButton" xml:space="preserve">
+    <value>Se reconnecter</value>
+  </data>
 </root>

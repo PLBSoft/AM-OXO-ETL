@@ -62,4 +62,25 @@ public class NavMenuTests : BunitContext
         cut.Markup.Should().Contain("Logout");
         cut.Markup.Should().Contain("admin@example.com");
     });
+
+    [Fact]
+    public void NavMenu_WhenAuthorized_AndEnglishCulture_ShowsProfileLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Markup.Should().Contain("My Profile");
+        cut.Find("a[href='profile']").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavMenu_WhenNotAuthorized_DoesNotShowProfileLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.Markup.Should().NotContain("My Profile");
+    });
 }

@@ -1,0 +1,230 @@
+@page "/profile"
+@attribute [Authorize]
+
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using ExcelETL.Application.Identity
+@using ExcelETL.BlazorAdmin.Components.Account.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IUserRepository UserRepository
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["Profile_PageTitle"]</PageTitle>
+
+<h1>@Loc["Profile_PageTitle"]</h1>
+
+@if (_profile is null)
+{
+    <p>@Loc["Profile_Loading"]</p>
+}
+else
+{
+    <div class="row">
+        <div class="col-lg-6">
+            <h2>@Loc["Profile_InfoHeading"]</h2>
+            <StatusMessage Message="@_infoMessage" IsError="_infoIsError" />
+            <EditForm id="profile-info-form" Model="InfoInput" OnValidSubmit="UpdateProfileAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="text-danger" role="alert" />
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="InfoInput.FirstName" id="Info.FirstName" class="form-control" />
+                    <label for="Info.FirstName">@Loc["Profile_FirstNameLabel"]</label>
+                    <ValidationMessage For="() => InfoInput.FirstName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="InfoInput.LastName" id="Info.LastName" class="form-control" />
+                    <label for="Info.LastName">@Loc["Profile_LastNameLabel"]</label>
+                    <ValidationMessage For="() => InfoInput.LastName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="InfoInput.Email" id="Info.Email" class="form-control" autocomplete="email" />
+                    <label for="Info.Email">@Loc["Account_EmailLabel"]</label>
+                    <ValidationMessage For="() => InfoInput.Email" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary" disabled="@_isUpdatingInfo">
+                    @Loc["Profile_UpdateInfoButton"]
+                </button>
+            </EditForm>
+        </div>
+    </div>
+
+    <hr />
+
+    <div class="row">
+        <div class="col-lg-6">
+            <h2>@Loc["Profile_SecurityHeading"]</h2>
+
+            @if (!_passwordChanged)
+            {
+                <StatusMessage Message="@_passwordMessage" IsError="_passwordIsError" />
+                <EditForm id="profile-password-form" Model="PasswordInput" OnValidSubmit="ChangePasswordAsync">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger" role="alert" />
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="PasswordInput.CurrentPassword" id="Password.Current" class="form-control" autocomplete="current-password" />
+                        <label for="Password.Current">@Loc["Profile_CurrentPasswordLabel"]</label>
+                        <ValidationMessage For="() => PasswordInput.CurrentPassword" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="PasswordInput.NewPassword" id="Password.New" class="form-control" autocomplete="new-password" />
+                        <label for="Password.New">@Loc["Profile_NewPasswordLabel"]</label>
+                        <ValidationMessage For="() => PasswordInput.NewPassword" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputText type="password" @bind-Value="PasswordInput.ConfirmNewPassword" id="Password.Confirm" class="form-control" autocomplete="new-password" />
+                        <label for="Password.Confirm">@Loc["Profile_ConfirmNewPasswordLabel"]</label>
+                        <ValidationMessage For="() => PasswordInput.ConfirmNewPassword" class="text-danger" />
+                    </div>
+                    <button type="submit" class="btn btn-primary" disabled="@_isChangingPassword">
+                        @Loc["Profile_ChangePasswordButton"]
+                    </button>
+                </EditForm>
+            }
+            else
+            {
+                <div class="alert alert-success" role="alert">@Loc["Profile_PasswordChangedLoggedOut"]</div>
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="Account/Login" />
+                    <button type="submit" class="btn btn-primary">@Loc["Profile_ReloginButton"]</button>
+                </form>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private UserProfile? _profile;
+    private string? _userId;
+
+    private InfoInputModel InfoInput { get; set; } = new();
+    private PasswordInputModel PasswordInput { get; set; } = new();
+
+    private bool _isUpdatingInfo;
+    private string? _infoMessage;
+    private bool _infoIsError;
+
+    private bool _isChangingPassword;
+    private string? _passwordMessage;
+    private bool _passwordIsError;
+    private bool _passwordChanged;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthState;
+        _userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (_userId is null)
+        {
+            return;
+        }
+
+        _profile = await UserRepository.GetByIdAsync(_userId);
+
+        if (_profile is not null)
+        {
+            InfoInput = new InfoInputModel
+            {
+                FirstName = _profile.FirstName,
+                LastName = _profile.LastName,
+                Email = _profile.Email ?? "",
+            };
+        }
+    }
+
+    private async Task UpdateProfileAsync()
+    {
+        if (_userId is null)
+        {
+            return;
+        }
+
+        _isUpdatingInfo = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserRepository.UpdateProfileAsync(_userId, InfoInput.FirstName, InfoInput.LastName, InfoInput.Email);
+            _infoIsError = !result.Succeeded;
+            _infoMessage = result.Succeeded ? Loc["Profile_UpdateInfoSuccess"] : string.Join(", ", result.Errors);
+
+            if (result.Succeeded)
+            {
+                _profile = await UserRepository.GetByIdAsync(_userId);
+            }
+        }
+        finally
+        {
+            _isUpdatingInfo = false;
+        }
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        if (_userId is null)
+        {
+            return;
+        }
+
+        _isChangingPassword = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserRepository.ChangePasswordAsync(_userId, PasswordInput.CurrentPassword, PasswordInput.NewPassword);
+            if (result.Succeeded)
+            {
+                _passwordChanged = true;
+            }
+            else
+            {
+                _passwordIsError = true;
+                _passwordMessage = string.Join(", ", result.Errors);
+            }
+        }
+        finally
+        {
+            _isChangingPassword = false;
+        }
+    }
+
+    private sealed class InfoInputModel
+    {
+        [Required]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = "";
+
+        [Required]
+        [Display(Name = "Last Name")]
+        public string LastName { get; set; } = "";
+
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = "";
+    }
+
+    private sealed class PasswordInputModel
+    {
+        [Required]
+        [DataType(DataType.Password)]
+        [Display(Name = "Current Password")]
+        public string CurrentPassword { get; set; } = "";
+
+        [Required]
+        [StringLength(100, MinimumLength = 6)]
+        [DataType(DataType.Password)]
+        [Display(Name = "New Password")]
+        public string NewPassword { get; set; } = "";
+
+        [DataType(DataType.Password)]
+        [Display(Name = "Confirm New Password")]
+        [Compare(nameof(NewPassword))]
+        public string ConfirmNewPassword { get; set; } = "";
+    }
+}

@@ -17,8 +17,12 @@
     [Parameter]
     public bool IsError { get; set; }
 
+    // Nullable: HttpContext only cascades during the HTTP request that (re)established the
+    // circuit. A page reached via in-circuit client-side navigation (e.g. a NavLink click while
+    // already connected) has none available, so this must tolerate a null value rather than
+    // assume one is always supplied.
     [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private HttpContext? HttpContext { get; set; }
 
     private string? DisplayMessage => Message ?? messageFromCookie;
 
@@ -28,11 +32,11 @@
 
     protected override void OnInitialized()
     {
-        messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
+        messageFromCookie = HttpContext?.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
         if (messageFromCookie is not null)
         {
-            HttpContext.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
+            HttpContext?.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
         }
     }
 }

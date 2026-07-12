@@ -394,4 +394,49 @@
   <data name="Upload_SelectConfigPrompt" xml:space="preserve">
     <value>Select an extraction configuration.</value>
   </data>
+  <data name="NavMenu_Profile" xml:space="preserve">
+    <value>My Profile</value>
+  </data>
+  <data name="Profile_PageTitle" xml:space="preserve">
+    <value>My Profile</value>
+  </data>
+  <data name="Profile_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Profile_InfoHeading" xml:space="preserve">
+    <value>General Information</value>
+  </data>
+  <data name="Profile_FirstNameLabel" xml:space="preserve">
+    <value>First Name</value>
+  </data>
+  <data name="Profile_LastNameLabel" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="Profile_UpdateInfoButton" xml:space="preserve">
+    <value>Update Information</value>
+  </data>
+  <data name="Profile_UpdateInfoSuccess" xml:space="preserve">
+    <value>Your information has been updated.</value>
+  </data>
+  <data name="Profile_SecurityHeading" xml:space="preserve">
+    <value>Security / Password</value>
+  </data>
+  <data name="Profile_CurrentPasswordLabel" xml:space="preserve">
+    <value>Current Password</value>
+  </data>
+  <data name="Profile_NewPasswordLabel" xml:space="preserve">
+    <value>New Password</value>
+  </data>
+  <data name="Profile_ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Confirm New Password</value>
+  </data>
+  <data name="Profile_ChangePasswordButton" xml:space="preserve">
+    <value>Change Password</value>
+  </data>
+  <data name="Profile_PasswordChangedLoggedOut" xml:space="preserve">
+    <value>Your password has been changed. For security reasons you have been signed out -- please sign in again.</value>
+  </data>
+  <data name="Profile_ReloginButton" xml:space="preserve">
+    <value>Sign in again</value>
+  </data>
 </root>
