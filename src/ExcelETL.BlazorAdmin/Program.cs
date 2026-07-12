@@ -1,6 +1,7 @@
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
+using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.Infrastructure.Diagnostics;
@@ -54,8 +55,22 @@ builder.Host.UseSerilog((_, loggerConfiguration) =>
 builder.Services.AddDbContextFactory<SystemLogsDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
 
+// AddEntityFrameworkStores<ApplicationIdentityDbContext>() below needs a directly-injectable
+// scoped ApplicationIdentityDbContext, so that registration is kept. IUserRepository is the only
+// consumer of the factory below -- unlike the Singleton factories elsewhere in this file, this one
+// must be registered Scoped: AddDbContextFactory's default Singleton lifetime would register a
+// singleton DbContextOptions<ApplicationIdentityDbContext>, which then can't resolve the Scoped
+// options configuration also added by AddDbContext above (fails at first use with "Cannot resolve
+// scoped service ... from root provider"). A Scoped factory still creates a fresh, short-lived
+// DbContext on every CreateDbContextAsync() call -- the safety property Interactive Server
+// components need -- it's only the factory *instance* that is now one-per-circuit instead of
+// shared app-wide.
 builder.Services.AddDbContext<ApplicationIdentityDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity")));
+builder.Services.AddDbContextFactory<ApplicationIdentityDbContext>(options =>
+    options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity")),
+    lifetime: ServiceLifetime.Scoped);
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Interactive Server components share a circuit across multiple renders, so a directly
 // injected scoped DbContext would be used concurrently/beyond its intended lifetime. This

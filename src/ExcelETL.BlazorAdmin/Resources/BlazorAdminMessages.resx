@@ -334,4 +334,25 @@
   <data name="Register_Submit" xml:space="preserve">
     <value>Register</value>
   </data>
+  <data name="NavMenu_Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Users_PageTitle" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Users_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Users_NoEntries" xml:space="preserve">
+    <value>No users found.</value>
+  </data>
+  <data name="Users_Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="Users_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Users_UserName" xml:space="preserve">
+    <value>Username</value>
+  </data>
 </root>

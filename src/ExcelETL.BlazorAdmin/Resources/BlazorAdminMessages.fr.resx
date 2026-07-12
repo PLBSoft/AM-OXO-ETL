@@ -334,4 +334,25 @@
   <data name="Register_Submit" xml:space="preserve">
     <value>S'inscrire</value>
   </data>
+  <data name="NavMenu_Users" xml:space="preserve">
+    <value>Utilisateurs</value>
+  </data>
+  <data name="Users_PageTitle" xml:space="preserve">
+    <value>Utilisateurs</value>
+  </data>
+  <data name="Users_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="Users_NoEntries" xml:space="preserve">
+    <value>Aucun utilisateur trouvé.</value>
+  </data>
+  <data name="Users_Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="Users_Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Users_UserName" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
 </root>

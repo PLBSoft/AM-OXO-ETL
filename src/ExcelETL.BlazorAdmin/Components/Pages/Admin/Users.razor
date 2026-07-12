@@ -1,0 +1,53 @@
+@page "/users"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Identity
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+
+@inject IUserRepository UserRepository
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["Users_PageTitle"]</PageTitle>
+
+<h1>@Loc["Users_PageTitle"]</h1>
+
+@if (_users is null)
+{
+    <p>@Loc["Users_Loading"]</p>
+}
+else if (_users.Count == 0)
+{
+    <p>@Loc["Users_NoEntries"]</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@Loc["Users_Id"]</th>
+                <th>@Loc["Users_Email"]</th>
+                <th>@Loc["Users_UserName"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in _users)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.Email</td>
+                    <td>@user.UserName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private IReadOnlyList<UserSummary>? _users;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _users = await UserRepository.GetAllAsync();
+    }
+}

@@ -78,6 +78,13 @@ Apply a strict Test-First (Red-Green-Refactor) lifecycle:
 3. Explicitly test reading values from merged range coordinates in Excel
 4. Ensure all business logic is test-covered before deployment
 
+### Repository test conventions
+- Test projects live under `tests/`, one per `src/` project, mirroring its internal folder structure 1:1 (a repository in `src/ExcelETL.Infrastructure/Identity/` is tested in `tests/ExcelETL.Infrastructure.Tests/Identity/`).
+- **FluentAssertions is pinned to 7.0.0** — v8+ is commercially licensed, which the OSS constraint above forbids. Always verify a NuGet package's license before adding or upgrading it.
+- Repositories backed by an EF Core `DbContext` are tested against the **real EF Core InMemory provider**, not mocked. Each test class gets its own tiny `internal sealed class Test{ContextName}DbContextFactory(string databaseName) : IDbContextFactory<TContext>` colocated in the same test folder, constructed with a GUID-suffixed database name per test class for isolation — there is no shared/generic factory helper.
+- Repositories that depend on ASP.NET Core Identity's `UserManager<T>`/`RoleManager<T>` (rather than an injected `IDbContextFactory<T>` directly) are tested with **Moq** instead, since those managers aren't meaningfully exercised against the InMemory provider alone.
+- Assertions use FluentAssertions exclusively (`.Should().Be(...)`, `.Should().BeEquivalentTo(...)`, `.Should().ThrowAsync<T>()`, etc.) — never xUnit's `Assert.*`.
+
 ---
 
 ## I18N (ENGLISH/FRENCH) STRATEGY
