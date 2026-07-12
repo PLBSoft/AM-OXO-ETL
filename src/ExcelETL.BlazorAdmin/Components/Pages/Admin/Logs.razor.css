@@ -1,0 +1,23 @@
+.log-row-error {
+    border-left: 4px solid var(--bs-danger);
+    background-color: rgba(220, 53, 69, 0.08);
+}
+
+.log-row-warning {
+    border-left: 4px solid var(--bs-warning);
+    background-color: rgba(255, 193, 7, 0.08);
+}
+
+.log-row-info {
+    border-left: 4px solid transparent;
+}
+
+.log-copy-btn {
+    padding: 0.1rem 0.35rem;
+    line-height: 1;
+    color: var(--bs-secondary-color);
+}
+
+    .log-copy-btn:hover {
+        color: var(--bs-body-color);
+    }

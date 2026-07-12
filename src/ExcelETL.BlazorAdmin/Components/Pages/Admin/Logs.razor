@@ -1,14 +1,19 @@
 @page "/logs"
-@implements IAsyncDisposable
 
 @using ExcelETL.Application.Diagnostics
 
 @inject ISystemLogRepository SystemLogRepository
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject IJSRuntime JS
 
 <PageTitle>@Loc["Logs_PageTitle"]</PageTitle>
 
-<h1>@Loc["Logs_PageTitle"]</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">@Loc["Logs_PageTitle"]</h1>
+    <button type="button" class="btn btn-outline-secondary" @onclick="RefreshAsync" disabled="@_isLoading">
+        @Loc["Logs_Refresh"]
+    </button>
+</div>
 
 @if (_logs is null)
 {
@@ -30,7 +35,15 @@ else
                 }
             </select>
         </div>
-        <div class="col-md-5">
+        <div class="col-md-3">
+            <select class="form-select" id="log-time-filter" @bind="_timeFilter">
+                <option value="">@Loc["Logs_TimeAll"]</option>
+                <option value="lastHour">@Loc["Logs_TimeLastHour"]</option>
+                <option value="today">@Loc["Logs_TimeToday"]</option>
+                <option value="yesterday">@Loc["Logs_TimeYesterday"]</option>
+            </select>
+        </div>
+        <div class="col-md-6">
             <input type="search" class="form-control" id="log-search" placeholder="@Loc["Logs_SearchPlaceholder"]"
                    @bind="_searchText" @bind:event="oninput" />
         </div>
@@ -59,29 +72,56 @@ else
                         <td>@entry.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
                         <td>@entry.Level</td>
                         <td>
-                            @entry.Message
-                            @if (!string.IsNullOrEmpty(entry.Exception))
-                            {
-                                <pre class="mb-0 small text-muted">@entry.Exception</pre>
-                            }
+                            <div class="d-flex align-items-start gap-2">
+                                <div class="flex-grow-1">
+                                    @entry.Message
+                                    @if (!string.IsNullOrEmpty(entry.Exception))
+                                    {
+                                        <pre class="mb-0 small text-muted">@entry.Exception</pre>
+                                    }
+                                </div>
+                                <button type="button" class="btn btn-sm btn-link log-copy-btn"
+                                        title="@Loc["Logs_CopyMessage"]"
+                                        @onclick="() => CopyToClipboardAsync(entry)">
+                                    @if (_copiedEntryId == entry.Id)
+                                    {
+                                        <span>@Loc["Logs_Copied"]</span>
+                                    }
+                                    else
+                                    {
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z" />
+                                            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z" />
+                                        </svg>
+                                    }
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+
+        @if (_hasMore)
+        {
+            <button type="button" class="btn btn-outline-secondary" @onclick="LoadMoreAsync" disabled="@_isLoading">
+                @Loc["Logs_LoadMore"]
+            </button>
+        }
     }
 }
 
 @code {
-    private const int RecentLogCount = 50;
-    private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(4);
+    private const int PageSize = 100;
 
     private IReadOnlyList<SystemLogEntry>? _logs;
-    private PeriodicTimer? _timer;
-    private CancellationTokenSource? _refreshCts;
-    private Task? _refreshLoop;
+    private bool _isLoading;
+    private bool _hasMore = true;
+    private int _displayCount = PageSize;
     private string _levelFilter = string.Empty;
     private string _searchText = string.Empty;
+    private string _timeFilter = string.Empty;
+    private int? _copiedEntryId;
 
     private IReadOnlyList<string> AvailableLevels =>
         _logs?.Select(e => e.Level).Distinct().OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
@@ -103,6 +143,18 @@ else
                 query = query.Where(e => e.Level == _levelFilter);
             }
 
+            if (!string.IsNullOrEmpty(_timeFilter))
+            {
+                var now = DateTime.UtcNow;
+                query = _timeFilter switch
+                {
+                    "lastHour" => query.Where(e => e.TimestampUtc >= now.AddHours(-1)),
+                    "today" => query.Where(e => e.TimestampUtc.Date == now.Date),
+                    "yesterday" => query.Where(e => e.TimestampUtc.Date == now.Date.AddDays(-1)),
+                    _ => query
+                };
+            }
+
             if (!string.IsNullOrWhiteSpace(_searchText))
             {
                 query = query.Where(e =>
@@ -114,58 +166,42 @@ else
         }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        await RefreshAsync();
-
-        _refreshCts = new CancellationTokenSource();
-        _timer = new PeriodicTimer(RefreshInterval);
-        _refreshLoop = RunRefreshLoopAsync(_refreshCts.Token);
-    }
-
-    private async Task RunRefreshLoopAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            while (await _timer!.WaitForNextTickAsync(cancellationToken))
-            {
-                await RefreshAsync();
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-    }
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
 
     private async Task RefreshAsync()
     {
-        _logs = await SystemLogRepository.GetRecentAsync(RecentLogCount);
+        _isLoading = true;
+        _logs = await SystemLogRepository.GetRecentAsync(_displayCount);
+        _hasMore = _logs.Count >= _displayCount;
+        _isLoading = false;
+    }
+
+    private async Task LoadMoreAsync()
+    {
+        _displayCount += PageSize;
+        await RefreshAsync();
+    }
+
+    private async Task CopyToClipboardAsync(SystemLogEntry entry)
+    {
+        var text = string.IsNullOrEmpty(entry.Exception) ? entry.Message : $"{entry.Message}\n{entry.Exception}";
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+
+        _copiedEntryId = entry.Id;
+        StateHasChanged();
+
+        await Task.Delay(1500);
+        if (_copiedEntryId == entry.Id)
+        {
+            _copiedEntryId = null;
+            StateHasChanged();
+        }
     }
 
     private static string LevelRowClass(string level) => level switch
     {
-        "Error" or "Fatal" => "table-danger",
-        "Warning" => "table-warning",
-        _ => ""
+        "Error" or "Fatal" => "log-row-error",
+        "Warning" => "log-row-warning",
+        _ => "log-row-info"
     };
-
-    public async ValueTask DisposeAsync()
-    {
-        _refreshCts?.Cancel();
-        _timer?.Dispose();
-
-        if (_refreshLoop is not null)
-        {
-            try
-            {
-                await _refreshLoop;
-            }
-            catch (OperationCanceledException)
-            {
-            }
-        }
-
-        _refreshCts?.Dispose();
-    }
 }
