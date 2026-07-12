@@ -4,6 +4,7 @@ using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
+using ExcelETL.BlazorAdmin.ExternalApi;
 using ExcelETL.Infrastructure.Diagnostics;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
@@ -83,6 +85,30 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
 builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
+
+// Deliberate, narrow exception to the "never talk to the Web API over HTTP" Clean Architecture
+// rule above -- see ExcelProcessingClient for why. Used only by the /upload-test admin page.
+builder.Services.Configure<WebApiClientOptions>(builder.Configuration.GetSection(WebApiClientOptions.SectionName));
+builder.Services.AddHttpClient<ExcelProcessingClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<WebApiClientOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(options.BaseUrl))
+    {
+        throw new InvalidOperationException(
+            $"Configuration value '{WebApiClientOptions.SectionName}:{nameof(WebApiClientOptions.BaseUrl)}' is required.");
+    }
+
+    if (string.IsNullOrWhiteSpace(options.ApiKey))
+    {
+        throw new InvalidOperationException(
+            $"Configuration value '{WebApiClientOptions.SectionName}:{nameof(WebApiClientOptions.ApiKey)}' is required.");
+    }
+
+    client.BaseAddress = new Uri(options.BaseUrl);
+    client.Timeout = ExcelProcessingClient.DefaultTimeout;
+    client.DefaultRequestHeaders.Add(ExcelProcessingClient.ApiKeyHeaderName, options.ApiKey);
+});
+builder.Services.AddScoped<IExcelDownloadInterop, ExcelDownloadInterop>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

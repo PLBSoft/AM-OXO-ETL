@@ -2,9 +2,11 @@ namespace ExcelETL.WebAPI;
 
 internal static class UploadLimits
 {
-    // Excel workbooks with many merged-cell forms can be large, and processing is synchronous;
-    // limits are set generously so legitimate uploads are not dropped mid-transfer.
-    public const long MaxExcelFileSizeBytes = 100 * 1024 * 1024; // 100 MB
+    // 10 MB is comfortably above any realistic form-style Excel workbook and matches the cap the
+    // BlazorAdmin /upload-test admin page enforces client-side (see
+    // ExcelETL.BlazorAdmin.Components.Pages.Admin.UploadTest.MaxFileSizeBytes) -- kept identical
+    // on both sides so that page can exercise the server's real limit, not a looser one.
+    public const long MaxExcelFileSizeBytes = 10 * 1024 * 1024; // 10 MB
 
     public const string ExcelProcessingTimeoutPolicy = "ExcelProcessing";
     public static readonly TimeSpan ExcelProcessingTimeout = TimeSpan.FromMinutes(5);

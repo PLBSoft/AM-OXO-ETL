@@ -1,0 +1,130 @@
+@page "/upload-test"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Extraction
+@using ExcelETL.BlazorAdmin.ExternalApi
+@using ExcelETL.Domain.Entities
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IExtractionConfigRepository ExtractionConfigRepository
+@inject ExcelProcessingClient ExcelProcessingClient
+@inject IExcelDownloadInterop ExcelDownloadInterop
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["Upload_PageTitle"]</PageTitle>
+
+<h1>@Loc["Upload_PageTitle"]</h1>
+<p>@Loc["Upload_Instructions"]</p>
+
+@if (_configs is null)
+{
+    <p>@Loc["Mappings_Loading"]</p>
+}
+else
+{
+    var uploading = _state == UploadState.Uploading;
+
+    <div class="mb-3">
+        <label class="form-label" for="extraction-config-select">@Loc["Upload_ExtractionConfigLabel"]</label>
+        <select id="extraction-config-select" class="form-select" @bind="_selectedConfigId" disabled="@uploading">
+            <option value="">@Loc["Upload_ExtractionConfigPlaceholder"]</option>
+            @foreach (var config in _configs)
+            {
+                <option value="@config.Id">@config.Name</option>
+            }
+        </select>
+        @if (_configs.Count == 0)
+        {
+            <div class="form-text">@Loc["Upload_NoConfigsAvailable"]</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="file-input">@Loc["Upload_FileLabel"]</label>
+        <InputFile id="file-input" class="form-control" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@uploading" />
+    </div>
+
+    @if (_state == UploadState.Uploading)
+    {
+        <div id="upload-status" class="alert alert-info d-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>@Loc["Upload_Uploading"]</span>
+        </div>
+    }
+    else if (_state == UploadState.Success)
+    {
+        <div id="upload-status" class="alert alert-success">@Loc["Upload_SuccessMessage"]</div>
+    }
+    else if (_state == UploadState.Error)
+    {
+        <div id="upload-status" class="alert alert-danger">@Loc["Upload_ErrorPrefix"] @_errorMessage</div>
+    }
+}
+
+@code {
+    // 10 MB: matches the Web API's own UploadLimits.MaxExcelFileSizeBytes (ExcelController), so
+    // this page enforces the same cap the server would anyway, while staying well under Blazor
+    // Server's default 512 KB SignalR message size limit that InputFile.OpenReadStream bypasses
+    // via its own maxAllowedSize parameter.
+    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
+
+    private enum UploadState { Idle, Uploading, Success, Error }
+
+    private List<ExtractionConfig>? _configs;
+    private Guid? _selectedConfigId;
+    private UploadState _state = UploadState.Idle;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _configs = (await ExtractionConfigRepository.GetAllAsync()).ToList();
+    }
+
+    private async Task OnInputFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        if (_state == UploadState.Uploading)
+        {
+            return;
+        }
+
+        if (_selectedConfigId is not { } configId)
+        {
+            _state = UploadState.Error;
+            _errorMessage = Loc["Upload_SelectConfigPrompt"];
+            return;
+        }
+
+        _state = UploadState.Uploading;
+        _errorMessage = null;
+        StateHasChanged();
+
+        Stream? fileStream = null;
+        ExcelProcessingResult? result = null;
+
+        try
+        {
+            fileStream = e.File.OpenReadStream(MaxFileSizeBytes);
+            result = await ExcelProcessingClient.ProcessAsync(configId, fileStream, e.File.Name, e.File.ContentType);
+
+            await ExcelDownloadInterop.DownloadFileFromStreamAsync(result.FileName, result.Content);
+
+            _state = UploadState.Success;
+        }
+        catch (Exception ex)
+        {
+            _state = UploadState.Error;
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            result?.Dispose();
+
+            if (fileStream is not null)
+            {
+                await fileStream.DisposeAsync();
+            }
+        }
+    }
+}

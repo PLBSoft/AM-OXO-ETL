@@ -355,4 +355,43 @@
   <data name="Users_UserName" xml:space="preserve">
     <value>Username</value>
   </data>
+  <data name="NavMenu_UploadTest" xml:space="preserve">
+    <value>Upload Test</value>
+  </data>
+  <data name="Upload_PageTitle" xml:space="preserve">
+    <value>Excel Upload Test</value>
+  </data>
+  <data name="Upload_Instructions" xml:space="preserve">
+    <value>Upload an .xlsx file to submit it to the Web API's /api/excel/process endpoint and download the generated workbook, exactly like the legacy application does.</value>
+  </data>
+  <data name="Upload_ExtractionConfigLabel" xml:space="preserve">
+    <value>Extraction configuration</value>
+  </data>
+  <data name="Upload_ExtractionConfigPlaceholder" xml:space="preserve">
+    <value>Select a configuration...</value>
+  </data>
+  <data name="Upload_NoConfigsAvailable" xml:space="preserve">
+    <value>No extraction configurations exist yet. Create one on the Extraction Mappings page first.</value>
+  </data>
+  <data name="Upload_FileLabel" xml:space="preserve">
+    <value>Excel file (.xlsx)</value>
+  </data>
+  <data name="Upload_SubmitButton" xml:space="preserve">
+    <value>Upload &amp; Process</value>
+  </data>
+  <data name="Upload_Uploading" xml:space="preserve">
+    <value>Processing... this can take up to a few minutes for large files. Please don't close this page.</value>
+  </data>
+  <data name="Upload_SuccessMessage" xml:space="preserve">
+    <value>Processing complete. Your download should start automatically.</value>
+  </data>
+  <data name="Upload_ErrorPrefix" xml:space="preserve">
+    <value>Upload failed:</value>
+  </data>
+  <data name="Upload_SelectFilePrompt" xml:space="preserve">
+    <value>Choose a file to upload.</value>
+  </data>
+  <data name="Upload_SelectConfigPrompt" xml:space="preserve">
+    <value>Select an extraction configuration.</value>
+  </data>
 </root>

@@ -355,4 +355,43 @@
   <data name="Users_UserName" xml:space="preserve">
     <value>Nom d'utilisateur</value>
   </data>
+  <data name="NavMenu_UploadTest" xml:space="preserve">
+    <value>Test de téléversement</value>
+  </data>
+  <data name="Upload_PageTitle" xml:space="preserve">
+    <value>Test de téléversement Excel</value>
+  </data>
+  <data name="Upload_Instructions" xml:space="preserve">
+    <value>Téléversez un fichier .xlsx vers le point de terminaison /api/excel/process de l'API Web et téléchargez le classeur généré, exactement comme le fait l'application héritée.</value>
+  </data>
+  <data name="Upload_ExtractionConfigLabel" xml:space="preserve">
+    <value>Configuration d'extraction</value>
+  </data>
+  <data name="Upload_ExtractionConfigPlaceholder" xml:space="preserve">
+    <value>Sélectionnez une configuration...</value>
+  </data>
+  <data name="Upload_NoConfigsAvailable" xml:space="preserve">
+    <value>Aucune configuration d'extraction n'existe encore. Créez-en une sur la page Mappings d'extraction.</value>
+  </data>
+  <data name="Upload_FileLabel" xml:space="preserve">
+    <value>Fichier Excel (.xlsx)</value>
+  </data>
+  <data name="Upload_SubmitButton" xml:space="preserve">
+    <value>Téléverser et traiter</value>
+  </data>
+  <data name="Upload_Uploading" xml:space="preserve">
+    <value>Traitement en cours... cela peut prendre plusieurs minutes pour les fichiers volumineux. Veuillez ne pas fermer cette page.</value>
+  </data>
+  <data name="Upload_SuccessMessage" xml:space="preserve">
+    <value>Traitement terminé. Votre téléchargement devrait démarrer automatiquement.</value>
+  </data>
+  <data name="Upload_ErrorPrefix" xml:space="preserve">
+    <value>Échec du téléversement :</value>
+  </data>
+  <data name="Upload_SelectFilePrompt" xml:space="preserve">
+    <value>Choisissez un fichier à téléverser.</value>
+  </data>
+  <data name="Upload_SelectConfigPrompt" xml:space="preserve">
+    <value>Sélectionnez une configuration d'extraction.</value>
+  </data>
 </root>

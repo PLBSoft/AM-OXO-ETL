@@ -124,3 +124,33 @@ The user is not a professional software architect and expects to make mistakes i
 - Trades away testability, layering, or maintainability for short-term convenience without the user asking for that trade-off explicitly
 
 Say so directly, explain the concrete downside, and propose the alternative — then wait for a decision rather than silently complying or silently "fixing" it. Do not assume a past instruction (including one written in this file) is correct just because it's already written down; instructions can contain mistakes too.
+
+---
+
+## CURRENT SOLUTION STATE (living reference — read this before exploring the codebase; update it at the end of each milestone)
+
+### Projects
+- `src/`: `ExcelETL.Domain`, `ExcelETL.Application`, `ExcelETL.Infrastructure`, `ExcelETL.WebAPI`, `ExcelETL.BlazorAdmin`
+- `tests/`: mirrors each `src/` project 1:1 (`ExcelETL.Domain.Tests`, etc.)
+- `legacy/`: `NewApiPingService`, `ExcelProcessingClientService` (+ `.Tests`) — the .NET Framework 4.8 legacy app's own HTTP client for calling the new API; the style precedent for any new M2M `HttpClient` code (multipart build, timeout translation, header setup).
+
+### Web API surface
+- `POST /api/excel/process` — `ExcelController` (`src/ExcelETL.WebAPI/Controllers/ExcelController.cs`). `multipart/form-data`, `[FromForm] ProcessExcelFileRequest { Guid ExtractionConfigId; IFormFile File }`. Returns `FileStreamResult` (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`). Max 10 MB, 5-min server timeout policy (`UploadLimits.MaxExcelFileSizeBytes` / `ExcelProcessingTimeout` / `ExcelProcessingTimeoutPolicy`) — kept identical to BlazorAdmin's `/upload-test` client-side cap (Milestone 10) so that page exercises the server's real limit.
+- API key auth: header `X-Api-Key` (`ApiKeyAuthenticationDefaults.HeaderName`), constant-time compare in `ApiKeyAuthenticationHandler`, value at appsettings key `ApiKeyAuthentication:ApiKey` (only set in `appsettings.Development.json` today — prod value expected via user secrets/env var). Applied as the fallback auth policy for the whole WebAPI app.
+- Kestrel (WebAPI `Program.cs`): `MaxRequestBodySize`=100 MB, `KeepAliveTimeout`=5 min, `RequestHeadersTimeout`=2 min.
+
+### BlazorAdmin state
+- Auth pattern for admin pages: `@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]` (see `Components/Pages/Admin/Users.razor`).
+- Rendermode is set **once, globally**: `App.razor` → `<Routes @rendermode="InteractiveServer" />`, `Program.cs` → `.AddInteractiveServerRenderMode()`. Individual pages must not declare their own `@rendermode`.
+- i18n: `src/ExcelETL.BlazorAdmin/Resources/BlazorAdminMessages.resx`/`.fr.resx` exists and is used by Dashboard/History/Logs/Mappings/Users/UploadTest via `IStringLocalizer<BlazorAdminMessages>`. Key convention: `{PageName}_{Element}` (e.g. `Users_PageTitle`, `History_Status`, `Upload_*`).
+- As of Milestone 10: `ExcelProcessingClient` (`src/ExcelETL.BlazorAdmin/ExternalApi/`) is a typed `HttpClient` (`AddHttpClient<ExcelProcessingClient>` in `Program.cs`) that calls the WebAPI's `POST /api/excel/process` directly — a **deliberate, narrow exception** to the "never talk to the Web API over HTTP" rule (see `Architecture` section above), scoped to the `/upload-test` admin page only, which exists to exercise the real M2M contract. Configured via `WebApiClientOptions` bound from the `WebApiClient:BaseUrl` / `WebApiClient:ApiKey` config section (dev values only in `appsettings.Development.json`, matching WebAPI's own dev API key; no base `appsettings.json` entry, same fail-fast-in-prod pattern as WebAPI's `ApiKeyAuthentication`). Timeout is 6 minutes (`ExcelProcessingClient.DefaultTimeout`), matching the legacy client's precedent. The JS-interop/stream-download step is isolated behind `IExcelDownloadInterop` (`ExcelDownloadInterop` impl uses `wwwroot/js/fileDownload.js` + `DotNetStreamReference`) specifically so it can be swapped for a fake in bUnit tests — bUnit's fake `IJSRuntime` cannot marshal a real `DotNetStreamReference`.
+- `wwwroot/js/fileDownload.js` is the first custom JS module in this project (previously only inline `IJSRuntime` calls to browser globals existed, e.g. clipboard write in `Logs.razor`).
+
+### Test conventions in practice
+- bUnit (v2.7.2): `class FooTests : BunitContext`, `Render<Foo>()`. Examples across `Components/Pages/Admin/*`, `Account/*`, `Layout/*`.
+- HTTP-calling code (e.g. `ExcelProcessingClient`) is tested with a hand-rolled `FakeHttpMessageHandler` (mirrors `legacy/ExcelProcessingClientService.Tests/FakeHttpMessageHandler.cs`), not RichardSzalay.MockHttp — avoids a new dependency for equivalent capability. Colocated per test project (`tests/ExcelETL.BlazorAdmin.Tests/ExternalApi/FakeHttpMessageHandler.cs`).
+- WebAPI endpoints are tested via `WebApplicationFactory<Program>` integration tests (e.g. `ExcelProcessEndpointTests.cs`), not mocked HTTP.
+- bUnit + `InputFile`: `cut.FindComponent<InputFile>()` + `InputFileContent.CreateFromText(...)` + `.UploadFiles(...)`. Note: triggering `InputFile.OnChange` in bUnit blocks synchronously until the whole async handler chain completes — a `TaskCompletionSource`-gated fake HTTP response that you only complete *after* calling `UploadFiles` will deadlock the test. Use immediately-resolved fake responses instead; the transient "Uploading" state isn't observable this way.
+
+### Maintenance rule
+Whenever a milestone adds new DI registrations, HTTP endpoints, config keys, JS modules, or resource files, update the relevant bullet above in the same commit. Treat this section as a cache of the exploration an agent would otherwise have to redo — keep it accurate rather than exhaustive.
