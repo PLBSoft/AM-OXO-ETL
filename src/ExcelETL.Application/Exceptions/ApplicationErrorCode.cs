@@ -11,5 +11,6 @@ public enum ApplicationErrorCode
     SheetNotFoundInExtractionConfig,
     ExtractionHistoryNotFound,
     WorksheetNotFoundInUploadedWorkbook,
-    GeneratedWorkbookSheetCountOutOfRange
+    GeneratedWorkbookSheetCountOutOfRange,
+    UnknownFieldReference
 }
