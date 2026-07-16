@@ -44,5 +44,10 @@ public enum DomainErrorCode
     TacheMultiplePivot_EmptyAction,
     ExtractionError_EmptySheet,
     ExtractionError_EmptyBlockIdentifier,
-    ExtractionError_EmptyMessage
+    ExtractionError_EmptyMessage,
+    ImportProfile_EmptyName,
+    ImportProfile_EmptyReperePrefix,
+    ImportProfile_NoSheetRules,
+    SheetExtractionRule_EmptySheetName,
+    SheetExtractionRule_SheetNameLocatorMismatch
 }
