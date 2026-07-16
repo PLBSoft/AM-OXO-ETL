@@ -32,5 +32,17 @@ public enum DomainErrorCode
     FieldRef_EmptyFieldName,
     ConditionalPointRule_EmptySourceFieldName,
     ConditionalPointRule_EmptyComparisonValue,
-    ConditionalPointRule_EmptyColonneName
+    ConditionalPointRule_EmptyColonneName,
+    EquipementPivot_EmptyRepere,
+    EquipementPivot_EmptyDesignation,
+    EquipementPivot_EmptyTypeElementCode,
+    IsolementPivot_EmptyRepere,
+    IsolementPivot_EmptyDesignation,
+    IsolementPivot_EmptyTypeElementNom,
+    PointPivot_EmptyColonneNom,
+    PointPivot_EmptyParentRepere,
+    TacheMultiplePivot_EmptyAction,
+    ExtractionError_EmptySheet,
+    ExtractionError_EmptyBlockIdentifier,
+    ExtractionError_EmptyMessage
 }
