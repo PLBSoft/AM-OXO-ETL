@@ -2,6 +2,8 @@
  
 *Généré le 2026-07-14 par exploration directe du code (aucune donnée n'est tirée de la mémoire long-terme sans vérification).*
  
+**Mise à jour 2026-07-16** — Lot A du pipeline d'extraction OXO (`ExcelETL.Domain/Extraction/`, voir §1 et §2) livré et commité ; le reste du document (structure générale, EF Core, auth, conventions de test) n'a pas changé et n'a pas été ré-audité.
+ 
 ---
  
 ## 1. Structure du solution/projets et câblage des dépendances
@@ -26,6 +28,8 @@ legacy/
  
 `legacy/` (ASP.NET MVC 5, .NET Framework 4.8) est le style de référence pour tout futur code HTTP M2M côté client (construction multipart, traduction des timeouts, headers) mais ne fait pas partie de la solution .NET 10.
  
+**⚠️ Deux dossiers `Extraction/` distincts, à ne pas confondre** : `src/ExcelETL.Application/Extraction/` est l'ancien pipeline (déjà en prod, `ExtractionConfig`/`CellMapping`/`SheetConfig`/`ExtractionResult`, exposé par `POST /api/excel/process`). `src/ExcelETL.Domain/Extraction/` (nouveau, 2026-07-16, Lot A) est le second pipeline OXO — `Primitives/`, `Pivot/`, `Profile/` (`ImportProfile`/`SheetExtractionRule`) — pas encore relié à un host, pas encore utilisé par `Application`/`WebAPI`. Les deux coexistent délibérément et ne fusionnent pas ; voir `CLAUDE.md` §"CURRENT SOLUTION STATE → Extraction pipeline" pour le détail des choix de modélisation (A1-A3) et `docs/tickets-tdd-extraction-2026-07-16.md` pour la suite (Lot B→E).
+ 
 ---
  
 ## 2. Conventions déjà adoptées
@@ -35,7 +39,7 @@ legacy/
 Piège EF Core documenté : les entités du Domain assignent leur `Guid` côté client (constructeur), donc le change tracker ne peut pas distinguer « nouvelle entité à clé pré-assignée » de « entité existante modifiée » — les repositories doivent forcer `context.Entry(x).State = EntityState.Added` explicitement après un ajout par mutation de collection.
  
 **Exceptions / pas de Result pattern générique.** Le Domain lève des exceptions typées (`DomainValidationException`, `DomainArgumentOutOfRangeException`, `DomainRuleViolationException`, dans `ExcelETL.Domain/Exceptions`), chacune portant un `DomainErrorCode` (enum) + les `Args` bruts interpolés dans un message anglais. L'Application fait de même avec `ApplicationErrorCode` (`ExtractionConfigNotFoundException`, etc.). Le WebAPI capte tout ça dans un seul `GlobalExceptionHandler : IExceptionHandler`, qui résout le code d'erreur via un `BusinessExceptionLocalizer` (ressources `.resx`) et mappe chaque type d'exception à un status HTTP (404/400/409/500) — voir `src/ExcelETL.WebAPI/ExceptionHandling/GlobalExceptionHandler.cs:43`.
-Une exception au principe « pas de Result » existe côté Identity : `IdentityOperationResult(bool Succeeded, IReadOnlyList<string> Errors)` — un record simple utilisé uniquement pour les opérations `UserManager` (mot de passe/profil), pour ne pas fuir de type ASP.NET Identity hors d'Infrastructure.
+Deux exceptions documentées au principe « pas de Result » : côté Identity, `IdentityOperationResult(bool Succeeded, IReadOnlyList<string> Errors)` — un record simple utilisé uniquement pour les opérations `UserManager` (mot de passe/profil), pour ne pas fuir de type ASP.NET Identity hors d'Infrastructure. Côté nouveau pipeline OXO (2026-07-16, voir §1) : `ImportResult` (`ExcelETL.Domain/Extraction/Pivot/`), une `sealed class` — pas un record — qui accumule des `ExtractionError` par bloc pendant que l'extraction continue sur les blocs suivants, un besoin de rapport de traitement par lot incompatible avec « lever une exception typée et arrêter ».
  
 **Entités Domain riches, pas des DTO anémiques.** Constructeurs qui valident (ex. `CellMapping`, `SheetConfig`, `ExtractionConfig` limitent à 4-5 feuilles via `MaxSheets`), propriétés en lecture seule + méthodes métier (`AddSheet`, `AddCellMapping`, `MarkCompleted`, `MarkFailed`) qui portent les invariants (ex. on ne peut pas `MarkCompleted` une entrée déjà `Completed`/`Failed`).
  
