@@ -21,7 +21,8 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
         while (true)
         {
             var blockStartRow = locator.FirstBlockStartRow + blockIndex * locator.Step;
-            var stopValue = workbookReader.ReadCellValue(locator.Sheet, BuildRange(stopField, blockStartRow));
+            var stopValue = workbookReader.ReadCellValue(
+                locator.Sheet, BlockFieldRangeCalculator.BuildRange(stopField, blockStartRow));
 
             if (string.IsNullOrWhiteSpace(stopValue))
             {
@@ -33,7 +34,8 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
 
             foreach (var field in otherFields)
             {
-                var value = workbookReader.ReadCellValue(locator.Sheet, BuildRange(field, blockStartRow));
+                var value = workbookReader.ReadCellValue(
+                    locator.Sheet, BlockFieldRangeCalculator.BuildRange(field, blockStartRow));
                 if (string.IsNullOrWhiteSpace(value))
                 {
                     blankFieldNames.Add(field.Name);
@@ -60,19 +62,5 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
         }
 
         return new RepeatingBlockReadResult(blocks, errors);
-    }
-
-    private static string BuildRange(BlockFieldDefinition field, int blockStartRow)
-    {
-        var (startColumn, endColumn) = SplitColumnRange(field.ColumnRange);
-        var start = $"{startColumn}{blockStartRow + field.RowOffsetStart}";
-        var end = $"{endColumn}{blockStartRow + field.RowOffsetEnd}";
-        return start == end ? start : $"{start}:{end}";
-    }
-
-    private static (string Start, string End) SplitColumnRange(string columnRange)
-    {
-        var parts = columnRange.Split(':');
-        return parts.Length == 1 ? (parts[0], parts[0]) : (parts[0], parts[1]);
     }
 }
