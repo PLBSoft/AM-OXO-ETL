@@ -16,5 +16,21 @@ public enum DomainErrorCode
     ExtractionHistory_EmptySourceFileName,
     ExtractionHistory_EmptyStoredFilePath,
     ExtractionHistory_CannotCompleteFromStatus,
-    ExtractionHistory_CannotFailFromStatus
+    ExtractionHistory_CannotFailFromStatus,
+    DirectCell_EmptySheet,
+    DirectCell_InvalidRange,
+    BlockFieldDefinition_EmptyName,
+    BlockFieldDefinition_InvalidColumnRange,
+    BlockFieldDefinition_RowOffsetEndBeforeStart,
+    RepeatingBlockLocator_EmptySheet,
+    RepeatingBlockLocator_NonPositiveFirstBlockStartRow,
+    RepeatingBlockLocator_NonPositiveStep,
+    RepeatingBlockLocator_EmptyStopFieldName,
+    RepeatingBlockLocator_EmptyFields,
+    SubstringAfter_EmptyPrefix,
+    Concat_EmptyParts,
+    FieldRef_EmptyFieldName,
+    ConditionalPointRule_EmptySourceFieldName,
+    ConditionalPointRule_EmptyComparisonValue,
+    ConditionalPointRule_EmptyColonneName
 }
