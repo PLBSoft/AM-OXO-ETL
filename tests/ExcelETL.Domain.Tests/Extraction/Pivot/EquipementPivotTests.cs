@@ -15,6 +15,18 @@ public class EquipementPivotTests
         equipement.Repere.Should().Be("C7401");
         equipement.Designation.Should().Be("Rév 1 du 01/01/2026");
         equipement.TypeElementNom.Should().Be("MAD TRAVAUX");
+        equipement.Localisation.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void WithExpression_CanBroadcastLocalisation()
+    {
+        var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
+
+        var broadcast = equipement with { Localisation = "Zone A" };
+
+        broadcast.Localisation.Should().Be("Zone A");
+        broadcast.Repere.Should().Be(equipement.Repere);
     }
 
     [Fact]

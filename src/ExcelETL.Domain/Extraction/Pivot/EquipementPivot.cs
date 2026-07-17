@@ -9,11 +9,17 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 // and target both use TypeElement.Nom throughout, including for the parent Equipement -- never
 // TypeElement.Code. The value itself ("MAD TRAVAUX" for a MAD dossier) comes from
 // ImportProfile.EquipementTypeElementNom, never a constant in the extraction service.
+//
+// Localisation starts empty and is filled in later by the DIVERS sheet's "loc1" broadcast (via a
+// `with` expression), same pattern as IsolementPivot.Localisation -- see
+// docs/modele-domaine-import-profile-2026-07-16.md §1.5 and docs/spec-extraction-fichier-source-oxo-2026-07-16.md §6.
+// Applies to the Equipement in addition to every Isolement of the run (Lot D).
 public sealed record EquipementPivot
 {
     public string Repere { get; }
     public string Designation { get; }
     public string TypeElementNom { get; }
+    public string Localisation { get; init; }
 
     public EquipementPivot(string repere, string designation, string typeElementNom)
     {
@@ -39,5 +45,6 @@ public sealed record EquipementPivot
         Repere = repere;
         Designation = designation;
         TypeElementNom = typeElementNom;
+        Localisation = "";
     }
 }
