@@ -34,16 +34,11 @@ public sealed class IsolementExtractionService(
         var positionField = FindField(locator, IsolementFieldNames.PositionALaPose);
         var typeElementField = FindField(locator, IsolementFieldNames.TypeElement);
 
-        // Grouped by ColonneName so each Colonne's own (possibly single-rule) condition set is
-        // evaluated independently -- see IConditionalPointRuleEvaluator's per-Colonne contract.
-        // ISOLEMENT has exactly one conditional Colonne (ZERO ENERGIE), so "this group didn't match"
-        // and "none of the sheet's conditional Colonnes matched" (model doc §3.2's actual trigger for
-        // the warning) are the same event here, and every non-"ZERO ENERGIE" isolement legitimately
-        // warns -- confirmed against all 3 real fixtures, none of which contain a ZERO ENERGIE-typed
-        // row in this sheet. That collapse won't hold once a sheet has *multiple* mutually-exclusive
-        // conditional types (DIVERS, Lot C6): a SOUPAPE isolement matching its own Colonnes shouldn't
-        // also warn just because it didn't match INSTRUMENTATION's or POINT FEU's. Revisit then --
-        // don't generalize the aggregation now for a need that doesn't exist yet.
+        // Grouped by ColonneName, then aggregated via ConditionalPointGroupEvaluator so a warning
+        // only fires when *none* of the sheet's conditional Colonnes matched (model doc §3.2) --
+        // ISOLEMENT has exactly one conditional Colonne (ZERO ENERGIE), so every non-"ZERO ENERGIE"
+        // isolement legitimately warns here, confirmed against all 3 real fixtures (none contain a
+        // ZERO ENERGIE-typed row in this sheet).
         var pointRuleGroups = sheetRule.PointRules.GroupBy(r => r.ColonneName).ToList();
 
         var isolements = new List<IsolementPivot>();
@@ -99,17 +94,16 @@ public sealed class IsolementExtractionService(
             }
 
             var extractedFields = new Dictionary<string, string> { [IsolementFieldNames.TypeElement] = typeElement! };
-            foreach (var group in pointRuleGroups)
+            var (colonneNames, warning) = ConditionalPointGroupEvaluator.Evaluate(
+                conditionalPointRuleEvaluator, pointRuleGroups, extractedFields);
+            foreach (var colonneName in colonneNames)
             {
-                var (shouldCreate, warning) = conditionalPointRuleEvaluator.Evaluate(group.ToList(), extractedFields);
-                if (shouldCreate)
-                {
-                    points.Add(new PointPivot(group.Key, repere));
-                }
-                else if (warning is not null)
-                {
-                    errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
-                }
+                points.Add(new PointPivot(colonneName, repere));
+            }
+
+            if (warning is not null)
+            {
+                errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
             }
 
             blockIndex++;

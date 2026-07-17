@@ -50,17 +50,16 @@ public sealed class AutresJointsTouchesExtractionService(
             }
 
             var extractedFields = new Dictionary<string, string> { [IsolementFieldNames.TypeElement] = typeElement };
-            foreach (var group in pointRuleGroups)
+            var (colonneNames, warning) = ConditionalPointGroupEvaluator.Evaluate(
+                conditionalPointRuleEvaluator, pointRuleGroups, extractedFields);
+            foreach (var colonneName in colonneNames)
             {
-                var (shouldCreate, warning) = conditionalPointRuleEvaluator.Evaluate(group.ToList(), extractedFields);
-                if (shouldCreate)
-                {
-                    points.Add(new PointPivot(group.Key, repere));
-                }
-                else if (warning is not null)
-                {
-                    errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
-                }
+                points.Add(new PointPivot(colonneName, repere));
+            }
+
+            if (warning is not null)
+            {
+                errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
             }
         }
 
