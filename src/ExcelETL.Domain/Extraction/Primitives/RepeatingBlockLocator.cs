@@ -8,11 +8,19 @@ namespace ExcelETL.Domain.Extraction.Primitives;
 // overridden below with SequenceEqual to give true structural equality.
 public sealed record RepeatingBlockLocator
 {
+    // Backing field rather than a plain auto-property: EF Core's constructor-binding materialization
+    // cannot bind a constructor parameter to an entity-collection navigation (confirmed empirically --
+    // "Navigations to related entities... cannot be bound" -- so Fields must be settable via
+    // reflection post-construction instead, using the private parameterless constructor below. Same
+    // technique as ExtractionConfig._sheets/SheetConfig._cellMappings, minus a public mutation method
+    // since RepeatingBlockLocator is meant to stay fully immutable after construction.
+    private readonly List<BlockFieldDefinition> _fields = [];
+
     public string Sheet { get; }
     public int FirstBlockStartRow { get; }
     public int Step { get; }
     public string StopFieldName { get; }
-    public IReadOnlyList<BlockFieldDefinition> Fields { get; }
+    public IReadOnlyList<BlockFieldDefinition> Fields => _fields;
 
     public RepeatingBlockLocator(
         string sheet, int firstBlockStartRow, int step, string stopFieldName, IReadOnlyList<BlockFieldDefinition> fields)
@@ -57,7 +65,15 @@ public sealed record RepeatingBlockLocator
         FirstBlockStartRow = firstBlockStartRow;
         Step = step;
         StopFieldName = stopFieldName;
-        Fields = fields;
+        _fields = [.. fields];
+    }
+
+    // EF Core materialization only -- every property is set directly via reflection immediately
+    // afterwards, bypassing this constructor's (nonexistent) validation entirely.
+    private RepeatingBlockLocator()
+    {
+        Sheet = string.Empty;
+        StopFieldName = string.Empty;
     }
 
     public bool Equals(RepeatingBlockLocator? other) =>

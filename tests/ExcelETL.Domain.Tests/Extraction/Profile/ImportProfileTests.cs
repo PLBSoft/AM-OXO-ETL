@@ -103,4 +103,25 @@ public class ImportProfileTests
 
         profile.SheetRules.Should().HaveCount(2);
     }
+
+    [Fact]
+    public void Constructor_WithExplicitId_ReconstructsProfileUnderThatId()
+    {
+        var existingId = Guid.NewGuid();
+
+        var profile = new ImportProfile(
+            existingId, "Profil OXO standard (édité)", "MAD-OXO-", EquipementTypeElementNom, [ValidRule()]);
+
+        profile.Id.Should().Be(existingId);
+        profile.Name.Should().Be("Profil OXO standard (édité)");
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyExplicitId_ThrowsArgumentException()
+    {
+        var act = () => new ImportProfile(
+            Guid.Empty, "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [ValidRule()]);
+
+        act.Should().Throw<ArgumentException>().WithParameterName("id");
+    }
 }

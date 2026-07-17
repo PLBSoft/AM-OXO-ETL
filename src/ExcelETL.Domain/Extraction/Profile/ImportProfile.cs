@@ -11,6 +11,11 @@ public sealed class ImportProfile : Entity
 {
     public const string DefaultReperePrefix = "MAD-OXO-";
 
+    // See RepeatingBlockLocator.Fields (Extraction/Primitives) for why SheetRules needs a backing
+    // field instead of a plain auto-property: EF Core cannot constructor-bind an entity-collection
+    // navigation.
+    private readonly List<SheetExtractionRule> _sheetRules = [];
+
     public string Name { get; }
     public string ReperePrefix { get; }
 
@@ -20,7 +25,7 @@ public sealed class ImportProfile : Entity
     // assumed. Never hardcoded in an extraction service; always read from here.
     public string EquipementTypeElementNom { get; }
 
-    public IReadOnlyList<SheetExtractionRule> SheetRules { get; }
+    public IReadOnlyList<SheetExtractionRule> SheetRules => _sheetRules;
 
     public ImportProfile(string name, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
         : this(name, DefaultReperePrefix, equipementTypeElementNom, sheetRules)
@@ -29,6 +34,18 @@ public sealed class ImportProfile : Entity
 
     public ImportProfile(
         string name, string reperePrefix, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
+        : this(Guid.NewGuid(), name, reperePrefix, equipementTypeElementNom, sheetRules)
+    {
+    }
+
+    // Reconstructs an existing profile under its original Id. ImportProfile has no in-place mutation
+    // methods -- editing a profile means building a brand new instance with the desired content and
+    // handing it to IImportProfileStore.SaveAsync under the same Id as the profile it replaces, so the
+    // store updates the existing row instead of inserting a duplicate. See EfImportProfileStore.
+    public ImportProfile(
+        Guid id, string name, string reperePrefix, string equipementTypeElementNom,
+        IReadOnlyList<SheetExtractionRule> sheetRules)
+        : base(id)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -60,6 +77,15 @@ public sealed class ImportProfile : Entity
         Name = name;
         ReperePrefix = reperePrefix;
         EquipementTypeElementNom = equipementTypeElementNom;
-        SheetRules = sheetRules;
+        _sheetRules = [.. sheetRules];
+    }
+
+    // EF Core materialization only -- every property is set directly via reflection immediately
+    // afterwards, bypassing this constructor's (nonexistent) validation entirely.
+    private ImportProfile()
+    {
+        Name = string.Empty;
+        ReperePrefix = string.Empty;
+        EquipementTypeElementNom = string.Empty;
     }
 }

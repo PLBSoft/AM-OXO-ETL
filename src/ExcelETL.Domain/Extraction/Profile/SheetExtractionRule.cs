@@ -17,9 +17,16 @@ namespace ExcelETL.Domain.Extraction.Profile;
 // is conditional).
 public sealed class SheetExtractionRule
 {
+    // See RepeatingBlockLocator.Fields for why PointRules needs a backing field instead of a plain
+    // auto-property: EF Core cannot constructor-bind an entity-collection navigation.
+    // UnconditionalColonneNames doesn't need this treatment -- it's a primitive (string) collection,
+    // not a navigation to an owned entity type, so EF Core binds it via the constructor like any
+    // other scalar-ish property.
+    private readonly List<ConditionalPointRule> _pointRules = [];
+
     public string SheetName { get; }
     public RepeatingBlockLocator Locator { get; }
-    public IReadOnlyList<ConditionalPointRule> PointRules { get; }
+    public IReadOnlyList<ConditionalPointRule> PointRules => _pointRules;
     public IReadOnlyList<string> UnconditionalColonneNames { get; }
 
     public SheetExtractionRule(
@@ -48,7 +55,16 @@ public sealed class SheetExtractionRule
 
         SheetName = sheetName;
         Locator = locator;
-        PointRules = pointRules;
+        _pointRules = [.. pointRules];
         UnconditionalColonneNames = unconditionalColonneNames;
+    }
+
+    // EF Core materialization only -- every property is set directly via reflection immediately
+    // afterwards, bypassing this constructor's (nonexistent) validation entirely.
+    private SheetExtractionRule()
+    {
+        SheetName = string.Empty;
+        Locator = null!;
+        UnconditionalColonneNames = [];
     }
 }
