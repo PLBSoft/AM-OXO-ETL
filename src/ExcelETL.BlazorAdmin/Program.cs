@@ -1,6 +1,7 @@
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
+using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
@@ -84,6 +85,7 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
 
 builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
+builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
 
 // Deliberate, narrow exception to the "never talk to the Web API over HTTP" Clean Architecture

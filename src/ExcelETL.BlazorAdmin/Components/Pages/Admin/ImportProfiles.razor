@@ -1,0 +1,79 @@
+@page "/import-profiles"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.Domain.Extraction.Profile
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+
+@inject IImportProfileStore ImportProfileStore
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Loc["ImportProfiles_PageTitle"]</PageTitle>
+
+<h1>@Loc["ImportProfiles_PageTitle"]</h1>
+
+<button id="create-profile-button" class="btn btn-primary mb-3" @onclick="CreateProfile">
+    @Loc["ImportProfiles_Create"]
+</button>
+
+@if (_profiles is null)
+{
+    <p>@Loc["ImportProfiles_Loading"]</p>
+}
+else if (_profiles.Count == 0)
+{
+    <p>@Loc["ImportProfiles_NoEntries"]</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@Loc["ImportProfiles_Name"]</th>
+                <th>@Loc["ImportProfiles_EquipementTypeElementNom"]</th>
+                <th>@Loc["ImportProfiles_SheetCount"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var profile in _profiles)
+            {
+                <tr>
+                    <td>@profile.Name</td>
+                    <td>@profile.EquipementTypeElementNom</td>
+                    <td>@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</td>
+                    <td>
+                        <button id="duplicate-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => DuplicateProfileAsync(profile)">
+                            @Loc["ImportProfiles_Duplicate"]
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ImportProfile>? _profiles;
+
+    protected override async Task OnInitializedAsync() => await LoadProfilesAsync();
+
+    private async Task LoadProfilesAsync() => _profiles = (await ImportProfileStore.GetAllAsync()).ToList();
+
+    private void CreateProfile() => NavigationManager.NavigateTo("import-profiles/new");
+
+    private async Task DuplicateProfileAsync(ImportProfile profile)
+    {
+        var duplicate = new ImportProfile(
+            $"{profile.Name} {Loc["ImportProfiles_DuplicateSuffix"]}",
+            profile.ReperePrefix,
+            profile.EquipementTypeElementNom,
+            profile.SheetRules);
+
+        await ImportProfileStore.SaveAsync(duplicate);
+        await LoadProfilesAsync();
+    }
+}

@@ -439,4 +439,34 @@
   <data name="Profile_ReloginButton" xml:space="preserve">
     <value>Se reconnecter</value>
   </data>
+  <data name="NavMenu_ImportProfiles" xml:space="preserve">
+    <value>Profils d'import</value>
+  </data>
+  <data name="ImportProfiles_PageTitle" xml:space="preserve">
+    <value>Profils d'import</value>
+  </data>
+  <data name="ImportProfiles_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="ImportProfiles_NoEntries" xml:space="preserve">
+    <value>Aucun profil d'import n'a encore été créé.</value>
+  </data>
+  <data name="ImportProfiles_Name" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="ImportProfiles_EquipementTypeElementNom" xml:space="preserve">
+    <value>Type d'équipement</value>
+  </data>
+  <data name="ImportProfiles_SheetCount" xml:space="preserve">
+    <value>{0} règle(s) de feuille</value>
+  </data>
+  <data name="ImportProfiles_Create" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="ImportProfiles_Duplicate" xml:space="preserve">
+    <value>Dupliquer</value>
+  </data>
+  <data name="ImportProfiles_DuplicateSuffix" xml:space="preserve">
+    <value>(Copie)</value>
+  </data>
 </root>

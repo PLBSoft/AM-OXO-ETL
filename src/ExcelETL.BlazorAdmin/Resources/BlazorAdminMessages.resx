@@ -439,4 +439,34 @@
   <data name="Profile_ReloginButton" xml:space="preserve">
     <value>Sign in again</value>
   </data>
+  <data name="NavMenu_ImportProfiles" xml:space="preserve">
+    <value>Import Profiles</value>
+  </data>
+  <data name="ImportProfiles_PageTitle" xml:space="preserve">
+    <value>Import Profiles</value>
+  </data>
+  <data name="ImportProfiles_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="ImportProfiles_NoEntries" xml:space="preserve">
+    <value>No import profiles have been created yet.</value>
+  </data>
+  <data name="ImportProfiles_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ImportProfiles_EquipementTypeElementNom" xml:space="preserve">
+    <value>Equipement type</value>
+  </data>
+  <data name="ImportProfiles_SheetCount" xml:space="preserve">
+    <value>{0} sheet rule(s)</value>
+  </data>
+  <data name="ImportProfiles_Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="ImportProfiles_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="ImportProfiles_DuplicateSuffix" xml:space="preserve">
+    <value>(Copy)</value>
+  </data>
 </root>
