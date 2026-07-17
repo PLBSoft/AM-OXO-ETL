@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Platines;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -7,9 +7,12 @@ using FluentAssertions;
 using Moq;
 using Xunit;
 
-namespace ExcelETL.Application.Tests.Extraction.Oxo.Platines;
+namespace ExcelETL.Application.Tests.Extraction.Oxo;
 
-public class PlatinesExtractionServiceTests
+// Covers PLATINES' shape specifically (Step=8, 7 unconditional Colonnes) -- also exercised by
+// ORIFICES CAPACITES (Lot C4) reusing the same service with a different SheetExtractionRule, see
+// OrificesCapacitesExtractionServiceIntegrationTests / the CLAUDE.md note on why this is shared.
+public class UnconditionalIsolementSheetExtractionServiceTests
 {
     private const string Sheet = "PLATINES";
 
@@ -24,15 +27,15 @@ public class PlatinesExtractionServiceTests
         "PLATINES / TAMPONS PLEINS"
     ];
 
-    private readonly PlatinesExtractionService _sut = new(new RepeatingBlockReader(), new TextTransformEvaluator());
+    private readonly UnconditionalIsolementSheetExtractionService _sut = new(new RepeatingBlockReader(), new TextTransformEvaluator());
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, PlatinesFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
-            new BlockFieldDefinition(PlatinesFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(PlatinesFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(PlatinesFieldNames.TypeElement, "B:E", 3, 5)
+            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
+            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
         UnconditionalColonneNames);

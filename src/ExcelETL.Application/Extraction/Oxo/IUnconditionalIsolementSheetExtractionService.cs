@@ -1,8 +1,8 @@
 using ExcelETL.Domain.Extraction.Profile;
 
-namespace ExcelETL.Application.Extraction.Oxo.Platines;
+namespace ExcelETL.Application.Extraction.Oxo;
 
-public interface IPlatinesExtractionService
+public interface IUnconditionalIsolementSheetExtractionService
 {
     IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule);
 }

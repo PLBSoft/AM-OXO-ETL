@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Platines;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -9,8 +9,8 @@ using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
-// Runs PlatinesExtractionService (Application, Lot C3) against the real ClosedXmlWorkbookReader and
-// the 3 real client fixtures.
+// Runs UnconditionalIsolementSheetExtractionService (Application, Lot C3) against the real
+// ClosedXmlWorkbookReader and the 3 real client fixtures, configured for PLATINES specifically.
 public class PlatinesExtractionServiceIntegrationTests
 {
     private const string Sheet = "PLATINES";
@@ -26,15 +26,15 @@ public class PlatinesExtractionServiceIntegrationTests
         "PLATINES / TAMPONS PLEINS"
     ];
 
-    private readonly PlatinesExtractionService _sut = new(new RepeatingBlockReader(), new TextTransformEvaluator());
+    private readonly UnconditionalIsolementSheetExtractionService _sut = new(new RepeatingBlockReader(), new TextTransformEvaluator());
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, PlatinesFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
-            new BlockFieldDefinition(PlatinesFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(PlatinesFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(PlatinesFieldNames.TypeElement, "B:E", 3, 5)
+            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
+            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
         UnconditionalColonneNames);
