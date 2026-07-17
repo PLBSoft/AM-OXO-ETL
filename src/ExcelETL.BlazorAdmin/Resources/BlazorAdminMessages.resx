@@ -556,4 +556,103 @@
   <data name="ImportProfileEditor_Operator_NotEquals" xml:space="preserve">
     <value>Not equals</value>
   </data>
+  <data name="NavMenu_ImportProfileTest" xml:space="preserve">
+    <value>Test Import Profile</value>
+  </data>
+  <data name="ImportProfileTest_PageTitle" xml:space="preserve">
+    <value>Test Import Profile</value>
+  </data>
+  <data name="ImportProfileTest_Instructions" xml:space="preserve">
+    <value>Upload an .xlsx file to run it through the extraction pipeline in memory, using the selected profile's sheet rules -- no file is archived and nothing is sent to the Web API.</value>
+  </data>
+  <data name="ImportProfileTest_ProfileLabel" xml:space="preserve">
+    <value>Import profile</value>
+  </data>
+  <data name="ImportProfileTest_ProfilePlaceholder" xml:space="preserve">
+    <value>Select a profile...</value>
+  </data>
+  <data name="ImportProfileTest_NoProfilesAvailable" xml:space="preserve">
+    <value>No import profiles exist yet. Create one on the Import Profiles page first.</value>
+  </data>
+  <data name="ImportProfileTest_FileLabel" xml:space="preserve">
+    <value>Excel file (.xlsx)</value>
+  </data>
+  <data name="ImportProfileTest_SelectProfilePrompt" xml:space="preserve">
+    <value>Select an import profile.</value>
+  </data>
+  <data name="ImportProfileTest_Processing" xml:space="preserve">
+    <value>Running the pipeline...</value>
+  </data>
+  <data name="ImportProfileTest_RejectedFileHeading" xml:space="preserve">
+    <value>File rejected</value>
+  </data>
+  <data name="ImportProfileTest_WarningsHeading" xml:space="preserve">
+    <value>Non-blocking warnings</value>
+  </data>
+  <data name="ImportProfileTest_EquipementHeading" xml:space="preserve">
+    <value>Equipement</value>
+  </data>
+  <data name="ImportProfileTest_IsolementsHeading" xml:space="preserve">
+    <value>Isolements</value>
+  </data>
+  <data name="ImportProfileTest_PointsHeading" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="ImportProfileTest_TachesMultiplesHeading" xml:space="preserve">
+    <value>Taches multiples</value>
+  </data>
+  <data name="ImportProfileTest_Repere" xml:space="preserve">
+    <value>Repere</value>
+  </data>
+  <data name="ImportProfileTest_Designation" xml:space="preserve">
+    <value>Designation</value>
+  </data>
+  <data name="ImportProfileTest_TypeElementNom" xml:space="preserve">
+    <value>TypeElement.Nom</value>
+  </data>
+  <data name="ImportProfileTest_Localisation" xml:space="preserve">
+    <value>Localisation</value>
+  </data>
+  <data name="ImportProfileTest_PositionALaPose" xml:space="preserve">
+    <value>Position a la pose</value>
+  </data>
+  <data name="ImportProfileTest_ColonneNom" xml:space="preserve">
+    <value>Colonne nom</value>
+  </data>
+  <data name="ImportProfileTest_ParentRepere" xml:space="preserve">
+    <value>Parent repere</value>
+  </data>
+  <data name="ImportProfileTest_Ordre" xml:space="preserve">
+    <value>Ordre</value>
+  </data>
+  <data name="ImportProfileTest_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="ImportProfileTest_Acteur" xml:space="preserve">
+    <value>Acteur</value>
+  </data>
+  <data name="ImportProfileTest_Risques" xml:space="preserve">
+    <value>Risques</value>
+  </data>
+  <data name="ImportProfileTest_TypeTacheMultipleCode" xml:space="preserve">
+    <value>Type tache multiple</value>
+  </data>
+  <data name="ImportProfileTest_DateValidation" xml:space="preserve">
+    <value>Date validation</value>
+  </data>
+  <data name="ImportProfileTest_EstFactice" xml:space="preserve">
+    <value>Est factice</value>
+  </data>
+  <data name="ImportProfileTest_Sheet" xml:space="preserve">
+    <value>Sheet</value>
+  </data>
+  <data name="ImportProfileTest_BlockIdentifier" xml:space="preserve">
+    <value>Block identifier</value>
+  </data>
+  <data name="ImportProfileTest_ErrorCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="ImportProfileTest_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
 </root>

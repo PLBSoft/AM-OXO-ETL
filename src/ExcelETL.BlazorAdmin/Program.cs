@@ -2,6 +2,10 @@ using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
+using ExcelETL.Application.Extraction.Oxo.Divers;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
@@ -87,6 +91,19 @@ builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigReposito
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
+
+// The OXO extraction pipeline (Lot A-D), wired here so the /import-profiles/test admin page can run
+// it in-process against an uploaded file -- no host has needed these registrations until now, since
+// WebAPI still only exposes the older ExtractionConfig pipeline. All stateless, so Singleton.
+builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
+builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
+builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
+builder.Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
+builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
+builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();
+builder.Services.AddSingleton<IAutresJointsTouchesExtractionService, AutresJointsTouchesExtractionService>();
+builder.Services.AddSingleton<IDiversExtractionService, DiversExtractionService>();
+builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
 
 // Deliberate, narrow exception to the "never talk to the Web API over HTTP" Clean Architecture
 // rule above -- see ExcelProcessingClient for why. Used only by the /upload-test admin page.

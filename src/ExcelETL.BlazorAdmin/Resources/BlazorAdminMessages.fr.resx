@@ -556,4 +556,103 @@
   <data name="ImportProfileEditor_Operator_NotEquals" xml:space="preserve">
     <value>Différent de</value>
   </data>
+  <data name="NavMenu_ImportProfileTest" xml:space="preserve">
+    <value>Tester un profil</value>
+  </data>
+  <data name="ImportProfileTest_PageTitle" xml:space="preserve">
+    <value>Tester un profil d'import</value>
+  </data>
+  <data name="ImportProfileTest_Instructions" xml:space="preserve">
+    <value>Déposez un fichier .xlsx pour l'exécuter à travers le pipeline d'extraction en mémoire, avec les règles de feuille du profil sélectionné -- aucun fichier n'est archivé et rien n'est envoyé au Web API.</value>
+  </data>
+  <data name="ImportProfileTest_ProfileLabel" xml:space="preserve">
+    <value>Profil d'import</value>
+  </data>
+  <data name="ImportProfileTest_ProfilePlaceholder" xml:space="preserve">
+    <value>Sélectionnez un profil...</value>
+  </data>
+  <data name="ImportProfileTest_NoProfilesAvailable" xml:space="preserve">
+    <value>Aucun profil d'import n'existe encore. Créez-en un sur la page Profils d'import d'abord.</value>
+  </data>
+  <data name="ImportProfileTest_FileLabel" xml:space="preserve">
+    <value>Fichier Excel (.xlsx)</value>
+  </data>
+  <data name="ImportProfileTest_SelectProfilePrompt" xml:space="preserve">
+    <value>Sélectionnez un profil d'import.</value>
+  </data>
+  <data name="ImportProfileTest_Processing" xml:space="preserve">
+    <value>Exécution du pipeline...</value>
+  </data>
+  <data name="ImportProfileTest_RejectedFileHeading" xml:space="preserve">
+    <value>Fichier rejeté</value>
+  </data>
+  <data name="ImportProfileTest_WarningsHeading" xml:space="preserve">
+    <value>Avertissements non bloquants</value>
+  </data>
+  <data name="ImportProfileTest_EquipementHeading" xml:space="preserve">
+    <value>Équipement</value>
+  </data>
+  <data name="ImportProfileTest_IsolementsHeading" xml:space="preserve">
+    <value>Isolements</value>
+  </data>
+  <data name="ImportProfileTest_PointsHeading" xml:space="preserve">
+    <value>Points</value>
+  </data>
+  <data name="ImportProfileTest_TachesMultiplesHeading" xml:space="preserve">
+    <value>Tâches multiples</value>
+  </data>
+  <data name="ImportProfileTest_Repere" xml:space="preserve">
+    <value>Repère</value>
+  </data>
+  <data name="ImportProfileTest_Designation" xml:space="preserve">
+    <value>Désignation</value>
+  </data>
+  <data name="ImportProfileTest_TypeElementNom" xml:space="preserve">
+    <value>TypeElement.Nom</value>
+  </data>
+  <data name="ImportProfileTest_Localisation" xml:space="preserve">
+    <value>Localisation</value>
+  </data>
+  <data name="ImportProfileTest_PositionALaPose" xml:space="preserve">
+    <value>Position à la pose</value>
+  </data>
+  <data name="ImportProfileTest_ColonneNom" xml:space="preserve">
+    <value>Nom de colonne</value>
+  </data>
+  <data name="ImportProfileTest_ParentRepere" xml:space="preserve">
+    <value>Repère parent</value>
+  </data>
+  <data name="ImportProfileTest_Ordre" xml:space="preserve">
+    <value>Ordre</value>
+  </data>
+  <data name="ImportProfileTest_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="ImportProfileTest_Acteur" xml:space="preserve">
+    <value>Acteur</value>
+  </data>
+  <data name="ImportProfileTest_Risques" xml:space="preserve">
+    <value>Risques</value>
+  </data>
+  <data name="ImportProfileTest_TypeTacheMultipleCode" xml:space="preserve">
+    <value>Type de tâche multiple</value>
+  </data>
+  <data name="ImportProfileTest_DateValidation" xml:space="preserve">
+    <value>Date de validation</value>
+  </data>
+  <data name="ImportProfileTest_EstFactice" xml:space="preserve">
+    <value>Est factice</value>
+  </data>
+  <data name="ImportProfileTest_Sheet" xml:space="preserve">
+    <value>Feuille</value>
+  </data>
+  <data name="ImportProfileTest_BlockIdentifier" xml:space="preserve">
+    <value>Identifiant du bloc</value>
+  </data>
+  <data name="ImportProfileTest_ErrorCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="ImportProfileTest_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
 </root>
