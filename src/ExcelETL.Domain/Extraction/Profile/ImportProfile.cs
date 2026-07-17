@@ -13,14 +13,22 @@ public sealed class ImportProfile : Entity
 
     public string Name { get; }
     public string ReperePrefix { get; }
+
+    // The Equipement parent's TypeElement.Nom for this profile (e.g. "MAD TRAVAUX" for a MAD dossier,
+    // an as-yet-unconfirmed value for a future REL profile) -- added in model doc v2 after the client
+    // clarified this value varies by profile and was never really the constant "MAD" originally
+    // assumed. Never hardcoded in an extraction service; always read from here.
+    public string EquipementTypeElementNom { get; }
+
     public IReadOnlyList<SheetExtractionRule> SheetRules { get; }
 
-    public ImportProfile(string name, IReadOnlyList<SheetExtractionRule> sheetRules)
-        : this(name, DefaultReperePrefix, sheetRules)
+    public ImportProfile(string name, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
+        : this(name, DefaultReperePrefix, equipementTypeElementNom, sheetRules)
     {
     }
 
-    public ImportProfile(string name, string reperePrefix, IReadOnlyList<SheetExtractionRule> sheetRules)
+    public ImportProfile(
+        string name, string reperePrefix, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -34,6 +42,13 @@ public sealed class ImportProfile : Entity
                 "Repere prefix must not be empty.", nameof(reperePrefix), DomainErrorCode.ImportProfile_EmptyReperePrefix);
         }
 
+        if (string.IsNullOrWhiteSpace(equipementTypeElementNom))
+        {
+            throw new DomainValidationException(
+                "Equipement type element nom must not be empty.", nameof(equipementTypeElementNom),
+                DomainErrorCode.ImportProfile_EmptyEquipementTypeElementNom);
+        }
+
         ArgumentNullException.ThrowIfNull(sheetRules);
 
         if (sheetRules.Count == 0)
@@ -44,6 +59,7 @@ public sealed class ImportProfile : Entity
 
         Name = name;
         ReperePrefix = reperePrefix;
+        EquipementTypeElementNom = equipementTypeElementNom;
         SheetRules = sheetRules;
     }
 }

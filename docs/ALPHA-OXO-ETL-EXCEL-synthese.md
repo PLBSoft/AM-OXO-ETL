@@ -1,6 +1,6 @@
 # ALPHA - OXO ETL EXCEL — Synthèse de conception : Module Extraction
 
-*Document de référence à tenir à jour au fil des échanges. Dernière mise à jour : 2026-07-16 — spec client feuille par feuille finalisée et validée, modèle de domaine figé, découpage en tickets TDD produit et prêt pour Claude Code.*
+*Document de référence à tenir à jour au fil des échanges. Dernière mise à jour : 2026-07-16 (v2) — inspection du fichier cible réel `OXO_TRAME_IMPORT_MAD.xlsx` produit par le client, plusieurs décisions et hypothèses révisées suite à cette inspection croisée avec les 3 fichiers source réels.*
 
 ## 1. Contexte établi
 
@@ -10,7 +10,7 @@
 - Budget : 15 jours/homme pour ce module (hors autres lots, hors module aval de traitement)
 - Fichier Excel source : 11 feuilles au total, 8-9 concernées par l'extraction
 - Format du fichier source susceptible d'évoluer dans le temps → nécessité de plusieurs profils d'import coexistants
-- Schéma de sortie (fichier plat, 4-5 feuilles) : **fixe et contractualisé** avec le module aval (hors scope ici) — le fichier d'entrée bouge, pas le format de sortie
+- Schéma de sortie : initialement envisagé comme fichier plat à 4-5 feuilles, **révisé au 2026-07-16** — le client a produit un premier fichier cible réel à seulement **2 feuilles** (`Parents`/`Enfants`), les Points étant représentés en colonnes plutôt qu'en feuilles séparées (voir §3/§6). Toujours en attente de contractualisation définitive avec le module aval — le fichier fourni est une première version de travail, pas encore figée
 - Contraintes techniques rappelées : pas de macros/chiffrement en entrée, ClosedXML obligatoire (licence OSS), CSV/ZIP bannis, 100% OSS (MIT/Apache 2.0)
 
 ## 2. Statut de l'existant — POC `ExtractionConfig`/`SheetConfig`/`CellMapping`
@@ -42,6 +42,8 @@ Un premier jet existe déjà dans le code (produit par Claude Code, milestone an
 | **[NOUVEAU 2026-07-16]** Conditions de création de Points | Égalité/inégalité stricte suffit (`ConditionOperator.Equals`/`NotEquals`), pas de moteur de conditions plus riche pour l'instant |
 | **[NOUVEAU 2026-07-16]** `TypeElement` — Equipement parent vs Isolement enfant | L'Équipement parent (feuille PROCEDURE) porte `TypeElement.Code` (`"MAD"` ou `"REL"` selon le dossier traité) ; les Isolements enfants portent `TypeElement.Nom` (valeurs données : `INSTRUMENTATION`, `ZERO ENERGIE`, `SOUPAPE`, `POINT FEU`...). Deux champs distincts, à ne pas confondre |
 | **[NOUVEAU 2026-07-16]** Correspondance de nom introuvable côté legacy | Si un nom de `Colonne`/`TypeElement` produit par AM-OXO-ETL ne correspond à rien côté application legacy, le moteur d'import legacy affiche une erreur explicite dans son résultat — **ce n'est pas un problème pour AM-OXO-ETL**, le client reste responsable d'aligner ses données. S'applique notamment aux variantes `FIN` de PLATINES (volontairement exclues) et à l'orthographe `"POINT FEU"` (retenue telle quelle) |
+| **[NOUVEAU 2026-07-16, v2]** `TypeElement.Code` vs `.Nom` | Révision d'une décision du même jour : on standardise finalement sur `TypeElement.Nom` **partout** (Équipement parent inclus), plutôt que `Code` pour le parent. Une table de traduction Code↔Nom pourra être ajoutée plus tard si le legacy l'exige (Code et Nom sont tous deux uniques côté OXO) |
+| **[NOUVEAU 2026-07-16, v2]** Structure réelle du fichier cible | Le client a fourni un premier fichier cible réel (`OXO_TRAME_IMPORT_MAD.xlsx`) : **2 feuilles** (`Parents`/`Enfants`), Points représentés en **colonnes** (1 colonne par `Colonne.Nom`, `X` = créer le Point), pas en feuilles séparées. Tâches Multiples volontairement absentes de ce premier jet. Données de test non liées aux 3 fichiers source réels — valide la forme du fichier cible, pas les règles d'extraction bout-en-bout |
 
 ## 4. Modèle pivot — figé (2026-07-16)
 
@@ -108,14 +110,16 @@ Points clés actés dans cette spec (au-delà de ce qui est déjà en §3/§5) :
 3. ~~**Claude** : catalogue final des primitives + modèle de domaine complet~~ — **Fait** : `modele-domaine-import-profile-2026-07-16.md`.
 4. ~~**Claude** : découpage en tâches TDD~~ — **Fait** : `tickets-tdd-extraction-2026-07-16.md`, 5 lots (A: primitives Domain, B: moteur générique, C: 6 services par feuille, D: orchestrateur + tests d'intégration contre les 3 fichiers réels, E: Infrastructure ClosedXML/persistance).
 5. **En cours** : transmission des documents et des tickets à Claude Code. Point opérationnel important — les documents markdown et les 3 fichiers Excel de fixtures doivent être **committés dans le repo Git** avant que Claude Code puisse s'appuyer dessus (il n'a accès qu'au code du dépôt, pas à l'historique de cette conversation).
-6. **Client** : fournir le format exact du fichier Excel cible (5 feuilles) — ne bloque que le lot E (écriture du fichier cible), pas l'extraction (lots A-D), qui peut être développée et testée dès maintenant contre les 3 fichiers réels.
+6. **Client** : ~~fournir le format exact du fichier Excel cible (5 feuilles)~~ — **Partiellement fait (2026-07-16)** : le client a fourni `OXO_TRAME_IMPORT_MAD.xlsx`, révélant une structure à 2 feuilles (Points en colonnes, pas en feuilles séparées) — voir §3/§6. Reste à couvrir : la feuille Tâches Multiples (volontairement absente de ce premier jet) et plusieurs colonnes descriptives non encore mappées à une règle d'extraction (ZONE/LOC2/LOC3, ETIQUETTE, DIAMETRE INCH...). Ne bloque toujours pas l'extraction (lots A-D), qui peut être développée et testée dès maintenant contre les 3 fichiers réels.
 7. **Client (si possible)** : fournir un premier fichier Excel exemple d'un dossier **REL** (aucun n'a encore été analysé — voir §8), pour vérifier que sa structure suit les mêmes conventions que les fichiers MAD déjà audités.
 
 ## 8. À trancher plus tard (pas maintenant)
 
 - Détail de l'écran Blazor de construction de profil (pas urgent tant que le modèle de domaine n'est pas persisté en base — voir séquencement §3)
-- Format exact du fichier Excel cible (5 feuilles : Equipement MAD Parent, Isolements enfants, Points parent, Points enfants, Tâches multiples) — en attente du client, bloque uniquement l'écriture finale (lot E des tickets TDD)
-- Structure d'un fichier Excel de dossier **REL** — aucun exemple disponible à ce jour ; le principe (`TypeElement.Code = "REL"`, même mécanisme que MAD) est acquis, mais rien ne garantit que la structure des feuilles/plages/pas de lecture soit identique tant qu'un exemple n'a pas été inspecté
+- Format exact du fichier Excel cible : **partiellement connu depuis le 2026-07-16** (2 feuilles `Parents`/`Enfants`, Points en colonnes — voir `OXO_TRAME_IMPORT_MAD.xlsx`) mais pas encore figé — la feuille Tâches Multiples manque encore, et plusieurs colonnes descriptives (ZONE/LOC2/LOC3, ETIQUETTE, DIAMETRE INCH, SERIE LBS, NATURE JOINT, BESOIN ECHAF...) n'ont pas de règle d'extraction associée. Bloque uniquement l'écriture finale (lot E des tickets TDD)
+- Structure d'un fichier Excel de dossier **REL** — aucun exemple disponible à ce jour ; le principe (`TypeElement.Nom = "REL"`, même mécanisme que MAD) est acquis, mais rien ne garantit que la structure des feuilles/plages/pas de lecture soit identique tant qu'un exemple n'a pas été inspecté
+- **[NOUVEAU 2026-07-16]** Type `"VANNE"` observé en feuille ISOLEMENT sans règle de Point définie (voir `spec-extraction-fichier-source-oxo-2026-07-16.md` §2/§9)
+- **[NOUVEAU 2026-07-16]** Variantes DEB/FIN de PLATINES : rouvert, le fichier cible réel du client ne coche que `FIN` — contredit la clarification antérieure. Le client lui-même ignore s'il s'agit d'une erreur de saisie ou d'une règle non documentée
 - Découpage exact des couches Clean Architecture pour ce module (rappel, déjà largement précisé par le modèle de domaine et les tickets TDD) :
   - Domain : modèle de règles (`ImportProfile`, primitives d'extraction, règles de mapping, objet pivot)
   - Application : moteur d'exécution du pipeline + orchestration + abstraction `IWorkbookReader`

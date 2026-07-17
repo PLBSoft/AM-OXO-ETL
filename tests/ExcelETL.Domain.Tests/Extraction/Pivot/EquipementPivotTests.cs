@@ -10,18 +10,18 @@ public class EquipementPivotTests
     [Fact]
     public void Constructor_WithValidArguments_CreatesEquipementPivot()
     {
-        var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD");
+        var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
 
         equipement.Repere.Should().Be("C7401");
         equipement.Designation.Should().Be("Rév 1 du 01/01/2026");
-        equipement.TypeElementCode.Should().Be("MAD");
+        equipement.TypeElementNom.Should().Be("MAD TRAVAUX");
     }
 
     [Fact]
     public void Constructor_WithSameArguments_ProducesStructurallyEqualInstances()
     {
-        var first = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD");
-        var second = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD");
+        var first = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
+        var second = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
 
         first.Should().Be(second);
         first.GetHashCode().Should().Be(second.GetHashCode());
@@ -33,7 +33,7 @@ public class EquipementPivotTests
     [InlineData(null)]
     public void Constructor_WithInvalidRepere_ThrowsDomainValidationException(string? invalidRepere)
     {
-        var act = () => new EquipementPivot(invalidRepere!, "Rév 1 du 01/01/2026", "MAD");
+        var act = () => new EquipementPivot(invalidRepere!, "Rév 1 du 01/01/2026", "MAD TRAVAUX");
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("repere")
@@ -46,7 +46,7 @@ public class EquipementPivotTests
     [InlineData(null)]
     public void Constructor_WithInvalidDesignation_ThrowsDomainValidationException(string? invalidDesignation)
     {
-        var act = () => new EquipementPivot("C7401", invalidDesignation!, "MAD");
+        var act = () => new EquipementPivot("C7401", invalidDesignation!, "MAD TRAVAUX");
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("designation")
@@ -57,12 +57,12 @@ public class EquipementPivotTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public void Constructor_WithInvalidTypeElementCode_ThrowsDomainValidationException(string? invalidTypeElementCode)
+    public void Constructor_WithInvalidTypeElementNom_ThrowsDomainValidationException(string? invalidTypeElementNom)
     {
-        var act = () => new EquipementPivot("C7401", "Rév 1 du 01/01/2026", invalidTypeElementCode!);
+        var act = () => new EquipementPivot("C7401", "Rév 1 du 01/01/2026", invalidTypeElementNom!);
 
         act.Should().Throw<DomainValidationException>()
-            .WithParameterName("typeElementCode")
-            .Which.ErrorCode.Should().Be(DomainErrorCode.EquipementPivot_EmptyTypeElementCode);
+            .WithParameterName("typeElementNom")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.EquipementPivot_EmptyTypeElementNom);
     }
 }

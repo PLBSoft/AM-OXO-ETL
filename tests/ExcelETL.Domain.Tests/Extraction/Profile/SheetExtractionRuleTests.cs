@@ -19,20 +19,30 @@ public class SheetExtractionRuleTests
         [
             new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")
         ];
+        IReadOnlyList<string> unconditionalColonneNames = ["PROLOCK VANNES", "DEPROLOCK VANNES"];
 
-        var rule = new SheetExtractionRule("ISOLEMENT", locator, pointRules);
+        var rule = new SheetExtractionRule("ISOLEMENT", locator, pointRules, unconditionalColonneNames);
 
         rule.SheetName.Should().Be("ISOLEMENT");
         rule.Locator.Should().Be(locator);
         rule.PointRules.Should().BeEquivalentTo(pointRules);
+        rule.UnconditionalColonneNames.Should().BeEquivalentTo(unconditionalColonneNames);
     }
 
     [Fact]
     public void Constructor_WithEmptyPointRules_CreatesSheetExtractionRule()
     {
-        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), []);
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], []);
 
         rule.PointRules.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyUnconditionalColonneNames_CreatesSheetExtractionRule()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], []);
+
+        rule.UnconditionalColonneNames.Should().BeEmpty();
     }
 
     [Theory]
@@ -41,7 +51,7 @@ public class SheetExtractionRuleTests
     [InlineData(null)]
     public void Constructor_WithInvalidSheetName_ThrowsDomainValidationException(string? invalidSheetName)
     {
-        var act = () => new SheetExtractionRule(invalidSheetName!, Locator("ISOLEMENT"), []);
+        var act = () => new SheetExtractionRule(invalidSheetName!, Locator("ISOLEMENT"), [], []);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("sheetName")
@@ -51,7 +61,7 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithNullLocator_ThrowsArgumentNullException()
     {
-        var act = () => new SheetExtractionRule("ISOLEMENT", null!, []);
+        var act = () => new SheetExtractionRule("ISOLEMENT", null!, [], []);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -59,7 +69,15 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithNullPointRules_ThrowsArgumentNullException()
     {
-        var act = () => new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), null!);
+        var act = () => new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), null!, []);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_WithNullUnconditionalColonneNames_ThrowsArgumentNullException()
+    {
+        var act = () => new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], null!);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -67,7 +85,7 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithSheetNameNotMatchingLocatorSheet_ThrowsDomainRuleViolationException()
     {
-        var act = () => new SheetExtractionRule("PLATINES", Locator("ISOLEMENT"), []);
+        var act = () => new SheetExtractionRule("PLATINES", Locator("ISOLEMENT"), [], []);
 
         act.Should().Throw<DomainRuleViolationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_SheetNameLocatorMismatch);
