@@ -13,19 +13,19 @@ namespace ExcelETL.Application.Extraction.Oxo.Procedure;
 // drop the whole block) would wrongly reject/skip perfectly valid rows, so this service walks the
 // block itself, via BlockFieldRangeCalculator for the range math only.
 //
-// The Equipement's TypeElement.Code is a literal "MAD"/"REL" chosen by which dossier is being
-// processed (spec §0) -- there is no cell in PROCEDURE that carries it, and no REL fixture exists yet
-// to validate the REL path against (see docs/spec-extraction-fichier-source-oxo-2026-07-16_4.md §9).
-// Hardcoded to "MAD" for now rather than threading an unvalidated parameter through the profile.
+// The Equipement's TypeElement.Nom (e.g. "MAD TRAVAUX" for a MAD dossier, still unconfirmed for a
+// future REL dossier -- see spec §0/§9) is never a constant here: it comes from
+// ImportProfile.EquipementTypeElementNom (model doc v2 §2.1), since the client confirmed this value
+// varies by profile, not by any cell in PROCEDURE.
 public sealed class ProcedureExtractionService(ITextTransformEvaluator textTransformEvaluator) : IProcedureExtractionService
 {
-    private const string EquipementTypeElementCode = "MAD";
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
 
     private static readonly string[] DateFormats = ["dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy"];
 
-    public ImportResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix)
+    public ImportResult Extract(
+        IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix, string equipementTypeElementNom)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(sheetRule);
@@ -57,7 +57,7 @@ public sealed class ProcedureExtractionService(ITextTransformEvaluator textTrans
         var numeroRevision = workbookReader.ReadCellValue(sheet, "P2:Q2") ?? "";
         var designation = BuildDesignation(numeroRevision, dateRevision);
 
-        var equipement = new EquipementPivot(repere, designation, EquipementTypeElementCode);
+        var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom);
         var points = new List<PointPivot>
         {
             new(TravauxCompletColonneName, repere),

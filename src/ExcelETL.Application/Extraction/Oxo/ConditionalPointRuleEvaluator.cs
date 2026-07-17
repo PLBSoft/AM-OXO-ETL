@@ -26,10 +26,16 @@ public sealed class ConditionalPointRuleEvaluator : IConditionalPointRuleEvaluat
             throw new UnknownFieldReferenceException(rule.SourceFieldName);
         }
 
+        // Trim + case-insensitive: real fixtures have trailing spaces ("SOUPAPE ") and mixed casing
+        // vs. the base's confirmed values -- see spec §7. A genuine spelling difference (e.g.
+        // "POINT DE FEU" vs "POINT FEU") is not normalized away by this and remains a legitimate
+        // non-match, covered by the non-blocking warning policy.
+        var isEqual = string.Equals(value.Trim(), rule.ComparisonValue.Trim(), StringComparison.OrdinalIgnoreCase);
+
         return rule.Operator switch
         {
-            ConditionOperator.Equals => value == rule.ComparisonValue,
-            ConditionOperator.NotEquals => value != rule.ComparisonValue,
+            ConditionOperator.Equals => isEqual,
+            ConditionOperator.NotEquals => !isEqual,
             _ => throw new NotSupportedException($"Unsupported condition operator '{rule.Operator}'.")
         };
     }

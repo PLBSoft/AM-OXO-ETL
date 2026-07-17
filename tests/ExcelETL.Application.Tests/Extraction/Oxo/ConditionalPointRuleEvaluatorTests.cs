@@ -88,6 +88,53 @@ public class ConditionalPointRuleEvaluatorTests
         warning.Should().BeNull();
     }
 
+    [Theory]
+    [InlineData("TUBING ")]
+    [InlineData("tubing")]
+    public void Evaluate_WithNotEqualsRuleAndTrailingSpaceOrCaseVariance_StillTreatsAsEqualAndDoesNotCreatePoint(string actualValue)
+    {
+        var rule = new ConditionalPointRule("TypeElement", ConditionOperator.NotEquals, "TUBING", "POSE ÉTIQUETTES");
+        var extractedFields = new Dictionary<string, string> { ["TypeElement"] = actualValue };
+
+        var (shouldCreate, warning) = _sut.Evaluate([rule], extractedFields);
+
+        shouldCreate.Should().BeFalse();
+        warning.Should().NotBeNull();
+    }
+
+    [Theory]
+    [InlineData("SOUPAPE ")]
+    [InlineData(" SOUPAPE")]
+    [InlineData("soupape")]
+    [InlineData("Soupape")]
+    public void Evaluate_WithTrailingSpaceOrCaseVariance_StillMatches(string actualValue)
+    {
+        // Real fixtures observed a trailing space ("SOUPAPE ") -- spec §7 requires trim + case-insensitive comparison.
+        var rule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT");
+        var extractedFields = new Dictionary<string, string> { ["TypeElement"] = actualValue };
+
+        var (shouldCreate, warning) = _sut.Evaluate([rule], extractedFields);
+
+        shouldCreate.Should().BeTrue();
+        warning.Should().BeNull();
+    }
+
+    [Fact]
+    public void Evaluate_WithRealWorldSpellingVariant_DoesNotMatch()
+    {
+        // "POINT DE FEU" (real G6306B cell) vs "POINT FEU" (confirmed base value) is a genuine
+        // spelling difference, not a casing/whitespace issue -- trim+casing normalization is not
+        // meant to paper over this; it's a legitimate non-match, covered by the non-blocking
+        // warning policy (spec §6/§7).
+        var rule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "POINT FEU", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES");
+        var extractedFields = new Dictionary<string, string> { ["TypeElement"] = "POINT DE FEU" };
+
+        var (shouldCreate, warning) = _sut.Evaluate([rule], extractedFields);
+
+        shouldCreate.Should().BeFalse();
+        warning.Should().NotBeNullOrWhiteSpace();
+    }
+
     [Fact]
     public void Evaluate_WithRuleReferencingUnknownField_ThrowsUnknownFieldReferenceException()
     {

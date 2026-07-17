@@ -18,6 +18,7 @@ public class ProcedureExtractionServiceIntegrationTests
 {
     private const string Sheet = "PROCEDURE";
     private const string ReperePrefix = "MAD-OXO-";
+    private const string EquipementTypeElementNom = "MAD TRAVAUX";
 
     private readonly ProcedureExtractionService _sut = new(new TextTransformEvaluator());
 
@@ -32,6 +33,7 @@ public class ProcedureExtractionServiceIntegrationTests
             new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
+        [],
         []);
 
     [Fact]
@@ -43,7 +45,7 @@ public class ProcedureExtractionServiceIntegrationTests
         result.Equipement.Should().NotBeNull();
         result.Equipement!.Repere.Should().Be("38-C7401");
         result.Equipement.Designation.Should().Be("Rév 2 du 12/12/2025");
-        result.Equipement.TypeElementCode.Should().Be("MAD");
+        result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
         result.Points.Should().BeEquivalentTo(
         [
             new PointPivot("TRAVAUX COMPLET", "38-C7401"),
@@ -66,7 +68,7 @@ public class ProcedureExtractionServiceIntegrationTests
         result.Equipement.Should().NotBeNull();
         result.Equipement!.Repere.Should().Be("644-D8570");
         result.Equipement.Designation.Should().Be("Rév 0 du 11/09/2025");
-        result.Equipement.TypeElementCode.Should().Be("MAD");
+        result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
 
         result.TachesMultiples.Should().NotBeEmpty();
         result.TachesMultiples[0].EstFactice.Should().BeTrue();
@@ -83,7 +85,7 @@ public class ProcedureExtractionServiceIntegrationTests
         result.Equipement.Should().NotBeNull();
         result.Equipement!.Repere.Should().Be("602-G6306B");
         result.Equipement.Designation.Should().Be("Rév 0 du 12/05/2025");
-        result.Equipement.TypeElementCode.Should().Be("MAD");
+        result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
 
         result.TachesMultiples.Should().NotBeEmpty();
         result.TachesMultiples[0].Ordre.Should().Be(1);
@@ -94,7 +96,7 @@ public class ProcedureExtractionServiceIntegrationTests
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
     }
 
     private static string FixturePath(string fileName)
