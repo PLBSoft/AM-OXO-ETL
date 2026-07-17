@@ -85,16 +85,14 @@ public class IsolementPivotTests
             .Which.ErrorCode.Should().Be(DomainErrorCode.IsolementPivot_EmptyTypeElementNom);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void Constructor_WithInvalidPositionALaPose_ThrowsDomainValidationException(string? invalidPositionALaPose)
+    [Fact]
+    public void Constructor_WithBlankPositionALaPose_CreatesIsolementPivot()
     {
-        var act = () => new IsolementPivot("C7401-ISO1", "Vanne principale", "ZERO ENERGIE", invalidPositionALaPose!, "Zone A");
+        // Only ISOLEMENT has a source cell for this ("Position MAD") -- PLATINES/ORIFICES
+        // CAPACITES/AUTRES JOINTS TOUCHES/DIVERS have none, so their IsolementPivot instances
+        // necessarily leave it blank.
+        var isolement = new IsolementPivot("C7401-PT1", "Aspiration", "PLATINE", "", "Zone A");
 
-        act.Should().Throw<DomainValidationException>()
-            .WithParameterName("positionALaPose")
-            .Which.ErrorCode.Should().Be(DomainErrorCode.IsolementPivot_EmptyPositionALaPose);
+        isolement.PositionALaPose.Should().BeEmpty();
     }
 }

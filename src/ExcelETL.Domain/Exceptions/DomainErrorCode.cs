@@ -38,7 +38,6 @@ public enum DomainErrorCode
     EquipementPivot_EmptyTypeElementNom,
     IsolementPivot_EmptyRepere,
     IsolementPivot_EmptyTypeElementNom,
-    IsolementPivot_EmptyPositionALaPose,
     PointPivot_EmptyColonneNom,
     PointPivot_EmptyParentRepere,
     TacheMultiplePivot_EmptyAction,
