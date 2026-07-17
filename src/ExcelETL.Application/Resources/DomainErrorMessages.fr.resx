@@ -67,4 +67,55 @@
   <data name="ExtractionHistory_CannotFailFromStatus" xml:space="preserve">
     <value>Impossible de marquer en échec une entrée d'historique d'extraction déjà au statut '{0}'.</value>
   </data>
+  <data name="BlockFieldDefinition_EmptyName" xml:space="preserve">
+    <value>Le nom ne doit pas être vide.</value>
+  </data>
+  <data name="BlockFieldDefinition_InvalidColumnRange" xml:space="preserve">
+    <value>La plage de colonnes doit être une lettre de colonne Excel valide (ex. 'B') ou une plage de colonnes (ex. 'B:E').</value>
+  </data>
+  <data name="BlockFieldDefinition_RowOffsetEndBeforeStart" xml:space="preserve">
+    <value>La fin de la plage de lignes ne doit pas précéder son début.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptySheet" xml:space="preserve">
+    <value>La feuille ne doit pas être vide.</value>
+  </data>
+  <data name="RepeatingBlockLocator_NonPositiveFirstBlockStartRow" xml:space="preserve">
+    <value>La ligne de début du premier bloc doit être positive.</value>
+  </data>
+  <data name="RepeatingBlockLocator_NonPositiveStep" xml:space="preserve">
+    <value>Le pas doit être positif.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptyStopFieldName" xml:space="preserve">
+    <value>Le nom du champ d'arrêt ne doit pas être vide.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptyFields" xml:space="preserve">
+    <value>La liste des champs doit contenir au moins une définition de champ.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptySourceFieldName" xml:space="preserve">
+    <value>Le nom du champ source ne doit pas être vide.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptyComparisonValue" xml:space="preserve">
+    <value>La valeur de comparaison ne doit pas être vide.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptyColonneName" xml:space="preserve">
+    <value>Le nom de la colonne ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_EmptyName" xml:space="preserve">
+    <value>Le nom ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_EmptyReperePrefix" xml:space="preserve">
+    <value>Le préfixe de repère ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_EmptyEquipementTypeElementNom" xml:space="preserve">
+    <value>Le nom TypeElement de l'équipement ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_NoSheetRules" xml:space="preserve">
+    <value>La liste des règles de feuille doit contenir au moins une règle.</value>
+  </data>
+  <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
+    <value>Le nom de la feuille ne doit pas être vide.</value>
+  </data>
+  <data name="SheetExtractionRule_SheetNameLocatorMismatch" xml:space="preserve">
+    <value>Le nom de la feuille '{0}' doit correspondre à la feuille du localisateur '{1}'.</value>
+  </data>
 </root>

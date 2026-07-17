@@ -1,0 +1,328 @@
+@page "/import-profiles/new"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Extraction.Primitives
+@using ExcelETL.Domain.Extraction.Profile
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+
+@inject IImportProfileStore ImportProfileStore
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Loc["ImportProfileEditor_PageTitle"]</PageTitle>
+
+<h1>@Loc["ImportProfileEditor_PageTitle"]</h1>
+
+@if (!string.IsNullOrEmpty(_profileErrorMessage))
+{
+    <div class="alert alert-danger">@_profileErrorMessage</div>
+}
+
+<div class="row g-2 mb-3">
+    <div class="col">
+        <input id="profile-name-input" class="form-control" @bind="_name"
+               placeholder="@Loc["ImportProfileEditor_NamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix"
+               placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom"
+               placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
+    </div>
+</div>
+
+<h3>@Loc["ImportProfileEditor_SheetRulesHeading"]</h3>
+
+@if (_sheetRules.Count == 0)
+{
+    <p>@Loc["ImportProfileEditor_NoSheetRulesYet"]</p>
+}
+else
+{
+    <ul class="list-group mb-3">
+        @foreach (var rule in _sheetRules)
+        {
+            <li class="list-group-item">
+                @Loc["ImportProfileEditor_SheetSummary", rule.SheetName, rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]
+                <ul>
+                    @foreach (var field in rule.Locator.Fields)
+                    {
+                        <li>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</li>
+                    }
+                </ul>
+                @if (rule.UnconditionalColonneNames.Count > 0)
+                {
+                    <p>@string.Join(", ", rule.UnconditionalColonneNames)</p>
+                }
+                @if (rule.PointRules.Count > 0)
+                {
+                    <ul>
+                        @foreach (var pointRule in rule.PointRules)
+                        {
+                            <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+                        }
+                    </ul>
+                }
+            </li>
+        }
+    </ul>
+}
+
+<div class="card mb-3">
+    <div class="card-header">@Loc["ImportProfileEditor_AddSheetHeading"]</div>
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(_sheetRuleErrorMessage))
+        {
+            <div class="alert alert-danger">@_sheetRuleErrorMessage</div>
+        }
+
+        <div class="row g-2 mb-2">
+            <div class="col">
+                <input id="sheet-rule-name-input" class="form-control" @bind="_newSheetRule.SheetName"
+                       placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="sheet-rule-first-block-start-row-input" type="number" class="form-control" @bind="_newSheetRule.FirstBlockStartRow"
+                       placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="sheet-rule-step-input" type="number" class="form-control" @bind="_newSheetRule.Step"
+                       placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="sheet-rule-stop-field-name-input" class="form-control" @bind="_newSheetRule.StopFieldName"
+                       placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
+            </div>
+        </div>
+
+        <h5>@Loc["ImportProfileEditor_FieldsHeading"]</h5>
+        @if (_newSheetRule.Fields.Count > 0)
+        {
+            <ul>
+                @foreach (var field in _newSheetRule.Fields)
+                {
+                    <li>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</li>
+                }
+            </ul>
+        }
+        <div class="row g-2 mb-2">
+            <div class="col">
+                <input id="block-field-name-input" class="form-control" @bind="_newField.Name"
+                       placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="block-field-column-range-input" class="form-control" @bind="_newField.ColumnRange"
+                       placeholder="@Loc["ImportProfileEditor_ColumnRangePlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="block-field-row-offset-start-input" type="number" class="form-control" @bind="_newField.RowOffsetStart"
+                       placeholder="@Loc["ImportProfileEditor_RowOffsetStartPlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="block-field-row-offset-end-input" type="number" class="form-control" @bind="_newField.RowOffsetEnd"
+                       placeholder="@Loc["ImportProfileEditor_RowOffsetEndPlaceholder"]" />
+            </div>
+            <div class="col-auto">
+                <button id="add-block-field-button" class="btn btn-secondary" @onclick="AddBlockField">
+                    @Loc["ImportProfileEditor_AddFieldButton"]
+                </button>
+            </div>
+        </div>
+
+        <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
+        @if (_newSheetRule.UnconditionalColonneNames.Count > 0)
+        {
+            <p>@string.Join(", ", _newSheetRule.UnconditionalColonneNames)</p>
+        }
+        <div class="row g-2 mb-2">
+            <div class="col">
+                <input id="unconditional-colonne-name-input" class="form-control" @bind="_newUnconditionalColonneName"
+                       placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+            </div>
+            <div class="col-auto">
+                <button id="add-unconditional-colonne-button" class="btn btn-secondary" @onclick="AddUnconditionalColonneName">
+                    @Loc["ImportProfileEditor_AddColonneButton"]
+                </button>
+            </div>
+        </div>
+
+        <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
+        @if (_newSheetRule.PointRules.Count > 0)
+        {
+            <ul>
+                @foreach (var pointRule in _newSheetRule.PointRules)
+                {
+                    <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+                }
+            </ul>
+        }
+        <div class="row g-2 mb-3">
+            <div class="col">
+                <input id="point-rule-colonne-name-input" class="form-control" @bind="_newPointRule.ColonneName"
+                       placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+            </div>
+            <div class="col">
+                <input id="point-rule-source-field-name-input" class="form-control" @bind="_newPointRule.SourceFieldName"
+                       placeholder="@Loc["ImportProfileEditor_SourceFieldNamePlaceholder"]" />
+            </div>
+            <div class="col">
+                <select id="point-rule-operator-select" class="form-select" @bind="_newPointRule.Operator">
+                    <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
+                    <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+                </select>
+            </div>
+            <div class="col">
+                <input id="point-rule-comparison-value-input" class="form-control" @bind="_newPointRule.ComparisonValue"
+                       placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
+            </div>
+            <div class="col-auto">
+                <button id="add-point-rule-button" class="btn btn-secondary" @onclick="AddPointRule">
+                    @Loc["ImportProfileEditor_AddPointRuleButton"]
+                </button>
+            </div>
+        </div>
+
+        <button id="add-sheet-rule-button" class="btn btn-primary" @onclick="AddSheetRule">
+            @Loc["ImportProfileEditor_AddSheetButton"]
+        </button>
+    </div>
+</div>
+
+<button id="save-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
+    @Loc["ImportProfileEditor_SaveButton"]
+</button>
+
+@code {
+    private string _name = string.Empty;
+    private string _reperePrefix = ImportProfile.DefaultReperePrefix;
+    private string _equipementTypeElementNom = string.Empty;
+    private string? _profileErrorMessage;
+
+    private readonly List<SheetExtractionRule> _sheetRules = [];
+    private NewSheetRuleModel _newSheetRule = new();
+    private NewBlockFieldModel _newField = new();
+    private string _newUnconditionalColonneName = string.Empty;
+    private NewPointRuleModel _newPointRule = new();
+    private string? _sheetRuleErrorMessage;
+
+    private void AddBlockField()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            _newSheetRule.Fields.Add(new BlockFieldDefinition(
+                _newField.Name, _newField.ColumnRange, _newField.RowOffsetStart, _newField.RowOffsetEnd));
+            _newField = new NewBlockFieldModel();
+        }
+        catch (DomainValidationException ex)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void AddUnconditionalColonneName()
+    {
+        if (string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        {
+            return;
+        }
+
+        _newSheetRule.UnconditionalColonneNames.Add(_newUnconditionalColonneName);
+        _newUnconditionalColonneName = string.Empty;
+    }
+
+    private void AddPointRule()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            _newSheetRule.PointRules.Add(new ConditionalPointRule(
+                _newPointRule.SourceFieldName, _newPointRule.Operator, _newPointRule.ComparisonValue, _newPointRule.ColonneName));
+            _newPointRule = new NewPointRuleModel();
+        }
+        catch (DomainValidationException ex)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void AddSheetRule()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            var locator = new RepeatingBlockLocator(
+                _newSheetRule.SheetName,
+                _newSheetRule.FirstBlockStartRow,
+                _newSheetRule.Step,
+                _newSheetRule.StopFieldName,
+                _newSheetRule.Fields);
+
+            var rule = new SheetExtractionRule(
+                _newSheetRule.SheetName, locator, _newSheetRule.PointRules, _newSheetRule.UnconditionalColonneNames);
+
+            _sheetRules.Add(rule);
+            _newSheetRule = new NewSheetRuleModel();
+            _newField = new NewBlockFieldModel();
+            _newUnconditionalColonneName = string.Empty;
+            _newPointRule = new NewPointRuleModel();
+        }
+        catch (Exception ex) when (ex is DomainValidationException or DomainArgumentOutOfRangeException or DomainRuleViolationException)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        _profileErrorMessage = null;
+
+        try
+        {
+            var profile = new ImportProfile(_name, _reperePrefix, _equipementTypeElementNom, _sheetRules);
+            await ImportProfileStore.SaveAsync(profile);
+            NavigationManager.NavigateTo("import-profiles");
+        }
+        catch (DomainValidationException ex)
+        {
+            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private sealed class NewSheetRuleModel
+    {
+        public string SheetName { get; set; } = string.Empty;
+        public int FirstBlockStartRow { get; set; }
+        public int Step { get; set; }
+        public string StopFieldName { get; set; } = string.Empty;
+        public List<BlockFieldDefinition> Fields { get; } = [];
+        public List<string> UnconditionalColonneNames { get; } = [];
+        public List<ConditionalPointRule> PointRules { get; } = [];
+    }
+
+    private sealed class NewBlockFieldModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ColumnRange { get; set; } = string.Empty;
+        public int RowOffsetStart { get; set; }
+        public int RowOffsetEnd { get; set; }
+    }
+
+    private sealed class NewPointRuleModel
+    {
+        public string ColonneName { get; set; } = string.Empty;
+        public string SourceFieldName { get; set; } = string.Empty;
+        public ConditionOperator Operator { get; set; } = ConditionOperator.Equals;
+        public string ComparisonValue { get; set; } = string.Empty;
+    }
+}

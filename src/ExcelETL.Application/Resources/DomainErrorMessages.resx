@@ -67,4 +67,55 @@
   <data name="ExtractionHistory_CannotFailFromStatus" xml:space="preserve">
     <value>Cannot fail an extraction history entry already in status '{0}'.</value>
   </data>
+  <data name="BlockFieldDefinition_EmptyName" xml:space="preserve">
+    <value>Name must not be empty.</value>
+  </data>
+  <data name="BlockFieldDefinition_InvalidColumnRange" xml:space="preserve">
+    <value>Column range must be a valid Excel column letter (e.g. 'B') or column range (e.g. 'B:E').</value>
+  </data>
+  <data name="BlockFieldDefinition_RowOffsetEndBeforeStart" xml:space="preserve">
+    <value>Row offset end must not be before row offset start.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptySheet" xml:space="preserve">
+    <value>Sheet must not be empty.</value>
+  </data>
+  <data name="RepeatingBlockLocator_NonPositiveFirstBlockStartRow" xml:space="preserve">
+    <value>First block start row must be positive.</value>
+  </data>
+  <data name="RepeatingBlockLocator_NonPositiveStep" xml:space="preserve">
+    <value>Step must be positive.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptyStopFieldName" xml:space="preserve">
+    <value>Stop field name must not be empty.</value>
+  </data>
+  <data name="RepeatingBlockLocator_EmptyFields" xml:space="preserve">
+    <value>Fields must contain at least one field definition.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptySourceFieldName" xml:space="preserve">
+    <value>Source field name must not be empty.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptyComparisonValue" xml:space="preserve">
+    <value>Comparison value must not be empty.</value>
+  </data>
+  <data name="ConditionalPointRule_EmptyColonneName" xml:space="preserve">
+    <value>Colonne name must not be empty.</value>
+  </data>
+  <data name="ImportProfile_EmptyName" xml:space="preserve">
+    <value>Name must not be empty.</value>
+  </data>
+  <data name="ImportProfile_EmptyReperePrefix" xml:space="preserve">
+    <value>Repere prefix must not be empty.</value>
+  </data>
+  <data name="ImportProfile_EmptyEquipementTypeElementNom" xml:space="preserve">
+    <value>Equipement type element nom must not be empty.</value>
+  </data>
+  <data name="ImportProfile_NoSheetRules" xml:space="preserve">
+    <value>Sheet rules must contain at least one rule.</value>
+  </data>
+  <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
+    <value>Sheet name must not be empty.</value>
+  </data>
+  <data name="SheetExtractionRule_SheetNameLocatorMismatch" xml:space="preserve">
+    <value>Sheet name '{0}' must match the locator's sheet '{1}'.</value>
+  </data>
 </root>

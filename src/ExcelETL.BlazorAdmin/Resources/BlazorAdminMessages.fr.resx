@@ -469,4 +469,91 @@
   <data name="ImportProfiles_DuplicateSuffix" xml:space="preserve">
     <value>(Copie)</value>
   </data>
+  <data name="ImportProfileEditor_PageTitle" xml:space="preserve">
+    <value>Nouveau profil d'import</value>
+  </data>
+  <data name="ImportProfileEditor_NamePlaceholder" xml:space="preserve">
+    <value>Nom du profil</value>
+  </data>
+  <data name="ImportProfileEditor_ReperePrefixPlaceholder" xml:space="preserve">
+    <value>Préfixe de repère</value>
+  </data>
+  <data name="ImportProfileEditor_EquipementTypeElementNomPlaceholder" xml:space="preserve">
+    <value>TypeElement.Nom de l'équipement (ex. MAD TRAVAUX)</value>
+  </data>
+  <data name="ImportProfileEditor_SaveButton" xml:space="preserve">
+    <value>Enregistrer le profil</value>
+  </data>
+  <data name="ImportProfileEditor_SheetRulesHeading" xml:space="preserve">
+    <value>Règles de feuille</value>
+  </data>
+  <data name="ImportProfileEditor_NoSheetRulesYet" xml:space="preserve">
+    <value>Aucune règle de feuille ajoutée pour le moment.</value>
+  </data>
+  <data name="ImportProfileEditor_SheetSummary" xml:space="preserve">
+    <value>{0} -- ligne de début {1}, pas {2}, champ d'arrêt '{3}'</value>
+  </data>
+  <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
+    <value>Ajouter une règle de feuille</value>
+  </data>
+  <data name="ImportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
+    <value>Nom de la feuille</value>
+  </data>
+  <data name="ImportProfileEditor_FirstBlockStartRowPlaceholder" xml:space="preserve">
+    <value>Ligne de début du premier bloc</value>
+  </data>
+  <data name="ImportProfileEditor_StepPlaceholder" xml:space="preserve">
+    <value>Pas</value>
+  </data>
+  <data name="ImportProfileEditor_StopFieldNamePlaceholder" xml:space="preserve">
+    <value>Nom du champ d'arrêt</value>
+  </data>
+  <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
+    <value>Champs du bloc</value>
+  </data>
+  <data name="ImportProfileEditor_FieldNamePlaceholder" xml:space="preserve">
+    <value>Nom du champ</value>
+  </data>
+  <data name="ImportProfileEditor_ColumnRangePlaceholder" xml:space="preserve">
+    <value>Plage de colonnes (ex. B:E)</value>
+  </data>
+  <data name="ImportProfileEditor_RowOffsetStartPlaceholder" xml:space="preserve">
+    <value>Décalage de ligne début</value>
+  </data>
+  <data name="ImportProfileEditor_RowOffsetEndPlaceholder" xml:space="preserve">
+    <value>Décalage de ligne fin</value>
+  </data>
+  <data name="ImportProfileEditor_AddFieldButton" xml:space="preserve">
+    <value>Ajouter le champ</value>
+  </data>
+  <data name="ImportProfileEditor_UnconditionalColonnesHeading" xml:space="preserve">
+    <value>Colonnes inconditionnelles (créer le Point systématiquement)</value>
+  </data>
+  <data name="ImportProfileEditor_ColonneNamePlaceholder" xml:space="preserve">
+    <value>Nom de la colonne</value>
+  </data>
+  <data name="ImportProfileEditor_AddColonneButton" xml:space="preserve">
+    <value>Ajouter la colonne</value>
+  </data>
+  <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
+    <value>Règles de point conditionnelles</value>
+  </data>
+  <data name="ImportProfileEditor_SourceFieldNamePlaceholder" xml:space="preserve">
+    <value>Nom du champ source</value>
+  </data>
+  <data name="ImportProfileEditor_ComparisonValuePlaceholder" xml:space="preserve">
+    <value>Valeur de comparaison</value>
+  </data>
+  <data name="ImportProfileEditor_AddPointRuleButton" xml:space="preserve">
+    <value>Ajouter la règle</value>
+  </data>
+  <data name="ImportProfileEditor_AddSheetButton" xml:space="preserve">
+    <value>Ajouter la feuille</value>
+  </data>
+  <data name="ImportProfileEditor_Operator_Equals" xml:space="preserve">
+    <value>Égal à</value>
+  </data>
+  <data name="ImportProfileEditor_Operator_NotEquals" xml:space="preserve">
+    <value>Différent de</value>
+  </data>
 </root>

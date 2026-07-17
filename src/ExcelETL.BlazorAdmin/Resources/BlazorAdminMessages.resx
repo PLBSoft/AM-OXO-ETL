@@ -469,4 +469,91 @@
   <data name="ImportProfiles_DuplicateSuffix" xml:space="preserve">
     <value>(Copy)</value>
   </data>
+  <data name="ImportProfileEditor_PageTitle" xml:space="preserve">
+    <value>New Import Profile</value>
+  </data>
+  <data name="ImportProfileEditor_NamePlaceholder" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
+  <data name="ImportProfileEditor_ReperePrefixPlaceholder" xml:space="preserve">
+    <value>Repere prefix</value>
+  </data>
+  <data name="ImportProfileEditor_EquipementTypeElementNomPlaceholder" xml:space="preserve">
+    <value>Equipement TypeElement.Nom (e.g. MAD TRAVAUX)</value>
+  </data>
+  <data name="ImportProfileEditor_SaveButton" xml:space="preserve">
+    <value>Save profile</value>
+  </data>
+  <data name="ImportProfileEditor_SheetRulesHeading" xml:space="preserve">
+    <value>Sheet rules</value>
+  </data>
+  <data name="ImportProfileEditor_NoSheetRulesYet" xml:space="preserve">
+    <value>No sheet rules added yet.</value>
+  </data>
+  <data name="ImportProfileEditor_SheetSummary" xml:space="preserve">
+    <value>{0} -- start row {1}, step {2}, stop field '{3}'</value>
+  </data>
+  <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
+    <value>Add a sheet rule</value>
+  </data>
+  <data name="ImportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
+    <value>Sheet name</value>
+  </data>
+  <data name="ImportProfileEditor_FirstBlockStartRowPlaceholder" xml:space="preserve">
+    <value>First block start row</value>
+  </data>
+  <data name="ImportProfileEditor_StepPlaceholder" xml:space="preserve">
+    <value>Step</value>
+  </data>
+  <data name="ImportProfileEditor_StopFieldNamePlaceholder" xml:space="preserve">
+    <value>Stop field name</value>
+  </data>
+  <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
+    <value>Block fields</value>
+  </data>
+  <data name="ImportProfileEditor_FieldNamePlaceholder" xml:space="preserve">
+    <value>Field name</value>
+  </data>
+  <data name="ImportProfileEditor_ColumnRangePlaceholder" xml:space="preserve">
+    <value>Column range (e.g. B:E)</value>
+  </data>
+  <data name="ImportProfileEditor_RowOffsetStartPlaceholder" xml:space="preserve">
+    <value>Row offset start</value>
+  </data>
+  <data name="ImportProfileEditor_RowOffsetEndPlaceholder" xml:space="preserve">
+    <value>Row offset end</value>
+  </data>
+  <data name="ImportProfileEditor_AddFieldButton" xml:space="preserve">
+    <value>Add field</value>
+  </data>
+  <data name="ImportProfileEditor_UnconditionalColonnesHeading" xml:space="preserve">
+    <value>Unconditional colonnes (always create the Point)</value>
+  </data>
+  <data name="ImportProfileEditor_ColonneNamePlaceholder" xml:space="preserve">
+    <value>Colonne name</value>
+  </data>
+  <data name="ImportProfileEditor_AddColonneButton" xml:space="preserve">
+    <value>Add colonne</value>
+  </data>
+  <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
+    <value>Conditional point rules</value>
+  </data>
+  <data name="ImportProfileEditor_SourceFieldNamePlaceholder" xml:space="preserve">
+    <value>Source field name</value>
+  </data>
+  <data name="ImportProfileEditor_ComparisonValuePlaceholder" xml:space="preserve">
+    <value>Comparison value</value>
+  </data>
+  <data name="ImportProfileEditor_AddPointRuleButton" xml:space="preserve">
+    <value>Add point rule</value>
+  </data>
+  <data name="ImportProfileEditor_AddSheetButton" xml:space="preserve">
+    <value>Add sheet rule</value>
+  </data>
+  <data name="ImportProfileEditor_Operator_Equals" xml:space="preserve">
+    <value>Equals</value>
+  </data>
+  <data name="ImportProfileEditor_Operator_NotEquals" xml:space="preserve">
+    <value>Not equals</value>
+  </data>
 </root>
