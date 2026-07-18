@@ -4,6 +4,7 @@ using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -27,7 +28,9 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         "PLATINES / TAMPONS PLEINS"
     ];
 
-    private readonly UnconditionalIsolementSheetExtractionService _sut = new(new RepeatingBlockReader(), new TextTransformEvaluator());
+    private readonly UnconditionalIsolementSheetExtractionService _sut = new(
+        new RepeatingBlockReader(), new TextTransformEvaluator(),
+        NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,

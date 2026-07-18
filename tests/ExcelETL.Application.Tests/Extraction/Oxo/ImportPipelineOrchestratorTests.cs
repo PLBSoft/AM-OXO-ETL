@@ -7,6 +7,7 @@ using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -29,7 +30,8 @@ public class ImportPipelineOrchestratorTests
     {
         _sut = new ImportPipelineOrchestrator(
             _procedureService.Object, _isolementService.Object, _unconditionalService.Object,
-            _autresJointsTouchesService.Object, _diversService.Object);
+            _autresJointsTouchesService.Object, _diversService.Object,
+            NullLogger<ImportPipelineOrchestrator>.Instance);
     }
 
     private static RepeatingBlockLocator TrivialLocator(string sheet) =>

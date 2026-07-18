@@ -4,6 +4,7 @@ using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -15,7 +16,7 @@ public class IsolementExtractionServiceTests
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
 
     private readonly IsolementExtractionService _sut =
-        new(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator());
+        new(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,

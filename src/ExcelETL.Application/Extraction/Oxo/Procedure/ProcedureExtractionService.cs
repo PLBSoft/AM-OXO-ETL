@@ -2,6 +2,7 @@ using System.Globalization;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo.Procedure;
 
@@ -17,7 +18,9 @@ namespace ExcelETL.Application.Extraction.Oxo.Procedure;
 // future REL dossier -- see spec §0/§9) is never a constant here: it comes from
 // ImportProfile.EquipementTypeElementNom (model doc v2 §2.1), since the client confirmed this value
 // varies by profile, not by any cell in PROCEDURE.
-public sealed class ProcedureExtractionService(ITextTransformEvaluator textTransformEvaluator) : IProcedureExtractionService
+public sealed class ProcedureExtractionService(
+    ITextTransformEvaluator textTransformEvaluator, ILogger<ProcedureExtractionService> logger)
+    : IProcedureExtractionService
 {
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
@@ -162,6 +165,10 @@ public sealed class ProcedureExtractionService(ITextTransformEvaluator textTrans
         return false;
     }
 
-    private static ImportResult Rejected(string sheet, string range, ExtractionErrorCode code, string message) =>
-        new(null, [], [], [], [new ExtractionError(sheet, range, code, message)]);
+    private ImportResult Rejected(string sheet, string range, ExtractionErrorCode code, string message)
+    {
+        var error = new ExtractionError(sheet, range, code, message);
+        ExtractionErrorLogging.Log(logger, error);
+        return new(null, [], [], [], [error]);
+    }
 }

@@ -5,6 +5,7 @@ using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
 
@@ -22,7 +23,8 @@ public class AutresJointsTouchesExtractionServiceTests
     ];
 
     private readonly AutresJointsTouchesExtractionService _sut =
-        new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator());
+        new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
+            NullLogger<AutresJointsTouchesExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,

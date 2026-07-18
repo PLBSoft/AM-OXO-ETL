@@ -139,5 +139,5 @@ public interface IImportProfileStore
 
 ## Ce que ce découpage ne couvre pas (rappel)
 - Écriture du fichier `.xlsx` cible (bloqué sur le format client)
-- Logs applicatifs (upload, egress, hash) — hors périmètre extraction pure
+- Logs applicatifs upload/egress/hash — toujours hors périmètre de ce document (concernent le jour où le pipeline OXO sera exposé en Web API). Le logging **extraction** (start/end du run, chaque `ExtractionError`) est en revanche couvert : voir Lot G dans `CLAUDE.md`, qui réutilise le sink Serilog → `SystemLogs` déjà en place plutôt qu'une nouvelle table dédiée.
 - Retrait du POC (`ExtractionConfig`/`Mappings.razor`/`UploadTest.razor`) — décision actée, pas encore exécutée

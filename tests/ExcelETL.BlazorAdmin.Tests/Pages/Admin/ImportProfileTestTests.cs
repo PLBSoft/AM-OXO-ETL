@@ -16,6 +16,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
@@ -39,6 +41,14 @@ public class ImportProfileTestTests : BunitContext
         Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
         Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
         Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
+        Services.AddSingleton<ILogger<ProcedureExtractionService>>(NullLogger<ProcedureExtractionService>.Instance);
+        Services.AddSingleton<ILogger<IsolementExtractionService>>(NullLogger<IsolementExtractionService>.Instance);
+        Services.AddSingleton<ILogger<UnconditionalIsolementSheetExtractionService>>(
+            NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
+        Services.AddSingleton<ILogger<AutresJointsTouchesExtractionService>>(
+            NullLogger<AutresJointsTouchesExtractionService>.Instance);
+        Services.AddSingleton<ILogger<DiversExtractionService>>(NullLogger<DiversExtractionService>.Instance);
+        Services.AddSingleton<ILogger<ImportPipelineOrchestrator>>(NullLogger<ImportPipelineOrchestrator>.Instance);
         Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
         Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
         Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();

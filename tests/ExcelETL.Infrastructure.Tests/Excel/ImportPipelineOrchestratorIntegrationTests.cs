@@ -8,6 +8,7 @@ using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
@@ -24,12 +25,19 @@ public class ImportPipelineOrchestratorIntegrationTests
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
     private readonly ImportPipelineOrchestrator _sut = new(
-        new ProcedureExtractionService(new TextTransformEvaluator()),
-        new IsolementExtractionService(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator()),
-        new UnconditionalIsolementSheetExtractionService(new RepeatingBlockReader(), new TextTransformEvaluator()),
+        new ProcedureExtractionService(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
+        new IsolementExtractionService(
+            new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance),
+        new UnconditionalIsolementSheetExtractionService(
+            new RepeatingBlockReader(), new TextTransformEvaluator(),
+            NullLogger<UnconditionalIsolementSheetExtractionService>.Instance),
         new AutresJointsTouchesExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator()),
-        new DiversExtractionService(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator()));
+            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
+            NullLogger<AutresJointsTouchesExtractionService>.Instance),
+        new DiversExtractionService(
+            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
+            NullLogger<DiversExtractionService>.Instance),
+        NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private static ImportProfile CreateProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,

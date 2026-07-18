@@ -2,6 +2,7 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
@@ -14,7 +15,9 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // for AUTRES JOINTS TOUCHES (Lot C5, one conditional Colonne) or DIVERS (Lot C6, several) --
 // those need IConditionalPointRuleEvaluator, which this class deliberately has no dependency on.
 public sealed class UnconditionalIsolementSheetExtractionService(
-    IRepeatingBlockReader repeatingBlockReader, ITextTransformEvaluator textTransformEvaluator)
+    IRepeatingBlockReader repeatingBlockReader,
+    ITextTransformEvaluator textTransformEvaluator,
+    ILogger<UnconditionalIsolementSheetExtractionService> logger)
     : IUnconditionalIsolementSheetExtractionService
 {
     public IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule)
@@ -26,6 +29,10 @@ public sealed class UnconditionalIsolementSheetExtractionService(
         var equipementRepere = workbookReader.ReadCellValue(sheet, "K6:U6") ?? "";
 
         var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);
+        foreach (var error in blockResult.Errors)
+        {
+            ExtractionErrorLogging.Log(logger, error);
+        }
 
         var isolements = new List<IsolementPivot>();
         var points = new List<PointPivot>();

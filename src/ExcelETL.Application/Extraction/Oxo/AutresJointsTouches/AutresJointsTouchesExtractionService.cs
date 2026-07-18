@@ -2,6 +2,7 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 
@@ -18,7 +19,8 @@ namespace ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 public sealed class AutresJointsTouchesExtractionService(
     IRepeatingBlockReader repeatingBlockReader,
     ITextTransformEvaluator textTransformEvaluator,
-    IConditionalPointRuleEvaluator conditionalPointRuleEvaluator)
+    IConditionalPointRuleEvaluator conditionalPointRuleEvaluator,
+    ILogger<AutresJointsTouchesExtractionService> logger)
     : IAutresJointsTouchesExtractionService
 {
     public IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule)
@@ -30,6 +32,11 @@ public sealed class AutresJointsTouchesExtractionService(
         var equipementRepere = workbookReader.ReadCellValue(sheet, "N6") ?? "";
 
         var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);
+        foreach (var blockError in blockResult.Errors)
+        {
+            ExtractionErrorLogging.Log(logger, blockError);
+        }
+
         var pointRuleGroups = sheetRule.PointRules.GroupBy(r => r.ColonneName).ToList();
 
         var isolements = new List<IsolementPivot>();
@@ -59,7 +66,9 @@ public sealed class AutresJointsTouchesExtractionService(
 
             if (warning is not null)
             {
-                errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
+                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning);
+                ExtractionErrorLogging.Log(logger, error);
+                errors.Add(error);
             }
         }
 

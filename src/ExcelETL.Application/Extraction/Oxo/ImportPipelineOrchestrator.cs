@@ -4,6 +4,7 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
@@ -23,7 +24,8 @@ public sealed class ImportPipelineOrchestrator(
     IIsolementExtractionService isolementExtractionService,
     IUnconditionalIsolementSheetExtractionService unconditionalIsolementSheetExtractionService,
     IAutresJointsTouchesExtractionService autresJointsTouchesExtractionService,
-    IDiversExtractionService diversExtractionService)
+    IDiversExtractionService diversExtractionService,
+    ILogger<ImportPipelineOrchestrator> logger)
     : IImportPipelineOrchestrator
 {
     private const string ProcedureSheetName = "PROCEDURE";
@@ -38,53 +40,71 @@ public sealed class ImportPipelineOrchestrator(
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(profile);
 
-        var procedureResult = procedureExtractionService.Extract(
-            workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom);
+        logger.LogInformation("Starting import pipeline run for profile {ProfileName}", profile.Name);
 
-        if (procedureResult.Equipement is null)
+        try
         {
-            return procedureResult;
+            var procedureResult = procedureExtractionService.Extract(
+                workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom);
+
+            if (procedureResult.Equipement is null)
+            {
+                logger.LogWarning(
+                    "Import pipeline run for profile {ProfileName} rejected the whole file: {ErrorCount} blocking error(s)",
+                    profile.Name, procedureResult.Errors.Count);
+                return procedureResult;
+            }
+
+            var isolementResult = isolementExtractionService.Extract(workbookReader, FindRule(profile, IsolementSheetName));
+            var platinesResult = unconditionalIsolementSheetExtractionService.Extract(workbookReader, FindRule(profile, PlatinesSheetName));
+            var orificesCapacitesResult = unconditionalIsolementSheetExtractionService.Extract(
+                workbookReader, FindRule(profile, OrificesCapacitesSheetName));
+            var autresJointsTouchesResult = autresJointsTouchesExtractionService.Extract(
+                workbookReader, FindRule(profile, AutresJointsTouchesSheetName));
+            var diversResult = diversExtractionService.Extract(workbookReader, FindRule(profile, DiversSheetName));
+
+            var loc1 = diversResult.Loc1;
+            var equipement = procedureResult.Equipement with { Localisation = loc1 };
+
+            var isolements = new List<IsolementPivot>();
+            isolements.AddRange(isolementResult.Isolements);
+            isolements.AddRange(platinesResult.Isolements);
+            isolements.AddRange(orificesCapacitesResult.Isolements);
+            isolements.AddRange(autresJointsTouchesResult.Isolements);
+            isolements.AddRange(diversResult.Isolements);
+            for (var i = 0; i < isolements.Count; i++)
+            {
+                isolements[i] = isolements[i] with { Localisation = loc1 };
+            }
+
+            var points = new List<PointPivot>();
+            points.AddRange(procedureResult.Points);
+            points.AddRange(isolementResult.Points);
+            points.AddRange(platinesResult.Points);
+            points.AddRange(orificesCapacitesResult.Points);
+            points.AddRange(autresJointsTouchesResult.Points);
+            points.AddRange(diversResult.Points);
+
+            var errors = new List<ExtractionError>();
+            errors.AddRange(procedureResult.Errors);
+            errors.AddRange(isolementResult.Errors);
+            errors.AddRange(platinesResult.Errors);
+            errors.AddRange(orificesCapacitesResult.Errors);
+            errors.AddRange(autresJointsTouchesResult.Errors);
+            errors.AddRange(diversResult.Errors);
+
+            logger.LogInformation(
+                "Completed import pipeline run for profile {ProfileName}: {IsolementCount} isolement(s), " +
+                "{PointCount} point(s), {ErrorCount} non-blocking warning(s)",
+                profile.Name, isolements.Count, points.Count, errors.Count);
+
+            return new ImportResult(equipement, isolements, points, procedureResult.TachesMultiples, errors);
         }
-
-        var isolementResult = isolementExtractionService.Extract(workbookReader, FindRule(profile, IsolementSheetName));
-        var platinesResult = unconditionalIsolementSheetExtractionService.Extract(workbookReader, FindRule(profile, PlatinesSheetName));
-        var orificesCapacitesResult = unconditionalIsolementSheetExtractionService.Extract(
-            workbookReader, FindRule(profile, OrificesCapacitesSheetName));
-        var autresJointsTouchesResult = autresJointsTouchesExtractionService.Extract(
-            workbookReader, FindRule(profile, AutresJointsTouchesSheetName));
-        var diversResult = diversExtractionService.Extract(workbookReader, FindRule(profile, DiversSheetName));
-
-        var loc1 = diversResult.Loc1;
-        var equipement = procedureResult.Equipement with { Localisation = loc1 };
-
-        var isolements = new List<IsolementPivot>();
-        isolements.AddRange(isolementResult.Isolements);
-        isolements.AddRange(platinesResult.Isolements);
-        isolements.AddRange(orificesCapacitesResult.Isolements);
-        isolements.AddRange(autresJointsTouchesResult.Isolements);
-        isolements.AddRange(diversResult.Isolements);
-        for (var i = 0; i < isolements.Count; i++)
+        catch (Exception ex)
         {
-            isolements[i] = isolements[i] with { Localisation = loc1 };
+            logger.LogError(ex, "Import pipeline run for profile {ProfileName} failed unexpectedly", profile.Name);
+            throw;
         }
-
-        var points = new List<PointPivot>();
-        points.AddRange(procedureResult.Points);
-        points.AddRange(isolementResult.Points);
-        points.AddRange(platinesResult.Points);
-        points.AddRange(orificesCapacitesResult.Points);
-        points.AddRange(autresJointsTouchesResult.Points);
-        points.AddRange(diversResult.Points);
-
-        var errors = new List<ExtractionError>();
-        errors.AddRange(procedureResult.Errors);
-        errors.AddRange(isolementResult.Errors);
-        errors.AddRange(platinesResult.Errors);
-        errors.AddRange(orificesCapacitesResult.Errors);
-        errors.AddRange(autresJointsTouchesResult.Errors);
-        errors.AddRange(diversResult.Errors);
-
-        return new ImportResult(equipement, isolements, points, procedureResult.TachesMultiples, errors);
     }
 
     private static SheetExtractionRule FindRule(ImportProfile profile, string sheetName) =>

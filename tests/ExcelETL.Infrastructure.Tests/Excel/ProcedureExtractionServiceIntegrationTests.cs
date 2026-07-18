@@ -5,6 +5,7 @@ using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
@@ -20,7 +21,8 @@ public class ProcedureExtractionServiceIntegrationTests
     private const string ReperePrefix = "MAD-OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
 
-    private readonly ProcedureExtractionService _sut = new(new TextTransformEvaluator());
+    private readonly ProcedureExtractionService _sut =
+        new(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,

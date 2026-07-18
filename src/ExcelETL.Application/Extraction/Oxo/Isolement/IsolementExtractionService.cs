@@ -1,6 +1,7 @@
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo.Isolement;
 
@@ -17,7 +18,9 @@ namespace ExcelETL.Application.Extraction.Oxo.Isolement;
 // spec calls for composing from K6:T6 specifically, so this service is self-contained and doesn't
 // need any cross-sheet context threaded in.
 public sealed class IsolementExtractionService(
-    ITextTransformEvaluator textTransformEvaluator, IConditionalPointRuleEvaluator conditionalPointRuleEvaluator)
+    ITextTransformEvaluator textTransformEvaluator,
+    IConditionalPointRuleEvaluator conditionalPointRuleEvaluator,
+    ILogger<IsolementExtractionService> logger)
     : IIsolementExtractionService
 {
     public IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule)
@@ -79,9 +82,11 @@ public sealed class IsolementExtractionService(
 
             if (blankFieldNames.Count > 0)
             {
-                errors.Add(new ExtractionError(
+                var error = new ExtractionError(
                     sheet, repere, ExtractionErrorCode.RequiredFieldMissing,
-                    $"Bloc à la ligne {blockStartRow} : champ(s) requis '{string.Join(", ", blankFieldNames)}' vide(s)."));
+                    $"Bloc à la ligne {blockStartRow} : champ(s) requis '{string.Join(", ", blankFieldNames)}' vide(s).");
+                ExtractionErrorLogging.Log(logger, error);
+                errors.Add(error);
                 blockIndex++;
                 continue;
             }
@@ -103,7 +108,9 @@ public sealed class IsolementExtractionService(
 
             if (warning is not null)
             {
-                errors.Add(new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning));
+                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning);
+                ExtractionErrorLogging.Log(logger, error);
+                errors.Add(error);
             }
 
             blockIndex++;

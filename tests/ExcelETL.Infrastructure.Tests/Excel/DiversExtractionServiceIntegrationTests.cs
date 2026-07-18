@@ -6,6 +6,7 @@ using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
@@ -25,7 +26,8 @@ public class DiversExtractionServiceIntegrationTests
     private const string PfAccordColonne = "PF : ACCORD TRAVAUX FEU";
 
     private readonly DiversExtractionService _sut =
-        new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator());
+        new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
+            NullLogger<DiversExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
