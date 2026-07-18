@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
@@ -35,12 +36,19 @@ public sealed class ImportPipelineOrchestrator(
     private const string AutresJointsTouchesSheetName = "AUTRES JOINTS TOUCHES";
     private const string DiversSheetName = "DIVERS";
 
+    // A successful run always processes exactly these 6 sheets -- PROCEDURE plus the other 5,
+    // unconditionally, once PROCEDURE itself succeeds. Not derived from a collection count because
+    // there's no single list of "the 6 sheets" in this class (PLATINES/ORIFICES CAPACITES share one
+    // service call each, see below), so a literal is clearer than reconstructing one just to count it.
+    private const int SheetsProcessedOnSuccess = 6;
+
     public ImportResult Run(IWorkbookReader workbookReader, ImportProfile profile)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(profile);
 
         logger.LogInformation("Starting import pipeline run for profile {ProfileName}", profile.Name);
+        var stopwatch = Stopwatch.StartNew();
 
         try
         {
@@ -50,8 +58,9 @@ public sealed class ImportPipelineOrchestrator(
             if (procedureResult.Equipement is null)
             {
                 logger.LogWarning(
-                    "Import pipeline run for profile {ProfileName} rejected the whole file: {ErrorCount} blocking error(s)",
-                    profile.Name, procedureResult.Errors.Count);
+                    "Import pipeline run for profile {ProfileName} rejected the whole file after {ElapsedMs}ms: " +
+                    "{ErrorCount} blocking error(s)",
+                    profile.Name, stopwatch.ElapsedMilliseconds, procedureResult.Errors.Count);
                 return procedureResult;
             }
 
@@ -93,16 +102,22 @@ public sealed class ImportPipelineOrchestrator(
             errors.AddRange(autresJointsTouchesResult.Errors);
             errors.AddRange(diversResult.Errors);
 
+            var totalElementCount = isolements.Count + points.Count + procedureResult.TachesMultiples.Count;
+
             logger.LogInformation(
-                "Completed import pipeline run for profile {ProfileName}: {IsolementCount} isolement(s), " +
-                "{PointCount} point(s), {ErrorCount} non-blocking warning(s)",
-                profile.Name, isolements.Count, points.Count, errors.Count);
+                "Completed import pipeline run for profile {ProfileName} in {ElapsedMs}ms: {SheetCount} sheet(s) " +
+                "processed, {TotalElementCount} element(s) extracted ({IsolementCount} isolement(s), " +
+                "{PointCount} point(s), {TacheMultipleCount} tache(s) multiple(s)), {ErrorCount} non-blocking warning(s)",
+                profile.Name, stopwatch.ElapsedMilliseconds, SheetsProcessedOnSuccess, totalElementCount,
+                isolements.Count, points.Count, procedureResult.TachesMultiples.Count, errors.Count);
 
             return new ImportResult(equipement, isolements, points, procedureResult.TachesMultiples, errors);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Import pipeline run for profile {ProfileName} failed unexpectedly", profile.Name);
+            logger.LogError(
+                ex, "Import pipeline run for profile {ProfileName} failed unexpectedly after {ElapsedMs}ms",
+                profile.Name, stopwatch.ElapsedMilliseconds);
             throw;
         }
     }
