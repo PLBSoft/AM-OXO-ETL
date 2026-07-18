@@ -748,4 +748,52 @@
   <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
     <value>Add sheet rule</value>
   </data>
+  <data name="ExportProfileTest_PageTitle" xml:space="preserve">
+    <value>Test Export Profile</value>
+  </data>
+  <data name="ExportProfileTest_Instructions" xml:space="preserve">
+    <value>Upload an .xlsx file to run it through the extraction pipeline, then generate a target workbook from an export profile -- both in memory, no file is archived and nothing is sent to the Web API.</value>
+  </data>
+  <data name="ExportProfileTest_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="ExportProfileTest_ImportProfileLabel" xml:space="preserve">
+    <value>Import profile</value>
+  </data>
+  <data name="ExportProfileTest_ImportProfilePlaceholder" xml:space="preserve">
+    <value>Select an import profile...</value>
+  </data>
+  <data name="ExportProfileTest_NoImportProfilesAvailable" xml:space="preserve">
+    <value>No import profiles exist yet. Create one on the Import Profiles page first.</value>
+  </data>
+  <data name="ExportProfileTest_FileLabel" xml:space="preserve">
+    <value>Excel file (.xlsx)</value>
+  </data>
+  <data name="ExportProfileTest_SelectImportProfilePrompt" xml:space="preserve">
+    <value>Select an import profile.</value>
+  </data>
+  <data name="ExportProfileTest_Processing" xml:space="preserve">
+    <value>Running the pipeline...</value>
+  </data>
+  <data name="ExportProfileTest_RejectedFileHeading" xml:space="preserve">
+    <value>File rejected</value>
+  </data>
+  <data name="ExportProfileTest_ExportProfileLabel" xml:space="preserve">
+    <value>Export profile</value>
+  </data>
+  <data name="ExportProfileTest_ExportProfilePlaceholder" xml:space="preserve">
+    <value>Select an export profile...</value>
+  </data>
+  <data name="ExportProfileTest_NoExportProfilesAvailable" xml:space="preserve">
+    <value>No export profiles exist yet. Create one on the Export Profiles page first.</value>
+  </data>
+  <data name="ExportProfileTest_SelectExportProfilePrompt" xml:space="preserve">
+    <value>Select an export profile.</value>
+  </data>
+  <data name="ExportProfileTest_GenerateButton" xml:space="preserve">
+    <value>Generate workbook</value>
+  </data>
+  <data name="ExportProfileTest_DownloadLinkText" xml:space="preserve">
+    <value>Download generated workbook</value>
+  </data>
 </root>

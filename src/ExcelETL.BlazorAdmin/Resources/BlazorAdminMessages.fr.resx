@@ -748,4 +748,52 @@
   <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
     <value>Ajouter la feuille</value>
   </data>
+  <data name="ExportProfileTest_PageTitle" xml:space="preserve">
+    <value>Tester un profil d'export</value>
+  </data>
+  <data name="ExportProfileTest_Instructions" xml:space="preserve">
+    <value>Déposez un fichier .xlsx pour l'exécuter à travers le pipeline d'extraction, puis générer un fichier cible à partir d'un profil d'export -- le tout en mémoire, aucun fichier n'est archivé et rien n'est envoyé au Web API.</value>
+  </data>
+  <data name="ExportProfileTest_Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="ExportProfileTest_ImportProfileLabel" xml:space="preserve">
+    <value>Profil d'import</value>
+  </data>
+  <data name="ExportProfileTest_ImportProfilePlaceholder" xml:space="preserve">
+    <value>Sélectionnez un profil d'import...</value>
+  </data>
+  <data name="ExportProfileTest_NoImportProfilesAvailable" xml:space="preserve">
+    <value>Aucun profil d'import n'existe encore. Créez-en un sur la page Profils d'import d'abord.</value>
+  </data>
+  <data name="ExportProfileTest_FileLabel" xml:space="preserve">
+    <value>Fichier Excel (.xlsx)</value>
+  </data>
+  <data name="ExportProfileTest_SelectImportProfilePrompt" xml:space="preserve">
+    <value>Sélectionnez un profil d'import.</value>
+  </data>
+  <data name="ExportProfileTest_Processing" xml:space="preserve">
+    <value>Exécution du pipeline...</value>
+  </data>
+  <data name="ExportProfileTest_RejectedFileHeading" xml:space="preserve">
+    <value>Fichier rejeté</value>
+  </data>
+  <data name="ExportProfileTest_ExportProfileLabel" xml:space="preserve">
+    <value>Profil d'export</value>
+  </data>
+  <data name="ExportProfileTest_ExportProfilePlaceholder" xml:space="preserve">
+    <value>Sélectionnez un profil d'export...</value>
+  </data>
+  <data name="ExportProfileTest_NoExportProfilesAvailable" xml:space="preserve">
+    <value>Aucun profil d'export n'existe encore. Créez-en un sur la page Profils d'export d'abord.</value>
+  </data>
+  <data name="ExportProfileTest_SelectExportProfilePrompt" xml:space="preserve">
+    <value>Sélectionnez un profil d'export.</value>
+  </data>
+  <data name="ExportProfileTest_GenerateButton" xml:space="preserve">
+    <value>Générer le fichier</value>
+  </data>
+  <data name="ExportProfileTest_DownloadLinkText" xml:space="preserve">
+    <value>Télécharger le fichier généré</value>
+  </data>
 </root>

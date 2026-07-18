@@ -1,0 +1,253 @@
+@page "/export-profiles/test"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.Application.Generation
+@using ExcelETL.Domain.Extraction.Pivot
+@using ExcelETL.Domain.Extraction.Profile
+@using ExcelETL.Domain.Generation.Profile
+@using ExcelETL.Infrastructure.Excel
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IImportProfileStore ImportProfileStore
+@inject IImportPipelineOrchestrator ImportPipelineOrchestrator
+@inject IExportProfileStore ExportProfileStore
+@inject ISheetGenerationEngine SheetGenerationEngine
+@inject IWorkbookWriter WorkbookWriter
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["ExportProfileTest_PageTitle"]</PageTitle>
+
+<h1>@Loc["ExportProfileTest_PageTitle"]</h1>
+<p>@Loc["ExportProfileTest_Instructions"]</p>
+
+@if (_importProfiles is null || _exportProfiles is null)
+{
+    <p>@Loc["ExportProfileTest_Loading"]</p>
+}
+else
+{
+    var processing = _state == State.Processing;
+
+    <div class="mb-3">
+        <label class="form-label" for="export-test-import-profile-select">@Loc["ExportProfileTest_ImportProfileLabel"]</label>
+        <select id="export-test-import-profile-select" class="form-select" @bind="_selectedImportProfileId" disabled="@processing">
+            <option value="">@Loc["ExportProfileTest_ImportProfilePlaceholder"]</option>
+            @foreach (var profile in _importProfiles)
+            {
+                <option value="@profile.Id">@profile.Name</option>
+            }
+        </select>
+        @if (_importProfiles.Count == 0)
+        {
+            <div class="form-text">@Loc["ExportProfileTest_NoImportProfilesAvailable"]</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="export-test-file-input">@Loc["ExportProfileTest_FileLabel"]</label>
+        <InputFile id="export-test-file-input" class="form-control" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@processing" />
+    </div>
+
+    @if (_state == State.Processing)
+    {
+        <div id="export-test-status" class="alert alert-info d-flex align-items-center gap-2">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>@Loc["ExportProfileTest_Processing"]</span>
+        </div>
+    }
+    else if (_state == State.Error)
+    {
+        <div id="export-test-status" class="alert alert-danger">@_importErrorMessage</div>
+    }
+    else if (_importResult is not null)
+    {
+        if (_importResult.Equipement is null)
+        {
+            <div id="export-test-status" class="alert alert-danger">
+                <h4>@Loc["ExportProfileTest_RejectedFileHeading"]</h4>
+                <ul>
+                    @foreach (var error in _importResult.Errors)
+                    {
+                        <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
+                    }
+                </ul>
+            </div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label class="form-label" for="export-test-export-profile-select">@Loc["ExportProfileTest_ExportProfileLabel"]</label>
+                <select id="export-test-export-profile-select" class="form-select" @bind="_selectedExportProfileId">
+                    <option value="">@Loc["ExportProfileTest_ExportProfilePlaceholder"]</option>
+                    @foreach (var profile in _exportProfiles)
+                    {
+                        <option value="@profile.Id">@profile.Name</option>
+                    }
+                </select>
+                @if (_exportProfiles.Count == 0)
+                {
+                    <div class="form-text">@Loc["ExportProfileTest_NoExportProfilesAvailable"]</div>
+                }
+            </div>
+
+            <button id="generate-workbook-button" class="btn btn-primary mb-3" @onclick="GenerateWorkbook">
+                @Loc["ExportProfileTest_GenerateButton"]
+            </button>
+
+            @if (!string.IsNullOrEmpty(_generationErrorMessage))
+            {
+                <div class="alert alert-danger">@_generationErrorMessage</div>
+            }
+
+            @if (_generatedWorkbook is not null)
+            {
+                <div class="alert alert-success">
+                    <a id="download-generated-workbook-link" class="btn btn-secondary mb-3"
+                       href="@_downloadDataUrl" download="@_downloadFileName">
+                        @Loc["ExportProfileTest_DownloadLinkText"]
+                    </a>
+
+                    @foreach (var sheet in _generatedWorkbook.Sheets)
+                    {
+                        <h3>@sheet.Name</h3>
+                        <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm">
+                            <thead>
+                                <tr>
+                                    @foreach (var header in sheet.Headers)
+                                    {
+                                        <th>@header</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var row in sheet.Rows)
+                                {
+                                    <tr>
+                                        @foreach (var cell in row.Cells)
+                                        {
+                                            <td>@cell</td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            }
+        }
+    }
+}
+
+@code {
+    // Matches ImportProfileTest.razor's own cap (Web API's UploadLimits.MaxExcelFileSizeBytes).
+    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
+
+    private enum State { Idle, Processing, Success, Error }
+
+    private List<ImportProfile>? _importProfiles;
+    private List<ExportProfile>? _exportProfiles;
+    private Guid? _selectedImportProfileId;
+    private Guid? _selectedExportProfileId;
+    private State _state = State.Idle;
+    private string? _importErrorMessage;
+    private ImportResult? _importResult;
+    private string? _generationErrorMessage;
+    private GeneratedWorkbook? _generatedWorkbook;
+    private string? _downloadDataUrl;
+    private string? _downloadFileName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _importProfiles = (await ImportProfileStore.GetAllAsync()).ToList();
+        _exportProfiles = (await ExportProfileStore.GetAllAsync()).ToList();
+    }
+
+    private async Task OnInputFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        if (_state == State.Processing)
+        {
+            return;
+        }
+
+        _importResult = null;
+        _generatedWorkbook = null;
+        _generationErrorMessage = null;
+        _downloadDataUrl = null;
+
+        if (_selectedImportProfileId is not { } importProfileId)
+        {
+            _state = State.Error;
+            _importErrorMessage = Loc["ExportProfileTest_SelectImportProfilePrompt"];
+            return;
+        }
+
+        var importProfile = _importProfiles!.First(p => p.Id == importProfileId);
+
+        _state = State.Processing;
+        _importErrorMessage = null;
+        StateHasChanged();
+
+        Stream? fileStream = null;
+
+        try
+        {
+            fileStream = e.File.OpenReadStream(MaxFileSizeBytes);
+            using var workbookReader = new ClosedXmlWorkbookReader(fileStream);
+            _importResult = ImportPipelineOrchestrator.Run(workbookReader, importProfile);
+            _state = State.Success;
+        }
+        catch (Exception ex)
+        {
+            _state = State.Error;
+            _importErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+        finally
+        {
+            if (fileStream is not null)
+            {
+                await fileStream.DisposeAsync();
+            }
+        }
+    }
+
+    private void GenerateWorkbook()
+    {
+        _generationErrorMessage = null;
+        _generatedWorkbook = null;
+        _downloadDataUrl = null;
+
+        if (_importResult?.Equipement is null)
+        {
+            return;
+        }
+
+        if (_selectedExportProfileId is not { } exportProfileId)
+        {
+            _generationErrorMessage = Loc["ExportProfileTest_SelectExportProfilePrompt"];
+            return;
+        }
+
+        var exportProfile = _exportProfiles!.First(p => p.Id == exportProfileId);
+
+        try
+        {
+            _generatedWorkbook = SheetGenerationEngine.Generate(_importResult, exportProfile);
+
+            using var stream = new MemoryStream();
+            WorkbookWriter.Write(_generatedWorkbook, stream);
+            _downloadFileName = TargetWorkbookFileNameBuilder.Build(_importResult.Equipement.Repere, DateTime.UtcNow);
+            _downloadDataUrl =
+                $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(stream.ToArray())}";
+        }
+        catch (Exception ex)
+        {
+            _generatedWorkbook = null;
+            _generationErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+}
