@@ -1,4 +1,5 @@
 using ExcelETL.Domain.Exceptions;
+using ExcelETL.Domain.Generation.Fields;
 
 namespace ExcelETL.Domain.Generation.Profile;
 
@@ -35,6 +36,19 @@ public sealed record SheetGenerationRule
 
         ArgumentNullException.ThrowIfNull(columnDefinitions);
         ArgumentNullException.ThrowIfNull(pointColumnDefinitions);
+
+        var incompatibleColumn = columnDefinitions.FirstOrDefault(
+            column => column.Source is not null && PivotFieldResolver.GetPivotSource(column.Source.Value) != pivotSource);
+
+        if (incompatibleColumn is not null)
+        {
+            var incompatibleFieldRef = incompatibleColumn.Source!.Value;
+            throw new DomainRuleViolationException(
+                $"Column '{incompatibleColumn.Header}' references field '{incompatibleFieldRef}', which belongs to " +
+                $"{PivotFieldResolver.GetPivotSource(incompatibleFieldRef)}, not this sheet's PivotSource ({pivotSource}).",
+                DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
+                incompatibleColumn.Header, incompatibleFieldRef, pivotSource);
+        }
 
         var duplicateHeader = columnDefinitions.Select(c => c.Header)
             .Concat(pointColumnDefinitions.Select(p => p.Header))

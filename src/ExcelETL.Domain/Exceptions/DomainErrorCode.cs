@@ -55,6 +55,7 @@ public enum DomainErrorCode
     SheetGenerationRule_EmptySheetName,
     SheetGenerationRule_DuplicateHeader,
     SheetGenerationRule_DuplicateColonneNom,
+    SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
     ColumnDefinition_EmptyHeader,
     PointColumnDefinition_EmptyHeader,
     PointColumnDefinition_EmptyColonneNom,

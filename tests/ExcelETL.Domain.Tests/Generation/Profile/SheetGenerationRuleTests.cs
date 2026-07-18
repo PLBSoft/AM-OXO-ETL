@@ -80,6 +80,29 @@ public class SheetGenerationRuleTests
     }
 
     [Fact]
+    public void Constructor_WithColumnSourceIncompatibleWithPivotSource_ThrowsDomainRuleViolationExceptionAtConstructionTime()
+    {
+        // IsolementPositionALaPose has no meaning on an Equipement row -- this must be rejected when
+        // the profile is built, not silently ignored (or thrown) later when a file is generated.
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Position MAD", PivotFieldRef.IsolementPositionALaPose)];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, []);
+
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource);
+    }
+
+    [Fact]
+    public void Constructor_WithColumnSourceCompatibleWithPivotSource_CreatesSheetGenerationRule()
+    {
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Position MAD", PivotFieldRef.IsolementPositionALaPose)];
+
+        var rule = new SheetGenerationRule("Enfants", PivotSource.Isolement, columns, []);
+
+        rule.ColumnDefinitions.Should().BeEquivalentTo(columns);
+    }
+
+    [Fact]
     public void Constructor_WithDuplicateHeaderAmongColumnDefinitions_ThrowsDomainValidationException()
     {
         IReadOnlyList<ColumnDefinition> columns =
