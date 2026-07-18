@@ -688,4 +688,64 @@
   <data name="ExportProfiles_DuplicateSuffix" xml:space="preserve">
     <value>(Copie)</value>
   </data>
+  <data name="ExportProfileEditor_PageTitle" xml:space="preserve">
+    <value>Nouveau profil d'export</value>
+  </data>
+  <data name="ExportProfileEditor_EditPageTitle" xml:space="preserve">
+    <value>Modifier le profil d'export</value>
+  </data>
+  <data name="ExportProfileEditor_ProfileNotFound" xml:space="preserve">
+    <value>Profil d'export introuvable.</value>
+  </data>
+  <data name="ExportProfileEditor_NamePlaceholder" xml:space="preserve">
+    <value>Nom du profil</value>
+  </data>
+  <data name="ExportProfileEditor_SaveButton" xml:space="preserve">
+    <value>Enregistrer le profil</value>
+  </data>
+  <data name="ExportProfileEditor_SheetRulesHeading" xml:space="preserve">
+    <value>Règles de feuille</value>
+  </data>
+  <data name="ExportProfileEditor_NoSheetRulesYet" xml:space="preserve">
+    <value>Aucune règle de feuille ajoutée pour le moment.</value>
+  </data>
+  <data name="ExportProfileEditor_AddSheetHeading" xml:space="preserve">
+    <value>Ajouter une règle de feuille</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
+    <value>Nom de la feuille</value>
+  </data>
+  <data name="ExportProfileEditor_PivotSource_Equipement" xml:space="preserve">
+    <value>Équipement</value>
+  </data>
+  <data name="ExportProfileEditor_PivotSource_Isolement" xml:space="preserve">
+    <value>Isolement</value>
+  </data>
+  <data name="ExportProfileEditor_ColumnsHeading" xml:space="preserve">
+    <value>Colonnes</value>
+  </data>
+  <data name="ExportProfileEditor_HeaderPlaceholder" xml:space="preserve">
+    <value>En-tête</value>
+  </data>
+  <data name="ExportProfileEditor_SourceNotMapped" xml:space="preserve">
+    <value>Non mappée pour l'instant</value>
+  </data>
+  <data name="ExportProfileEditor_AddColumnButton" xml:space="preserve">
+    <value>Ajouter la colonne</value>
+  </data>
+  <data name="ExportProfileEditor_PointColumnsHeading" xml:space="preserve">
+    <value>Colonnes Points</value>
+  </data>
+  <data name="ExportProfileEditor_ColonneNomPlaceholder" xml:space="preserve">
+    <value>Nom de la colonne</value>
+  </data>
+  <data name="ExportProfileEditor_MarkValuePlaceholder" xml:space="preserve">
+    <value>Valeur de marquage</value>
+  </data>
+  <data name="ExportProfileEditor_AddPointColumnButton" xml:space="preserve">
+    <value>Ajouter la colonne Point</value>
+  </data>
+  <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
+    <value>Ajouter la feuille</value>
+  </data>
 </root>

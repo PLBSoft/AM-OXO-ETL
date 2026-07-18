@@ -1,0 +1,295 @@
+@page "/export-profiles/new"
+@page "/export-profiles/{Id:guid}/edit"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Application.Generation
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Generation.Fields
+@using ExcelETL.Domain.Generation.Profile
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+
+@inject IExportProfileStore ExportProfileStore
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<PageTitle>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</PageTitle>
+
+<h1>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</h1>
+
+@if (_notFound)
+{
+    <div id="export-profile-not-found" class="alert alert-danger">@Loc["ExportProfileEditor_ProfileNotFound"]</div>
+}
+else
+{
+    @if (!string.IsNullOrEmpty(_profileErrorMessage))
+    {
+        <div class="alert alert-danger">@_profileErrorMessage</div>
+    }
+
+    <div class="row g-2 mb-3">
+        <div class="col">
+            <input id="export-profile-name-input" class="form-control" @bind="_name"
+                   placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
+        </div>
+    </div>
+
+    <h3>@Loc["ExportProfileEditor_SheetRulesHeading"]</h3>
+
+    @if (_sheetRules.Count == 0)
+    {
+        <p>@Loc["ExportProfileEditor_NoSheetRulesYet"]</p>
+    }
+    else
+    {
+        <ul class="list-group mb-3">
+            @foreach (var rule in _sheetRules)
+            {
+                <li class="list-group-item">
+                    <strong>@rule.SheetName</strong> (@rule.PivotSource)
+                    <ul>
+                        @foreach (var column in rule.ColumnDefinitions)
+                        {
+                            <li>@column.Header — @(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</li>
+                        }
+                        @foreach (var pointColumn in rule.PointColumnDefinitions)
+                        {
+                            <li>@pointColumn.ColonneNom / @pointColumn.Header / @pointColumn.MarkValue</li>
+                        }
+                    </ul>
+                </li>
+            }
+        </ul>
+    }
+
+    <div class="card mb-3">
+        <div class="card-header">@Loc["ExportProfileEditor_AddSheetHeading"]</div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(_sheetRuleErrorMessage))
+            {
+                <div class="alert alert-danger">@_sheetRuleErrorMessage</div>
+            }
+
+            <div class="row g-2 mb-2">
+                <div class="col">
+                    <input id="sheet-generation-rule-name-input" class="form-control" @bind="_newSheetRule.SheetName"
+                           placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
+                </div>
+                <div class="col">
+                    <select id="sheet-generation-rule-pivot-source-select" class="form-select" @bind="_newSheetRule.PivotSource">
+                        <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
+                        <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
+                    </select>
+                </div>
+            </div>
+
+            <h5>@Loc["ExportProfileEditor_ColumnsHeading"]</h5>
+            @if (_newSheetRule.ColumnDefinitions.Count > 0)
+            {
+                <ul>
+                    @foreach (var column in _newSheetRule.ColumnDefinitions)
+                    {
+                        <li>@column.Header — @(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</li>
+                    }
+                </ul>
+            }
+            <div class="row g-2 mb-2">
+                <div class="col">
+                    <input id="column-header-input" class="form-control" @bind="_newColumn.Header"
+                           placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+                </div>
+                <div class="col">
+                    <select id="column-source-select" class="form-select" @bind="_newColumn.SourceValue">
+                        <option value="">@Loc["ExportProfileEditor_SourceNotMapped"]</option>
+                        @foreach (var fieldRef in AvailableFieldRefs())
+                        {
+                            <option value="@fieldRef">@fieldRef</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button id="add-column-definition-button" class="btn btn-secondary" @onclick="AddColumnDefinition">
+                        @Loc["ExportProfileEditor_AddColumnButton"]
+                    </button>
+                </div>
+            </div>
+
+            <h5>@Loc["ExportProfileEditor_PointColumnsHeading"]</h5>
+            @if (_newSheetRule.PointColumnDefinitions.Count > 0)
+            {
+                <ul>
+                    @foreach (var pointColumn in _newSheetRule.PointColumnDefinitions)
+                    {
+                        <li>@pointColumn.ColonneNom / @pointColumn.Header / @pointColumn.MarkValue</li>
+                    }
+                </ul>
+            }
+            <div class="row g-2 mb-3">
+                <div class="col">
+                    <input id="point-column-nom-input" class="form-control" @bind="_newPointColumn.ColonneNom"
+                           placeholder="@Loc["ExportProfileEditor_ColonneNomPlaceholder"]" />
+                </div>
+                <div class="col">
+                    <input id="point-column-header-input" class="form-control" @bind="_newPointColumn.Header"
+                           placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+                </div>
+                <div class="col">
+                    <input id="point-column-mark-value-input" class="form-control" @bind="_newPointColumn.MarkValue"
+                           placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
+                </div>
+                <div class="col-auto">
+                    <button id="add-point-column-definition-button" class="btn btn-secondary" @onclick="AddPointColumnDefinition">
+                        @Loc["ExportProfileEditor_AddPointColumnButton"]
+                    </button>
+                </div>
+            </div>
+
+            <button id="add-sheet-generation-rule-button" class="btn btn-primary" @onclick="AddSheetRule">
+                @Loc["ExportProfileEditor_AddSheetButton"]
+            </button>
+        </div>
+    </div>
+
+    <button id="save-export-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
+        @Loc["ExportProfileEditor_SaveButton"]
+    </button>
+}
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private string _name = string.Empty;
+    private Guid? _editingId;
+    private bool _notFound;
+    private string? _profileErrorMessage;
+
+    private readonly List<SheetGenerationRule> _sheetRules = [];
+    private NewSheetGenerationRuleModel _newSheetRule = new();
+    private NewColumnModel _newColumn = new();
+    private NewPointColumnModel _newPointColumn = new();
+    private string? _sheetRuleErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var profile = await ExportProfileStore.GetByIdAsync(Id.Value);
+        if (profile is null)
+        {
+            _notFound = true;
+            return;
+        }
+
+        _editingId = profile.Id;
+        _name = profile.Name;
+        _sheetRules.AddRange(profile.SheetRules);
+    }
+
+    private IEnumerable<PivotFieldRef> AvailableFieldRefs() =>
+        Enum.GetValues<PivotFieldRef>().Where(fieldRef => PivotFieldResolver.GetPivotSource(fieldRef) == _newSheetRule.PivotSource);
+
+    private void AddColumnDefinition()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            PivotFieldRef? source = string.IsNullOrEmpty(_newColumn.SourceValue)
+                ? null
+                : Enum.Parse<PivotFieldRef>(_newColumn.SourceValue);
+
+            _newSheetRule.ColumnDefinitions.Add(new ColumnDefinition(_newColumn.Header, source));
+            _newColumn = new NewColumnModel();
+        }
+        catch (DomainValidationException ex)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void AddPointColumnDefinition()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            _newSheetRule.PointColumnDefinitions.Add(new PointColumnDefinition(
+                _newPointColumn.ColonneNom, _newPointColumn.Header, _newPointColumn.MarkValue));
+            _newPointColumn = new NewPointColumnModel();
+        }
+        catch (DomainValidationException ex)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void AddSheetRule()
+    {
+        _sheetRuleErrorMessage = null;
+
+        try
+        {
+            var rule = new SheetGenerationRule(
+                _newSheetRule.SheetName,
+                _newSheetRule.PivotSource,
+                _newSheetRule.ColumnDefinitions,
+                _newSheetRule.PointColumnDefinitions);
+
+            _sheetRules.Add(rule);
+            _newSheetRule = new NewSheetGenerationRuleModel();
+            _newColumn = new NewColumnModel();
+            _newPointColumn = new NewPointColumnModel();
+        }
+        catch (Exception ex) when (ex is DomainValidationException or DomainRuleViolationException)
+        {
+            _sheetRuleErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        _profileErrorMessage = null;
+
+        try
+        {
+            var profile = _editingId.HasValue
+                ? new ExportProfile(_editingId.Value, _name, _sheetRules)
+                : new ExportProfile(_name, _sheetRules);
+
+            await ExportProfileStore.SaveAsync(profile);
+            NavigationManager.NavigateTo("export-profiles");
+        }
+        catch (DomainValidationException ex)
+        {
+            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private sealed class NewSheetGenerationRuleModel
+    {
+        public string SheetName { get; set; } = string.Empty;
+        public PivotSource PivotSource { get; set; } = PivotSource.Equipement;
+        public List<ColumnDefinition> ColumnDefinitions { get; } = [];
+        public List<PointColumnDefinition> PointColumnDefinitions { get; } = [];
+    }
+
+    private sealed class NewColumnModel
+    {
+        public string Header { get; set; } = string.Empty;
+        public string SourceValue { get; set; } = string.Empty;
+    }
+
+    private sealed class NewPointColumnModel
+    {
+        public string ColonneNom { get; set; } = string.Empty;
+        public string Header { get; set; } = string.Empty;
+        public string MarkValue { get; set; } = PointColumnDefinition.DefaultMarkValue;
+    }
+}

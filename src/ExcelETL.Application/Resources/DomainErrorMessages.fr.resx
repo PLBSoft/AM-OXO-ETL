@@ -118,4 +118,34 @@
   <data name="SheetExtractionRule_SheetNameLocatorMismatch" xml:space="preserve">
     <value>Le nom de la feuille '{0}' doit correspondre à la feuille du localisateur '{1}'.</value>
   </data>
+  <data name="ExportProfile_EmptyName" xml:space="preserve">
+    <value>Le nom ne doit pas être vide.</value>
+  </data>
+  <data name="ExportProfile_NoSheetRules" xml:space="preserve">
+    <value>La liste des règles de feuille doit contenir au moins une règle.</value>
+  </data>
+  <data name="SheetGenerationRule_EmptySheetName" xml:space="preserve">
+    <value>Le nom de la feuille ne doit pas être vide.</value>
+  </data>
+  <data name="SheetGenerationRule_DuplicateHeader" xml:space="preserve">
+    <value>L'en-tête '{0}' est utilisé plus d'une fois dans cette feuille.</value>
+  </data>
+  <data name="SheetGenerationRule_DuplicateColonneNom" xml:space="preserve">
+    <value>Le nom de colonne '{0}' est utilisé plus d'une fois dans cette feuille.</value>
+  </data>
+  <data name="SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource" xml:space="preserve">
+    <value>La colonne '{0}' référence le champ '{1}', qui n'appartient pas à la source pivot de cette feuille ({2}).</value>
+  </data>
+  <data name="ColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>L'en-tête ne doit pas être vide.</value>
+  </data>
+  <data name="PointColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>L'en-tête ne doit pas être vide.</value>
+  </data>
+  <data name="PointColumnDefinition_EmptyColonneNom" xml:space="preserve">
+    <value>Le nom de colonne ne doit pas être vide.</value>
+  </data>
+  <data name="PointColumnDefinition_EmptyMarkValue" xml:space="preserve">
+    <value>La valeur de marquage ne doit pas être vide.</value>
+  </data>
 </root>
