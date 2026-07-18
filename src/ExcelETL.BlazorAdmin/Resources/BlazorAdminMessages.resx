@@ -655,4 +655,37 @@
   <data name="ImportProfileTest_Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="NavMenu_ExportProfiles" xml:space="preserve">
+    <value>Export Profiles</value>
+  </data>
+  <data name="NavMenu_ExportProfileTest" xml:space="preserve">
+    <value>Test Export Profile</value>
+  </data>
+  <data name="ExportProfiles_PageTitle" xml:space="preserve">
+    <value>Export Profiles</value>
+  </data>
+  <data name="ExportProfiles_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="ExportProfiles_NoEntries" xml:space="preserve">
+    <value>No export profiles have been created yet.</value>
+  </data>
+  <data name="ExportProfiles_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="ExportProfiles_SheetCount" xml:space="preserve">
+    <value>{0} sheet rule(s)</value>
+  </data>
+  <data name="ExportProfiles_Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="ExportProfiles_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="ExportProfiles_Duplicate" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="ExportProfiles_DuplicateSuffix" xml:space="preserve">
+    <value>(Copy)</value>
+  </data>
 </root>

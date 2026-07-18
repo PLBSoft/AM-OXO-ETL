@@ -1,0 +1,81 @@
+@page "/export-profiles"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Generation
+@using ExcelETL.Domain.Generation.Profile
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+
+@inject IExportProfileStore ExportProfileStore
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Loc["ExportProfiles_PageTitle"]</PageTitle>
+
+<h1>@Loc["ExportProfiles_PageTitle"]</h1>
+
+<button id="create-export-profile-button" class="btn btn-primary mb-3" @onclick="CreateProfile">
+    @Loc["ExportProfiles_Create"]
+</button>
+
+@if (_profiles is null)
+{
+    <p>@Loc["ExportProfiles_Loading"]</p>
+}
+else if (_profiles.Count == 0)
+{
+    <p>@Loc["ExportProfiles_NoEntries"]</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@Loc["ExportProfiles_Name"]</th>
+                <th>@Loc["ExportProfiles_SheetCount"]</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var profile in _profiles)
+            {
+                <tr>
+                    <td>@profile.Name</td>
+                    <td>@Loc["ExportProfiles_SheetCount", profile.SheetRules.Count]</td>
+                    <td>
+                        <button id="edit-export-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => EditProfile(profile)">
+                            @Loc["ExportProfiles_Edit"]
+                        </button>
+                        <button id="duplicate-export-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => DuplicateProfileAsync(profile)">
+                            @Loc["ExportProfiles_Duplicate"]
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ExportProfile>? _profiles;
+
+    protected override async Task OnInitializedAsync() => await LoadProfilesAsync();
+
+    private async Task LoadProfilesAsync() => _profiles = (await ExportProfileStore.GetAllAsync()).ToList();
+
+    private void CreateProfile() => NavigationManager.NavigateTo("export-profiles/new");
+
+    private void EditProfile(ExportProfile profile) => NavigationManager.NavigateTo($"export-profiles/{profile.Id}/edit");
+
+    private async Task DuplicateProfileAsync(ExportProfile profile)
+    {
+        var duplicate = new ExportProfile(
+            $"{profile.Name} {Loc["ExportProfiles_DuplicateSuffix"]}",
+            profile.SheetRules);
+
+        await ExportProfileStore.SaveAsync(duplicate);
+        await LoadProfilesAsync();
+    }
+}
