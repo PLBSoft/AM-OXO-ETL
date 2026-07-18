@@ -49,5 +49,14 @@ public enum DomainErrorCode
     ImportProfile_EmptyEquipementTypeElementNom,
     ImportProfile_NoSheetRules,
     SheetExtractionRule_EmptySheetName,
-    SheetExtractionRule_SheetNameLocatorMismatch
+    SheetExtractionRule_SheetNameLocatorMismatch,
+    ExportProfile_EmptyName,
+    ExportProfile_NoSheetRules,
+    SheetGenerationRule_EmptySheetName,
+    SheetGenerationRule_DuplicateHeader,
+    SheetGenerationRule_DuplicateColonneNom,
+    ColumnDefinition_EmptyHeader,
+    PointColumnDefinition_EmptyHeader,
+    PointColumnDefinition_EmptyColonneNom,
+    PointColumnDefinition_EmptyMarkValue
 }
