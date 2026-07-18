@@ -6,11 +6,13 @@ using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
+using ExcelETL.Application.Generation;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.BlazorAdmin.ExternalApi;
 using ExcelETL.Infrastructure.Diagnostics;
+using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
@@ -104,6 +106,13 @@ builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, Unc
 builder.Services.AddSingleton<IAutresJointsTouchesExtractionService, AutresJointsTouchesExtractionService>();
 builder.Services.AddSingleton<IDiversExtractionService, DiversExtractionService>();
 builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
+
+// Lot J: the target-workbook generation pipeline (Lot I), wired here so /export-profiles/test can
+// run it in process. IExportProfileStore is Scoped to match IImportProfileStore's lifetime; the
+// generation engine and writer are stateless, so Singleton, matching the OXO pipeline services above.
+builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
+builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
+builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
 
 // Deliberate, narrow exception to the "never talk to the Web API over HTTP" Clean Architecture
 // rule above -- see ExcelProcessingClient for why. Used only by the /upload-test admin page.
