@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Entities;
 using ExcelETL.Domain.Extraction.Profile;
+using ExcelETL.Domain.Generation.Profile;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExcelETL.Infrastructure.Persistence;
@@ -9,6 +10,7 @@ public class ExcelEtlDbContext(DbContextOptions<ExcelEtlDbContext> options) : Db
     public DbSet<ExtractionConfig> ExtractionConfigs => Set<ExtractionConfig>();
     public DbSet<ExtractionHistory> ExtractionHistories => Set<ExtractionHistory>();
     public DbSet<ImportProfile> ImportProfiles => Set<ImportProfile>();
+    public DbSet<ExportProfile> ExportProfiles => Set<ExportProfile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
