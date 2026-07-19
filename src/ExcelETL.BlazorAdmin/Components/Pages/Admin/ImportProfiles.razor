@@ -45,6 +45,10 @@ else
                     <td>@profile.EquipementTypeElementNom</td>
                     <td>@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</td>
                     <td>
+                        <button id="edit-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => EditProfile(profile)">
+                            @Loc["ImportProfiles_Edit"]
+                        </button>
                         <button id="duplicate-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
                                 @onclick="() => DuplicateProfileAsync(profile)">
                             @Loc["ImportProfiles_Duplicate"]
@@ -64,6 +68,8 @@ else
     private async Task LoadProfilesAsync() => _profiles = (await ImportProfileStore.GetAllAsync()).ToList();
 
     private void CreateProfile() => NavigationManager.NavigateTo("import-profiles/new");
+
+    private void EditProfile(ImportProfile profile) => NavigationManager.NavigateTo($"import-profiles/{profile.Id}/edit");
 
     private async Task DuplicateProfileAsync(ImportProfile profile)
     {

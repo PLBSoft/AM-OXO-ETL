@@ -4,6 +4,7 @@ using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
@@ -42,6 +43,22 @@ public class ImportProfileEditorTests : BunitContext
     }
 
     private IImportProfileStore Store => Services.GetRequiredService<IImportProfileStore>();
+
+    private static ImportProfile BuildProfileWithOneSheetRule(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT",
+            firstBlockStartRow: 9,
+            step: 7,
+            stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+
+        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+    }
 
     // Fills every field needed to pass the RepeatingBlockLocator/SheetExtractionRule build-up
     // (one block field, one unconditional colonne, one conditional point rule) and clicks
@@ -213,4 +230,50 @@ public class ImportProfileEditorTests : BunitContext
             CultureInfo.CurrentUICulture = originalCulture;
         }
     }
+
+    [Fact]
+    public async Task EditRoute_WithExistingProfile_PrefillsRootFieldsAndSheetRules() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#profile-name-input").GetAttribute("value").Should().Be("MAD OXO");
+            cut.Find("#profile-repere-prefix-input").GetAttribute("value").Should().Be(ImportProfile.DefaultReperePrefix);
+            cut.Find("#profile-equipement-type-element-nom-input").GetAttribute("value").Should().Be("MAD TRAVAUX");
+            cut.Markup.Should().Contain("ISOLEMENT");
+            cut.Markup.Should().Contain("PROLOCK VANNES");
+            cut.Markup.Should().Contain("Identification");
+        });
+
+    [Fact]
+    public async Task EditRoute_SaveAfterModification_UsesSameProfileId() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-V2-");
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
+            var saved = all.Single();
+            saved.Id.Should().Be(profile.Id);
+            saved.ReperePrefix.Should().Be("MAD-OXO-V2-");
+        });
+
+    [Fact]
+    public void EditRoute_WithUnknownId_DisplaysErrorAndDoesNotRenderForm() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, Guid.NewGuid()));
+
+        cut.Markup.Should().Contain("Import profile not found.");
+        cut.FindAll("#profile-name-input").Should().BeEmpty();
+        cut.FindAll("#save-profile-button").Should().BeEmpty();
+    });
 }

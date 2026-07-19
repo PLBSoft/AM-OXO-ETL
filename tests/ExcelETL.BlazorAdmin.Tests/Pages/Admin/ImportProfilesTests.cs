@@ -121,6 +121,21 @@ public class ImportProfilesTests : BunitContext
     });
 
     [Fact]
+    public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+            cut.Find($"#edit-profile-button-{profile.Id}").Click();
+
+            navigationManager.Uri.Should().EndWith($"/import-profiles/{profile.Id}/edit");
+        });
+
+    [Fact]
     public async Task DuplicateButton_CreatesSuffixedCopyWithNewId_AndRefreshesListWithoutNavigating() =>
         await WithCultureAsync("en-US", async () =>
         {

@@ -463,6 +463,9 @@
   <data name="ImportProfiles_Create" xml:space="preserve">
     <value>Create</value>
   </data>
+  <data name="ImportProfiles_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
   <data name="ImportProfiles_Duplicate" xml:space="preserve">
     <value>Duplicate</value>
   </data>
@@ -471,6 +474,12 @@
   </data>
   <data name="ImportProfileEditor_PageTitle" xml:space="preserve">
     <value>New Import Profile</value>
+  </data>
+  <data name="ImportProfileEditor_EditPageTitle" xml:space="preserve">
+    <value>Edit Import Profile</value>
+  </data>
+  <data name="ImportProfileEditor_ProfileNotFound" xml:space="preserve">
+    <value>Import profile not found.</value>
   </data>
   <data name="ImportProfileEditor_NamePlaceholder" xml:space="preserve">
     <value>Profile name</value>

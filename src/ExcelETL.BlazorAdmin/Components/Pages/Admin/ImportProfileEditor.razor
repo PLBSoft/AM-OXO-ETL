@@ -1,4 +1,5 @@
 @page "/import-profiles/new"
+@page "/import-profiles/{Id:guid}/edit"
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
 @using ExcelETL.Application.Exceptions
@@ -14,10 +15,16 @@
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject NavigationManager NavigationManager
 
-<PageTitle>@Loc["ImportProfileEditor_PageTitle"]</PageTitle>
+<PageTitle>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</PageTitle>
 
-<h1>@Loc["ImportProfileEditor_PageTitle"]</h1>
+<h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
+@if (_notFound)
+{
+    <div id="import-profile-not-found" class="alert alert-danger">@Loc["ImportProfileEditor_ProfileNotFound"]</div>
+}
+else
+{
 @if (!string.IsNullOrEmpty(_profileErrorMessage))
 {
     <div class="alert alert-danger">@_profileErrorMessage</div>
@@ -198,11 +205,17 @@ else
 <button id="save-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
     @Loc["ImportProfileEditor_SaveButton"]
 </button>
+}
 
 @code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
     private string _name = string.Empty;
     private string _reperePrefix = ImportProfile.DefaultReperePrefix;
     private string _equipementTypeElementNom = string.Empty;
+    private Guid? _editingId;
+    private bool _notFound;
     private string? _profileErrorMessage;
 
     private readonly List<SheetExtractionRule> _sheetRules = [];
@@ -211,6 +224,27 @@ else
     private string _newUnconditionalColonneName = string.Empty;
     private NewPointRuleModel _newPointRule = new();
     private string? _sheetRuleErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Id.HasValue)
+        {
+            return;
+        }
+
+        var profile = await ImportProfileStore.GetByIdAsync(Id.Value);
+        if (profile is null)
+        {
+            _notFound = true;
+            return;
+        }
+
+        _editingId = profile.Id;
+        _name = profile.Name;
+        _reperePrefix = profile.ReperePrefix;
+        _equipementTypeElementNom = profile.EquipementTypeElementNom;
+        _sheetRules.AddRange(profile.SheetRules);
+    }
 
     private void AddBlockField()
     {
@@ -289,7 +323,10 @@ else
 
         try
         {
-            var profile = new ImportProfile(_name, _reperePrefix, _equipementTypeElementNom, _sheetRules);
+            var profile = _editingId.HasValue
+                ? new ImportProfile(_editingId.Value, _name, _reperePrefix, _equipementTypeElementNom, _sheetRules)
+                : new ImportProfile(_name, _reperePrefix, _equipementTypeElementNom, _sheetRules);
+
             await ImportProfileStore.SaveAsync(profile);
             NavigationManager.NavigateTo("import-profiles");
         }

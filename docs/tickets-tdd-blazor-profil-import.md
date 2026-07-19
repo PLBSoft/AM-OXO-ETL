@@ -79,7 +79,11 @@ avec classeur synthétique invalide).
 
 ---
 
-## F3. Édition d'un profil d'import existant ⬜ à faire
+## F3. Édition d'un profil d'import existant ✅ terminé
+
+**Statut** : livré en TDD strict, symétrique de F3 côté `ExportProfile` (Lot J2). `IImportProfileStore.SaveAsync`
+(`EfImportProfileStore`) était déjà un véritable upsert keyé par `Id` (voir Lot E2) — aucune
+signature de store à ajouter, conformément à l'hypothèse du ticket.
 
 **Nature du ticket** : complément à F1, pas une réouverture de F1/F2 déjà livrés. L'absence
 d'édition (seulement Créer/Dupliquer) était un choix pragmatique de F1 à l'origine, mais elle
@@ -121,6 +125,30 @@ n'impose cette limitation, ce n'est pas à reconduire par défaut.
 
 **Dossier** : `src/ExcelETL.BlazorAdmin/Components/Pages/Admin/ImportProfileEditor.razor` +
 `ImportProfiles.razor` (extension, pas nouveau fichier) — miroir tests existants, étendus.
+
+**Preuve** :
+- `ImportProfileEditor.razor` porte désormais 2 routes (`/import-profiles/new` et
+  `/import-profiles/{Id:guid}/edit`) sur le même composant. `[Parameter] public Guid? Id`,
+  `OnInitializedAsync` charge via `IImportProfileStore.GetByIdAsync(id)` quand `Id` est renseigné,
+  pré-remplit `_name`/`_reperePrefix`/`_equipementTypeElementNom` et `_sheetRules.AddRange(profile.SheetRules)`
+  (sous-listes imbriquées incluses, aucune reconstruction manuelle nécessaire). `_editingId` distinct
+  de `Id` (même convention que `ExportProfileEditor`), utilisé par `SaveProfileAsync` pour
+  reconstruire l'`ImportProfile` via son constructeur 5 arguments (`Guid`-préservant) plutôt que le
+  constructeur 4 arguments qui mint un nouveau `Guid`. `_notFound` bloque le rendu du formulaire
+  (titre + alerte `#import-profile-not-found` seuls) quand `GetByIdAsync` renvoie `null`.
+- `ImportProfiles.razor` : bouton `#edit-profile-button-{id}` → `NavigationManager.NavigateTo($"import-profiles/{profile.Id}/edit")`,
+  ajouté à côté de Créer/Dupliquer.
+- Clés de ressource ajoutées (EN/FR) : `ImportProfiles_Edit`, `ImportProfileEditor_EditPageTitle`,
+  `ImportProfileEditor_ProfileNotFound`.
+- Tests (bUnit, réels `IImportProfileStore`/`EfImportProfileStore` + EF Core InMemory, pas de mock) :
+  `ImportProfilesTests.EditButton_NavigatesToEditRouteWithProfileId`,
+  `ImportProfileEditorTests.EditRoute_WithExistingProfile_PrefillsRootFieldsAndSheetRules`,
+  `ImportProfileEditorTests.EditRoute_SaveAfterModification_UsesSameProfileId` (assert
+  `saved.Id == profile.Id`, pas un nouveau `Guid`), `ImportProfileEditorTests.EditRoute_WithUnknownId_DisplaysErrorAndDoesNotRenderForm`.
+  Suite complète : `dotnet test tests/ExcelETL.BlazorAdmin.Tests` → 23/23 tests `ImportProfile*`
+  verts (les 8 tests F1.2/F1.3 existants, mode création, passent sans modification), 107/112 pour
+  l'assemblage complet (les 5 échecs restants sont les échecs pré-existants documentés dans
+  `CLAUDE.md` — `LoginTests`/`MainLayoutTests`, sans rapport avec F3, non touchés).
 
 ---
 
