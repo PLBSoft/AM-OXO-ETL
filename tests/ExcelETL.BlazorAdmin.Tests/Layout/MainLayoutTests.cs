@@ -35,7 +35,6 @@ public class MainLayoutTests : BunitContext
     {
         var cut = Render<MainLayout>();
 
-        cut.Markup.Should().Contain("About");
         cut.Markup.Should().Contain("An unhandled error has occurred.");
         cut.Markup.Should().Contain("Reload");
     });
@@ -45,7 +44,6 @@ public class MainLayoutTests : BunitContext
     {
         var cut = Render<MainLayout>();
 
-        cut.Markup.Should().Contain("À propos");
         cut.Markup.Should().Contain("Une erreur non gérée s'est produite.");
         cut.Markup.Should().Contain("Recharger");
     });

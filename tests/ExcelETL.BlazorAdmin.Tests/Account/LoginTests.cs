@@ -55,7 +55,7 @@ public class LoginTests : BunitContext
             .ReturnsAsync(SignInResult.Success);
 
         var cut = Render<Login>();
-        cut.Find("#Input\\.Email").Change("user@example.com");
+        cut.Find("#Input\\.UserName").Change("user@example.com");
         cut.Find("#Input\\.Password").Change("P@ssw0rd!");
         cut.Find("form").Submit();
 
@@ -72,7 +72,7 @@ public class LoginTests : BunitContext
             .ReturnsAsync(SignInResult.Failed);
 
         var cut = Render<Login>();
-        cut.Find("#Input\\.Email").Change("user@example.com");
+        cut.Find("#Input\\.UserName").Change("user@example.com");
         cut.Find("#Input\\.Password").Change("wrong-password");
         cut.Find("form").Submit();
 
@@ -88,7 +88,7 @@ public class LoginTests : BunitContext
             .ReturnsAsync(SignInResult.Failed);
 
         var cut = Render<Login>();
-        cut.Find("#Input\\.Email").Change("user@example.com");
+        cut.Find("#Input\\.UserName").Change("user@example.com");
         cut.Find("#Input\\.Password").Change("wrong-password");
         cut.Find("form").Submit();
 
