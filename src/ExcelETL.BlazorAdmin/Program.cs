@@ -11,6 +11,7 @@ using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.BlazorAdmin.ExternalApi;
+using ExcelETL.Hosting;
 using ExcelETL.Infrastructure.Diagnostics;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Identity;
@@ -22,9 +23,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Serilog;
-using Serilog.Events;
-using Serilog.Sinks.MSSqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,28 +33,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // below can show a unified view; the Application property distinguishes which process
 // emitted a given entry. Serilog owns and auto-creates this table's schema -- it is
 // intentionally outside the EF Core Code-First migrations used for the domain database.
-//
-// AutoCreateSqlTable makes the sink open a real connection during host startup, which would
-// otherwise break WebApplicationFactory-based integration tests that never point at a real SQL
-// Server. Tests disable the sink via this switch instead of stubbing out Serilog entirely.
-var enableMsSqlServerLogSink = builder.Configuration.GetValue("Serilog:EnableMsSqlServerSink", defaultValue: true);
-
-builder.Host.UseSerilog((_, loggerConfiguration) =>
-{
-    loggerConfiguration
-        .MinimumLevel.Information()
-        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("Application", "ExcelETL.BlazorAdmin")
-        .WriteTo.Console();
-
-    if (enableMsSqlServerLogSink)
-    {
-        loggerConfiguration.WriteTo.MSSqlServer(
-            connectionString: connectionString,
-            sinkOptions: new MSSqlServerSinkOptions { TableName = "SystemLogs", AutoCreateSqlTable = true });
-    }
-});
+// The sink/enrichment setup itself lives in ExcelETL.Hosting (see AddOxoHostLogging) so it is
+// defined exactly once for every host, not re-typed per Program.cs -- see CLAUDE.md, "Lot G3".
+builder.Host.AddOxoHostLogging("ExcelETL.BlazorAdmin", connectionString);
 
 // Read-only access to the SystemLogs table for the /dashboard page. This context carries no
 // migrations of its own -- see the UseSerilog configuration above for why Serilog owns the

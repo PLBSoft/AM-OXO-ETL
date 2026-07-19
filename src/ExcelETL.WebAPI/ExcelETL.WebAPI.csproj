@@ -9,12 +9,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
     <PackageReference Include="Microsoft.OpenApi" Version="2.10.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ExcelETL.Application\ExcelETL.Application.csproj" />
+    <ProjectReference Include="..\ExcelETL.Hosting\ExcelETL.Hosting.csproj" />
     <ProjectReference Include="..\ExcelETL.Infrastructure\ExcelETL.Infrastructure.csproj" />
   </ItemGroup>
 
