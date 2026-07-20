@@ -9,6 +9,7 @@
     <Project Path="src/ExcelETL.Application/ExcelETL.Application.csproj" />
     <Project Path="src/ExcelETL.BlazorAdmin/ExcelETL.BlazorAdmin.csproj" />
     <Project Path="src/ExcelETL.Domain/ExcelETL.Domain.csproj" />
+    <Project Path="src/ExcelETL.Hosting/ExcelETL.Hosting.csproj" />
     <Project Path="src/ExcelETL.Infrastructure/ExcelETL.Infrastructure.csproj" />
     <Project Path="src/ExcelETL.WebAPI/ExcelETL.WebAPI.csproj" />
   </Folder>
@@ -16,6 +17,7 @@
     <Project Path="tests/ExcelETL.Application.Tests/ExcelETL.Application.Tests.csproj" />
     <Project Path="tests/ExcelETL.BlazorAdmin.Tests/ExcelETL.BlazorAdmin.Tests.csproj" />
     <Project Path="tests/ExcelETL.Domain.Tests/ExcelETL.Domain.Tests.csproj" />
+    <Project Path="tests/ExcelETL.Hosting.Tests/ExcelETL.Hosting.Tests.csproj" />
     <Project Path="tests/ExcelETL.Infrastructure.Tests/ExcelETL.Infrastructure.Tests.csproj" />
     <Project Path="tests/ExcelETL.WebAPI.Tests/ExcelETL.WebAPI.Tests.csproj" />
   </Folder>
