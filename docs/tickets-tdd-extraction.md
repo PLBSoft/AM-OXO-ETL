@@ -76,15 +76,24 @@ Champ `H20:O21` (Position MAD) → `IsolementPivot.PositionALaPose`, destiné à
 
 **Cas `"VANNE"`** : un Isolement avec `TypeElement = "VANNE"` (valeur absente du référentiel OXO) est extrait normalement (pas de rejet de bloc), ne déclenche aucun des 3 Points ci-dessus, et produit un avertissement non bloquant dans `ImportResult.Errors`. Testé sur la fixture réelle `D8570` qui contient ce cas.
 
-### C3. PLATINES
-Pas=8, types réels `"PLATINE"`/`"TAMPON PLEIN"` (confirmés en base OXO, `Code` `PT`/`TP`).
+### C3. PLATINES / C4. ORIFICES CAPACITES
+**Implémentation réelle : un seul service partagé**, `UnconditionalIsolementSheetExtractionService`
+(`src/ExcelETL.Application/Extraction/Oxo/`) — renommé depuis `PlatinesExtractionService` une fois
+confirmé que les deux feuilles ont une structure byte-identique (même `K6:U6`, même pas, mêmes
+offsets), instancié une seule fois et appelé deux fois avec un `SheetExtractionRule` différent (un
+par feuille). Ce document conserve la description business par feuille ci-dessous (C3/C4 restent
+deux règles métier distinctes, seule leur implémentation technique a fusionné) — voir `CLAUDE.md`
+("Lot C3/C4") pour le détail du renommage.
+
+Pas=8 pour les deux feuilles.
+
+**C3 — PLATINES**, types réels `"PLATINE"`/`"TAMPON PLEIN"` (confirmés en base OXO, `Code` `PT`/`TP`).
 
 Points créés — **variantes `DEBUT` uniquement** : `"POSE ÉTIQUETTES"`, `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`, `"RECEPTION DEBUT MAD"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"RECEPTION DEBUT REL"`, `"PLATINES / TAMPONS PLEINS"`.
 
 Les variantes `FIN` restent **volontairement exclues** — position business assumée malgré un écart observé dans un fichier cible de test, pas un oubli. Ne pas les ajouter sans nouvelle décision client explicite.
 
-### C4. ORIFICES CAPACITES
-Pas=8, type réel `"TROU D'HOMME"` (seule valeur observée, confirmée en base OXO), mêmes 4 Colonnes de Points systématiques (pas de condition).
+**C4 — ORIFICES CAPACITES**, type réel `"TROU D'HOMME"` (seule valeur observée, confirmée en base OXO), mêmes 4 Colonnes de Points systématiques (pas de condition).
 
 ### C5. AUTRES JOINTS TOUCHES
 Pas=7, types réels `"TUYAUTERIE"` (défaut) et `"TUBING"` (exclusion) — condition `POSE ÉTIQUETTES` créé seulement si `TypeElement ≠ "TUBING"`.
