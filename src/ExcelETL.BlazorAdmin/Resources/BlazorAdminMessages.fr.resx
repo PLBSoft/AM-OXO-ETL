@@ -349,13 +349,25 @@
   <data name="ImportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
     <value>Nom de la feuille</value>
   </data>
+  <data name="ImportProfileEditor_SheetNameLabel" xml:space="preserve">
+    <value>Nom de la feuille</value>
+  </data>
   <data name="ImportProfileEditor_FirstBlockStartRowPlaceholder" xml:space="preserve">
+    <value>Ligne de début du premier bloc</value>
+  </data>
+  <data name="ImportProfileEditor_FirstBlockStartRowLabel" xml:space="preserve">
     <value>Ligne de début du premier bloc</value>
   </data>
   <data name="ImportProfileEditor_StepPlaceholder" xml:space="preserve">
     <value>Pas</value>
   </data>
+  <data name="ImportProfileEditor_StepLabel" xml:space="preserve">
+    <value>Pas</value>
+  </data>
   <data name="ImportProfileEditor_StopFieldNamePlaceholder" xml:space="preserve">
+    <value>Nom du champ d'arrêt</value>
+  </data>
+  <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
     <value>Nom du champ d'arrêt</value>
   </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">

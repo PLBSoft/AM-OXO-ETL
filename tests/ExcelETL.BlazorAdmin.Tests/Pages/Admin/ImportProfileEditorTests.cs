@@ -471,4 +471,138 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.FindAll("#modify-sheet-rule-button-1").Should().HaveCount(1);
         });
+
+    [Fact]
+    public void SheetRuleForm_RootLocatorFields_HaveVisibleLabels() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("label[for='sheet-rule-name-input']").TextContent.Should().Be("Sheet name");
+        cut.Find("label[for='sheet-rule-first-block-start-row-input']").TextContent.Should().Be("First block start row");
+        cut.Find("label[for='sheet-rule-step-input']").TextContent.Should().Be("Step");
+        cut.Find("label[for='sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
+    });
+
+    [Fact]
+    public async Task SheetRuleForm_EditMode_RootLocatorFields_HaveVisibleLabels() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("label[for='edit-0-sheet-rule-name-input']").TextContent.Should().Be("Sheet name");
+            cut.Find("label[for='edit-0-sheet-rule-first-block-start-row-input']").TextContent.Should().Be("First block start row");
+            cut.Find("label[for='edit-0-sheet-rule-step-input']").TextContent.Should().Be("Step");
+            cut.Find("label[for='edit-0-sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
+        });
+
+    [Fact]
+    public void BlockField_AfterAdding_DisplaysModifyAndDeleteButtons() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.FindAll("#modify-block-field-button-0").Should().HaveCount(1);
+        cut.FindAll("#delete-block-field-button-0").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void BlockField_ClickingModify_PrefillsEditFormWithExistingValues() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-row-offset-start-input").Change("1");
+        cut.Find("#block-field-row-offset-end-input").Change("2");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#modify-block-field-button-0").Click();
+
+        cut.Find("#block-field-0-name-input").GetAttribute("value").Should().Be("Identification");
+        cut.Find("#block-field-0-column-range-input").GetAttribute("value").Should().Be("B:E");
+        cut.Find("#block-field-0-row-offset-start-input").GetAttribute("value").Should().Be("1");
+        cut.Find("#block-field-0-row-offset-end-input").GetAttribute("value").Should().Be("2");
+    });
+
+    [Fact]
+    public void BlockField_SaveChanges_UpdatesFieldInPlace_AndClosesEditMode() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#modify-block-field-button-0").Click();
+        cut.Find("#block-field-0-column-range-input").Change("C:F");
+        cut.Find("#save-block-field-button-0").Click();
+
+        cut.FindAll("#block-field-0-name-input").Should().BeEmpty();
+        cut.Markup.Should().Contain("Identification (C:F, 0-0)");
+        cut.FindAll("#modify-block-field-button-1").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void BlockField_Cancel_DiscardsChanges() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#modify-block-field-button-0").Click();
+        cut.Find("#block-field-0-column-range-input").Change("C:F");
+        cut.Find("#cancel-block-field-button-0").Click();
+
+        cut.Markup.Should().Contain("Identification (B:E, 0-0)");
+    });
+
+    [Fact]
+    public void BlockField_Delete_RemovesFieldFromList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#block-field-name-input").Change("Designation");
+        cut.Find("#block-field-column-range-input").Change("H:U");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#delete-block-field-button-0").Click();
+
+        cut.Markup.Should().NotContain("Identification (B:E");
+        cut.Markup.Should().Contain("Designation (H:U");
+    });
+
+    [Fact]
+    public async Task BlockField_EditWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-modify-block-field-button-0").Click();
+            cut.Find("#edit-0-block-field-0-column-range-input").Change("C:F");
+            cut.Find("#edit-0-save-block-field-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            var rule = all.Single().SheetRules.Single();
+            rule.Locator.Fields.Should().ContainSingle(f => f.Name == "Identification" && f.ColumnRange == "C:F");
+        });
 }

@@ -349,13 +349,25 @@
   <data name="ImportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
     <value>Sheet name</value>
   </data>
+  <data name="ImportProfileEditor_SheetNameLabel" xml:space="preserve">
+    <value>Sheet name</value>
+  </data>
   <data name="ImportProfileEditor_FirstBlockStartRowPlaceholder" xml:space="preserve">
+    <value>First block start row</value>
+  </data>
+  <data name="ImportProfileEditor_FirstBlockStartRowLabel" xml:space="preserve">
     <value>First block start row</value>
   </data>
   <data name="ImportProfileEditor_StepPlaceholder" xml:space="preserve">
     <value>Step</value>
   </data>
+  <data name="ImportProfileEditor_StepLabel" xml:space="preserve">
+    <value>Step</value>
+  </data>
   <data name="ImportProfileEditor_StopFieldNamePlaceholder" xml:space="preserve">
+    <value>Stop field name</value>
+  </data>
+  <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
     <value>Stop field name</value>
   </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">

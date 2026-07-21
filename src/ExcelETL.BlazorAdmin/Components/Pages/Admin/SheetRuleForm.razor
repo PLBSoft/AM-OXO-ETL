@@ -13,18 +13,22 @@
 
 <div class="row g-2 mb-2">
     <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-rule-name-input")">@Loc["ImportProfileEditor_SheetNameLabel"]</label>
         <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName"
                placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
     </div>
     <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-rule-first-block-start-row-input")">@Loc["ImportProfileEditor_FirstBlockStartRowLabel"]</label>
         <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow"
                placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
     </div>
     <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-rule-step-input")">@Loc["ImportProfileEditor_StepLabel"]</label>
         <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step"
                placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
     </div>
     <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
         <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName"
                placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
     </div>
@@ -34,35 +38,40 @@
 @if (_fields.Count > 0)
 {
     <ul>
-        @foreach (var field in _fields)
+        @for (var j = 0; j < _fields.Count; j++)
         {
-            <li>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</li>
+            var fieldIndex = j;
+            var field = _fields[fieldIndex];
+            <li>
+                @if (_editingFieldIndex == fieldIndex)
+                {
+                    <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
+                                     InitialField="field"
+                                     SubmitButtonId="@($"{IdPrefix}save-block-field-button-{fieldIndex}")"
+                                     SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                     ShowCancel="true"
+                                     CancelButtonId="@($"{IdPrefix}cancel-block-field-button-{fieldIndex}")"
+                                     OnCancel="() => _editingFieldIndex = null"
+                                     OnSubmit="(BlockFieldDefinition updated) => HandleSaveBlockField(fieldIndex, updated)" />
+                }
+                else
+                {
+                    <span>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</span>
+                    <button id="@($"{IdPrefix}modify-block-field-button-{fieldIndex}")" class="btn btn-sm btn-secondary" @onclick="() => _editingFieldIndex = fieldIndex">
+                        @Loc["ImportProfileEditor_ModifyButton"]
+                    </button>
+                    <button id="@($"{IdPrefix}delete-block-field-button-{fieldIndex}")" class="btn btn-sm btn-danger" @onclick="() => DeleteBlockField(fieldIndex)">
+                        @Loc["ImportProfileEditor_DeleteButton"]
+                    </button>
+                }
+            </li>
         }
     </ul>
 }
-<div class="row g-2 mb-2">
-    <div class="col">
-        <input id="@($"{IdPrefix}block-field-name-input")" class="form-control" @bind="_newFieldName"
-               placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
-    </div>
-    <div class="col">
-        <input id="@($"{IdPrefix}block-field-column-range-input")" class="form-control" @bind="_newFieldColumnRange"
-               placeholder="@Loc["ImportProfileEditor_ColumnRangePlaceholder"]" />
-    </div>
-    <div class="col">
-        <input id="@($"{IdPrefix}block-field-row-offset-start-input")" type="number" class="form-control" @bind="_newFieldRowOffsetStart"
-               placeholder="@Loc["ImportProfileEditor_RowOffsetStartPlaceholder"]" />
-    </div>
-    <div class="col">
-        <input id="@($"{IdPrefix}block-field-row-offset-end-input")" type="number" class="form-control" @bind="_newFieldRowOffsetEnd"
-               placeholder="@Loc["ImportProfileEditor_RowOffsetEndPlaceholder"]" />
-    </div>
-    <div class="col-auto">
-        <button id="@($"{IdPrefix}add-block-field-button")" class="btn btn-secondary" @onclick="AddBlockField">
-            @Loc["ImportProfileEditor_AddFieldButton"]
-        </button>
-    </div>
-</div>
+<BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-")"
+                SubmitButtonId="@($"{IdPrefix}add-block-field-button")"
+                SubmitLabel="@Loc["ImportProfileEditor_AddFieldButton"]"
+                OnSubmit="AddBlockField" />
 
 <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
 @if (_unconditionalColonneNames.Count > 0)
@@ -160,10 +169,8 @@
     private readonly List<string> _unconditionalColonneNames = [];
     private readonly List<ConditionalPointRule> _pointRules = [];
 
-    private string _newFieldName = string.Empty;
-    private string _newFieldColumnRange = string.Empty;
-    private int _newFieldRowOffsetStart;
-    private int _newFieldRowOffsetEnd;
+    private int? _editingFieldIndex;
+
     private string _newUnconditionalColonneName = string.Empty;
     private string _newPointRuleColonneName = string.Empty;
     private string _newPointRuleSourceFieldName = string.Empty;
@@ -191,21 +198,20 @@
         _pointRules.AddRange(InitialRule.PointRules);
     }
 
-    private void AddBlockField()
-    {
-        _errorMessage = null;
+    private void AddBlockField(BlockFieldDefinition field) => _fields.Add(field);
 
-        try
+    private void HandleSaveBlockField(int fieldIndex, BlockFieldDefinition updated)
+    {
+        _fields[fieldIndex] = updated;
+        _editingFieldIndex = null;
+    }
+
+    private void DeleteBlockField(int fieldIndex)
+    {
+        _fields.RemoveAt(fieldIndex);
+        if (_editingFieldIndex == fieldIndex)
         {
-            _fields.Add(new BlockFieldDefinition(_newFieldName, _newFieldColumnRange, _newFieldRowOffsetStart, _newFieldRowOffsetEnd));
-            _newFieldName = string.Empty;
-            _newFieldColumnRange = string.Empty;
-            _newFieldRowOffsetStart = 0;
-            _newFieldRowOffsetEnd = 0;
-        }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            _editingFieldIndex = null;
         }
     }
 
@@ -272,10 +278,7 @@
         _fields.Clear();
         _unconditionalColonneNames.Clear();
         _pointRules.Clear();
-        _newFieldName = string.Empty;
-        _newFieldColumnRange = string.Empty;
-        _newFieldRowOffsetStart = 0;
-        _newFieldRowOffsetEnd = 0;
+        _editingFieldIndex = null;
         _newUnconditionalColonneName = string.Empty;
         _newPointRuleColonneName = string.Empty;
         _newPointRuleSourceFieldName = string.Empty;

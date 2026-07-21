@@ -1,0 +1,119 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Extraction.Primitives
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-2">
+    <div class="col">
+        <input id="@($"{IdPrefix}name-input")" class="form-control" @bind="_name"
+               placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}column-range-input")" class="form-control" @bind="_columnRange"
+               placeholder="@Loc["ImportProfileEditor_ColumnRangePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}row-offset-start-input")" type="number" class="form-control" @bind="_rowOffsetStart"
+               placeholder="@Loc["ImportProfileEditor_RowOffsetStartPlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}row-offset-end-input")" type="number" class="form-control" @bind="_rowOffsetEnd"
+               placeholder="@Loc["ImportProfileEditor_RowOffsetEndPlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
+            @SubmitLabel
+        </button>
+    </div>
+    @if (ShowCancel)
+    {
+        <div class="col-auto">
+            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+                @Loc["ImportProfileEditor_CancelButton"]
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public BlockFieldDefinition? InitialField { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-block-field-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-block-field-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<BlockFieldDefinition> OnSubmit { get; set; }
+
+    private string _name = string.Empty;
+    private string _columnRange = string.Empty;
+    private int _rowOffsetStart;
+    private int _rowOffsetEnd;
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- same reasoning as SheetRuleForm.OnInitialized:
+    // the parent gives an edit-mode instance a fresh component identity, so InitialField never
+    // changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialField is null)
+        {
+            return;
+        }
+
+        _name = InitialField.Name;
+        _columnRange = InitialField.ColumnRange;
+        _rowOffsetStart = InitialField.RowOffsetStart;
+        _rowOffsetEnd = InitialField.RowOffsetEnd;
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            var field = new BlockFieldDefinition(_name, _columnRange, _rowOffsetStart, _rowOffsetEnd);
+
+            await OnSubmit.InvokeAsync(field);
+
+            ResetForm();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _name = string.Empty;
+        _columnRange = string.Empty;
+        _rowOffsetStart = 0;
+        _rowOffsetEnd = 0;
+    }
+}
