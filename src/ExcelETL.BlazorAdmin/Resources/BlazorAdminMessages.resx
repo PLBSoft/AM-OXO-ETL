@@ -322,6 +322,15 @@
   <data name="ImportProfileEditor_EquipementTypeElementNomPlaceholder" xml:space="preserve">
     <value>Equipement TypeElement.Nom (e.g. MAD TRAVAUX)</value>
   </data>
+  <data name="ImportProfileEditor_NameLabel" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
+  <data name="ImportProfileEditor_ReperePrefixLabel" xml:space="preserve">
+    <value>Repere prefix</value>
+  </data>
+  <data name="ImportProfileEditor_EquipementTypeElementNomLabel" xml:space="preserve">
+    <value>Equipement type element name</value>
+  </data>
   <data name="ImportProfileEditor_SaveButton" xml:space="preserve">
     <value>Save profile</value>
   </data>
@@ -396,6 +405,18 @@
   </data>
   <data name="ImportProfileEditor_Operator_NotEquals" xml:space="preserve">
     <value>Not equals</value>
+  </data>
+  <data name="ImportProfileEditor_ModifyButton" xml:space="preserve">
+    <value>Modify</value>
+  </data>
+  <data name="ImportProfileEditor_DeleteButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ImportProfileEditor_SaveChangesButton" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="ImportProfileEditor_CancelButton" xml:space="preserve">
+    <value>Cancel</value>
   </data>
   <data name="NavMenu_ImportProfileTest" xml:space="preserve">
     <value>Test Import Profile</value>

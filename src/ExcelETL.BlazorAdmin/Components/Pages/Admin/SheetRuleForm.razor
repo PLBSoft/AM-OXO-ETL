@@ -1,0 +1,285 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Extraction.Primitives
+@using ExcelETL.Domain.Extraction.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-2">
+    <div class="col">
+        <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName"
+               placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow"
+               placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step"
+               placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName"
+               placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
+    </div>
+</div>
+
+<h5>@Loc["ImportProfileEditor_FieldsHeading"]</h5>
+@if (_fields.Count > 0)
+{
+    <ul>
+        @foreach (var field in _fields)
+        {
+            <li>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</li>
+        }
+    </ul>
+}
+<div class="row g-2 mb-2">
+    <div class="col">
+        <input id="@($"{IdPrefix}block-field-name-input")" class="form-control" @bind="_newFieldName"
+               placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}block-field-column-range-input")" class="form-control" @bind="_newFieldColumnRange"
+               placeholder="@Loc["ImportProfileEditor_ColumnRangePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}block-field-row-offset-start-input")" type="number" class="form-control" @bind="_newFieldRowOffsetStart"
+               placeholder="@Loc["ImportProfileEditor_RowOffsetStartPlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}block-field-row-offset-end-input")" type="number" class="form-control" @bind="_newFieldRowOffsetEnd"
+               placeholder="@Loc["ImportProfileEditor_RowOffsetEndPlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@($"{IdPrefix}add-block-field-button")" class="btn btn-secondary" @onclick="AddBlockField">
+            @Loc["ImportProfileEditor_AddFieldButton"]
+        </button>
+    </div>
+</div>
+
+<h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
+@if (_unconditionalColonneNames.Count > 0)
+{
+    <p>@string.Join(", ", _unconditionalColonneNames)</p>
+}
+<div class="row g-2 mb-2">
+    <div class="col">
+        <input id="@($"{IdPrefix}unconditional-colonne-name-input")" class="form-control" @bind="_newUnconditionalColonneName"
+               placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-secondary" @onclick="AddUnconditionalColonneName">
+            @Loc["ImportProfileEditor_AddColonneButton"]
+        </button>
+    </div>
+</div>
+
+<h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
+@if (_pointRules.Count > 0)
+{
+    <ul>
+        @foreach (var pointRule in _pointRules)
+        {
+            <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+        }
+    </ul>
+}
+<div class="row g-2 mb-3">
+    <div class="col">
+        <input id="@($"{IdPrefix}point-rule-colonne-name-input")" class="form-control" @bind="_newPointRuleColonneName"
+               placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-control" @bind="_newPointRuleSourceFieldName"
+               placeholder="@Loc["ImportProfileEditor_SourceFieldNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="_newPointRuleOperator">
+            <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
+            <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+        </select>
+    </div>
+    <div class="col">
+        <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="_newPointRuleComparisonValue"
+               placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary" @onclick="AddPointRule">
+            @Loc["ImportProfileEditor_AddPointRuleButton"]
+        </button>
+    </div>
+</div>
+
+<button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
+    @SubmitLabel
+</button>
+@if (ShowCancel)
+{
+    <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+        @Loc["ImportProfileEditor_CancelButton"]
+    </button>
+}
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public SheetExtractionRule? InitialRule { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-sheet-rule-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-sheet-rule-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<SheetExtractionRule> OnSubmit { get; set; }
+
+    private string _sheetName = string.Empty;
+    private int _firstBlockStartRow;
+    private int _step;
+    private string _stopFieldName = string.Empty;
+    private readonly List<BlockFieldDefinition> _fields = [];
+    private readonly List<string> _unconditionalColonneNames = [];
+    private readonly List<ConditionalPointRule> _pointRules = [];
+
+    private string _newFieldName = string.Empty;
+    private string _newFieldColumnRange = string.Empty;
+    private int _newFieldRowOffsetStart;
+    private int _newFieldRowOffsetEnd;
+    private string _newUnconditionalColonneName = string.Empty;
+    private string _newPointRuleColonneName = string.Empty;
+    private string _newPointRuleSourceFieldName = string.Empty;
+    private ConditionOperator _newPointRuleOperator = ConditionOperator.Equals;
+    private string _newPointRuleComparisonValue = string.Empty;
+
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
+    // component identity (conditionally rendered inside an @if, not a persistently bound one), so
+    // InitialRule never changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialRule is null)
+        {
+            return;
+        }
+
+        _sheetName = InitialRule.SheetName;
+        _firstBlockStartRow = InitialRule.Locator.FirstBlockStartRow;
+        _step = InitialRule.Locator.Step;
+        _stopFieldName = InitialRule.Locator.StopFieldName;
+        _fields.AddRange(InitialRule.Locator.Fields);
+        _unconditionalColonneNames.AddRange(InitialRule.UnconditionalColonneNames);
+        _pointRules.AddRange(InitialRule.PointRules);
+    }
+
+    private void AddBlockField()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            _fields.Add(new BlockFieldDefinition(_newFieldName, _newFieldColumnRange, _newFieldRowOffsetStart, _newFieldRowOffsetEnd));
+            _newFieldName = string.Empty;
+            _newFieldColumnRange = string.Empty;
+            _newFieldRowOffsetStart = 0;
+            _newFieldRowOffsetEnd = 0;
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void AddUnconditionalColonneName()
+    {
+        if (string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        {
+            return;
+        }
+
+        _unconditionalColonneNames.Add(_newUnconditionalColonneName);
+        _newUnconditionalColonneName = string.Empty;
+    }
+
+    private void AddPointRule()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            _pointRules.Add(new ConditionalPointRule(
+                _newPointRuleSourceFieldName, _newPointRuleOperator, _newPointRuleComparisonValue, _newPointRuleColonneName));
+            _newPointRuleColonneName = string.Empty;
+            _newPointRuleSourceFieldName = string.Empty;
+            _newPointRuleOperator = ConditionOperator.Equals;
+            _newPointRuleComparisonValue = string.Empty;
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            var locator = new RepeatingBlockLocator(_sheetName, _firstBlockStartRow, _step, _stopFieldName, _fields);
+
+            // SheetExtractionRule stores this list by reference (unlike PointRules, which it copies) --
+            // pass a snapshot so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
+            var rule = new SheetExtractionRule(_sheetName, locator, _pointRules, [.. _unconditionalColonneNames]);
+
+            await OnSubmit.InvokeAsync(rule);
+
+            ResetForm();
+        }
+        catch (Exception ex) when (ex is DomainValidationException or DomainArgumentOutOfRangeException or DomainRuleViolationException)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _sheetName = string.Empty;
+        _firstBlockStartRow = 0;
+        _step = 0;
+        _stopFieldName = string.Empty;
+        _fields.Clear();
+        _unconditionalColonneNames.Clear();
+        _pointRules.Clear();
+        _newFieldName = string.Empty;
+        _newFieldColumnRange = string.Empty;
+        _newFieldRowOffsetStart = 0;
+        _newFieldRowOffsetEnd = 0;
+        _newUnconditionalColonneName = string.Empty;
+        _newPointRuleColonneName = string.Empty;
+        _newPointRuleSourceFieldName = string.Empty;
+        _newPointRuleOperator = ConditionOperator.Equals;
+        _newPointRuleComparisonValue = string.Empty;
+    }
+}
