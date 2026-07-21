@@ -270,6 +270,17 @@ projet legacy à respecter, hors périmètre des conventions xUnit/FluentAsserti
 
 **Dossier** : côté `legacy/` (chemin exact à confirmer, hors du dépôt `ExcelETL.*` audité jusqu'ici).
 
+**K3 — réalisé (21/07)** : `ExcelProcessingClientService.ProcessAsync` prend désormais
+`(Guid importProfileId, Guid exportProfileId, HttpPostedFileBase file)` au lieu de
+`(Guid extractionConfigId, HttpPostedFileBase file)`, poste sur `api/oxo/process` (constante
+`ProcessRelativeUrl` mise à jour), avec 2 champs multipart (`ImportProfileId`/`ExportProfileId`) au
+lieu d'un seul (`ExtractionConfigId`) — bascule directe, aucune logique de fallback/routage
+parallèle. Tests mis à jour à l'identique (mêmes 15 cas, seuls le contrat de requête et l'URL
+attendue changent) : `Legacy.ExcelProcessingClientService.Tests` 15/15 vert
+(`dotnet test legacy/ExcelProcessingClientService.Tests/Legacy.ExcelProcessingClientService.Tests.csproj`).
+Conforme à l'amendement de périmètre ci-dessus : seul `legacy/ExcelProcessingClientService*` a été
+touché, le vrai site d'appel MVC 5 en production reste hors dépôt/hors périmètre.
+
 ---
 
 ## K4. Retrait du POC (`Mappings.razor`, `UploadTest.razor`, `ExtractionConfig*`, ancien pipeline Web API)

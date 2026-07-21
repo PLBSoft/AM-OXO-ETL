@@ -9,14 +9,18 @@ namespace Legacy.ExcelProcessingClientService
 {
     /// <summary>
     /// Represents the legacy ASP.NET MVC 5 / .NET Framework 4.8 application's client for
-    /// synchronously submitting an uploaded Excel file to the new ExcelETL Web API and
-    /// streaming back the processed workbook, authenticating via the X-Api-Key header.
+    /// synchronously submitting an uploaded Excel file to the new ExcelETL Web API's OXO
+    /// pipeline and streaming back the generated workbook, authenticating via the X-Api-Key
+    /// header. Migrated at Lot K3 from the retired POC route (api/excel/process,
+    /// ExtractionConfigId) to api/oxo/process (ImportProfileId/ExportProfileId) -- a direct,
+    /// one-shot contract change, not a parallel/feature-flagged rollout.
     /// </summary>
     public class ExcelProcessingClientService : IDisposable
     {
         private const string ApiKeyHeaderName = "X-Api-Key";
-        private const string ProcessRelativeUrl = "api/excel/process";
-        private const string ExtractionConfigIdFieldName = "ExtractionConfigId";
+        private const string ProcessRelativeUrl = "api/oxo/process";
+        private const string ImportProfileIdFieldName = "ImportProfileId";
+        private const string ExportProfileIdFieldName = "ExportProfileId";
         private const string FileFieldName = "File";
 
         // Extraction is synchronous and can take several seconds to a few minutes for large,
@@ -72,11 +76,13 @@ namespace Legacy.ExcelProcessingClientService
         }
 
         /// <summary>
-        /// Uploads <paramref name="file"/> for extraction under <paramref name="extractionConfigId"/>
-        /// and returns the generated workbook streamed back in the response body. The caller owns
-        /// the returned <see cref="ExcelProcessingResult"/> and must dispose it.
+        /// Uploads <paramref name="file"/> for extraction and generation under
+        /// <paramref name="importProfileId"/>/<paramref name="exportProfileId"/> and returns the
+        /// generated workbook streamed back in the response body. The caller owns the returned
+        /// <see cref="ExcelProcessingResult"/> and must dispose it.
         /// </summary>
-        public async Task<ExcelProcessingResult> ProcessAsync(Guid extractionConfigId, HttpPostedFileBase file)
+        public async Task<ExcelProcessingResult> ProcessAsync(
+            Guid importProfileId, Guid exportProfileId, HttpPostedFileBase file)
         {
             if (file == null)
             {
@@ -88,7 +94,7 @@ namespace Legacy.ExcelProcessingClientService
                 throw new ArgumentException("Uploaded file must not be empty.", "file");
             }
 
-            using (var content = BuildRequestContent(extractionConfigId, file))
+            using (var content = BuildRequestContent(importProfileId, exportProfileId, file))
             {
                 HttpResponseMessage response;
                 try
@@ -126,10 +132,12 @@ namespace Legacy.ExcelProcessingClientService
             }
         }
 
-        private static MultipartFormDataContent BuildRequestContent(Guid extractionConfigId, HttpPostedFileBase file)
+        private static MultipartFormDataContent BuildRequestContent(
+            Guid importProfileId, Guid exportProfileId, HttpPostedFileBase file)
         {
             var content = new MultipartFormDataContent();
-            content.Add(new StringContent(extractionConfigId.ToString()), ExtractionConfigIdFieldName);
+            content.Add(new StringContent(importProfileId.ToString()), ImportProfileIdFieldName);
+            content.Add(new StringContent(exportProfileId.ToString()), ExportProfileIdFieldName);
 
             var fileContent = new StreamContent(file.InputStream);
             fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse(

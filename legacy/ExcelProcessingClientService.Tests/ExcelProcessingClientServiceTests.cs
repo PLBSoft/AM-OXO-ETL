@@ -13,7 +13,8 @@ namespace Legacy.ExcelProcessingClientService.Tests
     {
         private const string BaseUrl = "https://excel-etl.internal/";
         private const string ApiKey = "legacy-app-api-key";
-        private static readonly Guid ExtractionConfigId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        private static readonly Guid ImportProfileId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        private static readonly Guid ExportProfileId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         [Fact]
         public void Constructor_ConfiguresBaseAddress()
@@ -69,7 +70,7 @@ namespace Legacy.ExcelProcessingClientService.Tests
         {
             using (var service = new ExcelProcessingClientService(BaseUrl, ApiKey))
             {
-                Func<Task> act = async () => await service.ProcessAsync(ExtractionConfigId, null);
+                Func<Task> act = async () => await service.ProcessAsync(ImportProfileId, ExportProfileId, null);
 
                 (await act.Should().ThrowAsync<ArgumentNullException>()).Which.ParamName.Should().Be("file");
             }
@@ -82,14 +83,14 @@ namespace Legacy.ExcelProcessingClientService.Tests
             {
                 var emptyFile = new FakeHttpPostedFile("empty.xlsx", "application/octet-stream", new MemoryStream());
 
-                Func<Task> act = async () => await service.ProcessAsync(ExtractionConfigId, emptyFile);
+                Func<Task> act = async () => await service.ProcessAsync(ImportProfileId, ExportProfileId, emptyFile);
 
                 (await act.Should().ThrowAsync<ArgumentException>()).Which.ParamName.Should().Be("file");
             }
         }
 
         [Fact]
-        public async Task ProcessAsync_PostsMultipartRequestWithConfigIdAndFileToProcessEndpoint()
+        public async Task ProcessAsync_PostsMultipartRequestWithProfileIdsAndFileToOxoProcessEndpoint()
         {
             var fakeHandler = new FakeHttpMessageHandler(_ => Task.FromResult(SuccessResponse(new byte[] { 1, 2, 3 })));
             using (var httpClient = new HttpClient(fakeHandler) { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromMinutes(5) })
@@ -98,12 +99,14 @@ namespace Legacy.ExcelProcessingClientService.Tests
             {
                 var file = new FakeHttpPostedFile("invoice.xlsx", "application/vnd.ms-excel", sourceStream);
 
-                using (await service.ProcessAsync(ExtractionConfigId, file))
+                using (await service.ProcessAsync(ImportProfileId, ExportProfileId, file))
                 {
                     fakeHandler.LastRequest.Method.Should().Be(HttpMethod.Post);
-                    fakeHandler.LastRequest.RequestUri.Should().Be(new Uri(new Uri(BaseUrl), "api/excel/process"));
-                    fakeHandler.LastRequestBody.Should().Contain("name=ExtractionConfigId");
-                    fakeHandler.LastRequestBody.Should().Contain(ExtractionConfigId.ToString());
+                    fakeHandler.LastRequest.RequestUri.Should().Be(new Uri(new Uri(BaseUrl), "api/oxo/process"));
+                    fakeHandler.LastRequestBody.Should().Contain("name=ImportProfileId");
+                    fakeHandler.LastRequestBody.Should().Contain(ImportProfileId.ToString());
+                    fakeHandler.LastRequestBody.Should().Contain("name=ExportProfileId");
+                    fakeHandler.LastRequestBody.Should().Contain(ExportProfileId.ToString());
                     fakeHandler.LastRequestBody.Should().Contain("name=File; filename=invoice.xlsx");
                 }
             }
@@ -121,7 +124,7 @@ namespace Legacy.ExcelProcessingClientService.Tests
             {
                 var file = new FakeHttpPostedFile("invoice.xlsx", "application/vnd.ms-excel", sourceStream);
 
-                using (var result = await service.ProcessAsync(ExtractionConfigId, file))
+                using (var result = await service.ProcessAsync(ImportProfileId, ExportProfileId, file))
                 {
                     result.FileName.Should().Be("processed-invoice.xlsx");
 
@@ -138,18 +141,18 @@ namespace Legacy.ExcelProcessingClientService.Tests
         public async Task ProcessAsync_OnNotFoundResponse_ThrowsHttpRequestExceptionWithStatusAndBody()
         {
             var fakeHandler = new FakeHttpMessageHandler(_ => Task.FromResult(
-                ErrorResponse(HttpStatusCode.NotFound, "{\"message\":\"Extraction config not found.\"}")));
+                ErrorResponse(HttpStatusCode.NotFound, "{\"message\":\"Import profile not found.\"}")));
             using (var httpClient = new HttpClient(fakeHandler) { BaseAddress = new Uri(BaseUrl), Timeout = TimeSpan.FromMinutes(5) })
             using (var service = new ExcelProcessingClientService(httpClient, ownsHttpClient: false))
             using (var sourceStream = new MemoryStream(new byte[] { 9, 9, 9 }))
             {
                 var file = new FakeHttpPostedFile("invoice.xlsx", "application/vnd.ms-excel", sourceStream);
 
-                Func<Task> act = async () => await service.ProcessAsync(ExtractionConfigId, file);
+                Func<Task> act = async () => await service.ProcessAsync(ImportProfileId, ExportProfileId, file);
 
                 var exception = await act.Should().ThrowAsync<HttpRequestException>();
                 exception.Which.Message.Should().Contain("404");
-                exception.Which.Message.Should().Contain("Extraction config not found");
+                exception.Which.Message.Should().Contain("Import profile not found");
             }
         }
 
@@ -166,7 +169,7 @@ namespace Legacy.ExcelProcessingClientService.Tests
             {
                 var file = new FakeHttpPostedFile("invoice.xlsx", "application/vnd.ms-excel", sourceStream);
 
-                Func<Task> act = async () => await service.ProcessAsync(ExtractionConfigId, file);
+                Func<Task> act = async () => await service.ProcessAsync(ImportProfileId, ExportProfileId, file);
 
                 await act.Should().ThrowAsync<TimeoutException>();
             }
