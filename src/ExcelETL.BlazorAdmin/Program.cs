@@ -15,6 +15,7 @@ using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
+using ExcelETL.Infrastructure.Seeding;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -97,6 +98,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddScoped<IdentitySeeder>();
 
+// Seeds the standard OXO import/export profiles this deployment relies on -- BlazorAdmin only (the
+// sole host owning ImportProfile/ExportProfile persistence today), same idempotent startup pattern as
+// IdentitySeeder just above. See DefaultProfileSeeder and docs/tickets-tdd-seed-profils-defaut.md.
+builder.Services.AddScoped<DefaultProfileSeeder>();
+
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -173,6 +179,17 @@ if (enableIdentitySeeding)
     using var scope = app.Services.CreateScope();
     var identitySeeder = scope.ServiceProvider.GetRequiredService<IdentitySeeder>();
     await identitySeeder.SeedAsync();
+}
+
+// Ensures the standard OXO import/export profiles exist on every startup -- idempotent, mirrors the
+// IdentitySeeding:Enabled switch immediately above (same rationale: WebApplicationFactory-based
+// integration tests spin up this Program against the real ExcelEtl database).
+var enableProfileSeeding = builder.Configuration.GetValue("ProfileSeeding:Enabled", defaultValue: true);
+if (enableProfileSeeding)
+{
+    using var scope = app.Services.CreateScope();
+    var profileSeeder = scope.ServiceProvider.GetRequiredService<DefaultProfileSeeder>();
+    await profileSeeder.SeedAsync();
 }
 
 app.Run();
