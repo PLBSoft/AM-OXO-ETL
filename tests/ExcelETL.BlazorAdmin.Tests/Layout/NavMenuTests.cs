@@ -1,9 +1,11 @@
 using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Layout;
+using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Infrastructure.Identity;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Layout;
@@ -69,6 +71,32 @@ public class NavMenuTests : BunitContext
 
         cut.Markup.Should().Contain("My Profile");
         cut.Find("a[href='profile']").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorized_ShowsSingleLinkWithUsernameAndProfileLabel() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("jdupont");
+
+        var cut = Render<NavMenu>();
+
+        var profileLabel = Services.GetRequiredService<IStringLocalizer<BlazorAdminMessages>>()["NavMenu_Profile"];
+
+        var profileLink = cut.Find("#nav-profile-link");
+        profileLink.GetAttribute("href").Should().Be("profile");
+        profileLink.TextContent.Should().Contain("jdupont");
+        profileLink.TextContent.Should().Contain(profileLabel.Value);
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorized_DoesNotRenderStandaloneUsernameElement() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("jdupont");
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-profile-link").Should().HaveCount(1);
+        cut.FindAll("span.nav-link").Should().BeEmpty();
     });
 
     [Fact]
