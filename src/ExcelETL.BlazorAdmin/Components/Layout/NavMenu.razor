@@ -24,31 +24,38 @@
         <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="users">
+                    <NavLink id="nav-users-link" class="nav-link" href="users">
                         <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Users"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="import-profiles">
+                    <NavLink id="nav-import-profiles-link" class="nav-link" href="import-profiles">
                         <span class="bi bi-collection-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ImportProfiles"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="import-profiles/test">
+                    <NavLink id="nav-import-profiles-test-link" class="nav-link" href="import-profiles/test">
                         <span class="bi bi-play-circle-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ImportProfileTest"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="export-profiles">
+                    <NavLink id="nav-export-profiles-link" class="nav-link" href="export-profiles">
                         <span class="bi bi-file-earmark-spreadsheet-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExportProfiles"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="export-profiles/test">
+                    <NavLink id="nav-export-profiles-test-link" class="nav-link" href="export-profiles/test">
                         <span class="bi bi-download-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExportProfileTest"]
                     </NavLink>
                 </div>
             </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink id="nav-login-link" class="nav-link" href="Account/Login">
+                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Login"]
+                    </NavLink>
+                </div>
+            </NotAuthorized>
         </AuthorizeView>
 
         <AuthorizeView>

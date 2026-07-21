@@ -1,6 +1,7 @@
 using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Layout;
+using ExcelETL.Infrastructure.Identity;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -80,5 +81,45 @@ public class NavMenuTests : BunitContext
         var cut = Render<NavMenu>();
 
         cut.Markup.Should().NotContain("My Profile");
+    });
+
+    private static readonly string[] AdminLinkIds =
+    [
+        "nav-users-link",
+        "nav-import-profiles-link",
+        "nav-import-profiles-test-link",
+        "nav-export-profiles-link",
+        "nav-export-profiles-test-link",
+    ];
+
+    [Fact]
+    public void NavMenu_WhenNotAuthorized_HidesAdminLinks_AndShowsLoginLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        foreach (var id in AdminLinkIds)
+        {
+            cut.FindAll($"#{id}").Should().BeEmpty();
+        }
+
+        var loginLink = cut.Find("#nav-login-link");
+        loginLink.GetAttribute("href").Should().Be("Account/Login");
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorizedAsAdmin_ShowsAdminLinks_AndHidesLoginLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
+
+        var cut = Render<NavMenu>();
+
+        foreach (var id in AdminLinkIds)
+        {
+            cut.FindAll($"#{id}").Should().HaveCount(1);
+        }
+
+        cut.FindAll("#nav-login-link").Should().BeEmpty();
     });
 }
