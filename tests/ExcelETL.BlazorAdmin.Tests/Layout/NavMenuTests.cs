@@ -34,7 +34,6 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("Logs");
         cut.Markup.Should().Contain("Register");
         cut.Markup.Should().Contain("Login");
     });
@@ -46,7 +45,6 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("Journaux");
         cut.Markup.Should().Contain("S'inscrire");
         cut.Markup.Should().Contain("Connexion");
     });
@@ -121,5 +119,35 @@ public class NavMenuTests : BunitContext
         }
 
         cut.FindAll("#nav-login-link").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void NavMenu_WhenNotAuthorized_ShowsLoginLink_ExactlyOnce() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-login-link").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void NavMenu_WhenNotAuthorized_HidesLogsLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-logs-link").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorized_WithoutAdminRole_ShowsLogsLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("someone@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-logs-link").Should().HaveCount(1);
     });
 }

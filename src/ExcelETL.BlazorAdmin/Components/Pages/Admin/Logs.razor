@@ -1,6 +1,8 @@
 @page "/logs"
+@attribute [Authorize]
 
 @using ExcelETL.Application.Diagnostics
+@using Microsoft.AspNetCore.Authorization
 
 @inject ISystemLogRepository SystemLogRepository
 @inject IStringLocalizer<BlazorAdminMessages> Loc
