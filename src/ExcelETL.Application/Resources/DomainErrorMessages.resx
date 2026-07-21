@@ -31,42 +31,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CellMapping_InvalidSourceCell" xml:space="preserve">
-    <value>Source cell must be a valid Excel cell reference (e.g. 'B4') or merged range (e.g. 'B4:D4').</value>
-  </data>
-  <data name="CellMapping_EmptyTargetPropertyName" xml:space="preserve">
-    <value>Target property name must not be empty.</value>
-  </data>
-  <data name="SheetConfig_EmptySheetName" xml:space="preserve">
-    <value>Sheet name must not be empty.</value>
-  </data>
-  <data name="SheetConfig_NegativeSheetIndex" xml:space="preserve">
-    <value>Sheet index must not be negative.</value>
-  </data>
-  <data name="SheetConfig_DuplicateCellMapping" xml:space="preserve">
-    <value>A cell mapping targeting property '{0}' already exists on sheet '{1}'.</value>
-  </data>
-  <data name="ExtractionConfig_EmptyName" xml:space="preserve">
-    <value>Name must not be empty.</value>
-  </data>
-  <data name="ExtractionConfig_TooManySheets" xml:space="preserve">
-    <value>An extraction config must produce exactly 4-5 sheets; cannot add more than {0}.</value>
-  </data>
-  <data name="ExtractionConfig_DuplicateSheetIndex" xml:space="preserve">
-    <value>A sheet with index {0} already exists in extraction config '{1}'.</value>
-  </data>
-  <data name="ExtractionHistory_EmptySourceFileName" xml:space="preserve">
-    <value>Source file name must not be empty.</value>
-  </data>
-  <data name="ExtractionHistory_EmptyStoredFilePath" xml:space="preserve">
-    <value>Stored file path must not be empty.</value>
-  </data>
-  <data name="ExtractionHistory_CannotCompleteFromStatus" xml:space="preserve">
-    <value>Cannot complete an extraction history entry already in status '{0}'.</value>
-  </data>
-  <data name="ExtractionHistory_CannotFailFromStatus" xml:space="preserve">
-    <value>Cannot fail an extraction history entry already in status '{0}'.</value>
-  </data>
   <data name="BlockFieldDefinition_EmptyName" xml:space="preserve">
     <value>Name must not be empty.</value>
   </data>

@@ -200,9 +200,9 @@ else
 }
 
 @code {
-    // Matches the Web API's UploadLimits.MaxExcelFileSizeBytes / UploadTest.razor's own copy of the
-    // same cap -- this page enforces the same limit, while staying under Blazor Server's default
-    // SignalR message size (bypassed via InputFile.OpenReadStream's own maxAllowedSize parameter).
+    // Matches the Web API's UploadLimits.MaxExcelFileSizeBytes -- this page enforces the same limit,
+    // while staying under Blazor Server's default SignalR message size (bypassed via
+    // InputFile.OpenReadStream's own maxAllowedSize parameter).
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
 
     private enum State { Idle, Processing, Success, Error }

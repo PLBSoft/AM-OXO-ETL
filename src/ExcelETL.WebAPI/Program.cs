@@ -72,17 +72,13 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-builder.Services.AddScoped<IExcelExtractionService, ClosedXmlExtractionService>();
-builder.Services.AddScoped<IExcelGeneratorService, ClosedXmlGeneratorService>();
-builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
-builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
-builder.Services.AddScoped<IProcessExcelFileService, ProcessExcelFileService>();
 
-// OXO pipeline (Lot K1/K2) -- same registrations as ExcelETL.BlazorAdmin/Program.cs, this host's
-// first-ever consumer of these services. All stateless -- Singleton, matching BlazorAdmin's
-// lifetimes -- except the two profile stores, which are Scoped like every other repository here
-// (short-lived DbContext per operation via IDbContextFactory).
+// OXO pipeline (Lot K1/K2) -- since Lot K4's removal of the old ExtractionConfig/ProcessExcelFile
+// pipeline, the only pipeline this host exposes. Same registrations as
+// ExcelETL.BlazorAdmin/Program.cs. All stateless -- Singleton, matching BlazorAdmin's lifetimes --
+// except the two profile stores, which are Scoped like every other repository here (short-lived
+// DbContext per operation via IDbContextFactory).
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
 builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
@@ -153,7 +149,7 @@ app.MapControllers();
 // DatabaseMigrationHostExtensions for the Database:AutoMigrate/IsRelational() gating and why
 // it's safe for both hosts to do this independently. WebApplicationFactory-based integration
 // tests for this host set Database:AutoMigrate=false explicitly (see HealthPingTests,
-// ApiKeyAuthenticationTests, ExcelProcessEndpointTests) since some of them never swap
+// ApiKeyAuthenticationTests, OxoProcessEndpointTests) since some of them never swap
 // ExcelEtlDbContext to the InMemory provider and would otherwise require a real, reachable
 // SQL Server just to start the host.
 await app.Services.MigrateIfEnabledAsync<ExcelEtlDbContext>(app.Configuration);

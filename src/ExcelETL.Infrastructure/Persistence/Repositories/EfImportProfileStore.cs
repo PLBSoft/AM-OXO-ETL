@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ExcelETL.Infrastructure.Persistence.Repositories;
 
-// Each method owns a short-lived DbContext created via the factory -- same rationale as
-// ExtractionConfigRepository (Blazor Server's long-lived circuits can invoke handlers concurrently).
+// Each method owns a short-lived DbContext created via the factory -- Blazor Server's long-lived
+// circuits can invoke handlers concurrently, so a directly-injected scoped DbContext would be
+// unsafe here.
 public class EfImportProfileStore(IDbContextFactory<ExcelEtlDbContext> dbContextFactory) : IImportProfileStore
 {
     public async Task<IReadOnlyList<ImportProfile>> GetAllAsync(CancellationToken cancellationToken = default)

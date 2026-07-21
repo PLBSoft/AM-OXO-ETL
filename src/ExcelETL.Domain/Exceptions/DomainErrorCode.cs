@@ -5,18 +5,6 @@ namespace ExcelETL.Domain.Exceptions;
 // translate it at the WebAPI/BlazorAdmin boundary -- see the DomainValidationException family.
 public enum DomainErrorCode
 {
-    CellMapping_InvalidSourceCell,
-    CellMapping_EmptyTargetPropertyName,
-    SheetConfig_EmptySheetName,
-    SheetConfig_NegativeSheetIndex,
-    SheetConfig_DuplicateCellMapping,
-    ExtractionConfig_EmptyName,
-    ExtractionConfig_TooManySheets,
-    ExtractionConfig_DuplicateSheetIndex,
-    ExtractionHistory_EmptySourceFileName,
-    ExtractionHistory_EmptyStoredFilePath,
-    ExtractionHistory_CannotCompleteFromStatus,
-    ExtractionHistory_CannotFailFromStatus,
     DirectCell_EmptySheet,
     DirectCell_InvalidRange,
     BlockFieldDefinition_EmptyName,

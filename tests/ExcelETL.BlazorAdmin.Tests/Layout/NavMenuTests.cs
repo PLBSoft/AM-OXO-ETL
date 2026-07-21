@@ -33,8 +33,7 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("Extraction Mappings");
-        cut.Markup.Should().Contain("Extraction History");
+        cut.Markup.Should().Contain("Logs");
         cut.Markup.Should().Contain("Register");
         cut.Markup.Should().Contain("Login");
     });
@@ -46,8 +45,7 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("Mappages d'extraction");
-        cut.Markup.Should().Contain("Historique d'extraction");
+        cut.Markup.Should().Contain("Journaux");
         cut.Markup.Should().Contain("S'inscrire");
         cut.Markup.Should().Contain("Connexion");
     });

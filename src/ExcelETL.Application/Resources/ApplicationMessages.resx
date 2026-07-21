@@ -31,26 +31,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ExtractionConfigNotFound" xml:space="preserve">
-    <value>Extraction config '{0}' was not found.</value>
-  </data>
-  <data name="ExtractionResult_SheetNotFound" xml:space="preserve">
-    <value>Sheet '{0}' was not found in the extraction result.</value>
-  </data>
-  <data name="ExtractionResult_PropertyNotFound" xml:space="preserve">
-    <value>Property '{0}' was not found on sheet '{1}' in the extraction result.</value>
-  </data>
-  <data name="SheetNotFoundInExtractionConfig" xml:space="preserve">
-    <value>Sheet '{0}' was not found in extraction config '{1}'.</value>
-  </data>
-  <data name="ExtractionHistoryNotFound" xml:space="preserve">
-    <value>Extraction history '{0}' was not found.</value>
-  </data>
   <data name="WorksheetNotFoundInUploadedWorkbook" xml:space="preserve">
     <value>Worksheet '{0}' was not found in the uploaded workbook.</value>
-  </data>
-  <data name="GeneratedWorkbookSheetCountOutOfRange" xml:space="preserve">
-    <value>Generated workbook must contain {0}-{1} sheets; got {2}.</value>
   </data>
   <data name="EmptyFileUploadRequired" xml:space="preserve">
     <value>A non-empty .xlsx file must be uploaded.</value>

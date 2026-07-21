@@ -5,13 +5,7 @@ namespace ExcelETL.Application.Exceptions;
 // the WebAPI/BlazorAdmin boundary -- mirrors ExcelETL.Domain.Exceptions.DomainErrorCode.
 public enum ApplicationErrorCode
 {
-    ExtractionConfigNotFound,
-    ExtractionResult_SheetNotFound,
-    ExtractionResult_PropertyNotFound,
-    SheetNotFoundInExtractionConfig,
-    ExtractionHistoryNotFound,
     WorksheetNotFoundInUploadedWorkbook,
-    GeneratedWorkbookSheetCountOutOfRange,
     UnknownFieldReference,
     ImportProfileNotFound,
     ExportProfileNotFound

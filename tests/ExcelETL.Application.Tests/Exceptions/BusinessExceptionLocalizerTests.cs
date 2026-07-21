@@ -1,5 +1,5 @@
 using ExcelETL.Application.Exceptions;
-using ExcelETL.Application.Extraction;
+using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Resources;
 using ExcelETL.Domain.Exceptions;
 using FluentAssertions;
@@ -30,22 +30,22 @@ public class BusinessExceptionLocalizerTests
     public void TryLocalize_WithApplicationException_UsesApplicationLocalizer()
     {
         var sut = CreateSut();
-        var exception = new ExtractionConfigNotFoundException(Guid.Empty);
+        var exception = new ImportProfileNotFoundException(Guid.Empty);
 
         var result = sut.TryLocalize(exception);
 
-        result.Should().Be($"application:ExtractionConfigNotFound:{Guid.Empty}");
+        result.Should().Be($"application:ImportProfileNotFound:{Guid.Empty}");
     }
 
     [Fact]
     public void TryLocalize_WithDomainException_UsesDomainLocalizer()
     {
         var sut = CreateSut();
-        var exception = new DomainRuleViolationException("irrelevant", DomainErrorCode.ExtractionConfig_TooManySheets, 5);
+        var exception = new DomainRuleViolationException("irrelevant", DomainErrorCode.SheetGenerationRule_DuplicateHeader, 5);
 
         var result = sut.TryLocalize(exception);
 
-        result.Should().Be("domain:ExtractionConfig_TooManySheets:5");
+        result.Should().Be("domain:SheetGenerationRule_DuplicateHeader:5");
     }
 
     [Fact]

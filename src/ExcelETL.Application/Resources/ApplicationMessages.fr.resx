@@ -31,26 +31,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ExtractionConfigNotFound" xml:space="preserve">
-    <value>La configuration d'extraction '{0}' est introuvable.</value>
-  </data>
-  <data name="ExtractionResult_SheetNotFound" xml:space="preserve">
-    <value>La feuille '{0}' est introuvable dans le résultat d'extraction.</value>
-  </data>
-  <data name="ExtractionResult_PropertyNotFound" xml:space="preserve">
-    <value>La propriété '{0}' est introuvable sur la feuille '{1}' dans le résultat d'extraction.</value>
-  </data>
-  <data name="SheetNotFoundInExtractionConfig" xml:space="preserve">
-    <value>La feuille '{0}' est introuvable dans la configuration d'extraction '{1}'.</value>
-  </data>
-  <data name="ExtractionHistoryNotFound" xml:space="preserve">
-    <value>L'historique d'extraction '{0}' est introuvable.</value>
-  </data>
   <data name="WorksheetNotFoundInUploadedWorkbook" xml:space="preserve">
     <value>La feuille '{0}' est introuvable dans le classeur envoyé.</value>
-  </data>
-  <data name="GeneratedWorkbookSheetCountOutOfRange" xml:space="preserve">
-    <value>Le classeur généré doit contenir entre {0} et {1} feuilles ; il en contient {2}.</value>
   </data>
   <data name="EmptyFileUploadRequired" xml:space="preserve">
     <value>Un fichier .xlsx non vide doit être envoyé.</value>

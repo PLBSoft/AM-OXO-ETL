@@ -343,6 +343,32 @@ avec la priorité « sobriété d'exécution » du présent document).
 mais un commit par projet reste recommandé pour faciliter la lecture du diff (pas pour ralentir
 la livraison, juste pour la lisibilité).
 
+**K4 — réalisé (21/07)** : livré en un seul commit plutôt qu'un commit par projet (les couches
+sont trop couplées — supprimer Domain sans corriger Application dans le même commit laisserait un
+état intermédiaire qui ne compile pas ; priorité donnée à des commits qui compilent tous, comme le
+permet la note d'efficacité). Périmètre exact supprimé : voir liste ci-dessus, intégralement
+réalisée, y compris l'extension `ExtractionHistory`/`Dashboard.razor`/`History.razor`/
+`AdminEndpointRouteBuilderExtensions.cs`. `ImportProfiles.razor` porte désormais `@page "/import-profiles"`
+**et** `@page "/"` — vérifié au navigateur : `/` déclenche la redirection `[Authorize]` vers
+`/Account/Login` (pas de 404), et `NavMenu` n'affiche plus que `Logs`/`Register`/`Login` pour un
+visiteur non connecté. Migration EF Core `20260721095640_RemoveExtractionConfigPoc` (supprime
+`CellMappings`, `ExtractionHistories`, `SheetConfigs`, `ExtractionConfigs`) générée via
+`dotnet ef migrations add ... --context ExcelEtlDbContext` et **appliquée avec succès contre la
+vraie base LocalDB** via le démarrage du serveur de dev (Lot G4, auto-migrate). A nécessité
+d'ajouter `Microsoft.EntityFrameworkCore.Design` directement à `ExcelETL.WebAPI.csproj`
+(`PrivateAssets="all"`) : la référence d'Infrastructure est privée et ne remonte pas au projet de
+démarrage que `dotnet ef` exige. `ApplicationErrorCode`/`DomainErrorCode` et leurs entrées
+`.resx` EN/FR purgées des membres POC-only ; `BusinessExceptionLocalizerTests.cs` migré vers
+`ImportProfileNotFoundException`/un `DomainErrorCode` encore existant. **Bug latent découvert en
+nettoyant les ressources** : `Logs.razor` réutilisait par erreur la clé `Dashboard_Loading` — une
+clé `Logs_Loading` dédiée a été créée (EN/FR) pour ne pas casser ce texte lors de la suppression de
+`Dashboard_*`. Recherche exhaustive post-suppression effectuée (hors dossiers `Migrations/`,
+légitimement historiques) : zéro référence vivante restante. Suite complète verte : Domain 215,
+Application 94, Infrastructure 101, WebAPI 13, BlazorAdmin 77, Hosting 6, legacy
+`ExcelProcessingClientService.Tests` 15, legacy `NewApiPingService.Tests` 9.
+
+**Lot K complet — K0→K4 tous réalisés, POC entièrement retiré.**
+
 ---
 
 ## Note d'efficacité d'implémentation (Claude Code)

@@ -1,6 +1,5 @@
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
-using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
@@ -10,7 +9,6 @@ using ExcelETL.Application.Generation;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
-using ExcelETL.BlazorAdmin.ExternalApi;
 using ExcelETL.Hosting;
 using ExcelETL.Infrastructure.Diagnostics;
 using ExcelETL.Infrastructure.Excel;
@@ -22,7 +20,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,19 +60,16 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 // Interactive Server components share a circuit across multiple renders, so a directly
 // injected scoped DbContext would be used concurrently/beyond its intended lifetime. This
 // factory registration is consumed exclusively by the repositories below -- Razor components
-// and endpoints in this app talk to ExtractionConfig/ExtractionHistory only through
-// IExtractionConfigRepository/IExtractionHistoryRepository, never through EF Core directly.
+// and endpoints in this app talk to ImportProfile/ExportProfile only through
+// IImportProfileStore/IExportProfileStore, never through EF Core directly.
 builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
 
-builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigRepository>();
-builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
 
 // The OXO extraction pipeline (Lot A-D), wired here so the /import-profiles/test admin page can run
-// it in-process against an uploaded file -- no host has needed these registrations until now, since
-// WebAPI still only exposes the older ExtractionConfig pipeline. All stateless, so Singleton.
+// it in-process against an uploaded file. All stateless, so Singleton.
 builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
 builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
 builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
@@ -92,30 +86,6 @@ builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchest
 builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
 builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
 builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
-
-// Deliberate, narrow exception to the "never talk to the Web API over HTTP" Clean Architecture
-// rule above -- see ExcelProcessingClient for why. Used only by the /upload-test admin page.
-builder.Services.Configure<WebApiClientOptions>(builder.Configuration.GetSection(WebApiClientOptions.SectionName));
-builder.Services.AddHttpClient<ExcelProcessingClient>((sp, client) =>
-{
-    var options = sp.GetRequiredService<IOptions<WebApiClientOptions>>().Value;
-    if (string.IsNullOrWhiteSpace(options.BaseUrl))
-    {
-        throw new InvalidOperationException(
-            $"Configuration value '{WebApiClientOptions.SectionName}:{nameof(WebApiClientOptions.BaseUrl)}' is required.");
-    }
-
-    if (string.IsNullOrWhiteSpace(options.ApiKey))
-    {
-        throw new InvalidOperationException(
-            $"Configuration value '{WebApiClientOptions.SectionName}:{nameof(WebApiClientOptions.ApiKey)}' is required.");
-    }
-
-    client.BaseAddress = new Uri(options.BaseUrl);
-    client.Timeout = ExcelProcessingClient.DefaultTimeout;
-    client.DefaultRequestHeaders.Add(ExcelProcessingClient.ApiKeyHeaderName, options.ApiKey);
-});
-builder.Services.AddScoped<IExcelDownloadInterop, ExcelDownloadInterop>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -177,16 +147,15 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapAdditionalIdentityEndpoints();
-app.MapAdminEndpoints();
 app.MapCultureEndpoints();
 
 // Applies any pending EF Core migrations for both databases this host owns, before identity
 // seeding below (which needs the Identity schema to already exist). See
 // DatabaseMigrationHostExtensions for the Database:AutoMigrate/IsRelational() gating and why
-// it's safe for both hosts (WebAPI/BlazorAdmin) to do this independently. The
-// HistoryDownloadEndpointTests integration test sets Database:AutoMigrate=false explicitly,
-// since it never swaps ApplicationIdentityDbContext to the InMemory provider (only
-// ExcelEtlDbContext) and would otherwise require a real, reachable SQL Server just to start.
+// it's safe for both hosts (WebAPI/BlazorAdmin) to do this independently. Integration tests that
+// exercise this host set Database:AutoMigrate=false explicitly, since they never swap
+// ApplicationIdentityDbContext to the InMemory provider (only ExcelEtlDbContext) and would
+// otherwise require a real, reachable SQL Server just to start.
 await app.Services.MigrateIfEnabledAsync<ExcelEtlDbContext>(app.Configuration);
 await app.Services.MigrateIfEnabledAsync<ApplicationIdentityDbContext>(app.Configuration);
 

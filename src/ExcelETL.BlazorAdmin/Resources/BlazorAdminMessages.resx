@@ -34,15 +34,6 @@
   <data name="NavMenu_ToggleTitle" xml:space="preserve">
     <value>Navigation menu</value>
   </data>
-  <data name="NavMenu_Dashboard" xml:space="preserve">
-    <value>Dashboard</value>
-  </data>
-  <data name="NavMenu_ExtractionMappings" xml:space="preserve">
-    <value>Extraction Mappings</value>
-  </data>
-  <data name="NavMenu_ExtractionHistory" xml:space="preserve">
-    <value>Extraction History</value>
-  </data>
   <data name="NavMenu_Logs" xml:space="preserve">
     <value>Logs</value>
   </data>
@@ -115,27 +106,6 @@
   <data name="NotFound_Message" xml:space="preserve">
     <value>Sorry, the content you are looking for does not exist.</value>
   </data>
-  <data name="Dashboard_PageTitle" xml:space="preserve">
-    <value>Dashboard</value>
-  </data>
-  <data name="Dashboard_Loading" xml:space="preserve">
-    <value>Loading...</value>
-  </data>
-  <data name="Dashboard_TotalJobs" xml:space="preserve">
-    <value>Total jobs</value>
-  </data>
-  <data name="Dashboard_Completed" xml:space="preserve">
-    <value>Completed</value>
-  </data>
-  <data name="Dashboard_Failed" xml:space="preserve">
-    <value>Failed</value>
-  </data>
-  <data name="Dashboard_AverageDuration" xml:space="preserve">
-    <value>Avg. duration</value>
-  </data>
-  <data name="Dashboard_NotAvailable" xml:space="preserve">
-    <value>N/A</value>
-  </data>
   <data name="Logs_PageTitle" xml:space="preserve">
     <value>Recent logs</value>
   </data>
@@ -160,6 +130,9 @@
   <data name="Logs_NoMatchingLogEntries" xml:space="preserve">
     <value>No log entries match the current filter.</value>
   </data>
+  <data name="Logs_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
   <data name="Logs_Refresh" xml:space="preserve">
     <value>Refresh</value>
   </data>
@@ -183,108 +156,6 @@
   </data>
   <data name="Logs_Copied" xml:space="preserve">
     <value>Copied!</value>
-  </data>
-  <data name="History_PageTitle" xml:space="preserve">
-    <value>Extraction History</value>
-  </data>
-  <data name="History_Loading" xml:space="preserve">
-    <value>Loading...</value>
-  </data>
-  <data name="History_NoEntries" xml:space="preserve">
-    <value>No extraction jobs have run yet.</value>
-  </data>
-  <data name="History_DateUtc" xml:space="preserve">
-    <value>Date (UTC)</value>
-  </data>
-  <data name="History_SourceFile" xml:space="preserve">
-    <value>Source file</value>
-  </data>
-  <data name="History_Status" xml:space="preserve">
-    <value>Status</value>
-  </data>
-  <data name="History_Download" xml:space="preserve">
-    <value>Download</value>
-  </data>
-  <data name="History_Status_Pending" xml:space="preserve">
-    <value>Pending</value>
-  </data>
-  <data name="History_Status_Processing" xml:space="preserve">
-    <value>Processing</value>
-  </data>
-  <data name="History_Status_Completed" xml:space="preserve">
-    <value>Completed</value>
-  </data>
-  <data name="History_Status_Failed" xml:space="preserve">
-    <value>Failed</value>
-  </data>
-  <data name="Mappings_PageTitle" xml:space="preserve">
-    <value>Extraction Mappings</value>
-  </data>
-  <data name="Mappings_Loading" xml:space="preserve">
-    <value>Loading...</value>
-  </data>
-  <data name="Mappings_Configurations" xml:space="preserve">
-    <value>Configurations</value>
-  </data>
-  <data name="Mappings_SheetCount" xml:space="preserve">
-    <value>{0} sheet(s)</value>
-  </data>
-  <data name="Mappings_NewConfiguration" xml:space="preserve">
-    <value>New configuration</value>
-  </data>
-  <data name="Mappings_ConfigurationNamePlaceholder" xml:space="preserve">
-    <value>Configuration name</value>
-  </data>
-  <data name="Mappings_Create" xml:space="preserve">
-    <value>Create</value>
-  </data>
-  <data name="Mappings_SheetHeader" xml:space="preserve">
-    <value>{0} (index {1})</value>
-  </data>
-  <data name="Mappings_SourceCell" xml:space="preserve">
-    <value>Source cell</value>
-  </data>
-  <data name="Mappings_TargetProperty" xml:space="preserve">
-    <value>Target property</value>
-  </data>
-  <data name="Mappings_DataType" xml:space="preserve">
-    <value>Data type</value>
-  </data>
-  <data name="Mappings_SourceCellPlaceholder" xml:space="preserve">
-    <value>e.g. B2 or B2:D4</value>
-  </data>
-  <data name="Mappings_PropertyNamePlaceholder" xml:space="preserve">
-    <value>Property name</value>
-  </data>
-  <data name="Mappings_AddMapping" xml:space="preserve">
-    <value>Add mapping</value>
-  </data>
-  <data name="Mappings_AddSheet" xml:space="preserve">
-    <value>Add sheet</value>
-  </data>
-  <data name="Mappings_SheetNamePlaceholder" xml:space="preserve">
-    <value>Sheet name</value>
-  </data>
-  <data name="Mappings_IndexPlaceholder" xml:space="preserve">
-    <value>Index</value>
-  </data>
-  <data name="Mappings_SelectConfigPrompt" xml:space="preserve">
-    <value>Select a configuration to view its sheets and cell mappings.</value>
-  </data>
-  <data name="Mappings_DataType_Text" xml:space="preserve">
-    <value>Text</value>
-  </data>
-  <data name="Mappings_DataType_Number" xml:space="preserve">
-    <value>Number</value>
-  </data>
-  <data name="Mappings_DataType_Decimal" xml:space="preserve">
-    <value>Decimal</value>
-  </data>
-  <data name="Mappings_DataType_Date" xml:space="preserve">
-    <value>Date</value>
-  </data>
-  <data name="Mappings_DataType_Boolean" xml:space="preserve">
-    <value>Boolean</value>
   </data>
   <data name="Account_EmailLabel" xml:space="preserve">
     <value>Email</value>
@@ -354,45 +225,6 @@
   </data>
   <data name="Users_UserName" xml:space="preserve">
     <value>Username</value>
-  </data>
-  <data name="NavMenu_UploadTest" xml:space="preserve">
-    <value>Upload Test</value>
-  </data>
-  <data name="Upload_PageTitle" xml:space="preserve">
-    <value>Excel Upload Test</value>
-  </data>
-  <data name="Upload_Instructions" xml:space="preserve">
-    <value>Upload an .xlsx file to submit it to the Web API's /api/excel/process endpoint and download the generated workbook, exactly like the legacy application does.</value>
-  </data>
-  <data name="Upload_ExtractionConfigLabel" xml:space="preserve">
-    <value>Extraction configuration</value>
-  </data>
-  <data name="Upload_ExtractionConfigPlaceholder" xml:space="preserve">
-    <value>Select a configuration...</value>
-  </data>
-  <data name="Upload_NoConfigsAvailable" xml:space="preserve">
-    <value>No extraction configurations exist yet. Create one on the Extraction Mappings page first.</value>
-  </data>
-  <data name="Upload_FileLabel" xml:space="preserve">
-    <value>Excel file (.xlsx)</value>
-  </data>
-  <data name="Upload_SubmitButton" xml:space="preserve">
-    <value>Upload &amp; Process</value>
-  </data>
-  <data name="Upload_Uploading" xml:space="preserve">
-    <value>Processing... this can take up to a few minutes for large files. Please don't close this page.</value>
-  </data>
-  <data name="Upload_SuccessMessage" xml:space="preserve">
-    <value>Processing complete. Your download should start automatically.</value>
-  </data>
-  <data name="Upload_ErrorPrefix" xml:space="preserve">
-    <value>Upload failed:</value>
-  </data>
-  <data name="Upload_SelectFilePrompt" xml:space="preserve">
-    <value>Choose a file to upload.</value>
-  </data>
-  <data name="Upload_SelectConfigPrompt" xml:space="preserve">
-    <value>Select an extraction configuration.</value>
   </data>
   <data name="NavMenu_Profile" xml:space="preserve">
     <value>My Profile</value>

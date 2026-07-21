@@ -44,17 +44,11 @@ public sealed class GlobalExceptionHandler(
 
     private static int StatusCodeFor(Exception exception) => exception switch
     {
-        ExtractionConfigNotFoundException
-            or SheetNotFoundInExtractionConfigException
-            or ExtractionHistoryNotFoundException
-            or ExtractionResultLookupException
-            or ImportProfileNotFoundException
-            or ExportProfileNotFoundException => StatusCodes.Status404NotFound,
+        ImportProfileNotFoundException or ExportProfileNotFoundException => StatusCodes.Status404NotFound,
         DomainValidationException
             or DomainArgumentOutOfRangeException
             or WorksheetNotFoundInWorkbookException => StatusCodes.Status400BadRequest,
-        DomainRuleViolationException
-            or InvalidGeneratedWorkbookSheetCountException => StatusCodes.Status409Conflict,
+        DomainRuleViolationException => StatusCodes.Status409Conflict,
         _ => StatusCodes.Status500InternalServerError
     };
 }
