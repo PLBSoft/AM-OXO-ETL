@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
+using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Generation;
 
@@ -14,15 +16,38 @@ namespace ExcelETL.Application.Generation;
 // its header row with zero data rows -- a stable, predictable output shape, matching the import side's
 // existing precedent that an empty sheet is a legitimate result, not an error (ORIFICES CAPACITES for
 // the C7401 fixture, Lot C4).
-public sealed class SheetGenerationEngine : ISheetGenerationEngine
+//
+// ILogger<T> injected/logged the same way as ImportPipelineOrchestrator (Lot G1/G2, mirrored here at
+// Lot K0bis so the generation half of the pipeline isn't observability-blind once exposed over HTTP).
+public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger) : ISheetGenerationEngine
 {
     public GeneratedWorkbook Generate(ImportResult importResult, ExportProfile profile)
     {
         ArgumentNullException.ThrowIfNull(importResult);
         ArgumentNullException.ThrowIfNull(profile);
 
-        var sheets = profile.SheetRules.Select(rule => GenerateSheet(rule, importResult)).ToList();
-        return new GeneratedWorkbook(sheets);
+        logger.LogInformation("Starting sheet generation for profile {ProfileName}", profile.Name);
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            var sheets = profile.SheetRules.Select(rule => GenerateSheet(rule, importResult)).ToList();
+            var totalRowCount = sheets.Sum(sheet => sheet.Rows.Count);
+
+            logger.LogInformation(
+                "Completed sheet generation for profile {ProfileName} in {ElapsedMs}ms: {SheetCount} sheet(s), " +
+                "{TotalRowCount} row(s)",
+                profile.Name, stopwatch.ElapsedMilliseconds, sheets.Count, totalRowCount);
+
+            return new GeneratedWorkbook(sheets);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex, "Sheet generation for profile {ProfileName} failed unexpectedly after {ElapsedMs}ms",
+                profile.Name, stopwatch.ElapsedMilliseconds);
+            throw;
+        }
     }
 
     private static GeneratedSheet GenerateSheet(SheetGenerationRule rule, ImportResult importResult)

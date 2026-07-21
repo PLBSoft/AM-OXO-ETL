@@ -79,6 +79,18 @@ consommer de travail inutile avant K1) :
 **Condition de sortie de K0** : ce point doit être tranché (fait ou explicitement différé avec
 justification) avant K1, pas découvert après coup une fois la route exposée.
 
+**K0 — résultat (21/07)** : recherche exhaustive confirmée, `ILogger` absent des deux fichiers.
+**K0bis réalisé** : `ILogger<SheetGenerationEngine>`/`ILogger<ClosedXmlWorkbookWriter>` injectés
+via primary constructor, log démarrage/succès (durée écoulée + compteurs) et log d'erreur avec
+`throw` — mêmes conventions que `ImportPipelineOrchestrator` (`src/ExcelETL.Application/Extraction/Oxo/ImportPipelineOrchestrator.cs`,
+Lot G1/G2). Voir `src/ExcelETL.Application/Generation/SheetGenerationEngine.cs` et
+`src/ExcelETL.Infrastructure/Excel/ClosedXmlWorkbookWriter.cs`. Tests mis à jour avec
+`NullLogger<T>.Instance` (`SheetGenerationEngineTests`, `ClosedXmlWorkbookWriterTests`,
+`GenerationPipelineIntegrationTests`) — aucune assertion sur le logging lui-même, conforme à la
+convention G1/G2. Suite complète vérifiée verte : Application.Tests 6/6 (filtre `Generation`),
+Infrastructure.Tests 135/135 (filtre `Excel`), BlazorAdmin.Tests 4/4 (filtre `ExportProfileTest`,
+DI inchangée dans `Program.cs`). **K0 clos, ne pas rouvrir.**
+
 ---
 
 ## K1. Nouvelle route Web API — pipeline OXO (import + génération)

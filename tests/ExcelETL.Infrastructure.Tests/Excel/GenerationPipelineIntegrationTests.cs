@@ -45,8 +45,8 @@ public class GenerationPipelineIntegrationTests
             NullLogger<DiversExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
-    private readonly SheetGenerationEngine _engine = new();
-    private readonly ClosedXmlWorkbookWriter _writer = new();
+    private readonly SheetGenerationEngine _engine = new(NullLogger<SheetGenerationEngine>.Instance);
+    private readonly ClosedXmlWorkbookWriter _writer = new(NullLogger<ClosedXmlWorkbookWriter>.Instance);
 
     private static ImportProfile CreateImportProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,

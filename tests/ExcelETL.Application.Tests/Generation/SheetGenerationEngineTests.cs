@@ -3,13 +3,14 @@ using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Application.Tests.Generation;
 
 public class SheetGenerationEngineTests
 {
-    private readonly SheetGenerationEngine _sut = new();
+    private readonly SheetGenerationEngine _sut = new(NullLogger<SheetGenerationEngine>.Instance);
 
     private static SheetGenerationRule ParentsRule() => new(
         "Parents",

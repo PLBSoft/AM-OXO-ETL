@@ -2,13 +2,14 @@ using ClosedXML.Excel;
 using ExcelETL.Application.Generation;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
 public class ClosedXmlWorkbookWriterTests
 {
-    private readonly ClosedXmlWorkbookWriter _sut = new();
+    private readonly ClosedXmlWorkbookWriter _sut = new(NullLogger<ClosedXmlWorkbookWriter>.Instance);
 
     [Fact]
     public void Write_WithMultipleSheets_WritesSheetNamesInOrder()
