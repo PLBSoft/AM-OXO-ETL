@@ -18,6 +18,7 @@ public class ApiKeyAuthenticationTests : IClassFixture<WebApplicationFactory<Pro
         {
             builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
+            builder.UseSetting("Database:AutoMigrate", "false");
         });
     }
 

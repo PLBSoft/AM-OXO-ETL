@@ -180,6 +180,16 @@ app.MapAdditionalIdentityEndpoints();
 app.MapAdminEndpoints();
 app.MapCultureEndpoints();
 
+// Applies any pending EF Core migrations for both databases this host owns, before identity
+// seeding below (which needs the Identity schema to already exist). See
+// DatabaseMigrationHostExtensions for the Database:AutoMigrate/IsRelational() gating and why
+// it's safe for both hosts (WebAPI/BlazorAdmin) to do this independently. The
+// HistoryDownloadEndpointTests integration test sets Database:AutoMigrate=false explicitly,
+// since it never swaps ApplicationIdentityDbContext to the InMemory provider (only
+// ExcelEtlDbContext) and would otherwise require a real, reachable SQL Server just to start.
+await app.Services.MigrateIfEnabledAsync<ExcelEtlDbContext>(app.Configuration);
+await app.Services.MigrateIfEnabledAsync<ApplicationIdentityDbContext>(app.Configuration);
+
 // Ensures the fixed set of administrator accounts this deployment relies on exists on every
 // startup (local or a fresh server) -- idempotent, so restarts and redeploys are safe. See
 // IdentitySeeder for why passwords are never read from a committed configuration file.

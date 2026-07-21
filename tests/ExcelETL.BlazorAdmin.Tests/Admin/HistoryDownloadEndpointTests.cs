@@ -33,6 +33,7 @@ public class HistoryDownloadEndpointTests : IClassFixture<WebApplicationFactory<
         {
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
             builder.UseSetting("IdentitySeeding:Enabled", "false");
+            builder.UseSetting("Database:AutoMigrate", "false");
 
             builder.ConfigureServices(services =>
             {

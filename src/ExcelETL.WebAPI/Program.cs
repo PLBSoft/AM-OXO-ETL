@@ -124,6 +124,15 @@ app.UseRequestTimeouts();
 
 app.MapControllers();
 
+// Applies any pending EF Core migrations for ExcelEtlDbContext on every startup -- see
+// DatabaseMigrationHostExtensions for the Database:AutoMigrate/IsRelational() gating and why
+// it's safe for both hosts to do this independently. WebApplicationFactory-based integration
+// tests for this host set Database:AutoMigrate=false explicitly (see HealthPingTests,
+// ApiKeyAuthenticationTests, ExcelProcessEndpointTests) since some of them never swap
+// ExcelEtlDbContext to the InMemory provider and would otherwise require a real, reachable
+// SQL Server just to start the host.
+await app.Services.MigrateIfEnabledAsync<ExcelEtlDbContext>(app.Configuration);
+
 app.Run();
 
 public partial class Program;
