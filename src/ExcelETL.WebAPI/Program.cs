@@ -1,5 +1,11 @@
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
+using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
+using ExcelETL.Application.Extraction.Oxo.Divers;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Procedure;
+using ExcelETL.Application.Generation;
 using ExcelETL.Hosting;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
@@ -72,6 +78,25 @@ builder.Services.AddScoped<IExtractionConfigRepository, ExtractionConfigReposito
 builder.Services.AddScoped<IExtractionHistoryRepository, ExtractionHistoryRepository>();
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddScoped<IProcessExcelFileService, ProcessExcelFileService>();
+
+// OXO pipeline (Lot K1/K2) -- same registrations as ExcelETL.BlazorAdmin/Program.cs, this host's
+// first-ever consumer of these services. All stateless -- Singleton, matching BlazorAdmin's
+// lifetimes -- except the two profile stores, which are Scoped like every other repository here
+// (short-lived DbContext per operation via IDbContextFactory).
+builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
+builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
+builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
+builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
+builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
+builder.Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
+builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
+builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();
+builder.Services.AddSingleton<IAutresJointsTouchesExtractionService, AutresJointsTouchesExtractionService>();
+builder.Services.AddSingleton<IDiversExtractionService, DiversExtractionService>();
+builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
+builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
+builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
+builder.Services.AddScoped<IProcessOxoFileService, ProcessOxoFileService>();
 // Singleton: GlobalExceptionHandler is registered as a singleton by AddExceptionHandler<T>(), and
 // this has no state of its own beyond the two singleton IStringLocalizer<T> it wraps.
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();

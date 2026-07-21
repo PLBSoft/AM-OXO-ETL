@@ -12,5 +12,7 @@ public enum ApplicationErrorCode
     ExtractionHistoryNotFound,
     WorksheetNotFoundInUploadedWorkbook,
     GeneratedWorkbookSheetCountOutOfRange,
-    UnknownFieldReference
+    UnknownFieldReference,
+    ImportProfileNotFound,
+    ExportProfileNotFound
 }

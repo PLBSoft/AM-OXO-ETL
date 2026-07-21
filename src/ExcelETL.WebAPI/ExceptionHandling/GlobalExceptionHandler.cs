@@ -1,5 +1,7 @@
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
+using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -45,7 +47,9 @@ public sealed class GlobalExceptionHandler(
         ExtractionConfigNotFoundException
             or SheetNotFoundInExtractionConfigException
             or ExtractionHistoryNotFoundException
-            or ExtractionResultLookupException => StatusCodes.Status404NotFound,
+            or ExtractionResultLookupException
+            or ImportProfileNotFoundException
+            or ExportProfileNotFoundException => StatusCodes.Status404NotFound,
         DomainValidationException
             or DomainArgumentOutOfRangeException
             or WorksheetNotFoundInWorkbookException => StatusCodes.Status400BadRequest,

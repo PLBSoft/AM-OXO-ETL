@@ -1,3 +1,4 @@
+using System.Globalization;
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
@@ -28,7 +29,22 @@ public sealed class ClosedXmlWorkbookReader : IWorkbookReader, IDisposable
             throw new WorksheetNotFoundInWorkbookException(sheet);
         }
 
-        var value = worksheet.Cell(TopLeftCellAddress(range)).GetString();
+        var cell = worksheet.Cell(TopLeftCellAddress(range));
+
+        // GetString() renders a date-typed cell using CultureInfo.CurrentCulture, which drifts under
+        // ASP.NET Core's per-request culture negotiation (RequestLocalizationOptions) -- discovered at
+        // Lot K1 when this pipeline ran, for the first time, inside a host that negotiates request
+        // culture (WebAPI defaults to en-US): the same cell that renders "12/12/2025 00:00:00" under a
+        // plain xUnit process (ambient culture) instead renders "9/11/2025 12:00:00 AM", which
+        // ProcedureExtractionService.TryParseDate's fixed "dd/MM/yyyy HH:mm:ss"/"dd/MM/yyyy" formats
+        // can't parse -- silently rejecting every real fixture. Render date cells ourselves,
+        // culture-invariant, rather than trust GetString()'s culture-dependent formatting.
+        if (cell.DataType == XLDataType.DateTime)
+        {
+            return cell.GetDateTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
+        }
+
+        var value = cell.GetString();
         return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 

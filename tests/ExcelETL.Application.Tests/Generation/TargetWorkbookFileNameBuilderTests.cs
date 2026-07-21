@@ -1,8 +1,8 @@
-using ExcelETL.Infrastructure.Excel;
+using ExcelETL.Application.Generation;
 using FluentAssertions;
 using Xunit;
 
-namespace ExcelETL.Infrastructure.Tests.Excel;
+namespace ExcelETL.Application.Tests.Generation;
 
 public class TargetWorkbookFileNameBuilderTests
 {

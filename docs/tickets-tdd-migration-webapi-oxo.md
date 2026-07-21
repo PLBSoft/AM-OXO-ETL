@@ -138,6 +138,61 @@ si la logique de résolution des profils + appel orchestrateur + génération d�
 controller devrait porter directement (cohérent avec la séparation déjà en place : `ExcelController`
 délègue à `ProcessExcelFileService`, ne pas dupliquer cette logique dans le controller ici non plus).
 
+**K1 — réalisé (21/07)** :
+- `ProcessOxoFileService` (`src/ExcelETL.Application/Extraction/Oxo/`) est le service d'orchestration
+  HTTP évoqué ci-dessus : résout les 2 profils (404 explicite via `ImportProfileNotFoundException`/
+  `ExportProfileNotFoundException`, nouveaux types + `ApplicationErrorCode` + entrées EN/FR dans
+  `ApplicationMessages.resx`/`.fr.resx`, mappés dans `GlobalExceptionHandler`), lance
+  `ImportPipelineOrchestrator.Run`, distingue le rejet (`Equipement is null`) du succès, génère +
+  archive (réutilise `IFileStorageService`, déjà branché — la contrainte "persistance sur disque"
+  du haut de `CLAUDE.md` s'applique à ce pipeline aussi, pas seulement à l'ancien). `ProcessOxoFileCommand`
+  transporte un `IWorkbookReader` déjà construit (pas un `Stream` brut) : construire un
+  `ClosedXmlWorkbookReader` nécessite Infrastructure, qu'Application ne peut pas référencer — c'est
+  le contrôleur (host, référence déjà Infrastructure) qui le construit, exactement comme le fait déjà
+  chaque page Blazor OXO.
+- **Déplacement architectural mineur** : `TargetWorkbookFileNameBuilder` (pure logique de chaîne, zéro
+  dépendance ClosedXML) vivait dans `ExcelETL.Infrastructure.Excel` alors qu'`Application` en a besoin
+  pour nommer le fichier archivé/généré — déplacé vers `ExcelETL.Application.Generation` (et son test
+  associé vers `ExcelETL.Application.Tests`). Aucun appelant cassé (`ExportProfileTest.razor` importait
+  déjà les deux namespaces).
+- Rejet : `422 Unprocessable Entity`, `ProblemDetails.Detail` localisé (`OxoFileRejected`) +
+  `Extensions["errors"]` (liste `Sheet`/`BlockIdentifier`/`Code`/`Message`).
+- **Bug réel découvert et corrigé pendant l'écriture des tests HTTP** (`ClosedXmlWorkbookReader.ReadCellValue`) :
+  `GetString()` de ClosedXML formate une cellule de type date selon `CultureInfo.CurrentCulture` ;
+  sous le host Web API, `RequestLocalizationOptions` fixe `en-US` par défaut par requête, ce qui
+  produit `"9/11/2025 12:00:00 AM"` au lieu du format `dd/MM/yyyy HH:mm:ss` que
+  `ProcedureExtractionService.TryParseDate` attend — **chaque fixture réelle était rejetée à 100%**
+  dès qu'appelée derrière une requête HTTP négociant la culture (jamais démasqué avant : aucun host
+  antérieur ne faisait tourner ce pipeline sous négociation de culture ASP.NET Core). Corrigé en
+  détectant `cell.DataType == XLDataType.DateTime` et en formatant nous-mêmes en
+  `CultureInfo.InvariantCulture` plutôt que de faire confiance à `GetString()`. Aucune régression :
+  suite complète revérifiée verte (Domain 255, Application 100, Infrastructure 131, WebAPI 21,
+  BlazorAdmin 112).
+- Tests : `tests/ExcelETL.WebAPI.Tests/Oxo/OxoProcessEndpointTests.cs` (7 cas : sans clé API,
+  `ImportProfileId`/`ExportProfileId` inconnus indépendamment, fichier rejeté, round-trip C7401 réel,
+  cas D8570/`"VANNE"`, logs upload/egress) + `ProcessOxoFileServiceTests.cs` (Application.Tests, 5 cas,
+  `Mock` sur toutes les dépendances).
+
+**K2 — réalisé (21/07, même commit que K1)** :
+- DI (`ExcelETL.WebAPI/Program.cs`) : les 9 services OXO déjà utilisés par BlazorAdmin + `IProcessOxoFileService`
+  enregistrés avec les mêmes durées de vie (`Scoped` pour les 2 profile stores, `Singleton` pour le
+  reste). `IWorkbookReader` **n'est pas** enregistré en DI — ni ici ni dans BlazorAdmin, il est
+  construit directement depuis le flux uploadé par le host (contrôleur ou composant Blazor).
+- Logs upload/egress ajoutés dans `OxoController` (nom fichier, taille, IP source pour l'upload ; nom
+  fichier généré + code HTTP pour l'égress) en plus des logs métier déjà posés dans
+  `ProcessOxoFileService` (Lot K0bis' convention). **Écart documenté avec le texte du ticket** :
+  `ProcessExcelFileService` (l'ancien pipeline) ne logue en réalité ni taille de fichier, ni IP, ni
+  hash — vérifié dans le code, contrairement à la description du ticket. Le hash de fichier n'a été
+  reproduit nulle part (aucun précédent dans ce dépôt) ; les autres champs (taille, IP, code réponse)
+  ont été ajoutés.
+- Test de logging : `Process_WithValidRequest_LogsUploadAndEgress` réutilise `CapturingLogger<T>`
+  (dupliqué dans `tests/ExcelETL.WebAPI.Tests/Oxo/CapturingLogger.cs`, même convention que
+  `tests/ExcelETL.Infrastructure.Tests/Excel/CapturingLogger.cs`, Lot G2) via une substitution DI de
+  `ILogger<OxoController>` sur une factory dédiée à ce test.
+- Pas de test DI dédié (registration-only) : même précédent que Lot J4 (BlazorAdmin), vérifié par
+  lecture de `Program.cs` plutôt que par un test dédié — aucun test de ce type n'existe ailleurs
+  dans ce dépôt.
+
 ---
 
 ## K2. Câblage DI et logs — route Web API OXO
