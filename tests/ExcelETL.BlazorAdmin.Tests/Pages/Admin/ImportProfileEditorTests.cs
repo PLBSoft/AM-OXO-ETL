@@ -1030,4 +1030,23 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#modify-block-field-button-0").GetAttribute("aria-label").Should().Be("Modify");
         cut.Find("#delete-block-field-button-0").GetAttribute("aria-label").Should().Be("Delete");
     });
+
+    [Fact]
+    public void BackToListButton_NavigatesToProfileList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#back-to-import-profiles-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/import-profiles");
+    });
+
+    [Fact]
+    public void BackToListButton_IsStillShown_WhenProfileNotFound() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, Guid.NewGuid()));
+
+        cut.FindAll("#back-to-import-profiles-button").Should().HaveCount(1);
+    });
 }

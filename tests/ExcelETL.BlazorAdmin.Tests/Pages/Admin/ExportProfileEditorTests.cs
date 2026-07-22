@@ -747,4 +747,23 @@ public class ExportProfileEditorTests : BunitContext
 
         cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Deprolock vannes");
     });
+
+    [Fact]
+    public void BackToListButton_NavigatesToProfileList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#back-to-export-profiles-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/export-profiles");
+    });
+
+    [Fact]
+    public void BackToListButton_IsStillShown_WhenProfileNotFound() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, Guid.NewGuid()));
+
+        cut.FindAll("#back-to-export-profiles-button").Should().HaveCount(1);
+    });
 }

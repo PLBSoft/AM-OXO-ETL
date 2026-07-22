@@ -18,6 +18,10 @@
 
 <h1>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</h1>
 
+<button id="back-to-export-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
+    @Loc["ExportProfileEditor_BackToListButton"]
+</button>
+
 @if (_notFound)
 {
     <div id="export-profile-not-found" class="alert alert-danger">@Loc["ExportProfileEditor_ProfileNotFound"]</div>
@@ -162,6 +166,8 @@ else
         _name = profile.Name;
         _sheetRules.AddRange(profile.SheetRules);
     }
+
+    private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
     private void HandleAddSheetRule(SheetGenerationRule rule) => _sheetRules.Add(rule);
 

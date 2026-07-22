@@ -310,6 +310,9 @@
   <data name="ImportProfileEditor_EditPageTitle" xml:space="preserve">
     <value>Modifier le profil d'import</value>
   </data>
+  <data name="ImportProfileEditor_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
+  </data>
   <data name="ImportProfileEditor_ProfileNotFound" xml:space="preserve">
     <value>Profil d'import introuvable.</value>
   </data>
@@ -591,6 +594,9 @@
   </data>
   <data name="ExportProfileEditor_EditPageTitle" xml:space="preserve">
     <value>Modifier le profil d'export</value>
+  </data>
+  <data name="ExportProfileEditor_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
   </data>
   <data name="ExportProfileEditor_ProfileNotFound" xml:space="preserve">
     <value>Profil d'export introuvable.</value>

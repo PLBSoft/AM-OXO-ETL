@@ -19,6 +19,10 @@
 
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
+<button id="back-to-import-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
+    @Loc["ImportProfileEditor_BackToListButton"]
+</button>
+
 @if (_notFound)
 {
     <div id="import-profile-not-found" class="alert alert-danger">@Loc["ImportProfileEditor_ProfileNotFound"]</div>
@@ -188,6 +192,8 @@ else
         _equipementTypeElementNom = profile.EquipementTypeElementNom;
         _sheetRules.AddRange(profile.SheetRules);
     }
+
+    private void BackToList() => NavigationManager.NavigateTo("import-profiles");
 
     private void HandleAddSheetRule(SheetExtractionRule rule) => _sheetRules.Add(rule);
 
