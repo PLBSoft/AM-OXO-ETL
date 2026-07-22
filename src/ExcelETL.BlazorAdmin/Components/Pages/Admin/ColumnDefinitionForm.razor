@@ -1,0 +1,127 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Application.Generation
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Generation.Fields
+@using ExcelETL.Domain.Generation.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-2">
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
+        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
+               placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}source-select")">@Loc["ExportProfileEditor_SourceLabel"]</label>
+        <select id="@($"{IdPrefix}source-select")" class="form-select" @bind="_sourceValue">
+            <option value="">@Loc["ExportProfileEditor_SourceNotMapped"]</option>
+            @foreach (var fieldRef in AvailableFieldRefs())
+            {
+                <option value="@fieldRef">@fieldRef</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
+            @SubmitLabel
+        </button>
+    </div>
+    @if (ShowCancel)
+    {
+        <div class="col-auto">
+            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+                @Loc["ExportProfileEditor_CancelButton"]
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public ColumnDefinition? InitialColumn { get; set; }
+
+    // Needed to filter the source <select>'s options -- the parent SheetGenerationRuleForm owns
+    // PivotSource, this component has no sheet-rule context of its own. Live-bound so the option
+    // list refreshes as soon as the parent's PivotSource select changes.
+    [Parameter]
+    public PivotSource PivotSource { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-column-definition-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-column-definition-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<ColumnDefinition> OnSubmit { get; set; }
+
+    private string _header = string.Empty;
+    private string _sourceValue = string.Empty;
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized:
+    // the parent gives an edit-mode instance a fresh component identity, so InitialColumn never
+    // changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialColumn is null)
+        {
+            return;
+        }
+
+        _header = InitialColumn.Header;
+        _sourceValue = InitialColumn.Source?.ToString() ?? string.Empty;
+    }
+
+    private IEnumerable<PivotFieldRef> AvailableFieldRefs() =>
+        Enum.GetValues<PivotFieldRef>().Where(fieldRef => PivotFieldResolver.GetPivotSource(fieldRef) == PivotSource);
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            PivotFieldRef? source = string.IsNullOrEmpty(_sourceValue)
+                ? null
+                : Enum.Parse<PivotFieldRef>(_sourceValue);
+
+            var column = new ColumnDefinition(_header, source);
+
+            await OnSubmit.InvokeAsync(column);
+
+            ResetForm();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _header = string.Empty;
+        _sourceValue = string.Empty;
+    }
+}

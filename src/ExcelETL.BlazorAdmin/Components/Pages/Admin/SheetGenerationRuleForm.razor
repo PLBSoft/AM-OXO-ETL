@@ -1,0 +1,275 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Generation.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-2">
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-generation-rule-name-input")">@Loc["ExportProfileEditor_SheetNameLabel"]</label>
+        <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="_sheetName"
+               placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")">@Loc["ExportProfileEditor_PivotSourceLabel"]</label>
+        <select id="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")" class="form-select" @bind="_pivotSource">
+            <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
+            <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
+        </select>
+    </div>
+</div>
+
+<h5>@Loc["ExportProfileEditor_ColumnsHeading"]</h5>
+@if (_columns.Count > 0)
+{
+    <ul class="block-field-list">
+        @for (var j = 0; j < _columns.Count; j++)
+        {
+            var columnIndex = j;
+            var column = _columns[columnIndex];
+            @if (_editingColumnIndex == columnIndex)
+            {
+                <li class="block-field-item-editing">
+                    <ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
+                                          InitialColumn="column"
+                                          PivotSource="_pivotSource"
+                                          SubmitButtonId="@($"{IdPrefix}save-column-definition-button-{columnIndex}")"
+                                          SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
+                                          ShowCancel="true"
+                                          CancelButtonId="@($"{IdPrefix}cancel-column-definition-button-{columnIndex}")"
+                                          OnCancel="() => _editingColumnIndex = null"
+                                          OnSubmit="(ColumnDefinition updated) => HandleSaveColumn(columnIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@column.Header</span>
+                        <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-column-definition-button-{columnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingColumnIndex = columnIndex">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </button>
+                        <button id="@($"{IdPrefix}delete-column-definition-button-{columnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteColumn(columnIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-")"
+                      PivotSource="_pivotSource"
+                      SubmitButtonId="@($"{IdPrefix}add-column-definition-button")"
+                      SubmitLabel="@Loc["ExportProfileEditor_AddColumnButton"]"
+                      OnSubmit="AddColumn" />
+
+<h5>@Loc["ExportProfileEditor_PointColumnsHeading"]</h5>
+@if (_pointColumns.Count > 0)
+{
+    <ul class="block-field-list">
+        @for (var j = 0; j < _pointColumns.Count; j++)
+        {
+            var pointColumnIndex = j;
+            var pointColumn = _pointColumns[pointColumnIndex];
+            @if (_editingPointColumnIndex == pointColumnIndex)
+            {
+                <li class="block-field-item-editing">
+                    <PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
+                                               InitialPointColumn="pointColumn"
+                                               SubmitButtonId="@($"{IdPrefix}save-point-column-definition-button-{pointColumnIndex}")"
+                                               SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
+                                               ShowCancel="true"
+                                               CancelButtonId="@($"{IdPrefix}cancel-point-column-definition-button-{pointColumnIndex}")"
+                                               OnCancel="() => _editingPointColumnIndex = null"
+                                               OnSubmit="(PointColumnDefinition updated) => HandleSavePointColumn(pointColumnIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@pointColumn.Header</span>
+                        <span class="block-field-range text-muted font-monospace">@pointColumn.ColonneNom · @pointColumn.MarkValue</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-point-column-definition-button-{pointColumnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingPointColumnIndex = pointColumnIndex">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </button>
+                        <button id="@($"{IdPrefix}delete-point-column-definition-button-{pointColumnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeletePointColumn(pointColumnIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-")"
+                           SubmitButtonId="@($"{IdPrefix}add-point-column-definition-button")"
+                           SubmitLabel="@Loc["ExportProfileEditor_AddPointColumnButton"]"
+                           OnSubmit="AddPointColumn" />
+
+<div class="right-aligned-actions">
+    <button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
+        @SubmitLabel
+    </button>
+    @if (ShowCancel)
+    {
+        <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+            @Loc["ExportProfileEditor_CancelButton"]
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public SheetGenerationRule? InitialRule { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-sheet-generation-rule-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-sheet-generation-rule-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<SheetGenerationRule> OnSubmit { get; set; }
+
+    private string _sheetName = string.Empty;
+    private PivotSource _pivotSource = PivotSource.Equipement;
+    private readonly List<ColumnDefinition> _columns = [];
+    private readonly List<PointColumnDefinition> _pointColumns = [];
+
+    private int? _editingColumnIndex;
+    private int? _editingPointColumnIndex;
+
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
+    // component identity (conditionally rendered inside an @if, not a persistently bound one), so
+    // InitialRule never changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialRule is null)
+        {
+            return;
+        }
+
+        _sheetName = InitialRule.SheetName;
+        _pivotSource = InitialRule.PivotSource;
+        _columns.AddRange(InitialRule.ColumnDefinitions);
+        _pointColumns.AddRange(InitialRule.PointColumnDefinitions);
+    }
+
+    private void AddColumn(ColumnDefinition column) => _columns.Add(column);
+
+    private void HandleSaveColumn(int index, ColumnDefinition updated)
+    {
+        _columns[index] = updated;
+        _editingColumnIndex = null;
+    }
+
+    private void DeleteColumn(int index)
+    {
+        _columns.RemoveAt(index);
+        if (_editingColumnIndex == index)
+        {
+            _editingColumnIndex = null;
+        }
+    }
+
+    private void AddPointColumn(PointColumnDefinition pointColumn) => _pointColumns.Add(pointColumn);
+
+    private void HandleSavePointColumn(int index, PointColumnDefinition updated)
+    {
+        _pointColumns[index] = updated;
+        _editingPointColumnIndex = null;
+    }
+
+    private void DeletePointColumn(int index)
+    {
+        _pointColumns.RemoveAt(index);
+        if (_editingPointColumnIndex == index)
+        {
+            _editingPointColumnIndex = null;
+        }
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            // SheetGenerationRule's constructor snapshots both lists itself ([.. columnDefinitions]),
+            // unlike the import side's SheetExtractionRule.UnconditionalColonneNames -- no defensive
+            // copy needed here before ResetForm() clears _columns/_pointColumns below.
+            var rule = new SheetGenerationRule(_sheetName, _pivotSource, _columns, _pointColumns);
+
+            await OnSubmit.InvokeAsync(rule);
+
+            ResetForm();
+        }
+        catch (Exception ex) when (ex is DomainValidationException or DomainRuleViolationException)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _sheetName = string.Empty;
+        _pivotSource = PivotSource.Equipement;
+        _columns.Clear();
+        _pointColumns.Clear();
+        _editingColumnIndex = null;
+        _editingPointColumnIndex = null;
+    }
+}

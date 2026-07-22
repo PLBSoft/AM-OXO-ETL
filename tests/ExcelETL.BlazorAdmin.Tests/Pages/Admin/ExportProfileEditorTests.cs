@@ -87,6 +87,21 @@ public class ExportProfileEditorTests : BunitContext
                     [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")])
             ]);
 
+    private static ExportProfile BuildProfileWithTwoSheetRules(string name = "Profil export OXO") =>
+        new(name,
+            [
+                new SheetGenerationRule(
+                    "Parents",
+                    PivotSource.Equipement,
+                    [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")]),
+                new SheetGenerationRule(
+                    "Enfants",
+                    PivotSource.Isolement,
+                    [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)],
+                    [])
+            ]);
+
     [Fact]
     public async Task Save_WithEmptyName_DisplaysLocalizedErrorAndDoesNotPersist() =>
         await WithCultureAsync("en-US", async () =>
@@ -367,5 +382,369 @@ public class ExportProfileEditorTests : BunitContext
 
         cut.Find("#save-export-profile-button").ParentElement!.GetAttribute("class")
             .Should().Contain("right-aligned-actions");
+    });
+
+    // Functional-parity ticket (Q4): modifying/deleting an already-added SheetGenerationRule,
+    // mirroring ImportProfileEditor.razor's SheetRuleForm-based edit-in-place flow exactly.
+
+    [Fact]
+    public async Task ExistingSheetRule_DisplaysModifyButton() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.FindAll("#modify-sheet-generation-rule-button-0").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task ClickingModify_SwitchesOnlyThatRuleIntoEditMode() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#edit-0-sheet-generation-rule-name-input").GetAttribute("value").Should().Be("Parents");
+            cut.FindAll("#modify-sheet-generation-rule-button-1").Should().HaveCount(1);
+            cut.FindAll("#edit-1-sheet-generation-rule-name-input").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task EditMode_PrefillsRootFieldsAndColumnsWithExistingRuleValues() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#edit-0-sheet-generation-rule-name-input").GetAttribute("value").Should().Be("Parents");
+            cut.Find("#edit-0-sheet-generation-rule-pivot-source-select").GetAttribute("value").Should().Be(nameof(PivotSource.Equipement));
+            cut.Find(".block-field-name").TextContent.Should().Be("Repère");
+            cut.Markup.Should().Contain("TRAVAUX COMPLET");
+        });
+
+    [Fact]
+    public async Task SaveChanges_UpdatesTheRuleInPlace_AndClosesEditMode_WithoutDuplicating() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-generation-rule-name-input").Change("Parents modifié");
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+
+            cut.FindAll("#edit-0-sheet-generation-rule-name-input").Should().BeEmpty();
+            cut.FindAll("#modify-sheet-generation-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#modify-sheet-generation-rule-button-1").Should().BeEmpty();
+            cut.Markup.Should().Contain("Parents modifié");
+
+            cut.Find("#save-export-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
+            var rule = all.Single().SheetRules.Should().ContainSingle().Subject;
+            rule.SheetName.Should().Be("Parents modifié");
+        });
+
+    [Fact]
+    public async Task Cancel_ExitsEditMode_WithoutApplyingChanges() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-generation-rule-name-input").Change("Ne sera jamais sauvegardé");
+            cut.Find("#cancel-sheet-generation-rule-button-0").Click();
+
+            cut.FindAll("#edit-0-sheet-generation-rule-name-input").Should().BeEmpty();
+
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-generation-rule-name-input").GetAttribute("value").Should().Be("Parents");
+        });
+
+    [Fact]
+    public async Task Delete_FirstClick_DoesNotRemoveTheRule_ShowsConfirmationInstead() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-generation-rule-button-0").Click();
+
+            cut.Markup.Should().Contain("Parents");
+            cut.Markup.Should().Contain("Delete this sheet rule? This cannot be undone.");
+            cut.FindAll("#confirm-delete-sheet-generation-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#cancel-delete-sheet-generation-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#modify-sheet-generation-rule-button-0").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task Delete_Confirm_RemovesTheRuleFromTheInMemoryList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-generation-rule-button-0").Click();
+            cut.Find("#confirm-delete-sheet-generation-rule-button-0").Click();
+
+            cut.Markup.Should().NotContain("Parents");
+            cut.Markup.Should().Contain("Enfants");
+        });
+
+    [Fact]
+    public async Task Delete_Cancel_KeepsTheRuleAndRestoresTheOriginalButtons() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-generation-rule-button-0").Click();
+            cut.Find("#cancel-delete-sheet-generation-rule-button-0").Click();
+
+            cut.Markup.Should().Contain("Parents");
+            cut.Markup.Should().Contain("Enfants");
+            cut.FindAll("#modify-sheet-generation-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#delete-sheet-generation-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#confirm-delete-sheet-generation-rule-button-0").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task SaveProfile_PersistsEditedSheetRule_VisibleAfterReload() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-generation-rule-name-input").Change("Parents modifié");
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+            cut.Find("#save-export-profile-button").Click();
+
+            var reloaded = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            reloaded.Markup.Should().Contain("Parents modifié");
+        });
+
+    [Fact]
+    public async Task AddingNewSheetRule_StillWorks_AfterEditingAnExistingRule() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-generation-rule-name-input").Change("Parents modifié");
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+
+            AddValidSheetRule(cut);
+
+            cut.FindAll("#modify-sheet-generation-rule-button-1").Should().HaveCount(1);
+        });
+
+    // Functional-parity ticket (Q4): modifying/deleting an already-added ColumnDefinition, within
+    // the always-present "Add a sheet rule" card -- mirrors ImportProfileEditor.razor's BlockField
+    // modify/delete tests.
+
+    [Fact]
+    public void Column_AfterAdding_DisplaysModifyAndDeleteButtons() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#column-header-input").Change("Repère");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.FindAll("#modify-column-definition-button-0").Should().HaveCount(1);
+        cut.FindAll("#delete-column-definition-button-0").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void Column_ClickingModify_PrefillsEditFormWithExistingValues() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#column-header-input").Change("Repère");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.Find("#modify-column-definition-button-0").Click();
+
+        cut.Find("#column-0-header-input").GetAttribute("value").Should().Be("Repère");
+        cut.Find("#column-0-source-select").GetAttribute("value").Should().Be(nameof(PivotFieldRef.EquipementRepere));
+    });
+
+    [Fact]
+    public void Column_SaveChanges_UpdatesColumnInPlace_AndClosesEditMode() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#column-header-input").Change("Repère");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.Find("#modify-column-definition-button-0").Click();
+        cut.Find("#column-0-header-input").Change("Repère modifié");
+        cut.Find("#save-column-definition-button-0").Click();
+
+        cut.FindAll("#column-0-header-input").Should().BeEmpty();
+        cut.Find(".block-field-name").TextContent.Should().Be("Repère modifié");
+        cut.FindAll("#modify-column-definition-button-1").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void Column_Cancel_DiscardsChanges() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#column-header-input").Change("Repère");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.Find("#modify-column-definition-button-0").Click();
+        cut.Find("#column-0-header-input").Change("Ne sera jamais sauvegardé");
+        cut.Find("#cancel-column-definition-button-0").Click();
+
+        cut.Find(".block-field-name").TextContent.Should().Be("Repère");
+    });
+
+    [Fact]
+    public void Column_Delete_RemovesColumnFromList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#column-header-input").Change("Repère");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.Find("#column-header-input").Change("Désignation");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementDesignation));
+        cut.Find("#add-column-definition-button").Click();
+
+        cut.Find("#delete-column-definition-button-0").Click();
+
+        cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Désignation");
+    });
+
+    [Fact]
+    public async Task Column_EditWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#edit-0-modify-column-definition-button-0").Click();
+            cut.Find("#edit-0-column-0-header-input").Change("Repère modifié");
+            cut.Find("#edit-0-save-column-definition-button-0").Click();
+
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+            cut.Find("#save-export-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            var rule = all.Single().SheetRules.Single();
+            rule.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Repère modifié" && c.Source == PivotFieldRef.EquipementRepere);
+        });
+
+    // Functional-parity ticket (Q4): same modify/delete treatment for PointColumnDefinition.
+
+    [Fact]
+    public void PointColumn_AfterAdding_DisplaysModifyAndDeleteButtons() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.FindAll("#modify-point-column-definition-button-0").Should().HaveCount(1);
+        cut.FindAll("#delete-point-column-definition-button-0").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void PointColumn_ClickingModify_PrefillsEditFormWithExistingValues() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#modify-point-column-definition-button-0").Click();
+
+        cut.Find("#point-column-0-nom-input").GetAttribute("value").Should().Be("TRAVAUX COMPLET");
+        cut.Find("#point-column-0-header-input").GetAttribute("value").Should().Be("Travaux complet");
+        cut.Find("#point-column-0-mark-value-input").GetAttribute("value").Should().Be(PointColumnDefinition.DefaultMarkValue);
+    });
+
+    [Fact]
+    public void PointColumn_SaveChanges_UpdatesPointColumnInPlace_AndClosesEditMode() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#modify-point-column-definition-button-0").Click();
+        cut.Find("#point-column-0-header-input").Change("Travaux complet modifié");
+        cut.Find("#save-point-column-definition-button-0").Click();
+
+        cut.FindAll("#point-column-0-header-input").Should().BeEmpty();
+        cut.Find(".block-field-name").TextContent.Should().Be("Travaux complet modifié");
+        cut.FindAll("#modify-point-column-definition-button-1").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void PointColumn_Cancel_DiscardsChanges() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#modify-point-column-definition-button-0").Click();
+        cut.Find("#point-column-0-header-input").Change("Ne sera jamais sauvegardé");
+        cut.Find("#cancel-point-column-definition-button-0").Click();
+
+        cut.Find(".block-field-name").TextContent.Should().Be("Travaux complet");
+    });
+
+    [Fact]
+    public void PointColumn_Delete_RemovesPointColumnFromList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#point-column-nom-input").Change("DEPROLOCK VANNES");
+        cut.Find("#point-column-header-input").Change("Deprolock vannes");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#delete-point-column-definition-button-0").Click();
+
+        cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Deprolock vannes");
     });
 }

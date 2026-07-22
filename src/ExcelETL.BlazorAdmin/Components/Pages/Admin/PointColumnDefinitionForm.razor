@@ -1,0 +1,115 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Generation.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-3">
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}nom-input")">@Loc["ExportProfileEditor_ColonneNomLabel"]</label>
+        <input id="@($"{IdPrefix}nom-input")" class="form-control" @bind="_colonneNom"
+               placeholder="@Loc["ExportProfileEditor_ColonneNomPlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
+        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
+               placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}mark-value-input")">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
+        <input id="@($"{IdPrefix}mark-value-input")" class="form-control" @bind="_markValue"
+               placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
+            @SubmitLabel
+        </button>
+    </div>
+    @if (ShowCancel)
+    {
+        <div class="col-auto">
+            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+                @Loc["ExportProfileEditor_CancelButton"]
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public PointColumnDefinition? InitialPointColumn { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-point-column-definition-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-point-column-definition-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<PointColumnDefinition> OnSubmit { get; set; }
+
+    private string _colonneNom = string.Empty;
+    private string _header = string.Empty;
+    private string _markValue = PointColumnDefinition.DefaultMarkValue;
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized:
+    // the parent gives an edit-mode instance a fresh component identity, so InitialPointColumn
+    // never changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialPointColumn is null)
+        {
+            return;
+        }
+
+        _colonneNom = InitialPointColumn.ColonneNom;
+        _header = InitialPointColumn.Header;
+        _markValue = InitialPointColumn.MarkValue;
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            var pointColumn = new PointColumnDefinition(_colonneNom, _header, _markValue);
+
+            await OnSubmit.InvokeAsync(pointColumn);
+
+            ResetForm();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _colonneNom = string.Empty;
+        _header = string.Empty;
+        _markValue = PointColumnDefinition.DefaultMarkValue;
+    }
+}

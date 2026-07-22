@@ -670,6 +670,24 @@
   <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
     <value>Add sheet rule</value>
   </data>
+  <data name="ExportProfileEditor_ModifyButton" xml:space="preserve">
+    <value>Modify</value>
+  </data>
+  <data name="ExportProfileEditor_DeleteButton" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ExportProfileEditor_SaveChangesButton" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="ExportProfileEditor_CancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="ExportProfileEditor_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirm delete</value>
+  </data>
+  <data name="ExportProfileEditor_ConfirmDeleteSheetRuleMessage" xml:space="preserve">
+    <value>Delete this sheet rule? This cannot be undone.</value>
+  </data>
   <data name="ExportProfileTest_PageTitle" xml:space="preserve">
     <value>Test Export Profile</value>
   </data>

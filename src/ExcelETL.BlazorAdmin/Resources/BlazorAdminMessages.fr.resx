@@ -670,6 +670,24 @@
   <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
     <value>Ajouter la feuille</value>
   </data>
+  <data name="ExportProfileEditor_ModifyButton" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="ExportProfileEditor_DeleteButton" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="ExportProfileEditor_SaveChangesButton" xml:space="preserve">
+    <value>Enregistrer les modifications</value>
+  </data>
+  <data name="ExportProfileEditor_CancelButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ExportProfileEditor_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirmer la suppression</value>
+  </data>
+  <data name="ExportProfileEditor_ConfirmDeleteSheetRuleMessage" xml:space="preserve">
+    <value>Supprimer cette règle de feuille ? Cette action est irréversible.</value>
+  </data>
   <data name="ExportProfileTest_PageTitle" xml:space="preserve">
     <value>Tester un profil d'export</value>
   </data>
