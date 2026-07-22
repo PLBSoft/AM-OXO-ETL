@@ -148,15 +148,17 @@
     </div>
 </div>
 
-<button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
-    @SubmitLabel
-</button>
-@if (ShowCancel)
-{
-    <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
-        @Loc["ImportProfileEditor_CancelButton"]
+<div class="sheet-rule-form-actions">
+    <button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
+        @SubmitLabel
     </button>
-}
+    @if (ShowCancel)
+    {
+        <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+            @Loc["ImportProfileEditor_CancelButton"]
+        </button>
+    }
+</div>
 
 @code {
     [Parameter]

@@ -393,6 +393,33 @@ public class ImportProfileEditorTests : BunitContext
             cut.Markup.Should().NotContain("3-4");
         });
 
+    // Client feedback (screenshot, 2026-07-22): the read-only sheet-rule summary's field ranges
+    // must render with the same name/range two-level, monospace-range styling as the edit form
+    // (SheetRuleForm's own block-field list) -- not the plain "Name (Range)" inline text it had
+    // before, since the two were visually inconsistent side by side.
+    [Fact]
+    public async Task Summary_DisplaysFieldNameAndRangeAsSeparateElements_WithMonospaceRangeClass_LikeEditMode() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithIsolementSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var names = cut.FindAll(".block-field-name");
+            var ranges = cut.FindAll(".block-field-range");
+
+            names.Should().Contain(e => e.TextContent == "Identification");
+            names.Should().Contain(e => e.TextContent == "TypeElement");
+            ranges.Should().Contain(e => e.TextContent == "B19:E20");
+            ranges.Should().Contain(e => e.TextContent == "B22:E23");
+
+            foreach (var range in ranges)
+            {
+                range.ClassList.Should().Contain("font-monospace");
+            }
+        });
+
     [Fact]
     public async Task EditMode_PrefillsConditionalPointRules() =>
         await WithCultureAsync("en-US", async () =>
@@ -619,6 +646,35 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("label[for='edit-0-sheet-rule-first-block-start-row-input']").TextContent.Should().Be("First block start row");
             cut.Find("label[for='edit-0-sheet-rule-step-input']").TextContent.Should().Be("Step");
             cut.Find("label[for='edit-0-sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
+        });
+
+    // Client feedback (screenshot, 2026-07-22): the Save/Cancel (or Add) buttons at the bottom of
+    // a sheet-rule form were left-aligned, inconsistent with the right-aligned per-field icon
+    // buttons above them -- wrapped in a shared right-aligned container (app.css
+    // .sheet-rule-form-actions) for both the "Add a sheet rule" card and edit mode.
+    [Fact]
+    public void SheetRuleForm_AddModeActionButton_IsInRightAlignedContainer() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#add-sheet-rule-button").ParentElement!.GetAttribute("class")
+            .Should().Contain("sheet-rule-form-actions");
+    });
+
+    [Fact]
+    public async Task SheetRuleForm_EditModeActionButtons_AreInRightAlignedContainer() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").ParentElement!.GetAttribute("class")
+                .Should().Contain("sheet-rule-form-actions");
+            cut.Find("#cancel-sheet-rule-button-0").ParentElement!.GetAttribute("class")
+                .Should().Contain("sheet-rule-form-actions");
         });
 
     [Fact]

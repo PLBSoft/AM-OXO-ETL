@@ -44,3 +44,60 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Block-field name/range rows: shared between the read-only sheet-rule summary
+   (ImportProfileEditor.razor) and the editable sheet-rule form (SheetRuleForm.razor) so both
+   render identically -- kept global rather than duplicated in two scoped .razor.css files. */
+.block-field-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.block-field-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.block-field-item-editing {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.block-field-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.block-field-name {
+    font-weight: 600;
+}
+
+.block-field-range {
+    font-size: 0.85rem;
+}
+
+.block-field-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.block-field-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+}
+
+.sheet-rule-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}

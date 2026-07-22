@@ -76,10 +76,15 @@ else
                 else
                 {
                     @Loc["ImportProfileEditor_SheetSummary", rule.SheetName, rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]
-                    <ul>
+                    <ul class="block-field-list">
                         @foreach (var field in rule.Locator.Fields)
                         {
-                            <li>@field.Name (@BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd))</li>
+                            <li class="block-field-item">
+                                <div class="block-field-info">
+                                    <span class="block-field-name">@field.Name</span>
+                                    <span class="block-field-range text-muted font-monospace">@BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd)</span>
+                                </div>
+                            </li>
                         }
                     </ul>
                     @if (rule.UnconditionalColonneNames.Count > 0)
