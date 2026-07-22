@@ -373,7 +373,8 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#edit-0-sheet-rule-first-block-start-row-input").GetAttribute("value").Should().Be("9");
             cut.Find("#edit-0-sheet-rule-step-input").GetAttribute("value").Should().Be("7");
             cut.Find("#edit-0-sheet-rule-stop-field-name-input").GetAttribute("value").Should().Be("Identification");
-            cut.Markup.Should().Contain("Identification (B9:E9)");
+            cut.Find(".block-field-name").TextContent.Should().Be("Identification");
+            cut.Find(".block-field-range").TextContent.Should().Be("B9:E9");
             cut.Markup.Should().Contain("PROLOCK VANNES");
         });
 
@@ -413,6 +414,92 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.Markup.Should().Contain("ZÉRO ENERGIE...");
             cut.Markup.Should().Contain("TypeElement");
+        });
+
+    // Ticket O2: the read-only sheet-rule summary must show the same section labels as the edit
+    // form above the unconditional-colonnes / conditional-point-rules lists -- and only when the
+    // underlying collection is non-empty.
+    [Fact]
+    public async Task Summary_WithUnconditionalColonnesAndPointRules_ShowsBothLabelsAndBulletLists() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var locator = new RepeatingBlockLocator(
+                "ISOLEMENT",
+                firstBlockStartRow: 9,
+                step: 7,
+                stopFieldName: "Identification",
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
+            var sheetRule = new SheetExtractionRule(
+                "ISOLEMENT", locator, pointRules: [pointRule],
+                unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            // Scoped to the read-only summary <li>, not the always-visible "Add a sheet rule" card
+            // below it -- that card's own SheetRuleForm renders these same two headings unconditionally.
+            var summaryItem = cut.Find("li.list-group-item");
+            var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
+            headings.Should().Contain("Unconditional colonnes (always create the Point)");
+            headings.Should().Contain("Conditional point rules");
+
+            var unconditionalHeading = summaryItem.QuerySelectorAll("h5")
+                .Single(h => h.TextContent == "Unconditional colonnes (always create the Point)");
+            var unconditionalList = unconditionalHeading.NextElementSibling!;
+            unconditionalList.TagName.Should().Be("UL");
+            unconditionalList.Children.Select(li => li.TextContent).Should().BeEquivalentTo("PROLOCK VANNES", "DEPROLOCK VANNES");
+
+            var pointRulesHeading = summaryItem.QuerySelectorAll("h5")
+                .Single(h => h.TextContent == "Conditional point rules");
+            var pointRulesList = pointRulesHeading.NextElementSibling!;
+            pointRulesList.TagName.Should().Be("UL");
+            pointRulesList.TextContent.Should().Contain("ZÉRO ENERGIE...");
+        });
+
+    [Fact]
+    public async Task Summary_WithOnlyUnconditionalColonnes_DoesNotShowConditionalPointRulesLabel() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var locator = new RepeatingBlockLocator(
+                "PLATINES",
+                firstBlockStartRow: 17,
+                step: 8,
+                stopFieldName: "Identification",
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            var sheetRule = new SheetExtractionRule(
+                "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var summaryItem = cut.Find("li.list-group-item");
+            var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
+            headings.Should().Contain("Unconditional colonnes (always create the Point)");
+            headings.Should().NotContain("Conditional point rules");
+        });
+
+    [Fact]
+    public async Task Summary_WithNeitherCollectionPopulated_ShowsNeitherLabel() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var locator = new RepeatingBlockLocator(
+                "PROCEDURE",
+                firstBlockStartRow: 9,
+                step: 1,
+                stopFieldName: "Action",
+                fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+            var sheetRule = new SheetExtractionRule(
+                "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var summaryItem = cut.Find("li.list-group-item");
+            summaryItem.QuerySelectorAll("h5").Should().BeEmpty();
         });
 
     [Fact]
@@ -589,7 +676,8 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#save-block-field-button-0").Click();
 
         cut.FindAll("#block-field-0-name-input").Should().BeEmpty();
-        cut.Markup.Should().Contain("Identification (C9:F9)");
+        cut.Find(".block-field-name").TextContent.Should().Be("Identification");
+        cut.Find(".block-field-range").TextContent.Should().Be("C9:F9");
         cut.FindAll("#modify-block-field-button-1").Should().BeEmpty();
     });
 
@@ -607,7 +695,8 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#block-field-0-absolute-range-input").Change("C9:F9");
         cut.Find("#cancel-block-field-button-0").Click();
 
-        cut.Markup.Should().Contain("Identification (B9:E9)");
+        cut.Find(".block-field-name").TextContent.Should().Be("Identification");
+        cut.Find(".block-field-range").TextContent.Should().Be("B9:E9");
     });
 
     [Fact]
@@ -627,8 +716,8 @@ public class ImportProfileEditorTests : BunitContext
 
         cut.Find("#delete-block-field-button-0").Click();
 
-        cut.Markup.Should().NotContain("Identification (B9:E9)");
-        cut.Markup.Should().Contain("Designation (H9:U9)");
+        cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Designation");
+        cut.FindAll(".block-field-range").Should().ContainSingle(e => e.TextContent == "H9:U9");
     });
 
     [Fact]
@@ -729,4 +818,45 @@ public class ImportProfileEditorTests : BunitContext
             cut.Markup.Should().Contain("far beyond the columns/rows");
             cut.FindAll("#modify-block-field-button-0").Should().HaveCount(1);
         });
+
+    // Ticket O1: field name and Excel range must be two distinct elements (not one concatenated
+    // string), and the range must carry the monospace styling class -- checked by class, not by a
+    // computed font value, per the project's "no selection by text or position" test convention.
+    [Fact]
+    public async Task BlockField_DisplaysNameAndRangeAsSeparateElements_WithMonospaceRangeClass() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithIsolementSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            var names = cut.FindAll(".block-field-name");
+            var ranges = cut.FindAll(".block-field-range");
+
+            names.Should().Contain(e => e.TextContent == "Identification");
+            names.Should().Contain(e => e.TextContent == "TypeElement");
+            ranges.Should().Contain(e => e.TextContent == "B19:E20");
+            ranges.Should().Contain(e => e.TextContent == "B22:E23");
+
+            foreach (var range in ranges)
+            {
+                range.ClassList.Should().Contain("font-monospace");
+            }
+        });
+
+    [Fact]
+    public void BlockField_IconButtons_HaveAriaLabels() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
+        cut.Find("#add-block-field-button").Click();
+
+        cut.Find("#modify-block-field-button-0").GetAttribute("aria-label").Should().Be("Modify");
+        cut.Find("#delete-block-field-button-0").GetAttribute("aria-label").Should().Be("Delete");
+    });
 }

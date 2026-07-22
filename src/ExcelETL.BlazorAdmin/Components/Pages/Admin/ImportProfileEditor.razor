@@ -84,10 +84,17 @@ else
                     </ul>
                     @if (rule.UnconditionalColonneNames.Count > 0)
                     {
-                        <p>@string.Join(", ", rule.UnconditionalColonneNames)</p>
+                        <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
+                        <ul>
+                            @foreach (var colonneName in rule.UnconditionalColonneNames)
+                            {
+                                <li>@colonneName</li>
+                            }
+                        </ul>
                     }
                     @if (rule.PointRules.Count > 0)
                     {
+                        <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
                         <ul>
                             @foreach (var pointRule in rule.PointRules)
                             {
