@@ -340,8 +340,8 @@
   <data name="ImportProfileEditor_NoSheetRulesYet" xml:space="preserve">
     <value>No sheet rules added yet.</value>
   </data>
-  <data name="ImportProfileEditor_SheetSummary" xml:space="preserve">
-    <value>{0} -- start row {1}, step {2}, stop field '{3}'</value>
+  <data name="ImportProfileEditor_SheetMetadata" xml:space="preserve">
+    <value>start row {0}, step {1}, stop field '{2}'</value>
   </data>
   <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Add a sheet rule</value>

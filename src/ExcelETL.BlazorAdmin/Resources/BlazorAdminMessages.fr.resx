@@ -340,8 +340,8 @@
   <data name="ImportProfileEditor_NoSheetRulesYet" xml:space="preserve">
     <value>Aucune règle de feuille ajoutée pour le moment.</value>
   </data>
-  <data name="ImportProfileEditor_SheetSummary" xml:space="preserve">
-    <value>{0} -- ligne de début {1}, pas {2}, champ d'arrêt '{3}'</value>
+  <data name="ImportProfileEditor_SheetMetadata" xml:space="preserve">
+    <value>ligne de début {0}, pas {1}, champ d'arrêt '{2}'</value>
   </data>
   <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Ajouter une règle de feuille</value>

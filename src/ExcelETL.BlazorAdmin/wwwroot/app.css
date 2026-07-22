@@ -96,8 +96,50 @@ h1:focus {
     padding: 0;
 }
 
-.sheet-rule-form-actions {
+/* Convention: docs/convention-ui-blazor-alignement-boutons.md -- every action-button row
+   (create/modify/delete/save/cancel) is right-aligned within its enclosing container. Used across
+   ImportProfileEditor.razor and SheetRuleForm.razor; not scoped to a single component's .razor.css
+   for the same reason as the block-field-* rules above. */
+.right-aligned-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+}
+
+/* Per-sheet-rule card (read-only summary, ImportProfileEditor.razor): each rule gets a visually
+   distinct bordered card with a clear gap between cards, well above the internal spacing used
+   between block fields inside one card, so the eye reads card boundaries unambiguously. */
+.sheet-rule-list {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sheet-rule-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+}
+
+.sheet-rule-editing-item {
+    padding: 1rem 0;
+}
+
+.sheet-rule-card-header {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.sheet-rule-card-title {
+    margin: 0;
+}
+
+.sheet-rule-card-meta {
+    font-size: 0.85rem;
 }

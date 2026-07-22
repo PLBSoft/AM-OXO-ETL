@@ -56,12 +56,12 @@ else
 }
 else
 {
-    <ul class="list-group mb-3">
+    <ul class="sheet-rule-list">
         @for (var i = 0; i < _sheetRules.Count; i++)
         {
             var index = i;
             var rule = _sheetRules[index];
-            <li class="list-group-item">
+            <li class="@(_editingIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
                 @if (_editingIndex == index)
                 {
                     <SheetRuleForm IdPrefix="@($"edit-{index}-")"
@@ -75,7 +75,10 @@ else
                 }
                 else
                 {
-                    @Loc["ImportProfileEditor_SheetSummary", rule.SheetName, rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]
+                    <div class="sheet-rule-card-header">
+                        <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
+                        <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]</span>
+                    </div>
                     <ul class="block-field-list">
                         @foreach (var field in rule.Locator.Fields)
                         {
@@ -107,7 +110,7 @@ else
                             }
                         </ul>
                     }
-                    <div class="mt-2">
+                    <div class="right-aligned-actions mt-2">
                         <button id="@($"modify-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
                             @Loc["ImportProfileEditor_ModifyButton"]
                         </button>
@@ -128,9 +131,11 @@ else
     </div>
 </div>
 
-<button id="save-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
-    @Loc["ImportProfileEditor_SaveButton"]
-</button>
+<div class="right-aligned-actions">
+    <button id="save-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
+        @Loc["ImportProfileEditor_SaveButton"]
+    </button>
+</div>
 }
 
 @code {

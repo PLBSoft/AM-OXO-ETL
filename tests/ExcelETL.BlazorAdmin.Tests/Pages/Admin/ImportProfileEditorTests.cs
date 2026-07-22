@@ -467,7 +467,7 @@ public class ImportProfileEditorTests : BunitContext
 
             // Scoped to the read-only summary <li>, not the always-visible "Add a sheet rule" card
             // below it -- that card's own SheetRuleForm renders these same two headings unconditionally.
-            var summaryItem = cut.Find("li.list-group-item");
+            var summaryItem = cut.Find("li.sheet-rule-card");
             var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
             headings.Should().Contain("Unconditional colonnes (always create the Point)");
             headings.Should().Contain("Conditional point rules");
@@ -502,7 +502,7 @@ public class ImportProfileEditorTests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
-            var summaryItem = cut.Find("li.list-group-item");
+            var summaryItem = cut.Find("li.sheet-rule-card");
             var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
             headings.Should().Contain("Unconditional colonnes (always create the Point)");
             headings.Should().NotContain("Conditional point rules");
@@ -525,9 +525,69 @@ public class ImportProfileEditorTests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
-            var summaryItem = cut.Find("li.list-group-item");
+            var summaryItem = cut.Find("li.sheet-rule-card");
             summaryItem.QuerySelectorAll("h5").Should().BeEmpty();
         });
+
+    // Ticket P1: each non-editing sheet rule in the summary is wrapped in its own visually
+    // distinct card (one container per rule, not a shared list-group border).
+    [Fact]
+    public async Task Summary_WithMultipleSheetRules_WrapsEachInADistinctCard() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.FindAll("li.sheet-rule-card").Should().HaveCount(2);
+        });
+
+    [Fact]
+    public async Task Summary_SheetNameAndMetadata_AreSeparateElements() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find(".sheet-rule-card-title").TextContent.Should().Be("ISOLEMENT");
+            var meta = cut.Find(".sheet-rule-card-meta").TextContent;
+            meta.Should().Contain("9");
+            meta.Should().Contain("7");
+            meta.Should().Contain("Identification");
+            meta.Should().NotContain("ISOLEMENT");
+        });
+
+    // Ticket P1's own open question, resolved by reading the code before implementing: a rule
+    // being edited is replaced in place by SheetRuleForm, not duplicated -- so it never shows up
+    // as a second summary card while its edit panel is open.
+    [Fact]
+    public async Task EditingRule_IsNotRenderedAsACardOrDuplicatedInTheSummary() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.FindAll("li.sheet-rule-card").Should().HaveCount(1);
+            cut.FindAll(".sheet-rule-card-title").Should().ContainSingle(e => e.TextContent == "PLATINES");
+            cut.FindAll("#edit-0-sheet-rule-name-input").Should().HaveCount(1);
+        });
+
+    // Ticket P2: save-profile-button belongs to the root form, not a sheet-rule card, but is
+    // governed by the same convention-ui-blazor-alignement-boutons.md rule.
+    [Fact]
+    public void SaveProfileButton_IsInRightAlignedContainer() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#save-profile-button").ParentElement!.GetAttribute("class")
+            .Should().Contain("right-aligned-actions");
+    });
 
     [Fact]
     public async Task SaveChanges_UpdatesTheRuleInPlace_AndClosesEditMode_WithoutDuplicating() =>
@@ -651,14 +711,14 @@ public class ImportProfileEditorTests : BunitContext
     // Client feedback (screenshot, 2026-07-22): the Save/Cancel (or Add) buttons at the bottom of
     // a sheet-rule form were left-aligned, inconsistent with the right-aligned per-field icon
     // buttons above them -- wrapped in a shared right-aligned container (app.css
-    // .sheet-rule-form-actions) for both the "Add a sheet rule" card and edit mode.
+    // .right-aligned-actions) for both the "Add a sheet rule" card and edit mode.
     [Fact]
     public void SheetRuleForm_AddModeActionButton_IsInRightAlignedContainer() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
 
         cut.Find("#add-sheet-rule-button").ParentElement!.GetAttribute("class")
-            .Should().Contain("sheet-rule-form-actions");
+            .Should().Contain("right-aligned-actions");
     });
 
     [Fact]
@@ -672,9 +732,9 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#modify-sheet-rule-button-0").Click();
 
             cut.Find("#save-sheet-rule-button-0").ParentElement!.GetAttribute("class")
-                .Should().Contain("sheet-rule-form-actions");
+                .Should().Contain("right-aligned-actions");
             cut.Find("#cancel-sheet-rule-button-0").ParentElement!.GetAttribute("class")
-                .Should().Contain("sheet-rule-form-actions");
+                .Should().Contain("right-aligned-actions");
         });
 
     [Fact]
