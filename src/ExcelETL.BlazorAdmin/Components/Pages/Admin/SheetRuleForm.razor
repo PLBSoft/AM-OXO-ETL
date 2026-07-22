@@ -1,4 +1,5 @@
 @using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Formatting
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Primitives
 @using ExcelETL.Domain.Extraction.Profile
@@ -47,6 +48,7 @@
                 {
                     <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
                                      InitialField="field"
+                                     FirstBlockStartRow="_firstBlockStartRow"
                                      SubmitButtonId="@($"{IdPrefix}save-block-field-button-{fieldIndex}")"
                                      SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                      ShowCancel="true"
@@ -56,7 +58,7 @@
                 }
                 else
                 {
-                    <span>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</span>
+                    <span>@field.Name (@BlockFieldRangeFormatter.ToAbsoluteRange(_firstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd))</span>
                     <button id="@($"{IdPrefix}modify-block-field-button-{fieldIndex}")" class="btn btn-sm btn-secondary" @onclick="() => _editingFieldIndex = fieldIndex">
                         @Loc["ImportProfileEditor_ModifyButton"]
                     </button>
@@ -69,6 +71,7 @@
     </ul>
 }
 <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-")"
+                FirstBlockStartRow="_firstBlockStartRow"
                 SubmitButtonId="@($"{IdPrefix}add-block-field-button")"
                 SubmitLabel="@Loc["ImportProfileEditor_AddFieldButton"]"
                 OnSubmit="AddBlockField" />

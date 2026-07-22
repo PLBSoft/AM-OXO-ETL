@@ -376,14 +376,17 @@
   <data name="ImportProfileEditor_FieldNamePlaceholder" xml:space="preserve">
     <value>Nom du champ</value>
   </data>
-  <data name="ImportProfileEditor_ColumnRangePlaceholder" xml:space="preserve">
-    <value>Plage de colonnes (ex. B:E)</value>
+  <data name="ImportProfileEditor_AbsoluteRangeLabel" xml:space="preserve">
+    <value>Plage Excel du 1ᵉʳ bloc</value>
   </data>
-  <data name="ImportProfileEditor_RowOffsetStartPlaceholder" xml:space="preserve">
-    <value>Décalage de ligne début</value>
+  <data name="ImportProfileEditor_AbsoluteRangePlaceholder" xml:space="preserve">
+    <value>ex. B19:E20</value>
   </data>
-  <data name="ImportProfileEditor_RowOffsetEndPlaceholder" xml:space="preserve">
-    <value>Décalage de ligne fin</value>
+  <data name="ImportProfileEditor_InvalidExcelRangeError" xml:space="preserve">
+    <value>Saisissez une plage Excel valide (ex. B19:E20 ou B9), dans les bornes réelles du classeur, avec une fin non antérieure au début.</value>
+  </data>
+  <data name="ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning" xml:space="preserve">
+    <value>Cette plage dépasse largement les colonnes/lignes observées dans les fichiers réels à ce jour -- vérifiez-la avant d'enregistrer.</value>
   </data>
   <data name="ImportProfileEditor_AddFieldButton" xml:space="preserve">
     <value>Ajouter le champ</value>

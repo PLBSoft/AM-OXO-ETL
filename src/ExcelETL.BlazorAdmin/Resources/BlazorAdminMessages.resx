@@ -376,14 +376,17 @@
   <data name="ImportProfileEditor_FieldNamePlaceholder" xml:space="preserve">
     <value>Field name</value>
   </data>
-  <data name="ImportProfileEditor_ColumnRangePlaceholder" xml:space="preserve">
-    <value>Column range (e.g. B:E)</value>
+  <data name="ImportProfileEditor_AbsoluteRangeLabel" xml:space="preserve">
+    <value>Excel range of the 1st block</value>
   </data>
-  <data name="ImportProfileEditor_RowOffsetStartPlaceholder" xml:space="preserve">
-    <value>Row offset start</value>
+  <data name="ImportProfileEditor_AbsoluteRangePlaceholder" xml:space="preserve">
+    <value>e.g. B19:E20</value>
   </data>
-  <data name="ImportProfileEditor_RowOffsetEndPlaceholder" xml:space="preserve">
-    <value>Row offset end</value>
+  <data name="ImportProfileEditor_InvalidExcelRangeError" xml:space="preserve">
+    <value>Enter a valid Excel range (e.g. B19:E20 or B9), within the workbook's real bounds, with the end not before the start.</value>
+  </data>
+  <data name="ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning" xml:space="preserve">
+    <value>This range is far beyond the columns/rows seen in real files so far -- double-check it before saving.</value>
   </data>
   <data name="ImportProfileEditor_AddFieldButton" xml:space="preserve">
     <value>Add field</value>

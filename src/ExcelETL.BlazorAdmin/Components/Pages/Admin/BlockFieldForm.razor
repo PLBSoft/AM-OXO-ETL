@@ -1,4 +1,5 @@
 @using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Formatting
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Primitives
 
@@ -9,6 +10,10 @@
 {
     <div class="alert alert-danger">@_errorMessage</div>
 }
+@if (!string.IsNullOrEmpty(_warningMessage))
+{
+    <div class="alert alert-warning">@_warningMessage</div>
+}
 
 <div class="row g-2 mb-2">
     <div class="col">
@@ -16,16 +21,9 @@
                placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
     </div>
     <div class="col">
-        <input id="@($"{IdPrefix}column-range-input")" class="form-control" @bind="_columnRange"
-               placeholder="@Loc["ImportProfileEditor_ColumnRangePlaceholder"]" />
-    </div>
-    <div class="col">
-        <input id="@($"{IdPrefix}row-offset-start-input")" type="number" class="form-control" @bind="_rowOffsetStart"
-               placeholder="@Loc["ImportProfileEditor_RowOffsetStartPlaceholder"]" />
-    </div>
-    <div class="col">
-        <input id="@($"{IdPrefix}row-offset-end-input")" type="number" class="form-control" @bind="_rowOffsetEnd"
-               placeholder="@Loc["ImportProfileEditor_RowOffsetEndPlaceholder"]" />
+        <label class="form-label" for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
+        <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
+               placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
     </div>
     <div class="col-auto">
         <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
@@ -49,6 +47,12 @@
     [Parameter]
     public BlockFieldDefinition? InitialField { get; set; }
 
+    // Needed to translate between the field's stored relative offsets and the absolute Excel range
+    // shown/entered here -- the parent SheetRuleForm owns FirstBlockStartRow, this component has no
+    // locator context of its own. See BlockFieldRangeFormatter.
+    [Parameter]
+    public int FirstBlockStartRow { get; set; }
+
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-block-field-button";
 
@@ -68,14 +72,14 @@
     public EventCallback<BlockFieldDefinition> OnSubmit { get; set; }
 
     private string _name = string.Empty;
-    private string _columnRange = string.Empty;
-    private int _rowOffsetStart;
-    private int _rowOffsetEnd;
+    private string _absoluteRange = string.Empty;
     private string? _errorMessage;
+    private string? _warningMessage;
 
     // Only ever runs once per mounted instance -- same reasoning as SheetRuleForm.OnInitialized:
     // the parent gives an edit-mode instance a fresh component identity, so InitialField never
-    // changes underneath an already-initialized instance.
+    // changes underneath an already-initialized instance. FirstBlockStartRow is already set by the
+    // time this runs (Blazor sets parameters before the first OnInitialized call).
     protected override void OnInitialized()
     {
         if (InitialField is null)
@@ -84,20 +88,33 @@
         }
 
         _name = InitialField.Name;
-        _columnRange = InitialField.ColumnRange;
-        _rowOffsetStart = InitialField.RowOffsetStart;
-        _rowOffsetEnd = InitialField.RowOffsetEnd;
+        _absoluteRange = BlockFieldRangeFormatter.ToAbsoluteRange(
+            FirstBlockStartRow, InitialField.ColumnRange, InitialField.RowOffsetStart, InitialField.RowOffsetEnd);
     }
 
     private async Task Submit()
     {
         _errorMessage = null;
+        _warningMessage = null;
+
+        var parseResult = BlockFieldRangeFormatter.FromAbsoluteRange(_absoluteRange, FirstBlockStartRow);
+        if (!parseResult.IsSuccess)
+        {
+            _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
+            return;
+        }
 
         try
         {
-            var field = new BlockFieldDefinition(_name, _columnRange, _rowOffsetStart, _rowOffsetEnd);
+            var field = new BlockFieldDefinition(
+                _name, parseResult.ColumnRange, parseResult.RowOffsetStart, parseResult.RowOffsetEnd);
 
             await OnSubmit.InvokeAsync(field);
+
+            if (parseResult.IsBeyondPracticalRange)
+            {
+                _warningMessage = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
+            }
 
             ResetForm();
         }
@@ -112,8 +129,6 @@
     private void ResetForm()
     {
         _name = string.Empty;
-        _columnRange = string.Empty;
-        _rowOffsetStart = 0;
-        _rowOffsetEnd = 0;
+        _absoluteRange = string.Empty;
     }
 }

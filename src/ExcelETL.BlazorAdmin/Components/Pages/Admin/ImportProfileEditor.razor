@@ -4,6 +4,7 @@
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.BlazorAdmin.Formatting
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Identity
@@ -78,7 +79,7 @@ else
                     <ul>
                         @foreach (var field in rule.Locator.Fields)
                         {
-                            <li>@field.Name (@field.ColumnRange, @field.RowOffsetStart-@field.RowOffsetEnd)</li>
+                            <li>@field.Name (@BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd))</li>
                         }
                     </ul>
                     @if (rule.UnconditionalColonneNames.Count > 0)

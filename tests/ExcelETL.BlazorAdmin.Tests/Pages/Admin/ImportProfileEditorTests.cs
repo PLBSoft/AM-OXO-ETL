@@ -60,6 +60,28 @@ public class ImportProfileEditorTests : BunitContext
         return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
     }
 
+    // Mirrors the real ISOLEMENT sheet's client-reported example (ticket N0): FirstBlockStartRow=19,
+    // Identification RowOffsetStart=0/End=1 (-> B19:E20), TypeElement RowOffsetStart=3/End=4 (-> B22:E23).
+    private static ImportProfile BuildProfileWithIsolementSheetRule(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT",
+            firstBlockStartRow: 19,
+            step: 7,
+            stopFieldName: "Identification",
+            fields:
+            [
+                new BlockFieldDefinition("Identification", "B:E", 0, 1),
+                new BlockFieldDefinition("TypeElement", "B:E", 3, 4)
+            ]);
+
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+
+        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+    }
+
     private static ImportProfile BuildProfileWithTwoSheetRules(
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
@@ -95,9 +117,7 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
 
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
-        cut.Find("#block-field-row-offset-start-input").Change("0");
-        cut.Find("#block-field-row-offset-end-input").Change("0");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
@@ -198,7 +218,7 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
 
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#add-sheet-rule-button").Click();
@@ -353,8 +373,23 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#edit-0-sheet-rule-first-block-start-row-input").GetAttribute("value").Should().Be("9");
             cut.Find("#edit-0-sheet-rule-step-input").GetAttribute("value").Should().Be("7");
             cut.Find("#edit-0-sheet-rule-stop-field-name-input").GetAttribute("value").Should().Be("Identification");
-            cut.Markup.Should().Contain("Identification (B:E, 0-0)");
+            cut.Markup.Should().Contain("Identification (B9:E9)");
             cut.Markup.Should().Contain("PROLOCK VANNES");
+        });
+
+    [Fact]
+    public async Task ExistingSheetRule_DisplaysAbsoluteExcelRanges_NotRawRowOffsets() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithIsolementSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Markup.Should().Contain("B19:E20");
+            cut.Markup.Should().Contain("B22:E23");
+            cut.Markup.Should().NotContain("0-1");
+            cut.Markup.Should().NotContain("3-4");
         });
 
     [Fact]
@@ -504,8 +539,9 @@ public class ImportProfileEditorTests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.FindAll("#modify-block-field-button-0").Should().HaveCount(1);
@@ -513,22 +549,29 @@ public class ImportProfileEditorTests : BunitContext
     });
 
     [Fact]
-    public void BlockField_ClickingModify_PrefillsEditFormWithExistingValues() => WithCulture("en-US", () =>
+    public void BlockFieldForm_AbsoluteRangeInput_HasVisibleLabel() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
 
-        cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
-        cut.Find("#block-field-row-offset-start-input").Change("1");
-        cut.Find("#block-field-row-offset-end-input").Change("2");
+        cut.Find("label[for='block-field-absolute-range-input']").TextContent.Should().Be("Excel range of the 1st block");
+    });
+
+    // Ticket example (N3): editing TypeElement (FirstBlockStartRow=19, RowOffsetStart=3/End=4) must
+    // prefill the text field with "B22:E23", not the raw offsets.
+    [Fact]
+    public void BlockField_ClickingModify_PrefillsEditFormWithAbsoluteExcelRange() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("19");
+        cut.Find("#block-field-name-input").Change("TypeElement");
+        cut.Find("#block-field-absolute-range-input").Change("B22:E23");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#modify-block-field-button-0").Click();
 
-        cut.Find("#block-field-0-name-input").GetAttribute("value").Should().Be("Identification");
-        cut.Find("#block-field-0-column-range-input").GetAttribute("value").Should().Be("B:E");
-        cut.Find("#block-field-0-row-offset-start-input").GetAttribute("value").Should().Be("1");
-        cut.Find("#block-field-0-row-offset-end-input").GetAttribute("value").Should().Be("2");
+        cut.Find("#block-field-0-name-input").GetAttribute("value").Should().Be("TypeElement");
+        cut.Find("#block-field-0-absolute-range-input").GetAttribute("value").Should().Be("B22:E23");
     });
 
     [Fact]
@@ -536,16 +579,17 @@ public class ImportProfileEditorTests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#modify-block-field-button-0").Click();
-        cut.Find("#block-field-0-column-range-input").Change("C:F");
+        cut.Find("#block-field-0-absolute-range-input").Change("C9:F9");
         cut.Find("#save-block-field-button-0").Click();
 
         cut.FindAll("#block-field-0-name-input").Should().BeEmpty();
-        cut.Markup.Should().Contain("Identification (C:F, 0-0)");
+        cut.Markup.Should().Contain("Identification (C9:F9)");
         cut.FindAll("#modify-block-field-button-1").Should().BeEmpty();
     });
 
@@ -554,15 +598,16 @@ public class ImportProfileEditorTests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#modify-block-field-button-0").Click();
-        cut.Find("#block-field-0-column-range-input").Change("C:F");
+        cut.Find("#block-field-0-absolute-range-input").Change("C9:F9");
         cut.Find("#cancel-block-field-button-0").Click();
 
-        cut.Markup.Should().Contain("Identification (B:E, 0-0)");
+        cut.Markup.Should().Contain("Identification (B9:E9)");
     });
 
     [Fact]
@@ -570,18 +615,20 @@ public class ImportProfileEditorTests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
+
         cut.Find("#block-field-name-input").Change("Identification");
-        cut.Find("#block-field-column-range-input").Change("B:E");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#block-field-name-input").Change("Designation");
-        cut.Find("#block-field-column-range-input").Change("H:U");
+        cut.Find("#block-field-absolute-range-input").Change("H9:U9");
         cut.Find("#add-block-field-button").Click();
 
         cut.Find("#delete-block-field-button-0").Click();
 
-        cut.Markup.Should().NotContain("Identification (B:E");
-        cut.Markup.Should().Contain("Designation (H:U");
+        cut.Markup.Should().NotContain("Identification (B9:E9)");
+        cut.Markup.Should().Contain("Designation (H9:U9)");
     });
 
     [Fact]
@@ -595,7 +642,7 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#modify-sheet-rule-button-0").Click();
 
             cut.Find("#edit-0-modify-block-field-button-0").Click();
-            cut.Find("#edit-0-block-field-0-column-range-input").Change("C:F");
+            cut.Find("#edit-0-block-field-0-absolute-range-input").Change("C9:F9");
             cut.Find("#edit-0-save-block-field-button-0").Click();
 
             cut.Find("#save-sheet-rule-button-0").Click();
@@ -604,5 +651,82 @@ public class ImportProfileEditorTests : BunitContext
             var all = await Store.GetAllAsync();
             var rule = all.Single().SheetRules.Single();
             rule.Locator.Fields.Should().ContainSingle(f => f.Name == "Identification" && f.ColumnRange == "C:F");
+        });
+
+    // Ticket example (N3): typing "B19:E20" against FirstBlockStartRow=19 must produce
+    // RowOffsetStart=0/RowOffsetEnd=1 on the persisted BlockFieldDefinition.
+    [Fact]
+    public async Task AddBlockField_WithAbsoluteExcelRange_ComputesCorrectRowOffsets() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#profile-name-input").Change("MAD OXO");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+            cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("19");
+            cut.Find("#sheet-rule-step-input").Change("7");
+            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
+
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change("B19:E20");
+            cut.Find("#add-block-field-button").Click();
+
+            cut.Find("#add-sheet-rule-button").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            var field = all.Single().SheetRules.Single().Locator.Fields.Single();
+            field.ColumnRange.Should().Be("B:E");
+            field.RowOffsetStart.Should().Be(0);
+            field.RowOffsetEnd.Should().Be(1);
+        });
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("E20:B19")]
+    public void AddBlockField_WithInvalidAbsoluteRange_DisplaysErrorAndDoesNotCreateField(string invalidRange) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("19");
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change(invalidRange);
+            cut.Find("#add-block-field-button").Click();
+
+            cut.Markup.Should().Contain("Enter a valid Excel range");
+            cut.FindAll("#modify-block-field-button-0").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void AddBlockField_WithRowBeyondRealExcelBounds_DisplaysBlockingErrorAndDoesNotCreateField() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("1");
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change("B2000000");
+            cut.Find("#add-block-field-button").Click();
+
+            cut.Markup.Should().Contain("Enter a valid Excel range");
+            cut.FindAll("#modify-block-field-button-0").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void AddBlockField_BeyondPracticalPlausibilityThreshold_DisplaysWarning_ButStillCreatesField() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("1");
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change("BA1");
+            cut.Find("#add-block-field-button").Click();
+
+            cut.Markup.Should().Contain("far beyond the columns/rows");
+            cut.FindAll("#modify-block-field-button-0").Should().HaveCount(1);
         });
 }
