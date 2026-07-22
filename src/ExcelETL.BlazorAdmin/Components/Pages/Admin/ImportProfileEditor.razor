@@ -110,14 +110,29 @@ else
                             }
                         </ul>
                     }
-                    <div class="right-aligned-actions mt-2">
-                        <button id="@($"modify-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
-                            @Loc["ImportProfileEditor_ModifyButton"]
-                        </button>
-                        <button id="@($"delete-sheet-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => DeleteSheetRule(index)">
-                            @Loc["ImportProfileEditor_DeleteButton"]
-                        </button>
-                    </div>
+                    @if (_pendingDeleteIndex == index)
+                    {
+                        <div class="right-aligned-actions mt-2">
+                            <span class="text-danger me-auto">@Loc["ImportProfileEditor_ConfirmDeleteSheetRuleMessage"]</span>
+                            <button id="@($"confirm-delete-sheet-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteSheetRule(index)">
+                                @Loc["ImportProfileEditor_ConfirmDeleteButton"]
+                            </button>
+                            <button id="@($"cancel-delete-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _pendingDeleteIndex = null">
+                                @Loc["ImportProfileEditor_CancelButton"]
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="right-aligned-actions mt-2">
+                            <button id="@($"modify-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
+                                @Loc["ImportProfileEditor_ModifyButton"]
+                            </button>
+                            <button id="@($"delete-sheet-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => _pendingDeleteIndex = index">
+                                @Loc["ImportProfileEditor_DeleteButton"]
+                            </button>
+                        </div>
+                    }
                 }
             </li>
         }
@@ -151,6 +166,7 @@ else
 
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _editingIndex;
+    private int? _pendingDeleteIndex;
 
     protected override async Task OnInitializedAsync()
     {
@@ -179,6 +195,12 @@ else
     {
         _sheetRules[index] = updated;
         _editingIndex = null;
+    }
+
+    private void ConfirmDeleteSheetRule(int index)
+    {
+        DeleteSheetRule(index);
+        _pendingDeleteIndex = null;
     }
 
     private void DeleteSheetRule(int index)

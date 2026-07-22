@@ -427,6 +427,12 @@
   <data name="ImportProfileEditor_DeleteButton" xml:space="preserve">
     <value>Delete</value>
   </data>
+  <data name="ImportProfileEditor_ConfirmDeleteSheetRuleMessage" xml:space="preserve">
+    <value>Delete this sheet rule? This cannot be undone.</value>
+  </data>
+  <data name="ImportProfileEditor_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirm delete</value>
+  </data>
   <data name="ImportProfileEditor_SaveChangesButton" xml:space="preserve">
     <value>Save changes</value>
   </data>

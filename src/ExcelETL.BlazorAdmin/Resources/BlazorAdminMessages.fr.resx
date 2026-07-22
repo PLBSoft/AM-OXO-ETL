@@ -427,6 +427,12 @@
   <data name="ImportProfileEditor_DeleteButton" xml:space="preserve">
     <value>Supprimer</value>
   </data>
+  <data name="ImportProfileEditor_ConfirmDeleteSheetRuleMessage" xml:space="preserve">
+    <value>Supprimer cette règle de feuille ? Cette action est irréversible.</value>
+  </data>
+  <data name="ImportProfileEditor_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirmer la suppression</value>
+  </data>
   <data name="ImportProfileEditor_SaveChangesButton" xml:space="preserve">
     <value>Enregistrer les modifications</value>
   </data>

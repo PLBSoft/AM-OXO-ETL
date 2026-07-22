@@ -631,8 +631,11 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#edit-0-sheet-rule-step-input").GetAttribute("value").Should().Be("7");
         });
 
+    // Client feedback (screenshot, 2026-07-22): deleting a sheet rule (unlike a single block field)
+    // discards the whole rule's nested state, so it now requires an explicit confirmation step
+    // instead of removing on the first click.
     [Fact]
-    public async Task Delete_RemovesTheRuleFromTheInMemoryList() =>
+    public async Task Delete_FirstClick_DoesNotRemoveTheRule_ShowsConfirmationInstead() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithTwoSheetRules();
@@ -641,8 +644,44 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#delete-sheet-rule-button-0").Click();
 
+            cut.Markup.Should().Contain("ISOLEMENT");
+            cut.Markup.Should().Contain("Delete this sheet rule? This cannot be undone.");
+            cut.FindAll("#confirm-delete-sheet-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#cancel-delete-sheet-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#modify-sheet-rule-button-0").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task Delete_Confirm_RemovesTheRuleFromTheInMemoryList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-rule-button-0").Click();
+            cut.Find("#confirm-delete-sheet-rule-button-0").Click();
+
             cut.Markup.Should().NotContain("ISOLEMENT");
             cut.Markup.Should().Contain("PLATINES");
+        });
+
+    [Fact]
+    public async Task Delete_Cancel_KeepsTheRuleAndRestoresTheOriginalButtons() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-rule-button-0").Click();
+            cut.Find("#cancel-delete-sheet-rule-button-0").Click();
+
+            cut.Markup.Should().Contain("ISOLEMENT");
+            cut.Markup.Should().Contain("PLATINES");
+            cut.FindAll("#modify-sheet-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#delete-sheet-rule-button-0").Should().HaveCount(1);
+            cut.FindAll("#confirm-delete-sheet-rule-button-0").Should().BeEmpty();
         });
 
     [Fact]
