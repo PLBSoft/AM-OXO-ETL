@@ -17,6 +17,7 @@
 
 <div class="row g-2 mb-2">
     <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}name-input")">@Loc["ImportProfileEditor_FieldNameLabel"]</label>
         <input id="@($"{IdPrefix}name-input")" class="form-control" @bind="_name"
                placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
     </div>

@@ -373,6 +373,9 @@
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Block fields</value>
   </data>
+  <data name="ImportProfileEditor_FieldNameLabel" xml:space="preserve">
+    <value>Field name</value>
+  </data>
   <data name="ImportProfileEditor_FieldNamePlaceholder" xml:space="preserve">
     <value>Field name</value>
   </data>
@@ -394,6 +397,9 @@
   <data name="ImportProfileEditor_UnconditionalColonnesHeading" xml:space="preserve">
     <value>Unconditional colonnes (always create the Point)</value>
   </data>
+  <data name="ImportProfileEditor_ColonneNameLabel" xml:space="preserve">
+    <value>Colonne name</value>
+  </data>
   <data name="ImportProfileEditor_ColonneNamePlaceholder" xml:space="preserve">
     <value>Colonne name</value>
   </data>
@@ -403,8 +409,17 @@
   <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
     <value>Conditional point rules</value>
   </data>
+  <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
+    <value>Source field name</value>
+  </data>
   <data name="ImportProfileEditor_SourceFieldNamePlaceholder" xml:space="preserve">
     <value>Source field name</value>
+  </data>
+  <data name="ImportProfileEditor_OperatorLabel" xml:space="preserve">
+    <value>Operator</value>
+  </data>
+  <data name="ImportProfileEditor_ComparisonValueLabel" xml:space="preserve">
+    <value>Comparison value</value>
   </data>
   <data name="ImportProfileEditor_ComparisonValuePlaceholder" xml:space="preserve">
     <value>Comparison value</value>

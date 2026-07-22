@@ -731,6 +731,22 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("label[for='sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
     });
 
+    // Client feedback (screenshot, 2026-07-22): every input in the "Add a sheet rule" section
+    // should have a visible label, not just a placeholder -- covers the field name (BlockFieldForm),
+    // the unconditional-colonne name, and the 4 conditional-point-rule inputs.
+    [Fact]
+    public void SheetRuleForm_RemainingInputs_HaveVisibleLabels() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("label[for='block-field-name-input']").TextContent.Should().Be("Field name");
+        cut.Find("label[for='unconditional-colonne-name-input']").TextContent.Should().Be("Colonne name");
+        cut.Find("label[for='point-rule-colonne-name-input']").TextContent.Should().Be("Colonne name");
+        cut.Find("label[for='point-rule-source-field-name-input']").TextContent.Should().Be("Source field name");
+        cut.Find("label[for='point-rule-operator-select']").TextContent.Should().Be("Operator");
+        cut.Find("label[for='point-rule-comparison-value-input']").TextContent.Should().Be("Comparison value");
+    });
+
     [Fact]
     public async Task SheetRuleForm_EditMode_RootLocatorFields_HaveVisibleLabels() =>
         await WithCultureAsync("en-US", async () =>
