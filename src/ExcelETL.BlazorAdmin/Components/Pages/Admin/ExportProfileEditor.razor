@@ -32,6 +32,7 @@ else
 
     <div class="row g-2 mb-3">
         <div class="col">
+            <label class="form-label" for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
             <input id="export-profile-name-input" class="form-control" @bind="_name"
                    placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
         </div>
@@ -45,19 +46,32 @@ else
     }
     else
     {
-        <ul class="list-group mb-3">
+        <ul class="sheet-rule-list">
             @foreach (var rule in _sheetRules)
             {
-                <li class="list-group-item">
-                    <strong>@rule.SheetName</strong> (@rule.PivotSource)
-                    <ul>
+                <li class="sheet-rule-card">
+                    <div class="sheet-rule-card-header">
+                        <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
+                        <span class="sheet-rule-card-meta text-muted">@Loc["ExportProfileEditor_SheetMetadata", rule.PivotSource]</span>
+                    </div>
+                    <ul class="block-field-list">
                         @foreach (var column in rule.ColumnDefinitions)
                         {
-                            <li>@column.Header — @(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</li>
+                            <li class="block-field-item">
+                                <div class="block-field-info">
+                                    <span class="block-field-name">@column.Header</span>
+                                    <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                                </div>
+                            </li>
                         }
                         @foreach (var pointColumn in rule.PointColumnDefinitions)
                         {
-                            <li>@pointColumn.ColonneNom / @pointColumn.Header / @pointColumn.MarkValue</li>
+                            <li class="block-field-item">
+                                <div class="block-field-info">
+                                    <span class="block-field-name">@pointColumn.Header</span>
+                                    <span class="block-field-range text-muted font-monospace">@pointColumn.ColonneNom · @pointColumn.MarkValue</span>
+                                </div>
+                            </li>
                         }
                     </ul>
                 </li>
@@ -75,10 +89,12 @@ else
 
             <div class="row g-2 mb-2">
                 <div class="col">
+                    <label class="form-label" for="sheet-generation-rule-name-input">@Loc["ExportProfileEditor_SheetNameLabel"]</label>
                     <input id="sheet-generation-rule-name-input" class="form-control" @bind="_newSheetRule.SheetName"
                            placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
                 </div>
                 <div class="col">
+                    <label class="form-label" for="sheet-generation-rule-pivot-source-select">@Loc["ExportProfileEditor_PivotSourceLabel"]</label>
                     <select id="sheet-generation-rule-pivot-source-select" class="form-select" @bind="_newSheetRule.PivotSource">
                         <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
                         <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
@@ -89,19 +105,26 @@ else
             <h5>@Loc["ExportProfileEditor_ColumnsHeading"]</h5>
             @if (_newSheetRule.ColumnDefinitions.Count > 0)
             {
-                <ul>
+                <ul class="block-field-list">
                     @foreach (var column in _newSheetRule.ColumnDefinitions)
                     {
-                        <li>@column.Header — @(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</li>
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@column.Header</span>
+                                <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                            </div>
+                        </li>
                     }
                 </ul>
             }
             <div class="row g-2 mb-2">
                 <div class="col">
+                    <label class="form-label" for="column-header-input">@Loc["ExportProfileEditor_HeaderLabel"]</label>
                     <input id="column-header-input" class="form-control" @bind="_newColumn.Header"
                            placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
                 </div>
                 <div class="col">
+                    <label class="form-label" for="column-source-select">@Loc["ExportProfileEditor_SourceLabel"]</label>
                     <select id="column-source-select" class="form-select" @bind="_newColumn.SourceValue">
                         <option value="">@Loc["ExportProfileEditor_SourceNotMapped"]</option>
                         @foreach (var fieldRef in AvailableFieldRefs())
@@ -120,23 +143,31 @@ else
             <h5>@Loc["ExportProfileEditor_PointColumnsHeading"]</h5>
             @if (_newSheetRule.PointColumnDefinitions.Count > 0)
             {
-                <ul>
+                <ul class="block-field-list">
                     @foreach (var pointColumn in _newSheetRule.PointColumnDefinitions)
                     {
-                        <li>@pointColumn.ColonneNom / @pointColumn.Header / @pointColumn.MarkValue</li>
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@pointColumn.Header</span>
+                                <span class="block-field-range text-muted font-monospace">@pointColumn.ColonneNom · @pointColumn.MarkValue</span>
+                            </div>
+                        </li>
                     }
                 </ul>
             }
             <div class="row g-2 mb-3">
                 <div class="col">
+                    <label class="form-label" for="point-column-nom-input">@Loc["ExportProfileEditor_ColonneNomLabel"]</label>
                     <input id="point-column-nom-input" class="form-control" @bind="_newPointColumn.ColonneNom"
                            placeholder="@Loc["ExportProfileEditor_ColonneNomPlaceholder"]" />
                 </div>
                 <div class="col">
+                    <label class="form-label" for="point-column-header-input">@Loc["ExportProfileEditor_HeaderLabel"]</label>
                     <input id="point-column-header-input" class="form-control" @bind="_newPointColumn.Header"
                            placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
                 </div>
                 <div class="col">
+                    <label class="form-label" for="point-column-mark-value-input">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
                     <input id="point-column-mark-value-input" class="form-control" @bind="_newPointColumn.MarkValue"
                            placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
                 </div>
@@ -147,15 +178,19 @@ else
                 </div>
             </div>
 
-            <button id="add-sheet-generation-rule-button" class="btn btn-primary" @onclick="AddSheetRule">
-                @Loc["ExportProfileEditor_AddSheetButton"]
-            </button>
+            <div class="right-aligned-actions">
+                <button id="add-sheet-generation-rule-button" class="btn btn-primary" @onclick="AddSheetRule">
+                    @Loc["ExportProfileEditor_AddSheetButton"]
+                </button>
+            </div>
         </div>
     </div>
 
-    <button id="save-export-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
-        @Loc["ExportProfileEditor_SaveButton"]
-    </button>
+    <div class="right-aligned-actions">
+        <button id="save-export-profile-button" class="btn btn-primary" @onclick="SaveProfileAsync">
+            @Loc["ExportProfileEditor_SaveButton"]
+        </button>
+    </div>
 }
 
 @code {

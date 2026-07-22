@@ -598,6 +598,9 @@
   <data name="ExportProfileEditor_NamePlaceholder" xml:space="preserve">
     <value>Profile name</value>
   </data>
+  <data name="ExportProfileEditor_NameLabel" xml:space="preserve">
+    <value>Profile name</value>
+  </data>
   <data name="ExportProfileEditor_SaveButton" xml:space="preserve">
     <value>Save profile</value>
   </data>
@@ -607,11 +610,20 @@
   <data name="ExportProfileEditor_NoSheetRulesYet" xml:space="preserve">
     <value>No sheet rules added yet.</value>
   </data>
+  <data name="ExportProfileEditor_SheetMetadata" xml:space="preserve">
+    <value>Source: {0}</value>
+  </data>
   <data name="ExportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Add a sheet rule</value>
   </data>
   <data name="ExportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
     <value>Sheet name</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNameLabel" xml:space="preserve">
+    <value>Sheet name</value>
+  </data>
+  <data name="ExportProfileEditor_PivotSourceLabel" xml:space="preserve">
+    <value>Pivot source</value>
   </data>
   <data name="ExportProfileEditor_PivotSource_Equipement" xml:space="preserve">
     <value>Equipement</value>
@@ -625,8 +637,14 @@
   <data name="ExportProfileEditor_HeaderPlaceholder" xml:space="preserve">
     <value>Header</value>
   </data>
+  <data name="ExportProfileEditor_HeaderLabel" xml:space="preserve">
+    <value>Header</value>
+  </data>
   <data name="ExportProfileEditor_SourceNotMapped" xml:space="preserve">
     <value>Not mapped yet</value>
+  </data>
+  <data name="ExportProfileEditor_SourceLabel" xml:space="preserve">
+    <value>Source field</value>
   </data>
   <data name="ExportProfileEditor_AddColumnButton" xml:space="preserve">
     <value>Add column</value>
@@ -637,7 +655,13 @@
   <data name="ExportProfileEditor_ColonneNomPlaceholder" xml:space="preserve">
     <value>Colonne name</value>
   </data>
+  <data name="ExportProfileEditor_ColonneNomLabel" xml:space="preserve">
+    <value>Colonne name</value>
+  </data>
   <data name="ExportProfileEditor_MarkValuePlaceholder" xml:space="preserve">
+    <value>Mark value</value>
+  </data>
+  <data name="ExportProfileEditor_MarkValueLabel" xml:space="preserve">
     <value>Mark value</value>
   </data>
   <data name="ExportProfileEditor_AddPointColumnButton" xml:space="preserve">
