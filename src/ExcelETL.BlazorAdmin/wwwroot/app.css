@@ -139,9 +139,21 @@ h1:focus {
 }
 
 .sheet-rule-card {
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--bs-border-color);
     border-radius: 0.5rem;
     padding: 1rem 1.25rem;
+}
+
+/* Pin the Modify/Delete (and delete-confirm) action row to the bottom-right of the card
+   regardless of how much content the card holds above it, so buttons line up across cards of
+   different heights within the same .sheet-rule-grid row. Scoped to a direct child of the card
+   (not every .right-aligned-actions, e.g. the page-level save-profile-button) since only this
+   usage lives inside a variable-height flex column. */
+.sheet-rule-card > .right-aligned-actions {
+    margin-top: auto;
+    padding-top: 0.75rem;
 }
 
 .sheet-rule-editing-item {

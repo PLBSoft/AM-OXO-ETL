@@ -112,7 +112,7 @@ else
                         </details>
                         @if (_pendingDeleteIndex == index)
                         {
-                            <div class="right-aligned-actions mt-2">
+                            <div class="right-aligned-actions">
                                 <span class="text-danger me-auto">@Loc["ExportProfileEditor_ConfirmDeleteSheetRuleMessage"]</span>
                                 <button id="@($"confirm-delete-sheet-generation-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteSheetRule(index)">
                                     @Loc["ExportProfileEditor_ConfirmDeleteButton"]
@@ -124,7 +124,7 @@ else
                         }
                         else
                         {
-                            <div class="right-aligned-actions mt-2">
+                            <div class="right-aligned-actions">
                                 <button id="@($"modify-sheet-generation-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
                                     @Loc["ExportProfileEditor_ModifyButton"]
                                 </button>
