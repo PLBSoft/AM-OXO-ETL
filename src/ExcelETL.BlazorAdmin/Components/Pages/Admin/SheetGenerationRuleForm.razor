@@ -15,12 +15,19 @@
         <label class="form-label" for="@($"{IdPrefix}sheet-generation-rule-name-input")">@Loc["ExportProfileEditor_SheetNameLabel"]</label>
         <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="_sheetName"
                placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
+        <div class="form-text">
+            @(_pivotSource == PivotSource.TacheMultiple
+                ? Loc["ExportProfileEditor_SheetNameHelpTacheMultiple"]
+                : Loc["ExportProfileEditor_SheetNameHelp"])
+        </div>
     </div>
     <div class="col">
         <label class="form-label" for="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")">@Loc["ExportProfileEditor_PivotSourceLabel"]</label>
-        <select id="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")" class="form-select" @bind="_pivotSource">
+        <select id="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")" class="form-select"
+                @bind="_pivotSource" @bind:after="OnPivotSourceChanged">
             <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
             <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
+            <option value="@PivotSource.TacheMultiple">@Loc["ExportProfileEditor_PivotSource_TacheMultiple"]</option>
         </select>
     </div>
 </div>
@@ -85,6 +92,8 @@
                       SubmitLabel="@Loc["ExportProfileEditor_AddColumnButton"]"
                       OnSubmit="AddColumn" />
 
+@if (_pivotSource != PivotSource.TacheMultiple)
+{
 <h5>@Loc["ExportProfileEditor_PointColumnsHeading"]</h5>
 @if (_pointColumns.Count > 0)
 {
@@ -142,6 +151,7 @@
                            SubmitButtonId="@($"{IdPrefix}add-point-column-definition-button")"
                            SubmitLabel="@Loc["ExportProfileEditor_AddPointColumnButton"]"
                            OnSubmit="AddPointColumn" />
+}
 
 <div class="right-aligned-actions">
     <button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
@@ -204,6 +214,20 @@
         _pivotSource = InitialRule.PivotSource;
         _columns.AddRange(InitialRule.ColumnDefinitions);
         _pointColumns.AddRange(InitialRule.PointColumnDefinitions);
+    }
+
+    // PointColumnDefinitions have no meaning for TacheMultiple (Domain rejects them outright, T2) and
+    // the subform that adds them is hidden the moment this pivot source is selected -- clearing any
+    // already-added ones here avoids a confusing submit-time DomainRuleViolationException for state the
+    // user can no longer even see. Switching back to Equipement/Isolement only restores the ability to
+    // add new Point columns, it does not resurrect ones cleared by an earlier switch to TacheMultiple.
+    private void OnPivotSourceChanged()
+    {
+        if (_pivotSource == PivotSource.TacheMultiple && _pointColumns.Count > 0)
+        {
+            _pointColumns.Clear();
+            _editingPointColumnIndex = null;
+        }
     }
 
     private void AddColumn(ColumnDefinition column) => _columns.Add(column);

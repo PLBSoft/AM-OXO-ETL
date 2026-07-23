@@ -646,6 +646,15 @@
   <data name="ExportProfileEditor_PivotSource_Isolement" xml:space="preserve">
     <value>Isolement</value>
   </data>
+  <data name="ExportProfileEditor_PivotSource_TacheMultiple" xml:space="preserve">
+    <value>Tâche multiple</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNameHelp" xml:space="preserve">
+    <value>Nom de la feuille (utilisé tel quel dans le fichier généré).</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNameHelpTacheMultiple" xml:space="preserve">
+    <value>Libellé interne uniquement -- le fichier généré nomme chaque feuille physique d'après le code de type de tâche multiple rencontré, pas d'après ce libellé.</value>
+  </data>
   <data name="ExportProfileEditor_ColumnsHeading" xml:space="preserve">
     <value>Colonnes</value>
   </data>

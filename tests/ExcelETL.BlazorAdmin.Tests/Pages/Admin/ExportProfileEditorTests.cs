@@ -213,6 +213,73 @@ public class ExportProfileEditorTests : BunitContext
     });
 
     [Fact]
+    public void PivotSourceSelect_WhenChangedToTacheMultiple_FiltersColumnSourceOptionsToTacheMultipleFields() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.TacheMultiple));
+            var options = cut.Find("#column-source-select").QuerySelectorAll("option");
+
+            options.Select(o => o.GetAttribute("value")).Should().Contain(nameof(PivotFieldRef.TacheMultipleAction));
+            options.Select(o => o.GetAttribute("value")).Should().NotContain(nameof(PivotFieldRef.EquipementRepere));
+            options.Select(o => o.GetAttribute("value")).Should().NotContain(nameof(PivotFieldRef.IsolementRepere));
+        });
+
+    [Fact]
+    public void PivotSourceSelect_WhenTacheMultipleSelected_HidesPointColumnSubform() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.TacheMultiple));
+
+        cut.FindAll("#add-point-column-definition-button").Should().BeEmpty();
+        cut.FindAll("#point-column-nom-input").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void PivotSourceSelect_SwitchedBackFromTacheMultiple_RestoresPointColumnSubform() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.TacheMultiple));
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
+
+        cut.FindAll("#add-point-column-definition-button").Should().ContainSingle();
+    });
+
+    [Fact]
+    public async Task Save_WithTacheMultipleSheetRuleAndColumns_PersistsProfileAndNavigatesToList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#export-profile-name-input").Change("Profil export OXO");
+
+            cut.Find("#sheet-generation-rule-name-input").Change("Tâches multiples");
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.TacheMultiple));
+
+            cut.Find("#column-header-input").Change("Action");
+            cut.Find("#column-source-select").Change(nameof(PivotFieldRef.TacheMultipleAction));
+            cut.Find("#add-column-definition-button").Click();
+
+            cut.Find("#add-sheet-generation-rule-button").Click();
+            cut.Find("#save-export-profile-button").Click();
+
+            navigationManager.Uri.Should().EndWith("/export-profiles");
+
+            var all = await Store.GetAllAsync();
+            var saved = all.Should().ContainSingle().Subject;
+            var rule = saved.SheetRules.Should().ContainSingle().Which;
+
+            rule.SheetName.Should().Be("Tâches multiples");
+            rule.PivotSource.Should().Be(PivotSource.TacheMultiple);
+            rule.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Action" && c.Source == PivotFieldRef.TacheMultipleAction);
+            rule.PointColumnDefinitions.Should().BeEmpty();
+        });
+
+    [Fact]
     public async Task Save_WithValidRootFieldsAndOneAddedSheetRule_PersistsProfileAndNavigatesToList() =>
         await WithCultureAsync("en-US", async () =>
         {

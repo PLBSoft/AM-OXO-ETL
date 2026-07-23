@@ -646,6 +646,15 @@
   <data name="ExportProfileEditor_PivotSource_Isolement" xml:space="preserve">
     <value>Isolement</value>
   </data>
+  <data name="ExportProfileEditor_PivotSource_TacheMultiple" xml:space="preserve">
+    <value>Tâche multiple</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNameHelp" xml:space="preserve">
+    <value>Sheet name (used as-is in the generated file).</value>
+  </data>
+  <data name="ExportProfileEditor_SheetNameHelpTacheMultiple" xml:space="preserve">
+    <value>Internal label only -- the generated file names each physical sheet after the multiple-task type code it encounters, not this label.</value>
+  </data>
   <data name="ExportProfileEditor_ColumnsHeading" xml:space="preserve">
     <value>Columns</value>
   </data>
