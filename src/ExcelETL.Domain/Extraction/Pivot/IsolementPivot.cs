@@ -19,6 +19,11 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 //   make every non-ISOLEMENT sheet's extraction throw. Individual sheet services (e.g.
 //   IsolementExtractionService for the ISOLEMENT sheet specifically) may still enforce their own,
 //   stricter "blank is reportable" policy on top of this before ever constructing the pivot.
+// Tableaux/Applications/RepereParent (Lot U, docs/tickets-tdd-pivot-tableaux-applications-export.md)
+// follow the exact same broadcast mechanism as Localisation: all start empty and are filled in later
+// by ImportPipelineOrchestrator (Tableaux/Applications from ImportProfile.DefaultTableaux/
+// DefaultApplicationNames, RepereParent from the run's EquipementPivot.Repere) via a `with`
+// expression -- a plain copied string/list, not a navigation back to EquipementPivot itself.
 public sealed record IsolementPivot
 {
     public string Repere { get; }
@@ -26,6 +31,9 @@ public sealed record IsolementPivot
     public string TypeElementNom { get; }
     public string PositionALaPose { get; }
     public string Localisation { get; init; }
+    public IReadOnlyList<string> Tableaux { get; init; }
+    public IReadOnlyList<string> Applications { get; init; }
+    public string RepereParent { get; init; }
 
     public IsolementPivot(string repere, string designation, string typeElementNom, string positionALaPose, string localisation)
     {
@@ -47,5 +55,44 @@ public sealed record IsolementPivot
         TypeElementNom = typeElementNom;
         PositionALaPose = positionALaPose;
         Localisation = localisation;
+        Tableaux = [];
+        Applications = [];
+        RepereParent = "";
+    }
+
+    // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
+    // properties by reference, not content, so an explicit override is needed (same reason as
+    // RepeatingBlockLocator/Concat in Extraction/Primitives).
+    public bool Equals(IsolementPivot? other) =>
+        other is not null
+        && Repere == other.Repere
+        && Designation == other.Designation
+        && TypeElementNom == other.TypeElementNom
+        && PositionALaPose == other.PositionALaPose
+        && Localisation == other.Localisation
+        && Tableaux.SequenceEqual(other.Tableaux)
+        && Applications.SequenceEqual(other.Applications)
+        && RepereParent == other.RepereParent;
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Repere);
+        hash.Add(Designation);
+        hash.Add(TypeElementNom);
+        hash.Add(PositionALaPose);
+        hash.Add(Localisation);
+        hash.Add(RepereParent);
+        foreach (var tableau in Tableaux)
+        {
+            hash.Add(tableau);
+        }
+
+        foreach (var application in Applications)
+        {
+            hash.Add(application);
+        }
+
+        return hash.ToHashCode();
     }
 }

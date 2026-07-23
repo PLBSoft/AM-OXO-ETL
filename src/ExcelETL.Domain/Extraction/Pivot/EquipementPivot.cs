@@ -14,12 +14,19 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 // `with` expression), same pattern as IsolementPivot.Localisation -- see
 // docs/modele-domaine-import-profile-2026-07-16.md §1.5 and docs/spec-extraction-fichier-source-oxo-2026-07-16.md §6.
 // Applies to the Equipement in addition to every Isolement of the run (Lot D).
+//
+// Tableaux/Applications (Lot U, docs/tickets-tdd-pivot-tableaux-applications-export.md) follow the
+// exact same broadcast mechanism as Localisation: both start empty and are filled in later by
+// ImportPipelineOrchestrator from ImportProfile.DefaultTableaux/DefaultApplicationNames (via a `with`
+// expression), never constructed positionally, never a hardcoded constant in an extraction service.
 public sealed record EquipementPivot
 {
     public string Repere { get; }
     public string Designation { get; }
     public string TypeElementNom { get; }
     public string Localisation { get; init; }
+    public IReadOnlyList<string> Tableaux { get; init; }
+    public IReadOnlyList<string> Applications { get; init; }
 
     public EquipementPivot(string repere, string designation, string typeElementNom)
     {
@@ -46,5 +53,39 @@ public sealed record EquipementPivot
         Designation = designation;
         TypeElementNom = typeElementNom;
         Localisation = "";
+        Tableaux = [];
+        Applications = [];
+    }
+
+    // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
+    // properties by reference, not content, so an explicit override is needed (same reason as
+    // RepeatingBlockLocator/Concat in Extraction/Primitives).
+    public bool Equals(EquipementPivot? other) =>
+        other is not null
+        && Repere == other.Repere
+        && Designation == other.Designation
+        && TypeElementNom == other.TypeElementNom
+        && Localisation == other.Localisation
+        && Tableaux.SequenceEqual(other.Tableaux)
+        && Applications.SequenceEqual(other.Applications);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Repere);
+        hash.Add(Designation);
+        hash.Add(TypeElementNom);
+        hash.Add(Localisation);
+        foreach (var tableau in Tableaux)
+        {
+            hash.Add(tableau);
+        }
+
+        foreach (var application in Applications)
+        {
+            hash.Add(application);
+        }
+
+        return hash.ToHashCode();
     }
 }

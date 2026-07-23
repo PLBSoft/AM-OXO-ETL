@@ -17,6 +17,9 @@ public class IsolementPivotTests
         isolement.TypeElementNom.Should().Be("ZERO ENERGIE");
         isolement.PositionALaPose.Should().Be("FERMÉE");
         isolement.Localisation.Should().Be("Zone A");
+        isolement.Tableaux.Should().BeEmpty();
+        isolement.Applications.Should().BeEmpty();
+        isolement.RepereParent.Should().BeEmpty();
     }
 
     [Fact]
@@ -56,6 +59,24 @@ public class IsolementPivotTests
         var broadcast = isolement with { Localisation = "Zone A" };
 
         broadcast.Localisation.Should().Be("Zone A");
+        broadcast.Repere.Should().Be(isolement.Repere);
+    }
+
+    [Fact]
+    public void WithExpression_CanBroadcastTableauxApplicationsAndRepereParent()
+    {
+        var isolement = new IsolementPivot("C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", string.Empty);
+
+        var broadcast = isolement with
+        {
+            Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"],
+            Applications = ["PROGRESS"],
+            RepereParent = "C7401"
+        };
+
+        broadcast.Tableaux.Should().BeEquivalentTo(["TRAVAUX COMPLET", "TRAVAUX DETAIL"], o => o.WithStrictOrdering());
+        broadcast.Applications.Should().BeEquivalentTo(["PROGRESS"]);
+        broadcast.RepereParent.Should().Be("C7401");
         broadcast.Repere.Should().Be(isolement.Repere);
     }
 

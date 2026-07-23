@@ -16,6 +16,8 @@ public class EquipementPivotTests
         equipement.Designation.Should().Be("Rév 1 du 01/01/2026");
         equipement.TypeElementNom.Should().Be("MAD TRAVAUX");
         equipement.Localisation.Should().BeEmpty();
+        equipement.Tableaux.Should().BeEmpty();
+        equipement.Applications.Should().BeEmpty();
     }
 
     [Fact]
@@ -30,10 +32,34 @@ public class EquipementPivotTests
     }
 
     [Fact]
+    public void WithExpression_CanBroadcastTableauxAndApplications()
+    {
+        var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
+
+        var broadcast = equipement with { Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], Applications = ["PROGRESS"] };
+
+        broadcast.Tableaux.Should().BeEquivalentTo(["TRAVAUX COMPLET", "TRAVAUX DETAIL"], o => o.WithStrictOrdering());
+        broadcast.Applications.Should().BeEquivalentTo(["PROGRESS"]);
+        broadcast.Repere.Should().Be(equipement.Repere);
+    }
+
+    [Fact]
     public void Constructor_WithSameArguments_ProducesStructurallyEqualInstances()
     {
         var first = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
         var second = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX");
+
+        first.Should().Be(second);
+        first.GetHashCode().Should().Be(second.GetHashCode());
+    }
+
+    [Fact]
+    public void WithExpression_SameTableauxAndApplicationsContent_ProducesStructurallyEqualInstances()
+    {
+        var first = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX")
+            with { Tableaux = ["TRAVAUX COMPLET"], Applications = ["PROGRESS"] };
+        var second = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX")
+            with { Tableaux = ["TRAVAUX COMPLET"], Applications = ["PROGRESS"] };
 
         first.Should().Be(second);
         first.GetHashCode().Should().Be(second.GetHashCode());
