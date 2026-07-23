@@ -376,6 +376,97 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#generated-sheet-Enfants-table").InnerHtml.Should().Contain("VANNE");
         });
 
+    // Lot T (docs/tickets-tdd-export-taches-multiples.md, T7): the preview already renders one HTML
+    // table per physically generated sheet (@foreach over _generatedWorkbook.Sheets) -- since
+    // SheetGenerationEngine (T3) now emits one dynamic sheet per distinct TypeTacheMultipleCode, this
+    // page needed no code change at all. These tests exist to prove that end-to-end against a real
+    // fixture, not just at the Application layer.
+    private static ExportProfile CreateRealExportProfileWithTacheMultipleRule()
+    {
+        var baseProfile = CreateRealExportProfile();
+        return new ExportProfile(
+            baseProfile.Name,
+            [
+                .. baseProfile.SheetRules,
+                new SheetGenerationRule(
+                    "Tâches multiples",
+                    PivotSource.TacheMultiple,
+                    [
+                        new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
+                        new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
+                        new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
+                        new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
+                        new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
+                    ],
+                    [])
+            ]);
+    }
+
+    private async Task<ExportProfile> SeedRealExportProfileWithTacheMultipleRuleAsync()
+    {
+        var profile = CreateRealExportProfileWithTacheMultipleRule();
+        var store = Services.GetRequiredService<IExportProfileStore>();
+        await store.SaveAsync(profile);
+        return profile;
+    }
+
+    [Fact]
+    public async Task Run_C7401Fixture_WithTacheMultipleRule_RendersOneTablePerDistinctCodeWithCorrectValues() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileWithTacheMultipleRuleAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+            cut.Markup.Should().NotContain("File rejected");
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            // C7401's PROCEDURE TacheMultiple block produces both TM_PROC_MAD (59 rows) and
+            // TM_PROC_REL (39 rows) -- confirmed against the real fixture while building T5.
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-TM_PROC_MAD-table").Should().NotBeEmpty());
+            cut.FindAll("#generated-sheet-TM_PROC_REL-table").Should().NotBeEmpty();
+
+            var madTable = cut.Find("#generated-sheet-TM_PROC_MAD-table");
+            madTable.QuerySelectorAll("tbody tr").Should().HaveCount(59);
+
+            var relTable = cut.Find("#generated-sheet-TM_PROC_REL-table");
+            relTable.QuerySelectorAll("tbody tr").Should().HaveCount(39);
+
+            madTable.QuerySelectorAll("thead th").Select(th => th.TextContent).Should().Equal(
+                "Ordre", "Action", "Acteur", "Risques", "Date de validation");
+        });
+
+    [Fact]
+    public async Task Run_C7401Fixture_WithoutTacheMultipleRuleInProfile_RendersNoTacheMultipleTables() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+            cut.FindAll("#generated-sheet-Enfants-table").Should().NotBeEmpty();
+            cut.FindAll("table[id^='generated-sheet-TM_']").Should().BeEmpty();
+        });
+
     [Fact]
     public void Component_NeverReferencesHttpClientOrExcelProcessingClient()
     {
