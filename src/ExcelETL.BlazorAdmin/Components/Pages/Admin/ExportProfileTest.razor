@@ -122,27 +122,29 @@ else
                     @foreach (var sheet in _generatedWorkbook.Sheets)
                     {
                         <h3>@sheet.Name</h3>
-                        <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    @foreach (var header in sheet.Headers)
-                                    {
-                                        <th>@header</th>
-                                    }
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var row in sheet.Rows)
-                                {
+                        <div class="generated-sheet-scroll">
+                            <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm table-striped generated-sheet-table">
+                                <thead>
                                     <tr>
-                                        @foreach (var cell in row.Cells)
+                                        @foreach (var header in sheet.Headers)
                                         {
-                                            <td>@cell</td>
+                                            <th>@header</th>
                                         }
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in sheet.Rows)
+                                    {
+                                        <tr>
+                                            @foreach (var cell in row.Cells)
+                                            {
+                                                <td>@cell</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             }
