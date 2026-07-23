@@ -53,7 +53,8 @@ public sealed class ImportPipelineOrchestrator(
         try
         {
             var procedureResult = procedureExtractionService.Extract(
-                workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom);
+                workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom,
+                profile.DefaultTableaux);
 
             if (procedureResult.Equipement is null)
             {
@@ -73,7 +74,13 @@ public sealed class ImportPipelineOrchestrator(
             var diversResult = diversExtractionService.Extract(workbookReader, FindRule(profile, DiversSheetName));
 
             var loc1 = diversResult.Loc1;
-            var equipement = procedureResult.Equipement with { Localisation = loc1 };
+            var repereParent = procedureResult.Equipement.Repere;
+            var equipement = procedureResult.Equipement with
+            {
+                Localisation = loc1,
+                Tableaux = profile.DefaultTableaux,
+                Applications = profile.DefaultApplicationNames
+            };
 
             var isolements = new List<IsolementPivot>();
             isolements.AddRange(isolementResult.Isolements);
@@ -83,7 +90,13 @@ public sealed class ImportPipelineOrchestrator(
             isolements.AddRange(diversResult.Isolements);
             for (var i = 0; i < isolements.Count; i++)
             {
-                isolements[i] = isolements[i] with { Localisation = loc1 };
+                isolements[i] = isolements[i] with
+                {
+                    Localisation = loc1,
+                    Tableaux = profile.DefaultTableaux,
+                    Applications = profile.DefaultApplicationNames,
+                    RepereParent = repereParent
+                };
             }
 
             var points = new List<PointPivot>();

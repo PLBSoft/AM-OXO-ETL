@@ -65,7 +65,9 @@ public class ImportPipelineOrchestratorTests
     public void Run_WhenProcedureFails_ReturnsImmediatelyWithoutCallingTheOtherFiveServices()
     {
         _procedureService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
             .Returns(RejectedProcedureResult());
         var workbookReader = Mock.Of<IWorkbookReader>();
 
@@ -87,7 +89,9 @@ public class ImportPipelineOrchestratorTests
     public void Run_WhenProcedureSucceeds_AggregatesEverythingFromAllSixSources()
     {
         _procedureService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -141,7 +145,9 @@ public class ImportPipelineOrchestratorTests
     public void Run_BroadcastsLoc1FromDiversOntoEquipementAndEveryIsolement()
     {
         _procedureService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -162,5 +168,101 @@ public class ImportPipelineOrchestratorTests
 
         result.Equipement!.Localisation.Should().Be("ZONE 4");
         result.Isolements.Should().ContainSingle().Which.Localisation.Should().Be("ZONE 4");
+    }
+
+    [Fact]
+    public void Run_PassesProfileDefaultTableauxToProcedureService_NotAHardcodedConstant()
+    {
+        // Lot U, U3: architecture guard-rail mirroring the existing EquipementTypeElementNom one --
+        // the orchestrator must pass through whatever the active profile carries.
+        var defaultTableaux = new[] { "FOO", "BAR" };
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                defaultTableaux))
+            .Returns(ValidProcedureResult());
+        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _autresJointsTouchesService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _diversService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(workbookReader, CreateProfile(defaultTableaux: defaultTableaux));
+
+        result.Equipement.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Run_BroadcastsDefaultTableauxApplicationsAndRepereParentFromProfileOntoEquipementAndEveryIsolement()
+    {
+        var defaultTableaux = new[] { "TRAVAUX COMPLET", "TRAVAUX DETAIL" };
+        var defaultApplicationNames = new[] { "PROGRESS" };
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns(ValidProcedureResult());
+        _isolementService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult(
+                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")], [], []));
+        _unconditionalService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _autresJointsTouchesService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _diversService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(
+            workbookReader, CreateProfile(defaultTableaux: defaultTableaux, defaultApplicationNames: defaultApplicationNames));
+
+        result.Equipement!.Tableaux.Should().BeEquivalentTo(defaultTableaux, o => o.WithStrictOrdering());
+        result.Equipement.Applications.Should().BeEquivalentTo(defaultApplicationNames);
+        result.Isolements.Should().ContainSingle();
+        var isolement = result.Isolements.Single();
+        isolement.Tableaux.Should().BeEquivalentTo(defaultTableaux, o => o.WithStrictOrdering());
+        isolement.Applications.Should().BeEquivalentTo(defaultApplicationNames);
+        isolement.RepereParent.Should().Be(result.Equipement.Repere);
+    }
+
+    [Fact]
+    public void Run_WithEmptyDefaultTableauxAndApplicationNames_ProducesEmptyListsOnAllPivots()
+    {
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns(ValidProcedureResult());
+        _isolementService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult(
+                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")], [], []));
+        _unconditionalService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _autresJointsTouchesService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _diversService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(workbookReader, CreateProfile());
+
+        result.Equipement!.Tableaux.Should().BeEmpty();
+        result.Equipement.Applications.Should().BeEmpty();
+        result.Isolements.Should().ContainSingle();
+        var isolement = result.Isolements.Single();
+        isolement.Tableaux.Should().BeEmpty();
+        isolement.Applications.Should().BeEmpty();
     }
 }

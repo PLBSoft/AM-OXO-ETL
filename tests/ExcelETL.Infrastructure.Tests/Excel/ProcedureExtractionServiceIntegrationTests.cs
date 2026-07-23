@@ -20,6 +20,7 @@ public class ProcedureExtractionServiceIntegrationTests
     private const string Sheet = "PROCEDURE";
     private const string ReperePrefix = "MAD-OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
+    private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
 
     private readonly ProcedureExtractionService _sut =
         new(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance);
@@ -98,7 +99,7 @@ public class ProcedureExtractionServiceIntegrationTests
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
     }
 
     private static string FixturePath(string fileName)

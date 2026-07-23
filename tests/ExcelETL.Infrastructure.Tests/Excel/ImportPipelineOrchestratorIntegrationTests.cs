@@ -23,6 +23,8 @@ public class ImportPipelineOrchestratorIntegrationTests
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
+    private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
+    private static readonly string[] DefaultApplicationNames = ["PROGRESS"];
 
     private readonly ImportPipelineOrchestrator _sut = new(
         new ProcedureExtractionService(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
@@ -41,7 +43,7 @@ public class ImportPipelineOrchestratorIntegrationTests
 
     private static ImportProfile CreateProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
-        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
+        DefaultTableaux, DefaultApplicationNames,
         [
             new SheetExtractionRule(
                 "PROCEDURE",
@@ -140,10 +142,15 @@ public class ImportPipelineOrchestratorIntegrationTests
         result.Equipement.Designation.Should().Be("Rév 2 du 12/12/2025");
         result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
         result.Equipement.Localisation.Should().Be("ZONE 1");
+        result.Equipement.Tableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        result.Equipement.Applications.Should().Equal("PROGRESS");
 
         // ISOLEMENT(8) + PLATINES(15) + ORIFICES CAPACITES(0) + AUTRES JOINTS TOUCHES(0) + DIVERS(0)
         result.Isolements.Should().HaveCount(23);
         result.Isolements.Should().OnlyContain(i => i.Localisation == "ZONE 1");
+        result.Isolements.Should().OnlyContain(i => i.RepereParent == "38-C7401");
+        result.Isolements.Should().OnlyContain(i => i.Tableaux.SequenceEqual(DefaultTableaux));
+        result.Isolements.Should().OnlyContain(i => i.Applications.SequenceEqual(DefaultApplicationNames));
         result.TachesMultiples.Should().HaveCount(98);
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
     }
@@ -157,10 +164,13 @@ public class ImportPipelineOrchestratorIntegrationTests
         result.Equipement!.Repere.Should().Be("644-D8570");
         result.Equipement.Designation.Should().Be("Rév 0 du 11/09/2025");
         result.Equipement.Localisation.Should().Be("ZONE 4");
+        result.Equipement.Tableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        result.Equipement.Applications.Should().Equal("PROGRESS");
 
         // ISOLEMENT(15, incl. VANNE) + PLATINES(21) + ORIFICES CAPACITES(5) + AUTRES JOINTS TOUCHES(13) + DIVERS(13)
         result.Isolements.Should().HaveCount(67);
         result.Isolements.Should().OnlyContain(i => i.Localisation == "ZONE 4");
+        result.Isolements.Should().OnlyContain(i => i.RepereParent == "644-D8570");
         result.TachesMultiples.Should().NotBeEmpty();
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
 
@@ -178,10 +188,13 @@ public class ImportPipelineOrchestratorIntegrationTests
         result.Equipement!.Repere.Should().Be("602-G6306B");
         result.Equipement.Designation.Should().Be("Rév 0 du 12/05/2025");
         result.Equipement.Localisation.Should().Be("ZONE 4");
+        result.Equipement.Tableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        result.Equipement.Applications.Should().Equal("PROGRESS");
 
         // ISOLEMENT(3) + PLATINES(5) + ORIFICES CAPACITES(2) + AUTRES JOINTS TOUCHES(4) + DIVERS(4)
         result.Isolements.Should().HaveCount(18);
         result.Isolements.Should().OnlyContain(i => i.Localisation == "ZONE 4");
+        result.Isolements.Should().OnlyContain(i => i.RepereParent == "602-G6306B");
         result.TachesMultiples.Should().NotBeEmpty();
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
     }

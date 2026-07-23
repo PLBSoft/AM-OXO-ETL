@@ -22,16 +22,15 @@ public sealed class ProcedureExtractionService(
     ITextTransformEvaluator textTransformEvaluator, ILogger<ProcedureExtractionService> logger)
     : IProcedureExtractionService
 {
-    private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
-    private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
-
     private static readonly string[] DateFormats = ["dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy"];
 
     public ImportResult Extract(
-        IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix, string equipementTypeElementNom)
+        IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix, string equipementTypeElementNom,
+        IReadOnlyList<string> defaultTableaux)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(sheetRule);
+        ArgumentNullException.ThrowIfNull(defaultTableaux);
 
         var sheet = sheetRule.SheetName;
 
@@ -61,11 +60,7 @@ public sealed class ProcedureExtractionService(
         var designation = BuildDesignation(numeroRevision, dateRevision);
 
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom);
-        var points = new List<PointPivot>
-        {
-            new(TravauxCompletColonneName, repere),
-            new(TravauxDetailColonneName, repere)
-        };
+        var points = defaultTableaux.Select(tableauName => new PointPivot(tableauName, repere)).ToList();
         var tachesMultiples = ReadTachesMultiples(workbookReader, sheetRule.Locator);
 
         return new ImportResult(equipement, [], points, tachesMultiples, []);
