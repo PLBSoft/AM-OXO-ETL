@@ -3,6 +3,7 @@
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.BlazorAdmin.Excel
 @using ExcelETL.Domain.Extraction.Pivot
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Excel
@@ -245,7 +246,8 @@ else
         try
         {
             fileStream = e.File.OpenReadStream(MaxFileSizeBytes);
-            using var workbookReader = new ClosedXmlWorkbookReader(fileStream);
+            await using var buffered = await BrowserFileStreamBuffering.BufferToSeekableStreamAsync(fileStream);
+            using var workbookReader = new ClosedXmlWorkbookReader(buffered);
             _result = ImportPipelineOrchestrator.Run(workbookReader, profile);
             _state = State.Success;
         }
