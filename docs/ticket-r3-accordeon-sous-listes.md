@@ -1,5 +1,7 @@
 # Ticket : R3 — Repli (accordéon) des sous-listes à taille variable ne réagit pas au clic
 
+✅ Implémenté — voir commit `3b0390c`
+
 ## Contexte
 
 Page Blazor « Modifier le profil d'import » (`/import-profiles/{id}/edit`). Les cartes de « Règles de feuille » (PROCEDURE, ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS) contiennent des sous-listes de taille variable (colonnes inconditionnelles, règles conditionnelles) qui doivent pouvoir se replier/déplier (accordéon).
