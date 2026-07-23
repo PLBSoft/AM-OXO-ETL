@@ -9,6 +9,13 @@ namespace ExcelETL.Domain.Generation.Profile;
 // PointColumnDefinitions are both lists, so the default record-synthesized equality (reference
 // equality on IReadOnlyList<T>) is overridden below with SequenceEqual, same pattern as
 // RepeatingBlockLocator.Fields on the import side.
+//
+// For PivotSource.TacheMultiple (Lot T), SheetName changes role: it's an admin-facing internal label
+// only (e.g. "Tâches multiples") -- the generated workbook never uses it as an actual sheet name for
+// this PivotSource, since the engine discovers TypeTacheMultipleCode values at runtime and emits one
+// physical sheet per distinct code instead (see SheetGenerationEngine). Still required non-blank, same
+// validation as every other PivotSource. PointColumnDefinitions are rejected outright for this
+// PivotSource (a TacheMultiple has no associated Point, structurally distinct from Equipement/Isolement).
 public sealed record SheetGenerationRule
 {
     // See RepeatingBlockLocator.Fields (Extraction/Primitives) for why these need a backing field
@@ -48,6 +55,14 @@ public sealed record SheetGenerationRule
                 $"{PivotFieldResolver.GetPivotSource(incompatibleFieldRef)}, not this sheet's PivotSource ({pivotSource}).",
                 DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
                 incompatibleColumn.Header, incompatibleFieldRef, pivotSource);
+        }
+
+        if (pivotSource == PivotSource.TacheMultiple && pointColumnDefinitions.Count > 0)
+        {
+            throw new DomainRuleViolationException(
+                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Point -- " +
+                "PointColumnDefinitions are not allowed for this pivot source.",
+                DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
         }
 
         var duplicateHeader = columnDefinitions.Select(c => c.Header)

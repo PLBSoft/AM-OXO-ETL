@@ -100,6 +100,9 @@
   <data name="SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource" xml:space="preserve">
     <value>La colonne '{0}' référence le champ '{1}', qui n'appartient pas à la source pivot de cette feuille ({2}).</value>
   </data>
+  <data name="SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple" xml:space="preserve">
+    <value>La feuille '{0}' utilise la source pivot TacheMultiple, qui n'a pas de Point associé -- les colonnes Point ne sont pas autorisées.</value>
+  </data>
   <data name="ColumnDefinition_EmptyHeader" xml:space="preserve">
     <value>L'en-tête ne doit pas être vide.</value>
   </data>

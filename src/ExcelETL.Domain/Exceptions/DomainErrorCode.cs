@@ -44,6 +44,7 @@ public enum DomainErrorCode
     SheetGenerationRule_DuplicateHeader,
     SheetGenerationRule_DuplicateColonneNom,
     SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
+    SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple,
     ColumnDefinition_EmptyHeader,
     PointColumnDefinition_EmptyHeader,
     PointColumnDefinition_EmptyColonneNom,

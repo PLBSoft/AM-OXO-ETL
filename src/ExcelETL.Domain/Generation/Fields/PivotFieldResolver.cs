@@ -1,3 +1,4 @@
+using System.Globalization;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Generation.Profile;
 
@@ -21,6 +22,11 @@ public static class PivotFieldResolver
             or PivotFieldRef.IsolementTypeElementNom
             or PivotFieldRef.IsolementPositionALaPose
             or PivotFieldRef.IsolementLocalisation => PivotSource.Isolement,
+        PivotFieldRef.TacheMultipleOrdre
+            or PivotFieldRef.TacheMultipleAction
+            or PivotFieldRef.TacheMultipleActeur
+            or PivotFieldRef.TacheMultipleRisques
+            or PivotFieldRef.TacheMultipleDateValidation => PivotSource.TacheMultiple,
         _ => throw new ArgumentOutOfRangeException(nameof(fieldRef), fieldRef, "Unknown pivot field reference.")
     };
 
@@ -47,5 +53,18 @@ public static class PivotFieldResolver
         PivotFieldRef.IsolementLocalisation => isolement.Localisation,
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Isolement row. This should have been rejected at profile construction.")
+    };
+
+    // DateValidation is formatted "dd/MM/yyyy" for consistency with ProcedureExtractionService's own
+    // date rendering (see DateRevision) -- invariant culture, not the reader's/host's negotiated culture.
+    public static string Resolve(TacheMultiplePivot tacheMultiple, PivotFieldRef fieldRef) => fieldRef switch
+    {
+        PivotFieldRef.TacheMultipleOrdre => tacheMultiple.Ordre?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+        PivotFieldRef.TacheMultipleAction => tacheMultiple.Action,
+        PivotFieldRef.TacheMultipleActeur => tacheMultiple.Acteur,
+        PivotFieldRef.TacheMultipleRisques => tacheMultiple.Risques,
+        PivotFieldRef.TacheMultipleDateValidation => tacheMultiple.DateValidation?.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture) ?? string.Empty,
+        _ => throw new InvalidOperationException(
+            $"Pivot field '{fieldRef}' is not valid for a TacheMultiple row. This should have been rejected at profile construction.")
     };
 }

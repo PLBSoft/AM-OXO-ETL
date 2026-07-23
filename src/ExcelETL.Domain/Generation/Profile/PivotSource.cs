@@ -4,5 +4,6 @@ namespace ExcelETL.Domain.Generation.Profile;
 public enum PivotSource
 {
     Equipement,
-    Isolement
+    Isolement,
+    TacheMultiple
 }

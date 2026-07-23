@@ -34,6 +34,21 @@ public class SheetGenerationEngineTests
         ],
         [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")]);
 
+    private static SheetGenerationRule TachesMultiplesRule() => new(
+        "Tâches multiples",
+        PivotSource.TacheMultiple,
+        [
+            new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
+            new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
+            new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
+            new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
+            new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
+        ],
+        []);
+
+    private static ImportResult ImportResultWith(params TacheMultiplePivot[] tachesMultiples) => new(
+        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], tachesMultiples, []);
+
     [Fact]
     public void Generate_ForEquipementSheet_WritesHeaderInDescriptiveThenPointOrder()
     {
@@ -125,5 +140,133 @@ public class SheetGenerationEngineTests
         workbook.Sheets.Should().HaveCount(2);
         workbook.Sheets[0].Name.Should().Be("Parents");
         workbook.Sheets[1].Name.Should().Be("Enfants");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_ProducesOnePhysicalSheetPerDistinctCode()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false),
+            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", new DateOnly(2026, 7, 21), false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Should().HaveCount(2);
+        workbook.Sheets.Select(sheet => sheet.Name).Should().Equal("TM_PROC_MAD", "TM_PROC_REL");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_WritesCorrectColumnValuesIncludingFactice()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false),
+            new TacheMultiplePivot(null, "--- Section suivante ---", "", "", "TM_PROC_MAD", null, true));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        var sheet = workbook.Sheets.Should().ContainSingle().Which;
+        sheet.Headers.Should().Equal("Ordre", "Action", "Acteur", "Risques", "Date de validation");
+        sheet.Rows.Should().HaveCount(2);
+        sheet.Rows[0].Cells.Should().Equal("1", "Consigner", "ADF", "Aucun", "20/07/2026");
+        sheet.Rows[1].Cells.Should().Equal("", "--- Section suivante ---", "", "", "");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_PreservesRowOrderRatherThanSortingByOrdre()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Première", "ADF", "Aucun", "TM_PROC_MAD", null, false),
+            new TacheMultiplePivot(null, "Factice intercalée", "", "", "TM_PROC_MAD", null, true),
+            new TacheMultiplePivot(2, "Deuxième", "ADF", "Aucun", "TM_PROC_MAD", null, false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        var sheet = workbook.Sheets.Should().ContainSingle().Which;
+        sheet.Rows.Select(row => row.Cells[1]).Should().Equal("Première", "Factice intercalée", "Deuxième");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_SortsGeneratedSheetsAlphabeticallyByCode()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Z action", "ADF", "", "TM_PROC_Z", null, false),
+            new TacheMultiplePivot(1, "A action", "ADF", "", "TM_PROC_A", null, false),
+            new TacheMultiplePivot(1, "M action", "ADF", "", "TM_PROC_M", null, false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Select(sheet => sheet.Name).Should().Equal("TM_PROC_A", "TM_PROC_M", "TM_PROC_Z");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_WhenTachesMultiplesEmpty_ProducesNoTacheMultipleSheet()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule(), TachesMultiplesRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Should().ContainSingle();
+        workbook.Sheets[0].Name.Should().Be("Parents");
+    }
+
+    [Fact]
+    public void Generate_WithTacheMultipleSheetAfterParentsAndEnfants_KeepsThemFirst()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule(), EnfantsRule(), TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Should().HaveCount(3);
+        workbook.Sheets[0].Name.Should().Be("Parents");
+        workbook.Sheets[1].Name.Should().Be("Enfants");
+        workbook.Sheets[2].Name.Should().Be("TM_PROC_MAD");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_SanitizesForbiddenCharactersInSheetName()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM/PROC:MAD", null, false));
+
+        var act = () => _sut.Generate(importResult, profile);
+
+        act.Should().NotThrow();
+        act().Sheets[0].Name.Should().Be("TM_PROC_MAD");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_TruncatesSheetNameLongerThan31Characters()
+    {
+        var longCode = new string('A', 40);
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", longCode, null, false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Name.Should().HaveLength(31);
+        workbook.Sheets[0].Name.Should().Be(longCode[..31]);
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_DoesNotModifyKnownRealCodes()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
+            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Select(sheet => sheet.Name).Should().Equal("TM_PROC_MAD", "TM_PROC_REL");
     }
 }

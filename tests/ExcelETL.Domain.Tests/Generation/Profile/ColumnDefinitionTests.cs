@@ -18,6 +18,15 @@ public class ColumnDefinitionTests
     }
 
     [Fact]
+    public void Constructor_WithTacheMultipleSource_CreatesColumnDefinitionWithNoException()
+    {
+        var act = () => new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction);
+
+        act.Should().NotThrow();
+        act().Source.Should().Be(PivotFieldRef.TacheMultipleAction);
+    }
+
+    [Fact]
     public void Constructor_WithNullSource_CreatesColumnDefinitionWithNoException()
     {
         var act = () => new ColumnDefinition("Colonne libre", null);

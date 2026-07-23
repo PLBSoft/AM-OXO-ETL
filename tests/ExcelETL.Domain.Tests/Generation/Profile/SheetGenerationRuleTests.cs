@@ -145,6 +145,52 @@ public class SheetGenerationRuleTests
     }
 
     [Fact]
+    public void Constructor_WithTacheMultiplePivotSourceAndEquipementColumnSource_ThrowsDomainRuleViolationException()
+    {
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)];
+
+        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, []);
+
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource);
+    }
+
+    [Fact]
+    public void Constructor_WithTacheMultiplePivotSourceAndPointColumnDefinitions_ThrowsDomainRuleViolationException()
+    {
+        IReadOnlyList<PointColumnDefinition> points = [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")];
+
+        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, [], points);
+
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple);
+    }
+
+    [Fact]
+    public void Constructor_WithTacheMultiplePivotSourceAndTacheMultipleColumnSource_CreatesSheetGenerationRule()
+    {
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction)];
+
+        var rule = new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, []);
+
+        rule.PivotSource.Should().Be(PivotSource.TacheMultiple);
+        rule.ColumnDefinitions.Should().BeEquivalentTo(columns);
+        rule.PointColumnDefinitions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithEquipementOrIsolementPivotSource_IsUnaffectedByTacheMultipleValidations()
+    {
+        var equipementRule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints());
+        var isolementRule = new SheetGenerationRule(
+            "Enfants", PivotSource.Isolement,
+            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)], ValidPoints());
+
+        equipementRule.PointColumnDefinitions.Should().BeEquivalentTo(ValidPoints());
+        isolementRule.PointColumnDefinitions.Should().BeEquivalentTo(ValidPoints());
+    }
+
+    [Fact]
     public void Equality_WithSameValues_AreEqual()
     {
         var first = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints());

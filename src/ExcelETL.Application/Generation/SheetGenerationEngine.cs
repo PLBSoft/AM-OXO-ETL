@@ -31,7 +31,7 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
 
         try
         {
-            var sheets = profile.SheetRules.Select(rule => GenerateSheet(rule, importResult)).ToList();
+            var sheets = profile.SheetRules.SelectMany(rule => GenerateSheets(rule, importResult)).ToList();
             var totalRowCount = sheets.Sum(sheet => sheet.Rows.Count);
 
             logger.LogInformation(
@@ -48,6 +48,39 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
                 profile.Name, stopwatch.ElapsedMilliseconds);
             throw;
         }
+    }
+
+    // TacheMultiple produces zero-to-many physical sheets per rule (one per distinct
+    // TypeTacheMultipleCode encountered at runtime) -- Equipement/Isolement always produce exactly one,
+    // matching this rule's own SheetName. This dynamic-grouping mechanic is deliberately specific to
+    // TacheMultiple, not a generic primitive offered to the other two pivot sources (see the ticket's
+    // own "note de conception", docs/tickets-tdd-export-taches-multiples.md T3).
+    private static IEnumerable<GeneratedSheet> GenerateSheets(SheetGenerationRule rule, ImportResult importResult) =>
+        rule.PivotSource == PivotSource.TacheMultiple
+            ? GenerateTacheMultipleSheets(rule, importResult)
+            : [GenerateSheet(rule, importResult)];
+
+    // Sheets are ordered alphabetically by their raw (pre-sanitization) code for a deterministic,
+    // reproducible output -- not by Dictionary/GroupBy encounter order. Rows within a sheet keep
+    // ImportResult.TachesMultiples' own order (extraction order), including EstFactice rows in their
+    // original position -- "fidélité à la structure source" per the ticket's own decision, not a sort
+    // by Ordre (which is null for factice rows and would misplace them).
+    private static IEnumerable<GeneratedSheet> GenerateTacheMultipleSheets(SheetGenerationRule rule, ImportResult importResult)
+    {
+        var headers = rule.ColumnDefinitions.Select(column => column.Header).ToList();
+
+        return importResult.TachesMultiples
+            .GroupBy(tache => tache.TypeTacheMultipleCode)
+            .OrderBy(group => group.Key, StringComparer.Ordinal)
+            .Select(group =>
+            {
+                var rows = group.Select(tache => new GeneratedRow(
+                    [.. rule.ColumnDefinitions.Select(column =>
+                        column.Source is null ? string.Empty : PivotFieldResolver.Resolve(tache, column.Source.Value))]))
+                    .ToList();
+
+                return new GeneratedSheet(ExcelSheetNameSanitizer.Sanitize(group.Key), headers, rows);
+            });
     }
 
     private static GeneratedSheet GenerateSheet(SheetGenerationRule rule, ImportResult importResult)

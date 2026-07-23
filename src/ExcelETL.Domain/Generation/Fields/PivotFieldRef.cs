@@ -14,5 +14,10 @@ public enum PivotFieldRef
     IsolementDesignation,
     IsolementTypeElementNom,
     IsolementPositionALaPose,
-    IsolementLocalisation
+    IsolementLocalisation,
+    TacheMultipleOrdre,
+    TacheMultipleAction,
+    TacheMultipleActeur,
+    TacheMultipleRisques,
+    TacheMultipleDateValidation
 }
