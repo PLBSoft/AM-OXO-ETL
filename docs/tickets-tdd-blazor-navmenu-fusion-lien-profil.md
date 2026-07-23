@@ -1,5 +1,7 @@
 # Ticket TDD — Lot M : fusion du nom d'utilisateur et du lien "Mon Profil" dans le NavMenu
 
+✅ Implémenté — voir commit `3388b63`
+
 *Document vivant (pas de suffixe de date, voir `convention-nommage-documents.md`). Suite du Lot L
 (`tickets-tdd-blazor-navmenu-visibilite-authentification.md`, `NavMenu.razor` déjà en place avec
 un second `<AuthorizeView>` générique — tout utilisateur authentifié — couvrant nom d'utilisateur/

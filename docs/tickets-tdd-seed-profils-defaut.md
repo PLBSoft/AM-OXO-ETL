@@ -1,5 +1,7 @@
 # Tickets TDD — Lot M : seed des profils d'import/export par défaut
 
+✅ Implémenté — voir commit `4bbba60`
+
 *Document vivant (pas de suffixe de date, voir `convention-nommage-documents.md`). Dépend
 entièrement des Lots E (`IImportProfileStore`/`EfImportProfileStore`) et I
 (`IExportProfileStore`/`EfExportProfileStore`), tous deux terminés — ce lot n'ajoute aucune
