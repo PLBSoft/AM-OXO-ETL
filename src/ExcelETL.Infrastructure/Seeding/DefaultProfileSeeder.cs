@@ -186,6 +186,13 @@ public class DefaultProfileSeeder(
     // actually produces -- no Source = null placeholder columns anticipating an extraction rule that
     // doesn't exist yet. Point column Headers reuse the raw Colonne name verbatim: no localized-label
     // catalogue exists for these yet, and inventing one wasn't asked for by this ticket.
+    //
+    // The third rule (Tâches multiples, Lot T) needs no Guid of its own, unlike ImportProfileId/
+    // ExportProfileId above -- SheetGenerationRule is a plain record with no identity property (see
+    // its own Domain source comment), not an aggregate root. Idempotence for this rule is already fully
+    // covered by ExportProfileId: SeedExportProfileAsync only ever calls BuildDefaultExportProfile()
+    // once, the very first time no profile exists under that Id, so this rule can never be
+    // re-created/duplicated on a later restart either.
     private static ExportProfile BuildDefaultExportProfile() => new(
         ExportProfileId, ProfileName,
         [
@@ -234,6 +241,17 @@ public class DefaultProfileSeeder(
                         "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
                     new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
-                ])
+                ]),
+            new SheetGenerationRule(
+                "Tâches multiples",
+                PivotSource.TacheMultiple,
+                [
+                    new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
+                    new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
+                    new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
+                    new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
+                    new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
+                ],
+                [])
         ]);
 }

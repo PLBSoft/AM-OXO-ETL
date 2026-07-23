@@ -123,7 +123,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
         _writer.Write(generatedWorkbook, destination);
         using var reread = new XLWorkbook(destination);
 
-        reread.Worksheets.Select(ws => ws.Name).Should().Equal("Parents", "Enfants");
+        // C7401's PROCEDURE TacheMultiple block produces both TM_PROC_MAD and TM_PROC_REL rows (see
+        // Generate_C7401Fixture_WithSeededProfiles_ProducesTacheMultipleSheetsFromRealCodes below), so
+        // both dynamic sheets are expected here too, alphabetically after Parents/Enfants.
+        reread.Worksheets.Select(ws => ws.Name).Should().Equal("Parents", "Enfants", "TM_PROC_MAD", "TM_PROC_REL");
 
         var parents = reread.Worksheet("Parents");
         parents.Cell(1, 1).GetString().Should().Be("Repère");
@@ -133,6 +136,38 @@ public class DefaultProfileSeederPipelineIntegrationTests
         var enfants = reread.Worksheet("Enfants");
         enfants.Cell(1, 1).GetString().Should().Be("Numéro");
         enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
+    }
+
+    [Fact]
+    public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesTacheMultipleSheetsFromRealCodes()
+    {
+        var (importProfile, exportProfile) = await SeedAndFetchProfilesAsync();
+
+        ImportResult importResult;
+        using (var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx")))
+        using (var workbookReader = new ClosedXmlWorkbookReader(sourceStream))
+        {
+            importResult = _orchestrator.Run(workbookReader, importProfile);
+        }
+
+        var generatedWorkbook = _generationEngine.Generate(importResult, exportProfile);
+        using var destination = new MemoryStream();
+        _writer.Write(generatedWorkbook, destination);
+        using var reread = new XLWorkbook(destination);
+
+        var expectedCounts = importResult.TachesMultiples
+            .GroupBy(t => t.TypeTacheMultipleCode)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        expectedCounts.Should().ContainKeys("TM_PROC_MAD", "TM_PROC_REL");
+
+        foreach (var (code, count) in expectedCounts)
+        {
+            var sheet = reread.Worksheet(code);
+            sheet.Cell(1, 1).GetString().Should().Be("Ordre");
+            sheet.Cell(1, 2).GetString().Should().Be("Action");
+            sheet.RowsUsed().Should().HaveCount(1 + count);
+        }
     }
 
     private ImportResult RunOnFixture(string fileName, ImportProfile profile)

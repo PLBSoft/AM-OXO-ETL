@@ -143,7 +143,7 @@ public class DefaultProfileSeederTests
 
         var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
 
-        profile!.SheetRules.Select(r => r.SheetName).Should().Equal("Parents", "Enfants");
+        profile!.SheetRules.Select(r => r.SheetName).Should().Equal("Parents", "Enfants", "Tâches multiples");
 
         var parents = profile.SheetRules.Single(r => r.SheetName == "Parents");
         parents.PivotSource.Should().Be(PivotSource.Equipement);
@@ -169,6 +169,18 @@ public class DefaultProfileSeederTests
             PivotFieldRef.IsolementPositionALaPose
         ]);
         enfants.PointColumnDefinitions.Should().HaveCount(17);
+
+        var tachesMultiples = profile.SheetRules.Single(r => r.SheetName == "Tâches multiples");
+        tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
+        tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
+        tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
+        [
+            PivotFieldRef.TacheMultipleOrdre,
+            PivotFieldRef.TacheMultipleAction,
+            PivotFieldRef.TacheMultipleActeur,
+            PivotFieldRef.TacheMultipleRisques,
+            PivotFieldRef.TacheMultipleDateValidation
+        ]);
     }
 
     [Fact]
