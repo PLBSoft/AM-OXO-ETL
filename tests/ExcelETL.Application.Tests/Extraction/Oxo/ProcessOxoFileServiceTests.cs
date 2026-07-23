@@ -36,7 +36,7 @@ public class ProcessOxoFileServiceTests
     }
 
     private static ImportProfile CreateImportProfile() => new(
-        "Profil import test", "MAD TRAVAUX",
+        "Profil import test", "MAD TRAVAUX", [], [],
         [new SheetExtractionRule(
             "PROCEDURE",
             new RepeatingBlockLocator("PROCEDURE", 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]),

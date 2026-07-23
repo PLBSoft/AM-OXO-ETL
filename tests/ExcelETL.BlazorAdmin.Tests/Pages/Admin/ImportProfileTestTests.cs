@@ -131,6 +131,7 @@ public class ImportProfileTestTests : BunitContext
     // configuration the pipeline's own regression guard-rail already exercises.
     private static ImportProfile CreateRealProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

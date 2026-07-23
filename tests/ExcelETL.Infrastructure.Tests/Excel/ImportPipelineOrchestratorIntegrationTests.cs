@@ -41,6 +41,7 @@ public class ImportPipelineOrchestratorIntegrationTests
 
     private static ImportProfile CreateProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

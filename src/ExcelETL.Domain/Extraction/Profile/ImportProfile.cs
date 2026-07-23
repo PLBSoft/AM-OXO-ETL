@@ -25,16 +25,30 @@ public sealed class ImportProfile : Entity
     // assumed. Never hardcoded in an extraction service; always read from here.
     public string EquipementTypeElementNom { get; }
 
+    // The Tableau names (e.g. "TRAVAUX COMPLET"/"TRAVAUX DETAIL") and Application names (e.g.
+    // "PROGRESS", legacy EF6 AMProgress BaseElement<->Application many-to-many, kept as plain names
+    // rather than a new entity -- see Lot U ticket doc) broadcast to the Equipement and every
+    // Isolement of a run, same mechanism as loc1 (see ImportPipelineOrchestrator). Never a hardcoded
+    // constant in an extraction service -- always read from here, same anti-hardcoding rule as
+    // EquipementTypeElementNom.
+    public IReadOnlyList<string> DefaultTableaux { get; }
+    public IReadOnlyList<string> DefaultApplicationNames { get; }
+
     public IReadOnlyList<SheetExtractionRule> SheetRules => _sheetRules;
 
-    public ImportProfile(string name, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
-        : this(name, DefaultReperePrefix, equipementTypeElementNom, sheetRules)
+    public ImportProfile(
+        string name, string equipementTypeElementNom,
+        IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
+        IReadOnlyList<SheetExtractionRule> sheetRules)
+        : this(name, DefaultReperePrefix, equipementTypeElementNom, defaultTableaux, defaultApplicationNames, sheetRules)
     {
     }
 
     public ImportProfile(
-        string name, string reperePrefix, string equipementTypeElementNom, IReadOnlyList<SheetExtractionRule> sheetRules)
-        : this(Guid.NewGuid(), name, reperePrefix, equipementTypeElementNom, sheetRules)
+        string name, string reperePrefix, string equipementTypeElementNom,
+        IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
+        IReadOnlyList<SheetExtractionRule> sheetRules)
+        : this(Guid.NewGuid(), name, reperePrefix, equipementTypeElementNom, defaultTableaux, defaultApplicationNames, sheetRules)
     {
     }
 
@@ -44,6 +58,7 @@ public sealed class ImportProfile : Entity
     // store updates the existing row instead of inserting a duplicate. See EfImportProfileStore.
     public ImportProfile(
         Guid id, string name, string reperePrefix, string equipementTypeElementNom,
+        IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
         IReadOnlyList<SheetExtractionRule> sheetRules)
         : base(id)
     {
@@ -66,6 +81,8 @@ public sealed class ImportProfile : Entity
                 DomainErrorCode.ImportProfile_EmptyEquipementTypeElementNom);
         }
 
+        ArgumentNullException.ThrowIfNull(defaultTableaux);
+        ArgumentNullException.ThrowIfNull(defaultApplicationNames);
         ArgumentNullException.ThrowIfNull(sheetRules);
 
         if (sheetRules.Count == 0)
@@ -77,6 +94,8 @@ public sealed class ImportProfile : Entity
         Name = name;
         ReperePrefix = reperePrefix;
         EquipementTypeElementNom = equipementTypeElementNom;
+        DefaultTableaux = [.. defaultTableaux];
+        DefaultApplicationNames = [.. defaultApplicationNames];
         _sheetRules = [.. sheetRules];
     }
 
@@ -87,5 +106,7 @@ public sealed class ImportProfile : Entity
         Name = string.Empty;
         ReperePrefix = string.Empty;
         EquipementTypeElementNom = string.Empty;
+        DefaultTableaux = [];
+        DefaultApplicationNames = [];
     }
 }

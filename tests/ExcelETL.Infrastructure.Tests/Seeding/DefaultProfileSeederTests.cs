@@ -63,7 +63,8 @@ public class DefaultProfileSeederTests
 
         var seeded = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
         var renamed = new ImportProfile(
-            seeded!.Id, "Renamed by an admin", seeded.ReperePrefix, seeded.EquipementTypeElementNom, seeded.SheetRules);
+            seeded!.Id, "Renamed by an admin", seeded.ReperePrefix, seeded.EquipementTypeElementNom,
+            seeded.DefaultTableaux, seeded.DefaultApplicationNames, seeded.SheetRules);
         await importProfileStore.SaveAsync(renamed);
 
         await seeder.SeedAsync();

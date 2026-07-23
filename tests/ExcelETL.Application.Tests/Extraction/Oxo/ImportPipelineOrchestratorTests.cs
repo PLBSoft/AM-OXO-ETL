@@ -37,8 +37,10 @@ public class ImportPipelineOrchestratorTests
     private static RepeatingBlockLocator TrivialLocator(string sheet) =>
         new(sheet, 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]);
 
-    private static ImportProfile CreateProfile() => new(
+    private static ImportProfile CreateProfile(
+        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null) => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        defaultTableaux ?? [], defaultApplicationNames ?? [],
         [
             new SheetExtractionRule("PROCEDURE", TrivialLocator("PROCEDURE"), [], []),
             new SheetExtractionRule("ISOLEMENT", TrivialLocator("ISOLEMENT"), [], []),

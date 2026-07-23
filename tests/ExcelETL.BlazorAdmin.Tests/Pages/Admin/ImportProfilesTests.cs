@@ -73,7 +73,7 @@ public class ImportProfilesTests : BunitContext
         var sheetRule = new SheetExtractionRule(
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
 
-        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
     [Fact]

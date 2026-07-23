@@ -24,6 +24,15 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
             .IsRequired()
             .HasMaxLength(200);
 
+        // DefaultTableaux/DefaultApplicationNames are plain lists of strings, not related entities --
+        // mapped as EF Core primitive collections (JSON columns on SqlServer), same treatment as
+        // UnconditionalColonneNames below.
+        builder.Property(p => p.DefaultTableaux)
+            .IsRequired();
+
+        builder.Property(p => p.DefaultApplicationNames)
+            .IsRequired();
+
         // SheetExtractionRule has no identity of its own (see the Domain type's own comment) -- it's
         // owned by ImportProfile, not a sibling entity like SheetConfig/CellMapping. A shadow "Id" key
         // is required because EF Core owned collections must have a key and SheetExtractionRule

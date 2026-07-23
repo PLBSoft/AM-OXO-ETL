@@ -89,6 +89,7 @@ public class ImportPipelineOrchestratorLoggingIntegrationTests
 
     private static ImportProfile CreateProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

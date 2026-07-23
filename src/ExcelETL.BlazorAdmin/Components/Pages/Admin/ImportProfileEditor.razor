@@ -52,6 +52,42 @@ else
     </div>
 </div>
 
+<h3>@Loc["ImportProfileEditor_DefaultTableauxHeading"]</h3>
+@if (_defaultTableaux.Count > 0)
+{
+    <p id="default-tableaux-summary">@string.Join(", ", _defaultTableaux)</p>
+}
+<div class="row g-2 mb-3">
+    <div class="col">
+        <label class="form-label" for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
+        <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
+               placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="add-default-tableau-button" class="btn btn-secondary" @onclick="AddDefaultTableau">
+            @Loc["ImportProfileEditor_AddTableauButton"]
+        </button>
+    </div>
+</div>
+
+<h3>@Loc["ImportProfileEditor_DefaultApplicationNamesHeading"]</h3>
+@if (_defaultApplicationNames.Count > 0)
+{
+    <p id="default-application-names-summary">@string.Join(", ", _defaultApplicationNames)</p>
+}
+<div class="row g-2 mb-3">
+    <div class="col">
+        <label class="form-label" for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
+        <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
+               placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="add-default-application-name-button" class="btn btn-secondary" @onclick="AddDefaultApplicationName">
+            @Loc["ImportProfileEditor_AddApplicationButton"]
+        </button>
+    </div>
+</div>
+
 <h3>@Loc["ImportProfileEditor_SheetRulesHeading"]</h3>
 
 @if (_sheetRules.Count == 0)
@@ -183,6 +219,11 @@ else
     private bool _notFound;
     private string? _profileErrorMessage;
 
+    private readonly List<string> _defaultTableaux = [];
+    private readonly List<string> _defaultApplicationNames = [];
+    private string _newDefaultTableauName = string.Empty;
+    private string _newDefaultApplicationName = string.Empty;
+
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _editingIndex;
     private int? _pendingDeleteIndex;
@@ -206,10 +247,34 @@ else
         _name = profile.Name;
         _reperePrefix = profile.ReperePrefix;
         _equipementTypeElementNom = profile.EquipementTypeElementNom;
+        _defaultTableaux.AddRange(profile.DefaultTableaux);
+        _defaultApplicationNames.AddRange(profile.DefaultApplicationNames);
         _sheetRules.AddRange(profile.SheetRules);
     }
 
     private void BackToList() => NavigationManager.NavigateTo("import-profiles");
+
+    private void AddDefaultTableau()
+    {
+        if (string.IsNullOrWhiteSpace(_newDefaultTableauName))
+        {
+            return;
+        }
+
+        _defaultTableaux.Add(_newDefaultTableauName);
+        _newDefaultTableauName = string.Empty;
+    }
+
+    private void AddDefaultApplicationName()
+    {
+        if (string.IsNullOrWhiteSpace(_newDefaultApplicationName))
+        {
+            return;
+        }
+
+        _defaultApplicationNames.Add(_newDefaultApplicationName);
+        _newDefaultApplicationName = string.Empty;
+    }
 
     private void HandleAddSheetRule(SheetExtractionRule rule) => _sheetRules.Add(rule);
 
@@ -249,8 +314,11 @@ else
         try
         {
             var profile = _editingId.HasValue
-                ? new ImportProfile(_editingId.Value, _name, _reperePrefix, _equipementTypeElementNom, _sheetRules)
-                : new ImportProfile(_name, _reperePrefix, _equipementTypeElementNom, _sheetRules);
+                ? new ImportProfile(
+                    _editingId.Value, _name, _reperePrefix, _equipementTypeElementNom,
+                    _defaultTableaux, _defaultApplicationNames, _sheetRules)
+                : new ImportProfile(
+                    _name, _reperePrefix, _equipementTypeElementNom, _defaultTableaux, _defaultApplicationNames, _sheetRules);
 
             await ImportProfileStore.SaveAsync(profile);
             NavigationManager.NavigateTo("import-profiles");

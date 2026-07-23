@@ -16,7 +16,8 @@ public class EfImportProfileStoreTests
     private IImportProfileStore CreateStore() => new EfImportProfileStore(_dbContextFactory);
 
     private static ImportProfile CreateSampleProfile(
-        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX",
+        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null)
     {
         var locator = new RepeatingBlockLocator(
             "ISOLEMENT",
@@ -39,7 +40,9 @@ public class EfImportProfileStoreTests
             ],
             unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
 
-        return new ImportProfile(name, "MAD-OXO-", equipementTypeElementNom, [sheetRule]);
+        return new ImportProfile(
+            name, "MAD-OXO-", equipementTypeElementNom,
+            defaultTableaux ?? ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], defaultApplicationNames ?? ["PROGRESS"], [sheetRule]);
     }
 
     [Fact]
@@ -55,6 +58,8 @@ public class EfImportProfileStoreTests
         reloaded!.Id.Should().Be(profile.Id);
         reloaded.Name.Should().Be("MAD OXO");
         reloaded.ReperePrefix.Should().Be("MAD-OXO-");
+        reloaded.DefaultTableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        reloaded.DefaultApplicationNames.Should().Equal("PROGRESS");
         reloaded.SheetRules.Should().ContainSingle();
 
         var rule = reloaded.SheetRules.Single();
@@ -89,6 +94,19 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithEmptyDefaultTableauxAndApplicationNames_PersistsAndReloadsAsEmpty()
+    {
+        var profile = CreateSampleProfile(defaultTableaux: [], defaultApplicationNames: []);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.DefaultTableaux.Should().BeEmpty();
+        reloaded.DefaultApplicationNames.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task SaveAsync_WithMultipleSheetRules_PersistsEachRulesNestedDataIndependently()
     {
         var isolementLocator = new RepeatingBlockLocator(
@@ -110,7 +128,7 @@ public class EfImportProfileStoreTests
             ],
             []);
 
-        var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [isolementRule, diversRule]);
+        var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [isolementRule, diversRule]);
         var store = CreateStore();
 
         await store.SaveAsync(profile);
@@ -162,7 +180,7 @@ public class EfImportProfileStoreTests
             [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var editedRule = new SheetExtractionRule("DIVERS", editedLocator, [], []);
         var edited = new ImportProfile(
-            original.Id, "Profil OXO (édité)", original.ReperePrefix, "MAD TRAVAUX EDITE", [editedRule]);
+            original.Id, "Profil OXO (édité)", original.ReperePrefix, "MAD TRAVAUX EDITE", [], [], [editedRule]);
 
         await store.SaveAsync(edited);
 

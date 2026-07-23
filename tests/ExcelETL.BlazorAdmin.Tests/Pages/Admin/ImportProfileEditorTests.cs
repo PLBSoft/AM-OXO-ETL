@@ -57,7 +57,7 @@ public class ImportProfileEditorTests : BunitContext
         var sheetRule = new SheetExtractionRule(
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
 
-        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
     // Mirrors the real ISOLEMENT sheet's client-reported example (ticket N0): FirstBlockStartRow=19,
@@ -79,7 +79,7 @@ public class ImportProfileEditorTests : BunitContext
         var sheetRule = new SheetExtractionRule(
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
 
-        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
     private static ImportProfile BuildProfileWithTwoSheetRules(
@@ -103,7 +103,7 @@ public class ImportProfileEditorTests : BunitContext
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
 
-        return new ImportProfile(name, equipementTypeElementNom, [isolementRule, platinesRule]);
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [isolementRule, platinesRule]);
     }
 
     // Fills every field needed to pass the RepeatingBlockLocator/SheetExtractionRule build-up
@@ -441,7 +441,7 @@ public class ImportProfileEditorTests : BunitContext
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [pointRule], unconditionalColonneNames: ["PROLOCK VANNES"]);
-            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
@@ -468,7 +468,7 @@ public class ImportProfileEditorTests : BunitContext
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [pointRule],
                 unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
-            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
@@ -506,7 +506,7 @@ public class ImportProfileEditorTests : BunitContext
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
-            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
@@ -530,7 +530,7 @@ public class ImportProfileEditorTests : BunitContext
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
-            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [sheetRule]);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
@@ -722,7 +722,7 @@ public class ImportProfileEditorTests : BunitContext
         var sheetRule = new SheetExtractionRule(
             "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
 
-        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
     // Ticket's own requirement: the count shown in the (still-collapsed) summary must reflect

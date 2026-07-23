@@ -172,6 +172,7 @@ public class ExportProfileTestTests : BunitContext
     // exactly -- same already-validated cell ranges for all 6 sheets.
     private static ImportProfile CreateRealImportProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

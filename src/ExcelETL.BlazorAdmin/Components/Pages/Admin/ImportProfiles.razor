@@ -85,6 +85,8 @@ else
             $"{profile.Name} {Loc["ImportProfiles_DuplicateSuffix"]}",
             profile.ReperePrefix,
             profile.EquipementTypeElementNom,
+            profile.DefaultTableaux,
+            profile.DefaultApplicationNames,
             profile.SheetRules);
 
         await ImportProfileStore.SaveAsync(duplicate);

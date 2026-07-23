@@ -42,6 +42,11 @@ public class DefaultProfileSeeder(
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
 
+    // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), decision #4: the only
+    // Application name seeded by default. "PROGRESS" is the legacy EF6 AMProgress Application name
+    // this deployment cares about today -- an admin can add more via the profile editor.
+    private const string ProgressApplicationName = "PROGRESS";
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await SeedImportProfileAsync(cancellationToken);
@@ -101,6 +106,8 @@ public class DefaultProfileSeeder(
     // checklist (docs/tickets-tdd-seed-profils-defaut.md, closing section) -- zero divergence found.
     private static ImportProfile BuildDefaultImportProfile() => new(
         ImportProfileId, ProfileName, ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
+        [TravauxCompletColonneName, TravauxDetailColonneName],
+        [ProgressApplicationName],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

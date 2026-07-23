@@ -50,6 +50,7 @@ public class GenerationPipelineIntegrationTests
 
     private static ImportProfile CreateImportProfile() => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
+        ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(
                 "PROCEDURE",

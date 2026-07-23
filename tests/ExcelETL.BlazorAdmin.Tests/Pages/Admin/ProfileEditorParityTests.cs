@@ -59,7 +59,7 @@ public class ProfileEditorParityTests : BunitContext
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
 
-        return new ImportProfile("MAD OXO", "MAD TRAVAUX", [isolementRule, platinesRule]);
+        return new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [isolementRule, platinesRule]);
     }
 
     private static ExportProfile BuildExportProfileWithTwoSheetRules() =>

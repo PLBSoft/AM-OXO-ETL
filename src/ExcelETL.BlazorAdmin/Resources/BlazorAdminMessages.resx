@@ -409,6 +409,30 @@
   <data name="ImportProfileEditor_AddColonneButton" xml:space="preserve">
     <value>Add colonne</value>
   </data>
+  <data name="ImportProfileEditor_DefaultTableauxHeading" xml:space="preserve">
+    <value>Tableaux</value>
+  </data>
+  <data name="ImportProfileEditor_TableauNameLabel" xml:space="preserve">
+    <value>Tableau name</value>
+  </data>
+  <data name="ImportProfileEditor_TableauNamePlaceholder" xml:space="preserve">
+    <value>Tableau name</value>
+  </data>
+  <data name="ImportProfileEditor_AddTableauButton" xml:space="preserve">
+    <value>Add tableau</value>
+  </data>
+  <data name="ImportProfileEditor_DefaultApplicationNamesHeading" xml:space="preserve">
+    <value>Applications</value>
+  </data>
+  <data name="ImportProfileEditor_ApplicationNameLabel" xml:space="preserve">
+    <value>Application name</value>
+  </data>
+  <data name="ImportProfileEditor_ApplicationNamePlaceholder" xml:space="preserve">
+    <value>Application name</value>
+  </data>
+  <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
+    <value>Add application</value>
+  </data>
   <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
     <value>Conditional point rules</value>
   </data>

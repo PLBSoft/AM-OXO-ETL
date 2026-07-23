@@ -21,11 +21,15 @@ public class ImportProfileTests
     {
         var rule = ValidRule();
 
-        var profile = new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [rule]);
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom,
+            ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"], [rule]);
 
         profile.Name.Should().Be("Profil OXO standard");
         profile.ReperePrefix.Should().Be("MAD-OXO-");
         profile.EquipementTypeElementNom.Should().Be(EquipementTypeElementNom);
+        profile.DefaultTableaux.Should().BeEquivalentTo(["TRAVAUX COMPLET", "TRAVAUX DETAIL"], o => o.WithStrictOrdering());
+        profile.DefaultApplicationNames.Should().BeEquivalentTo(["PROGRESS"]);
         profile.SheetRules.Should().BeEquivalentTo([rule]);
         profile.Id.Should().NotBeEmpty();
     }
@@ -33,9 +37,37 @@ public class ImportProfileTests
     [Fact]
     public void Constructor_WithoutReperePrefix_DefaultsToMadOxo()
     {
-        var profile = new ImportProfile("Profil OXO standard", EquipementTypeElementNom, sheetRules: [ValidRule()]);
+        var profile = new ImportProfile(
+            "Profil OXO standard", EquipementTypeElementNom, [], [], sheetRules: [ValidRule()]);
 
         profile.ReperePrefix.Should().Be("MAD-OXO-");
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyTableauxAndApplicationNames_CreatesImportProfile()
+    {
+        var profile = new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        profile.DefaultTableaux.Should().BeEmpty();
+        profile.DefaultApplicationNames.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithNullDefaultTableaux_ThrowsArgumentNullException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, null!, [], [ValidRule()]);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_WithNullDefaultApplicationNames_ThrowsArgumentNullException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], null!, [ValidRule()]);
+
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Theory]
@@ -44,7 +76,7 @@ public class ImportProfileTests
     [InlineData(null)]
     public void Constructor_WithInvalidName_ThrowsDomainValidationException(string? invalidName)
     {
-        var act = () => new ImportProfile(invalidName!, "MAD-OXO-", EquipementTypeElementNom, [ValidRule()]);
+        var act = () => new ImportProfile(invalidName!, "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("name")
@@ -57,7 +89,8 @@ public class ImportProfileTests
     [InlineData(null)]
     public void Constructor_WithInvalidReperePrefix_ThrowsDomainValidationException(string? invalidReperePrefix)
     {
-        var act = () => new ImportProfile("Profil OXO standard", invalidReperePrefix!, EquipementTypeElementNom, [ValidRule()]);
+        var act = () => new ImportProfile(
+            "Profil OXO standard", invalidReperePrefix!, EquipementTypeElementNom, [], [], [ValidRule()]);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("reperePrefix")
@@ -70,7 +103,7 @@ public class ImportProfileTests
     [InlineData(null)]
     public void Constructor_WithInvalidEquipementTypeElementNom_ThrowsDomainValidationException(string? invalidValue)
     {
-        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", invalidValue!, [ValidRule()]);
+        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", invalidValue!, [], [], [ValidRule()]);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("equipementTypeElementNom")
@@ -80,7 +113,7 @@ public class ImportProfileTests
     [Fact]
     public void Constructor_WithNullSheetRules_ThrowsArgumentNullException()
     {
-        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, null!);
+        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], null!);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -88,7 +121,7 @@ public class ImportProfileTests
     [Fact]
     public void Constructor_WithNoSheetRules_ThrowsDomainValidationException()
     {
-        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, []);
+        var act = () => new ImportProfile("Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], []);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("sheetRules")
@@ -99,7 +132,8 @@ public class ImportProfileTests
     public void Constructor_WithMultipleSheetRules_CreatesImportProfile()
     {
         var profile = new ImportProfile(
-            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [ValidRule("ISOLEMENT"), ValidRule("PLATINES")]);
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [],
+            [ValidRule("ISOLEMENT"), ValidRule("PLATINES")]);
 
         profile.SheetRules.Should().HaveCount(2);
     }
@@ -110,17 +144,17 @@ public class ImportProfileTests
         var existingId = Guid.NewGuid();
 
         var profile = new ImportProfile(
-            existingId, "Profil OXO standard (édité)", "MAD-OXO-", EquipementTypeElementNom, [ValidRule()]);
+            existingId, "Profil OXO standard (edite)", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
 
         profile.Id.Should().Be(existingId);
-        profile.Name.Should().Be("Profil OXO standard (édité)");
+        profile.Name.Should().Be("Profil OXO standard (edite)");
     }
 
     [Fact]
     public void Constructor_WithEmptyExplicitId_ThrowsArgumentException()
     {
         var act = () => new ImportProfile(
-            Guid.Empty, "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [ValidRule()]);
+            Guid.Empty, "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
 
         act.Should().Throw<ArgumentException>().WithParameterName("id");
     }
