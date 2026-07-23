@@ -14,9 +14,14 @@
 
 <h1>@Loc["ExportProfiles_PageTitle"]</h1>
 
-<button id="create-export-profile-button" class="btn btn-primary mb-3" @onclick="CreateProfile">
-    @Loc["ExportProfiles_Create"]
-</button>
+<div class="right-aligned-actions mb-3">
+    <button id="test-export-profile-button" class="btn btn-secondary" @onclick="TestProfile">
+        @Loc["NavMenu_ExportProfileTest"]
+    </button>
+    <button id="create-export-profile-button" class="btn btn-primary" @onclick="CreateProfile">
+        @Loc["ExportProfiles_Create"]
+    </button>
+</div>
 
 @if (_profiles is null)
 {
@@ -66,6 +71,8 @@ else
     private async Task LoadProfilesAsync() => _profiles = (await ExportProfileStore.GetAllAsync()).ToList();
 
     private void CreateProfile() => NavigationManager.NavigateTo("export-profiles/new");
+
+    private void TestProfile() => NavigationManager.NavigateTo("export-profiles/test");
 
     private void EditProfile(ExportProfile profile) => NavigationManager.NavigateTo($"export-profiles/{profile.Id}/edit");
 

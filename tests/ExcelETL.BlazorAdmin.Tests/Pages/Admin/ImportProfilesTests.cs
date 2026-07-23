@@ -121,6 +121,17 @@ public class ImportProfilesTests : BunitContext
     });
 
     [Fact]
+    public void TestProfileButton_NavigatesToTestRoute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfiles>();
+        var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+        cut.Find("#test-import-profile-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/import-profiles/test");
+    });
+
+    [Fact]
     public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
         await WithCultureAsync("en-US", async () =>
         {

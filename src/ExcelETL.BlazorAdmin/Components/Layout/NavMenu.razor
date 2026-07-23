@@ -7,7 +7,7 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ExcelETL.BlazorAdmin</a>
+        <a class="navbar-brand" href="">Alpha - MAD / REL OXO</a>
     </div>
 </div>
 
@@ -15,31 +15,11 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink id="nav-logs-link" class="nav-link" href="logs">
-                        <span class="bi bi-card-list-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Logs"]
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-
         <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink id="nav-users-link" class="nav-link" href="users">
-                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Users"]
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
                     <NavLink id="nav-import-profiles-link" class="nav-link" href="import-profiles">
                         <span class="bi bi-collection-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ImportProfiles"]
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink id="nav-import-profiles-test-link" class="nav-link" href="import-profiles/test">
-                        <span class="bi bi-play-circle-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ImportProfileTest"]
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
@@ -48,8 +28,18 @@
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
-                    <NavLink id="nav-export-profiles-test-link" class="nav-link" href="export-profiles/test">
-                        <span class="bi bi-download-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExportProfileTest"]
+                    <NavLink id="nav-users-link" class="nav-link" href="users">
+                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Users"]
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink id="nav-logs-link" class="nav-link" href="logs">
+                        <span class="bi bi-card-list-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Logs"]
                     </NavLink>
                 </div>
             </Authorized>

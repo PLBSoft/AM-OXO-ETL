@@ -113,9 +113,7 @@ public class NavMenuTests : BunitContext
     [
         "nav-users-link",
         "nav-import-profiles-link",
-        "nav-import-profiles-test-link",
         "nav-export-profiles-link",
-        "nav-export-profiles-test-link",
     ];
 
     [Fact]
@@ -177,5 +175,55 @@ public class NavMenuTests : BunitContext
         var cut = Render<NavMenu>();
 
         cut.FindAll("#nav-logs-link").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorizedAsAdmin_DoesNotRenderProfileTestLinks() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-import-profiles-test-link").Should().BeEmpty();
+        cut.FindAll("#nav-export-profiles-test-link").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void NavMenu_RendersAdminAndLogsLinks_InExpectedOrder() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
+
+        var cut = Render<NavMenu>();
+
+        var orderedIds = new[]
+        {
+            "nav-import-profiles-link",
+            "nav-export-profiles-link",
+            "nav-users-link",
+            "nav-logs-link",
+            "nav-profile-link",
+        };
+
+        var indexes = orderedIds.Select(id => cut.Markup.IndexOf($"id=\"{id}\"", StringComparison.Ordinal)).ToArray();
+
+        indexes.Should().OnlyContain(index => index >= 0);
+        indexes.Should().BeInAscendingOrder();
+
+        var logoutLabel = Services.GetRequiredService<IStringLocalizer<BlazorAdminMessages>>()["NavMenu_Logout"].Value;
+        var logoutButtonIndex = cut.Markup.IndexOf(logoutLabel, StringComparison.Ordinal);
+        var profileLinkIndex = indexes[^1];
+
+        logoutButtonIndex.Should().BeGreaterThan(profileLinkIndex);
+    });
+
+    [Fact]
+    public void NavMenu_RendersRenamedBrand() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.Markup.Should().Contain("Alpha - MAD / REL OXO");
+        cut.Markup.Should().NotContain("ExcelETL.BlazorAdmin");
     });
 }

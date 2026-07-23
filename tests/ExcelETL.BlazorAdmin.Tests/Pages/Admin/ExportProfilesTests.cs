@@ -114,6 +114,17 @@ public class ExportProfilesTests : BunitContext
     });
 
     [Fact]
+    public void TestProfileButton_NavigatesToTestRoute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfiles>();
+        var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+        cut.Find("#test-export-profile-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/export-profiles/test");
+    });
+
+    [Fact]
     public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
         await WithCultureAsync("en-US", async () =>
         {
