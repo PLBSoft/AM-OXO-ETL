@@ -414,6 +414,27 @@ public class ImportProfileTestTests : BunitContext
         });
 
     [Fact]
+    public async Task ResultTables_AreWrappedInAStickyHeaderScrollContainer() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("644-D8570"));
+
+            foreach (var tableId in new[] { "equipement-table", "isolements-table", "points-table", "taches-multiples-table", "warnings-table" })
+            {
+                var table = cut.Find($"#{tableId}");
+                table.ClassList.Should().Contain("test-table");
+                table.ParentElement!.ClassList.Should().Contain("test-table-scroll");
+            }
+        });
+
+    [Fact]
     public async Task WarningsSection_CanBeCollapsedAndExpanded() =>
         await WithCultureAsync("en-US", async () =>
         {

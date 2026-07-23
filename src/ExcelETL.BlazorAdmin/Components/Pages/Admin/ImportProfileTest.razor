@@ -89,24 +89,26 @@ else
                     </summary>
                     @if (!_collapsedSections.Contains("equipement"))
                     {
-                        <table id="equipement-table" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>@Loc["ImportProfileTest_Repere"]</th>
-                                    <th>@Loc["ImportProfileTest_Designation"]</th>
-                                    <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
-                                    <th>@Loc["ImportProfileTest_Localisation"]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>@_result.Equipement.Repere</td>
-                                    <td>@_result.Equipement.Designation</td>
-                                    <td>@_result.Equipement.TypeElementNom</td>
-                                    <td>@_result.Equipement.Localisation</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div class="test-table-scroll">
+                            <table id="equipement-table" class="table table-sm test-table">
+                                <thead>
+                                    <tr>
+                                        <th>@Loc["ImportProfileTest_Repere"]</th>
+                                        <th>@Loc["ImportProfileTest_Designation"]</th>
+                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
+                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>@_result.Equipement.Repere</td>
+                                        <td>@_result.Equipement.Designation</td>
+                                        <td>@_result.Equipement.TypeElementNom</td>
+                                        <td>@_result.Equipement.Localisation</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </details>
 
@@ -116,29 +118,31 @@ else
                     </summary>
                     @if (!_collapsedSections.Contains("isolements"))
                     {
-                        <table id="isolements-table" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>@Loc["ImportProfileTest_Repere"]</th>
-                                    <th>@Loc["ImportProfileTest_Designation"]</th>
-                                    <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
-                                    <th>@Loc["ImportProfileTest_PositionALaPose"]</th>
-                                    <th>@Loc["ImportProfileTest_Localisation"]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var isolement in _result.Isolements)
-                                {
+                        <div class="test-table-scroll">
+                            <table id="isolements-table" class="table table-sm test-table">
+                                <thead>
                                     <tr>
-                                        <td>@isolement.Repere</td>
-                                        <td>@isolement.Designation</td>
-                                        <td>@isolement.TypeElementNom</td>
-                                        <td>@isolement.PositionALaPose</td>
-                                        <td>@isolement.Localisation</td>
+                                        <th>@Loc["ImportProfileTest_Repere"]</th>
+                                        <th>@Loc["ImportProfileTest_Designation"]</th>
+                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
+                                        <th>@Loc["ImportProfileTest_PositionALaPose"]</th>
+                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var isolement in _result.Isolements)
+                                    {
+                                        <tr>
+                                            <td>@isolement.Repere</td>
+                                            <td>@isolement.Designation</td>
+                                            <td>@isolement.TypeElementNom</td>
+                                            <td>@isolement.PositionALaPose</td>
+                                            <td>@isolement.Localisation</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </details>
 
@@ -148,23 +152,25 @@ else
                     </summary>
                     @if (!_collapsedSections.Contains("points"))
                     {
-                        <table id="points-table" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>@Loc["ImportProfileTest_ColonneNom"]</th>
-                                    <th>@Loc["ImportProfileTest_ParentRepere"]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var point in _result.Points)
-                                {
+                        <div class="test-table-scroll">
+                            <table id="points-table" class="table table-sm test-table">
+                                <thead>
                                     <tr>
-                                        <td>@point.ColonneNom</td>
-                                        <td>@point.ParentRepere</td>
+                                        <th>@Loc["ImportProfileTest_ColonneNom"]</th>
+                                        <th>@Loc["ImportProfileTest_ParentRepere"]</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var point in _result.Points)
+                                    {
+                                        <tr>
+                                            <td>@point.ColonneNom</td>
+                                            <td>@point.ParentRepere</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </details>
 
@@ -174,33 +180,35 @@ else
                     </summary>
                     @if (!_collapsedSections.Contains("taches-multiples"))
                     {
-                        <table id="taches-multiples-table" class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th>@Loc["ImportProfileTest_Ordre"]</th>
-                                    <th>@Loc["ImportProfileTest_Action"]</th>
-                                    <th>@Loc["ImportProfileTest_Acteur"]</th>
-                                    <th>@Loc["ImportProfileTest_Risques"]</th>
-                                    <th>@Loc["ImportProfileTest_TypeTacheMultipleCode"]</th>
-                                    <th>@Loc["ImportProfileTest_DateValidation"]</th>
-                                    <th>@Loc["ImportProfileTest_EstFactice"]</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var tache in _result.TachesMultiples)
-                                {
+                        <div class="test-table-scroll">
+                            <table id="taches-multiples-table" class="table table-sm test-table">
+                                <thead>
                                     <tr>
-                                        <td>@tache.Ordre</td>
-                                        <td>@tache.Action</td>
-                                        <td>@tache.Acteur</td>
-                                        <td>@tache.Risques</td>
-                                        <td>@tache.TypeTacheMultipleCode</td>
-                                        <td>@tache.DateValidation</td>
-                                        <td>@tache.EstFactice</td>
+                                        <th>@Loc["ImportProfileTest_Ordre"]</th>
+                                        <th>@Loc["ImportProfileTest_Action"]</th>
+                                        <th>@Loc["ImportProfileTest_Acteur"]</th>
+                                        <th>@Loc["ImportProfileTest_Risques"]</th>
+                                        <th>@Loc["ImportProfileTest_TypeTacheMultipleCode"]</th>
+                                        <th>@Loc["ImportProfileTest_DateValidation"]</th>
+                                        <th>@Loc["ImportProfileTest_EstFactice"]</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach (var tache in _result.TachesMultiples)
+                                    {
+                                        <tr>
+                                            <td>@tache.Ordre</td>
+                                            <td>@tache.Action</td>
+                                            <td>@tache.Acteur</td>
+                                            <td>@tache.Risques</td>
+                                            <td>@tache.TypeTacheMultipleCode</td>
+                                            <td>@tache.DateValidation</td>
+                                            <td>@tache.EstFactice</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </details>
 
@@ -212,27 +220,29 @@ else
                         </summary>
                         @if (!_collapsedSections.Contains("warnings"))
                         {
-                            <table id="warnings-table" class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>@Loc["ImportProfileTest_Sheet"]</th>
-                                        <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
-                                        <th>@Loc["ImportProfileTest_ErrorCode"]</th>
-                                        <th>@Loc["ImportProfileTest_Message"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var warning in _result.Errors)
-                                    {
+                            <div class="test-table-scroll">
+                                <table id="warnings-table" class="table table-sm test-table">
+                                    <thead>
                                         <tr>
-                                            <td>@warning.Sheet</td>
-                                            <td>@warning.BlockIdentifier</td>
-                                            <td>@warning.Code</td>
-                                            <td>@warning.Message</td>
+                                            <th>@Loc["ImportProfileTest_Sheet"]</th>
+                                            <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
+                                            <th>@Loc["ImportProfileTest_ErrorCode"]</th>
+                                            <th>@Loc["ImportProfileTest_Message"]</th>
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var warning in _result.Errors)
+                                        {
+                                            <tr>
+                                                <td>@warning.Sheet</td>
+                                                <td>@warning.BlockIdentifier</td>
+                                                <td>@warning.Code</td>
+                                                <td>@warning.Message</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         }
                     </details>
                 }
