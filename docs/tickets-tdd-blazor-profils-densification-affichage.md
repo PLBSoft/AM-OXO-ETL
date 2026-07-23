@@ -1,5 +1,7 @@
 # Tickets TDD — Lot R : densification de l'affichage des profils (import + export)
 
+✅ Implémenté — voir commit `4bb4bb9`
+
 *Document vivant (pas de suffixe de date, voir `convention-nommage-documents.md`). Fait suite au
 Lot P (`tickets-tdd-blazor-profil-import-cartes-regles-feuille.md`, cartes par règle de feuille)
 et aux tickets de parité Q (`tickets-tdd-blazor-profil-export-parite-visuelle.md`/
