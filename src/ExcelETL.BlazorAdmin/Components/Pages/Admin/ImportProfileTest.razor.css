@@ -1,0 +1,29 @@
+.test-table-details {
+    margin-top: 1.5rem;
+}
+
+.test-table-details > summary {
+    cursor: pointer;
+    font-size: 1.75rem;
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.test-table-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.test-table-details > summary::before {
+    content: "\25B6";
+    font-size: 0.9rem;
+    transition: transform 0.15s ease;
+}
+
+.test-table-details[open] > summary::before {
+    transform: rotate(90deg);
+}

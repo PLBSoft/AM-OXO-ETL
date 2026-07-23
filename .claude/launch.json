@@ -5,7 +5,8 @@
       "name": "blazor-admin",
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "src/ExcelETL.BlazorAdmin/ExcelETL.BlazorAdmin.csproj", "--launch-profile", "https"],
-      "port": 7013
+      "port": 7013,
+      "url": "https://localhost:7013"
     }
   ]
 }

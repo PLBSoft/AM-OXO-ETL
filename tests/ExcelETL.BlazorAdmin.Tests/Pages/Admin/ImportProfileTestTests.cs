@@ -332,4 +332,104 @@ public class ImportProfileTestTests : BunitContext
             cut.Markup.Should().NotContain("File rejected");
             cut.FindAll("#isolements-table tbody tr").Should().HaveCount(18);
         });
+
+    [Fact]
+    public async Task ResultTables_AreOpenByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("38-C7401"));
+
+            cut.Find("#equipement-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+            cut.Find("#isolements-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+            cut.Find("#equipement-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task ClickingSummary_CollapsesTable_AndRemovesItFromTheDom() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("38-C7401"));
+
+            cut.Find("#equipement-details-toggle").Click();
+
+            cut.FindAll("#equipement-table").Should().BeEmpty();
+            cut.Find("#equipement-details-toggle").ParentElement!.HasAttribute("open").Should().BeFalse();
+            cut.Find("#isolements-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task ClickingSummaryTwice_ReExpandsTable() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("38-C7401"));
+
+            cut.Find("#equipement-details-toggle").Click();
+            cut.Find("#equipement-details-toggle").Click();
+
+            cut.Find("#equipement-table").Should().NotBeNull();
+            cut.Find("#equipement-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task CollapsingOneTable_LeavesOtherTablesExpanded() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("644-D8570"));
+
+            cut.Find("#isolements-details-toggle").Click();
+
+            cut.FindAll("#isolements-table").Should().BeEmpty();
+            cut.Find("#equipement-table").Should().NotBeNull();
+            cut.Find("#points-table").Should().NotBeNull();
+            cut.Find("#taches-multiples-table").Should().NotBeNull();
+            cut.Find("#warnings-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task WarningsSection_CanBeCollapsedAndExpanded() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+
+            cut.Find("#warnings-details-toggle").Click();
+            cut.FindAll("#warnings-table").Should().BeEmpty();
+
+            cut.Find("#warnings-details-toggle").Click();
+            cut.Find("#warnings-table").Should().NotBeNull();
+        });
 }
