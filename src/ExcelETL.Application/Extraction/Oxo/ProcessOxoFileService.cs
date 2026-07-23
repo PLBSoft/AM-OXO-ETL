@@ -3,13 +3,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
-// HTTP-facing orchestration service for the OXO pipeline (Lot K1), the counterpart of
-// ProcessExcelFileService for the old ExtractionConfig pipeline: resolves both profiles, runs the
-// import + generation pipeline, archives the generated workbook (same IFileStorageService as the
-// old pipeline -- the top-level "generated workbook is archived on the local filesystem" constraint
-// applies regardless of which pipeline produced it), and turns the whole-file-rejection case
-// (ImportResult.Equipement is null, model doc §3.1) into a distinguishable result rather than an
-// exception, so the WebAPI controller can return 422 instead of a 200 with an empty body.
+// Resolves both profiles, runs the import + generation pipeline, archives the generated workbook
+// (IFileStorageService), and turns the whole-file-rejection case (ImportResult.Equipement is null,
+// model doc §3.1) into a distinguishable result rather than an exception, so the WebAPI controller
+// can return 422 instead of a 200 with an empty body.
 public sealed class ProcessOxoFileService(
     IImportProfileStore importProfileStore,
     IExportProfileStore exportProfileStore,

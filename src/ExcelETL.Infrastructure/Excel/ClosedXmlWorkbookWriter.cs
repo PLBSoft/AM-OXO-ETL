@@ -5,14 +5,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Infrastructure.Excel;
 
-// The Lot I4 implementation of IWorkbookWriter -- builds a fresh XLWorkbook from the intermediate
-// GeneratedWorkbook structure (I3) and saves it into the caller-provided stream. Sheets are added in
-// GeneratedWorkbook.Sheets order (already the ExportProfile's order); headers go on row 1, data rows
-// start on row 2. New, independent of ClosedXmlGeneratorService (the ExtractionResult/ExtractedSheet
-// POC generator) -- explicitly out of scope for reuse per this lot's ticket.
+// Builds a fresh XLWorkbook from the intermediate GeneratedWorkbook structure and saves it into the
+// caller-provided stream. Sheets are added in GeneratedWorkbook.Sheets order (already the
+// ExportProfile's order); headers go on row 1, data rows start on row 2.
 //
-// ILogger<T> injected/logged the same way as ImportPipelineOrchestrator (Lot G1/G2, mirrored here at
-// Lot K0bis so the generation half of the pipeline isn't observability-blind once exposed over HTTP).
+// ILogger<T> injected/logged the same way as ImportPipelineOrchestrator (Lot G1/G2).
 public sealed class ClosedXmlWorkbookWriter(ILogger<ClosedXmlWorkbookWriter> logger) : IWorkbookWriter
 {
     public void Write(GeneratedWorkbook workbook, Stream destination)

@@ -8,9 +8,6 @@ using Microsoft.Extensions.Localization;
 
 namespace ExcelETL.WebAPI.Controllers;
 
-// The OXO pipeline's HTTP entry point (Lot K1) -- functional mirror of ExcelController/
-// ProcessExcelFileService, but on ImportPipelineOrchestrator/SheetGenerationEngine instead of the
-// old ExtractionConfig pipeline. Both routes coexist until Lot K4 retires this one and the old one.
 [ApiController]
 [Route("api/oxo")]
 public class OxoController(
@@ -38,11 +35,8 @@ public class OxoController(
             });
         }
 
-        // Upload log: file name/size and the caller's source IP -- mirrors what ProcessExcelFileService
-        // actually logs today (file name only, no size/IP/hash despite the ticket's fuller
-        // description of the legacy behavior; not reproduced here since no such logging exists
-        // anywhere in this codebase to mirror). Reaches SystemLogs via the same ILogger<T> ->
-        // Serilog MSSqlServer sink pipeline as every other log call in this host (see Lot G3).
+        // Upload log: file name/size and the caller's source IP. Reaches SystemLogs via the same
+        // ILogger<T> -> Serilog MSSqlServer sink pipeline as every other log call in this host (see Lot G3).
         logger.LogInformation(
             "OXO upload: {SourceFileName} ({FileSizeBytes} bytes) from {RemoteIpAddress}",
             request.File.FileName, request.File.Length, HttpContext.Connection.RemoteIpAddress);
@@ -54,7 +48,7 @@ public class OxoController(
 
         // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
         // exception are not caught here: GlobalExceptionHandler translates them into a localized
-        // ProblemDetails response, same convention as ExcelController.
+        // ProblemDetails response.
         var result = await processOxoFileService.ProcessAsync(command, cancellationToken);
 
         if (result.ImportResult.Equipement is null)
