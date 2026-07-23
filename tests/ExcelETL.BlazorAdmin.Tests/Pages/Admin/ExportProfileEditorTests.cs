@@ -136,9 +136,13 @@ public class ExportProfileEditorTests : BunitContext
         AddValidSheetRule(cut);
 
         cut.Markup.Should().Contain("Parents");
+        cut.Find("#sheet-generation-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
+
+        // Lot R3: columns/point columns are collapsed by default.
+        cut.Markup.Should().NotContain("Repère");
+        cut.Find("#sheet-rule-details-toggle-0").Click();
         cut.Markup.Should().Contain("Repère");
         cut.Markup.Should().Contain("TRAVAUX COMPLET");
-        cut.Find("#sheet-generation-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
     });
 
     [Fact]
@@ -246,6 +250,10 @@ public class ExportProfileEditorTests : BunitContext
 
             cut.Find("#export-profile-name-input").GetAttribute("value").Should().Be("Profil export OXO");
             cut.Markup.Should().Contain("Parents");
+
+            // Lot R3: columns/point columns are collapsed by default.
+            cut.Markup.Should().NotContain("Repère");
+            cut.Find("#sheet-rule-details-toggle-0").Click();
             cut.Markup.Should().Contain("Repère");
             cut.Markup.Should().Contain("TRAVAUX COMPLET");
         });
@@ -316,6 +324,88 @@ public class ExportProfileEditorTests : BunitContext
         cut.FindAll("li.sheet-rule-card").Should().HaveCount(2);
     });
 
+    // Lot R1: same responsive grid class as the import side (app.css, shared verbatim).
+    [Fact]
+    public void SheetRuleList_HasGridCssClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+        cut.Find("#column-header-input").Change("Numéro");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.IsolementRepere));
+        cut.Find("#add-column-definition-button").Click();
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        var list = cut.Find("ul.sheet-rule-list");
+        list.ClassList.Should().Contain("sheet-rule-grid");
+        cut.FindAll("li.sheet-rule-card").Should().HaveCount(2);
+    });
+
+    // Lot R2: the column/point-column list inside a read-only sheet-rule card is a compact
+    // multi-column grid, same class as the import side's block-field list.
+    [Fact]
+    public void BlockFieldList_InSummary_HasGridCssClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+
+        var fieldList = cut.Find("li.sheet-rule-card ul.block-field-list");
+        fieldList.ClassList.Should().Contain("block-field-grid");
+    });
+
+    // Lot R3: ColumnDefinition/PointColumnDefinition are collapsed behind a details/summary,
+    // closed by default -- the full list must be genuinely absent from the DOM.
+    [Fact]
+    public void SheetRuleSublistDetails_CollapsedByDefault_FullListIsAbsentFromDom() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+
+        cut.FindAll("#sheet-rule-details-content-0").Should().BeEmpty();
+        cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("1");
+    });
+
+    [Fact]
+    public void SheetRuleSublistDetails_ClickingSummary_ExpandsFullListWithSameValues() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+
+        cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+        cut.Markup.Should().Contain("Repère");
+        cut.Markup.Should().Contain("TRAVAUX COMPLET");
+    });
+
+    // Ticket's own requirement: the count shown in the (still-collapsed) summary must reflect
+    // whatever the list currently holds, not a value captured at first render.
+    [Fact]
+    public void SheetRuleSublistDetails_SummaryCount_ReflectsCurrentListSize_NotFirstRenderValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            // AddValidSheetRule adds 1 column + 1 point column.
+            AddValidSheetRule(cut);
+
+            cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("1 columns").And.Contain("1 point columns");
+
+            // Add a second column via edit mode, save -- summary count must update.
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-column-header-input").Change("Désignation");
+            cut.Find("#edit-0-column-source-select").Change(nameof(PivotFieldRef.EquipementDesignation));
+            cut.Find("#edit-0-add-column-definition-button").Click();
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("2 columns").And.Contain("1 point columns");
+        });
+
     [Fact]
     public void Summary_SheetNameAndMetadata_AreSeparateElements() => WithCulture("en-US", () =>
     {
@@ -336,6 +426,7 @@ public class ExportProfileEditorTests : BunitContext
         var cut = Render<ExportProfileEditor>();
 
         AddValidSheetRule(cut);
+        cut.Find("#sheet-rule-details-toggle-0").Click();
 
         var names = cut.FindAll(".block-field-name").Select(e => e.TextContent).ToList();
         var values = cut.FindAll(".block-field-range").Select(e => e.TextContent).ToList();
@@ -357,6 +448,7 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#column-source-select").Change(string.Empty);
         cut.Find("#add-column-definition-button").Click();
         cut.Find("#add-sheet-generation-rule-button").Click();
+        cut.Find("#sheet-rule-details-toggle-0").Click();
 
         cut.Find(".block-field-name").TextContent.Should().Be("Commentaires");
         cut.Find(".block-field-range").TextContent.Should().Be("Not mapped yet");

@@ -60,7 +60,7 @@ else
 }
 else
 {
-    <ul class="sheet-rule-list">
+    <ul class="sheet-rule-list sheet-rule-grid">
         @for (var i = 0; i < _sheetRules.Count; i++)
         {
             var index = i;
@@ -83,7 +83,7 @@ else
                         <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
                         <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]</span>
                     </div>
-                    <ul class="block-field-list">
+                    <ul class="block-field-list block-field-grid">
                         @foreach (var field in rule.Locator.Fields)
                         {
                             <li class="block-field-item">
@@ -94,25 +94,39 @@ else
                             </li>
                         }
                     </ul>
-                    @if (rule.UnconditionalColonneNames.Count > 0)
+                    @if (rule.UnconditionalColonneNames.Count > 0 || rule.PointRules.Count > 0)
                     {
-                        <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
-                        <ul>
-                            @foreach (var colonneName in rule.UnconditionalColonneNames)
+                        <details class="sheet-rule-sublist-details">
+                            <summary id="@($"sheet-rule-details-toggle-{index}")"
+                                     @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
+                                @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count]
+                            </summary>
+                            @if (_expandedSheetRuleDetails.Contains(index))
                             {
-                                <li>@colonneName</li>
+                                <div id="@($"sheet-rule-details-content-{index}")">
+                                    @if (rule.UnconditionalColonneNames.Count > 0)
+                                    {
+                                        <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
+                                        <ul>
+                                            @foreach (var colonneName in rule.UnconditionalColonneNames)
+                                            {
+                                                <li>@colonneName</li>
+                                            }
+                                        </ul>
+                                    }
+                                    @if (rule.PointRules.Count > 0)
+                                    {
+                                        <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
+                                        <ul>
+                                            @foreach (var pointRule in rule.PointRules)
+                                            {
+                                                <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
                             }
-                        </ul>
-                    }
-                    @if (rule.PointRules.Count > 0)
-                    {
-                        <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
-                        <ul>
-                            @foreach (var pointRule in rule.PointRules)
-                            {
-                                <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
-                            }
-                        </ul>
+                        </details>
                     }
                     @if (_pendingDeleteIndex == index)
                     {
@@ -171,6 +185,7 @@ else
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _editingIndex;
     private int? _pendingDeleteIndex;
+    private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -215,6 +230,14 @@ else
         if (_editingIndex == index)
         {
             _editingIndex = null;
+        }
+    }
+
+    private void ToggleSheetRuleDetails(int index)
+    {
+        if (!_expandedSheetRuleDetails.Add(index))
+        {
+            _expandedSheetRuleDetails.Remove(index);
         }
     }
 

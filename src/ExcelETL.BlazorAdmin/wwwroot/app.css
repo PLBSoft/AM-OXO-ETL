@@ -81,6 +81,20 @@ h1:focus {
     font-size: 0.85rem;
 }
 
+/* Lot R (densification): compact multi-column layout for a field/column list once it's inside a
+   read-only .sheet-rule-card summary -- kept as a distinct class from .block-field-list itself so
+   the always-editable add/edit forms (SheetRuleForm/SheetGenerationRuleForm/BlockFieldForm/...)
+   keep their existing one-per-row layout unchanged. */
+.block-field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.25rem 1.5rem;
+}
+
+.block-field-grid > .block-field-item {
+    border-bottom: none;
+}
+
 .block-field-actions {
     display: flex;
     gap: 0.25rem;
@@ -106,15 +120,21 @@ h1:focus {
     gap: 0.5rem;
 }
 
-/* Per-sheet-rule card (read-only summary, ImportProfileEditor.razor): each rule gets a visually
-   distinct bordered card with a clear gap between cards, well above the internal spacing used
-   between block fields inside one card, so the eye reads card boundaries unambiguously. */
+/* Per-sheet-rule card (read-only summary, ImportProfileEditor.razor/ExportProfileEditor.razor):
+   each rule gets a visually distinct bordered card. */
 .sheet-rule-list {
     list-style: none;
     padding-left: 0;
     margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
+}
+
+/* Lot R (densification): responsive grid of cards -- as many columns as fit at >=480px each,
+   rather than one full-width card per row, so more of a 6-sheet profile is visible without
+   scrolling on a wide screen. Kept as a class distinct from .sheet-rule-list (list-reset/spacing)
+   so a dedicated selector exists for tests to assert against, per the ticket's own requirement. */
+.sheet-rule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
     gap: 1.5rem;
 }
 
@@ -126,6 +146,9 @@ h1:focus {
 
 .sheet-rule-editing-item {
     padding: 1rem 0;
+    /* An open edit form is wide (multiple input rows) -- let it span every grid column rather
+       than being squeezed into a single ~480px cell. */
+    grid-column: 1 / -1;
 }
 
 .sheet-rule-card-header {
@@ -142,4 +165,25 @@ h1:focus {
 
 .sheet-rule-card-meta {
     font-size: 0.85rem;
+}
+
+/* Lot R (densification, R3): unbounded-size sub-lists inside a .sheet-rule-card (import's
+   UnconditionalColonneNames/ConditionalPointRule; export's ColumnDefinition/PointColumnDefinition)
+   are collapsed behind a <details>/<summary> disclosure, always closed by default. The full list
+   markup itself is only rendered once expanded (a Razor @if on component state, not native
+   <details> open/closed CSS) so it is genuinely absent from the DOM while collapsed, not just
+   visually hidden -- see ImportProfileEditor.razor/ExportProfileEditor.razor's ToggleSheetRuleDetails. */
+.sheet-rule-sublist-details {
+    margin-top: 0.75rem;
+}
+
+.sheet-rule-sublist-details > summary {
+    cursor: pointer;
+    color: var(--bs-link-color);
+    font-size: 0.9rem;
+    list-style: none;
+}
+
+.sheet-rule-sublist-details > summary::-webkit-details-marker {
+    display: none;
 }

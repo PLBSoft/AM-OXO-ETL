@@ -201,10 +201,14 @@ public class ImportProfileEditorTests : BunitContext
         AddValidSheetRule(cut);
 
         cut.Markup.Should().Contain("ISOLEMENT");
+        cut.Find("#sheet-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
+
+        // Lot R3: unconditional colonnes/conditional point rules are collapsed by default.
+        cut.Markup.Should().NotContain("PROLOCK VANNES");
+        cut.Find("#sheet-rule-details-toggle-0").Click();
         cut.Markup.Should().Contain("PROLOCK VANNES");
         cut.Markup.Should().Contain("ZÉRO ENERGIE...");
         cut.Markup.Should().Contain("TypeElement");
-        cut.Find("#sheet-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
     });
 
     [Fact]
@@ -288,8 +292,12 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#profile-repere-prefix-input").GetAttribute("value").Should().Be(ImportProfile.DefaultReperePrefix);
             cut.Find("#profile-equipement-type-element-nom-input").GetAttribute("value").Should().Be("MAD TRAVAUX");
             cut.Markup.Should().Contain("ISOLEMENT");
-            cut.Markup.Should().Contain("PROLOCK VANNES");
             cut.Markup.Should().Contain("Identification");
+
+            // Lot R3: unconditional colonnes are collapsed by default.
+            cut.Markup.Should().NotContain("PROLOCK VANNES");
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+            cut.Markup.Should().Contain("PROLOCK VANNES");
         });
 
     [Fact]
@@ -464,6 +472,7 @@ public class ImportProfileEditorTests : BunitContext
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
 
             // Scoped to the read-only summary <li>, not the always-visible "Add a sheet rule" card
             // below it -- that card's own SheetRuleForm renders these same two headings unconditionally.
@@ -501,6 +510,7 @@ public class ImportProfileEditorTests : BunitContext
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
 
             var summaryItem = cut.Find("li.sheet-rule-card");
             var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
@@ -541,6 +551,107 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
             cut.FindAll("li.sheet-rule-card").Should().HaveCount(2);
+        });
+
+    // Lot R1: the sheet-rule cards' parent <ul> is a responsive CSS grid (auto-fill columns),
+    // not a one-card-per-row flex stack -- so more of a 6-sheet profile is visible without
+    // scrolling on a wide screen. Asserted on the class attribute only, per the ticket's own
+    // instruction (bUnit doesn't compute real layout).
+    [Fact]
+    public async Task SheetRuleList_HasGridCssClass() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var list = cut.Find("ul.sheet-rule-list");
+            list.ClassList.Should().Contain("sheet-rule-grid");
+
+            // No regression on the number of cards or their content.
+            cut.FindAll("li.sheet-rule-card").Should().HaveCount(2);
+        });
+
+    // Lot R2: the block-field list inside a read-only sheet-rule card is a compact multi-column
+    // grid, not one field per full-width row.
+    [Fact]
+    public async Task BlockFieldList_InSummary_HasGridCssClass() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithIsolementSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var fieldList = cut.Find("li.sheet-rule-card ul.block-field-list");
+            fieldList.ClassList.Should().Contain("block-field-grid");
+
+            // No regression on field content.
+            cut.FindAll(".block-field-name").Select(e => e.TextContent).Should().BeEquivalentTo("Identification", "TypeElement");
+        });
+
+    // Lot R3: UnconditionalColonneNames/ConditionalPointRule are collapsed behind a details/summary,
+    // closed by default -- the full list must be genuinely absent from the DOM, not just visually
+    // hidden (same rule as L2/NavMenu: FindAll empty, not a display:none check).
+    [Fact]
+    public async Task SheetRuleSublistDetails_CollapsedByDefault_FullListIsAbsentFromDom() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.FindAll("#sheet-rule-details-content-0").Should().BeEmpty();
+            cut.Find("li.sheet-rule-card").QuerySelectorAll("h5").Should().BeEmpty();
+
+            var summary = cut.Find("#sheet-rule-details-toggle-0");
+            summary.TextContent.Should().Contain("1");
+        });
+
+    [Fact]
+    public async Task SheetRuleSublistDetails_ClickingSummary_ExpandsFullListWithSameValues() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+            cut.Markup.Should().Contain("PROLOCK VANNES");
+        });
+
+    // Ticket's own requirement: the count shown in the (still-collapsed) summary must reflect
+    // whatever the list currently holds, not a value captured at first render.
+    [Fact]
+    public void SheetRuleSublistDetails_SummaryCount_ReflectsCurrentListSize_NotFirstRenderValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
+            cut.Find("#sheet-rule-step-input").Change("7");
+            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change("B9:E9");
+            cut.Find("#add-block-field-button").Click();
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+            cut.Find("#add-sheet-rule-button").Click();
+
+            cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("1");
+
+            // Add a second unconditional colonne via edit mode, save -- summary count must update.
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-unconditional-colonne-name-input").Change("DEPROLOCK VANNES");
+            cut.Find("#edit-0-add-unconditional-colonne-button").Click();
+            cut.Find("#save-sheet-rule-button-0").Click();
+
+            cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("2");
         });
 
     [Fact]

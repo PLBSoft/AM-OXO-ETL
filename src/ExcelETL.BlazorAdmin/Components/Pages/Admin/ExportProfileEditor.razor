@@ -49,7 +49,7 @@ else
     }
     else
     {
-        <ul class="sheet-rule-list">
+        <ul class="sheet-rule-list sheet-rule-grid">
             @for (var i = 0; i < _sheetRules.Count; i++)
             {
                 var index = i;
@@ -72,26 +72,40 @@ else
                             <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
                             <span class="sheet-rule-card-meta text-muted">@Loc["ExportProfileEditor_SheetMetadata", rule.PivotSource]</span>
                         </div>
-                        <ul class="block-field-list">
-                            @foreach (var column in rule.ColumnDefinitions)
-                            {
-                                <li class="block-field-item">
-                                    <div class="block-field-info">
-                                        <span class="block-field-name">@column.Header</span>
-                                        <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                        @if (rule.ColumnDefinitions.Count > 0 || rule.PointColumnDefinitions.Count > 0)
+                        {
+                            <details class="sheet-rule-sublist-details">
+                                <summary id="@($"sheet-rule-details-toggle-{index}")"
+                                         @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
+                                    @Loc["ExportProfileEditor_SheetRuleDetailsSummary", rule.ColumnDefinitions.Count, rule.PointColumnDefinitions.Count]
+                                </summary>
+                                @if (_expandedSheetRuleDetails.Contains(index))
+                                {
+                                    <div id="@($"sheet-rule-details-content-{index}")">
+                                        <ul class="block-field-list block-field-grid">
+                                            @foreach (var column in rule.ColumnDefinitions)
+                                            {
+                                                <li class="block-field-item">
+                                                    <div class="block-field-info">
+                                                        <span class="block-field-name">@column.Header</span>
+                                                        <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                                                    </div>
+                                                </li>
+                                            }
+                                            @foreach (var pointColumn in rule.PointColumnDefinitions)
+                                            {
+                                                <li class="block-field-item">
+                                                    <div class="block-field-info">
+                                                        <span class="block-field-name">@pointColumn.Header</span>
+                                                        <span class="block-field-range text-muted font-monospace">@pointColumn.ColonneNom · @pointColumn.MarkValue</span>
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
                                     </div>
-                                </li>
-                            }
-                            @foreach (var pointColumn in rule.PointColumnDefinitions)
-                            {
-                                <li class="block-field-item">
-                                    <div class="block-field-info">
-                                        <span class="block-field-name">@pointColumn.Header</span>
-                                        <span class="block-field-range text-muted font-monospace">@pointColumn.ColonneNom · @pointColumn.MarkValue</span>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
+                                }
+                            </details>
+                        }
                         @if (_pendingDeleteIndex == index)
                         {
                             <div class="right-aligned-actions mt-2">
@@ -147,6 +161,7 @@ else
     private readonly List<SheetGenerationRule> _sheetRules = [];
     private int? _editingIndex;
     private int? _pendingDeleteIndex;
+    private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -189,6 +204,14 @@ else
         if (_editingIndex == index)
         {
             _editingIndex = null;
+        }
+    }
+
+    private void ToggleSheetRuleDetails(int index)
+    {
+        if (!_expandedSheetRuleDetails.Add(index))
+        {
+            _expandedSheetRuleDetails.Remove(index);
         }
     }
 

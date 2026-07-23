@@ -412,6 +412,9 @@
   <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
     <value>Règles de point conditionnelles</value>
   </data>
+  <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
+    <value>{0} colonnes inconditionnelles, {1} règles conditionnelles</value>
+  </data>
   <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
     <value>Nom du champ source</value>
   </data>
@@ -648,6 +651,9 @@
   </data>
   <data name="ExportProfileEditor_SourceNotMapped" xml:space="preserve">
     <value>Non mappée pour l'instant</value>
+  </data>
+  <data name="ExportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
+    <value>{0} colonnes, {1} colonnes de points</value>
   </data>
   <data name="ExportProfileEditor_SourceLabel" xml:space="preserve">
     <value>Champ source</value>
