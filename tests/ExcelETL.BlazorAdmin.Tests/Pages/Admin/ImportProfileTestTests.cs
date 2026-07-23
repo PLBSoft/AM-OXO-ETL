@@ -13,6 +13,7 @@ using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -225,6 +226,17 @@ public class ImportProfileTestTests : BunitContext
 
         cut.FindComponent<InputFile>().Should().NotBeNull();
         cut.Markup.Should().Contain("No import profiles exist yet.");
+    });
+
+    [Fact]
+    public void BackToListButton_NavigatesToImportProfileList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#back-to-import-profiles-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/import-profiles");
     });
 
     [Fact]

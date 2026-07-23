@@ -18,6 +18,7 @@ using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -68,6 +69,21 @@ public class ExportProfileTestTests : BunitContext
         Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
         Services.AddLocalization();
         Services.AddSingleton<BusinessExceptionLocalizer>();
+    }
+
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
     }
 
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)
@@ -369,4 +385,15 @@ public class ExportProfileTestTests : BunitContext
         source.Should().NotContain("ExcelProcessingClient");
         source.Should().NotContain("IExcelDownloadInterop");
     }
+
+    [Fact]
+    public void BackToListButton_NavigatesToExportProfileList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#back-to-export-profiles-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/export-profiles");
+    });
 }

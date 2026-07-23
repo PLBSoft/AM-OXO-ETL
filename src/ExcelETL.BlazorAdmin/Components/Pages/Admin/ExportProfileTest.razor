@@ -20,10 +20,16 @@
 @inject IWorkbookWriter WorkbookWriter
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
 
 <PageTitle>@Loc["ExportProfileTest_PageTitle"]</PageTitle>
 
 <h1>@Loc["ExportProfileTest_PageTitle"]</h1>
+
+<button id="back-to-export-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
+    @Loc["ExportProfileTest_BackToListButton"]
+</button>
+
 <p>@Loc["ExportProfileTest_Instructions"]</p>
 
 @if (_importProfiles is null || _exportProfiles is null)
@@ -149,6 +155,8 @@ else
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
 
     private enum State { Idle, Processing, Success, Error }
+
+    private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
     private List<ImportProfile>? _importProfiles;
     private List<ExportProfile>? _exportProfiles;

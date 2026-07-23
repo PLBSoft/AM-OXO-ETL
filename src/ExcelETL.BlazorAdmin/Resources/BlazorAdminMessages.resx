@@ -472,6 +472,9 @@
   <data name="ImportProfileTest_Instructions" xml:space="preserve">
     <value>Upload an .xlsx file to run it through the extraction pipeline in memory, using the selected profile's sheet rules -- no file is archived and nothing is sent to the Web API.</value>
   </data>
+  <data name="ImportProfileTest_BackToListButton" xml:space="preserve">
+    <value>Back to list</value>
+  </data>
   <data name="ImportProfileTest_ProfileLabel" xml:space="preserve">
     <value>Import profile</value>
   </data>
@@ -711,6 +714,9 @@
   </data>
   <data name="ExportProfileTest_Instructions" xml:space="preserve">
     <value>Upload an .xlsx file to run it through the extraction pipeline, then generate a target workbook from an export profile -- both in memory, no file is archived and nothing is sent to the Web API.</value>
+  </data>
+  <data name="ExportProfileTest_BackToListButton" xml:space="preserve">
+    <value>Back to list</value>
   </data>
   <data name="ExportProfileTest_Loading" xml:space="preserve">
     <value>Loading...</value>

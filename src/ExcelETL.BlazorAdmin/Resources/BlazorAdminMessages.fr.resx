@@ -472,6 +472,9 @@
   <data name="ImportProfileTest_Instructions" xml:space="preserve">
     <value>Déposez un fichier .xlsx pour l'exécuter à travers le pipeline d'extraction en mémoire, avec les règles de feuille du profil sélectionné -- aucun fichier n'est archivé et rien n'est envoyé au Web API.</value>
   </data>
+  <data name="ImportProfileTest_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
+  </data>
   <data name="ImportProfileTest_ProfileLabel" xml:space="preserve">
     <value>Profil d'import</value>
   </data>
@@ -711,6 +714,9 @@
   </data>
   <data name="ExportProfileTest_Instructions" xml:space="preserve">
     <value>Déposez un fichier .xlsx pour l'exécuter à travers le pipeline d'extraction, puis générer un fichier cible à partir d'un profil d'export -- le tout en mémoire, aucun fichier n'est archivé et rien n'est envoyé au Web API.</value>
+  </data>
+  <data name="ExportProfileTest_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
   </data>
   <data name="ExportProfileTest_Loading" xml:space="preserve">
     <value>Chargement...</value>

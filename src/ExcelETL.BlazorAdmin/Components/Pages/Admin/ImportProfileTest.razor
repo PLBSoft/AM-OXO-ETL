@@ -15,10 +15,16 @@
 @inject IImportPipelineOrchestrator ImportPipelineOrchestrator
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
 
 <PageTitle>@Loc["ImportProfileTest_PageTitle"]</PageTitle>
 
 <h1>@Loc["ImportProfileTest_PageTitle"]</h1>
+
+<button id="back-to-import-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
+    @Loc["ImportProfileTest_BackToListButton"]
+</button>
+
 <p>@Loc["ImportProfileTest_Instructions"]</p>
 
 @if (_profiles is null)
@@ -207,6 +213,8 @@ else
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
 
     private enum State { Idle, Processing, Success, Error }
+
+    private void BackToList() => NavigationManager.NavigateTo("import-profiles");
 
     private List<ImportProfile>? _profiles;
     private Guid? _selectedProfileId;
