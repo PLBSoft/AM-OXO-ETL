@@ -127,6 +127,25 @@ Say so directly, explain the concrete downside, and propose the alternative — 
 
 ---
 
+## Utilisation du navigateur (Browser / Claude in Chrome)
+
+Réserver la vérification navigateur aux cas où un rendu visuel ou une
+interaction UI doit réellement être validé : mise en page Blazor,
+comportement d'un composant interactif, régression visuelle après un
+changement CSS/markup.
+
+Pour les modifications suivantes, préférer la compilation + les tests
+unitaires/bUnit existants plutôt que le navigateur :
+- réordonnancement de liens/éléments dans le NavMenu ou une sidebar
+- renommage, refactoring, changement de logique métier sans impact visuel
+- modifications de configuration, de seeders, de migrations EF
+- toute tâche où le résultat attendu est déjà couvert par un test
+
+En cas de doute, demander avant de lancer le navigateur plutôt que
+de l'utiliser par défaut.
+
+---
+
 ## CURRENT SOLUTION STATE (living reference — read this before exploring the codebase; update it at the end of each milestone)
 
 ### Projects
