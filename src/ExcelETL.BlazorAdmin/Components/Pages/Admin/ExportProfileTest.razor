@@ -121,30 +121,37 @@ else
 
                     @foreach (var sheet in _generatedWorkbook.Sheets)
                     {
-                        <h3>@sheet.Name</h3>
-                        <div class="generated-sheet-scroll">
-                            <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm table-striped generated-sheet-table">
-                                <thead>
-                                    <tr>
-                                        @foreach (var header in sheet.Headers)
-                                        {
-                                            <th>@header</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var row in sheet.Rows)
-                                    {
-                                        <tr>
-                                            @foreach (var cell in row.Cells)
+                        <details class="test-table-details" open="@(!_collapsedSections.Contains(sheet.Name))">
+                            <summary id="generated-sheet-@(sheet.Name)-details-toggle" @onclick="() => ToggleSection(sheet.Name)" @onclick:preventDefault="true">
+                                @Loc["ExportProfileTest_SheetNameWithCount", sheet.Name, GetGeneratedSheetItemCount(sheet)]
+                            </summary>
+                            @if (!_collapsedSections.Contains(sheet.Name))
+                            {
+                                <div class="generated-sheet-scroll">
+                                    <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm table-striped generated-sheet-table">
+                                        <thead>
+                                            <tr>
+                                                @foreach (var header in sheet.Headers)
+                                                {
+                                                    <th>@header</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var row in sheet.Rows)
                                             {
-                                                <td>@cell</td>
+                                                <tr>
+                                                    @foreach (var cell in row.Cells)
+                                                    {
+                                                        <td>@cell</td>
+                                                    }
+                                                </tr>
                                             }
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </details>
                     }
                 </div>
             }
@@ -169,8 +176,48 @@ else
     private ImportResult? _importResult;
     private string? _generationErrorMessage;
     private GeneratedWorkbook? _generatedWorkbook;
+    private ExportProfile? _generatedExportProfile;
     private string? _downloadDataUrl;
     private string? _downloadFileName;
+    private readonly HashSet<string> _collapsedSections = [];
+
+    private void ToggleSection(string section)
+    {
+        if (!_collapsedSections.Add(section))
+        {
+            _collapsedSections.Remove(section);
+        }
+    }
+
+    // A sheet's item count depends on which pivot fed it, which GeneratedSheet itself doesn't carry
+    // (it's just headers/rows) -- resolved via the ExportProfile rule that produced it instead.
+    // Equipement/Isolement rules always produce exactly one physically-named sheet (SheetName as-is);
+    // anything left over is, by elimination, a PivotSource.TacheMultiple dynamic sheet, matched back to
+    // its TypeTacheMultipleCode group via the same sanitizer the engine used to name it (Lot T3/T4).
+    private int GetGeneratedSheetItemCount(GeneratedSheet sheet)
+    {
+        if (_importResult is null || _generatedExportProfile is null)
+        {
+            return 0;
+        }
+
+        var rule = _generatedExportProfile.SheetRules.FirstOrDefault(
+            r => r.SheetName == sheet.Name && r.PivotSource is PivotSource.Equipement or PivotSource.Isolement);
+
+        if (rule is { PivotSource: PivotSource.Equipement })
+        {
+            return _importResult.Equipement is null ? 0 : 1;
+        }
+
+        if (rule is { PivotSource: PivotSource.Isolement })
+        {
+            return _importResult.Isolements.Count;
+        }
+
+        // TacheMultiple: exclude "ligne de mise en page" rows (EstFactice, blank Ordre) from the count.
+        return _importResult.TachesMultiples.Count(
+            tache => tache.Ordre.HasValue && ExcelSheetNameSanitizer.Sanitize(tache.TypeTacheMultipleCode) == sheet.Name);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,6 +234,7 @@ else
 
         _importResult = null;
         _generatedWorkbook = null;
+        _generatedExportProfile = null;
         _generationErrorMessage = null;
         _downloadDataUrl = null;
 
@@ -231,6 +279,7 @@ else
     {
         _generationErrorMessage = null;
         _generatedWorkbook = null;
+        _generatedExportProfile = null;
         _downloadDataUrl = null;
 
         if (_importResult?.Equipement is null)
@@ -249,6 +298,7 @@ else
         try
         {
             _generatedWorkbook = SheetGenerationEngine.Generate(_importResult, exportProfile);
+            _generatedExportProfile = exportProfile;
 
             using var stream = new MemoryStream();
             WorkbookWriter.Write(_generatedWorkbook, stream);
@@ -259,6 +309,7 @@ else
         catch (Exception ex)
         {
             _generatedWorkbook = null;
+            _generatedExportProfile = null;
             _generationErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
         }
     }

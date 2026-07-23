@@ -769,4 +769,7 @@
   <data name="ExportProfileTest_DownloadLinkText" xml:space="preserve">
     <value>Download generated workbook</value>
   </data>
+  <data name="ExportProfileTest_SheetNameWithCount" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
 </root>

@@ -467,6 +467,181 @@ public class ExportProfileTestTests : BunitContext
             cut.FindAll("table[id^='generated-sheet-TM_']").Should().BeEmpty();
         });
 
+    // Mirrors ImportProfileTest's own collapsible-section tests (test-table-details/toggle) --
+    // same mechanic, applied here to the dynamic per-sheet generated-workbook preview.
+    [Fact]
+    public async Task GeneratedSheetTables_AreOpenByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            cut.Find("#generated-sheet-Parents-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+            cut.Find("#generated-sheet-Enfants-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+            cut.Find("#generated-sheet-Enfants-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task ClickingSheetSummary_CollapsesTable_AndRemovesItFromTheDom() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            cut.Find("#generated-sheet-Parents-details-toggle").Click();
+
+            cut.FindAll("#generated-sheet-Parents-table").Should().BeEmpty();
+            cut.Find("#generated-sheet-Parents-details-toggle").ParentElement!.HasAttribute("open").Should().BeFalse();
+            cut.Find("#generated-sheet-Enfants-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task ClickingSheetSummaryTwice_ReExpandsTable() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            cut.Find("#generated-sheet-Parents-details-toggle").Click();
+            cut.Find("#generated-sheet-Parents-details-toggle").Click();
+
+            cut.Find("#generated-sheet-Parents-table").Should().NotBeNull();
+            cut.Find("#generated-sheet-Parents-details-toggle").ParentElement!.HasAttribute("open").Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task CollapsingOneSheet_LeavesOtherSheetExpanded() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            cut.Find("#generated-sheet-Enfants-details-toggle").Click();
+
+            cut.FindAll("#generated-sheet-Enfants-table").Should().BeEmpty();
+            cut.Find("#generated-sheet-Parents-table").Should().NotBeNull();
+        });
+
+    [Fact]
+    public async Task GeneratedSheetTables_AreWrappedInAStickyHeaderScrollContainer() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            foreach (var sheetName in new[] { "Parents", "Enfants" })
+            {
+                var table = cut.Find($"#generated-sheet-{sheetName}-table");
+                table.ClassList.Should().Contain("generated-sheet-table");
+                table.ParentElement!.ClassList.Should().Contain("generated-sheet-scroll");
+            }
+        });
+
+    [Fact]
+    public async Task GeneratedSheetSummaries_DisplayItemCountsNextToSheetName_ExcludingFacticeTacheMultipleRows() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileWithTacheMultipleRuleAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            // Compute expectations independently, straight from the real pipeline, rather than hardcoding
+            // fixture-specific numbers that could silently drift if the fixture changes.
+            var orchestrator = Services.GetRequiredService<IImportPipelineOrchestrator>();
+            using var reader = new ClosedXmlWorkbookReader(File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx")));
+            var importResult = orchestrator.Run(reader, importProfile);
+
+            var expectedIsolementCount = importResult.Isolements.Count;
+            var expectedMadCount = importResult.TachesMultiples.Count(t => t.Ordre.HasValue && t.TypeTacheMultipleCode == "TM_PROC_MAD");
+            var expectedRelCount = importResult.TachesMultiples.Count(t => t.Ordre.HasValue && t.TypeTacheMultipleCode == "TM_PROC_REL");
+
+            // Sanity: this fixture genuinely has at least one "ligne de mise en page" (blank Ordre) row,
+            // so the exclusion below is actually exercised, not vacuously true.
+            importResult.TachesMultiples.Count(t => !t.Ordre.HasValue).Should().BeGreaterThan(0);
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Parents-table").Should().NotBeEmpty());
+
+            cut.Find("#generated-sheet-Parents-details-toggle").TextContent.Should().Contain("Parents (1)");
+            cut.Find("#generated-sheet-Enfants-details-toggle").TextContent.Should().Contain($"Enfants ({expectedIsolementCount})");
+            cut.Find("#generated-sheet-TM_PROC_MAD-details-toggle").TextContent.Should().Contain($"TM_PROC_MAD ({expectedMadCount})");
+            cut.Find("#generated-sheet-TM_PROC_REL-details-toggle").TextContent.Should().Contain($"TM_PROC_REL ({expectedRelCount})");
+        });
+
     [Fact]
     public void Component_NeverReferencesHttpClientOrExcelProcessingClient()
     {
