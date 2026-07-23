@@ -230,12 +230,55 @@ figée par règle de profil.
 
 ---
 
+## T8. Infrastructure — migration idempotente du profil d'export déjà seedé
+
+**Contexte du problème** (découvert après livraison initiale de T1-T7) : `DefaultProfileSeeder`
+ne modifie jamais un profil déjà présent en base (comportement voulu, pour ne pas écraser une
+personnalisation admin — voir `tickets-tdd-seed-profils-defaut.md`). Les profils d'export déjà
+seedés **avant** ce lot (créés lors du Lot M) ne reçoivent donc jamais la règle "Tâches multiples"
+ajoutée en T5, même après mise à jour du code — le seeder ne fait rien puisque le profil existe
+déjà. Symptôme observé : aucune feuille Tâches Multiples dans `/export-profiles/test` ni dans le
+fichier généré, alors que T1-T7 sont livrés et verts. Confirmé en environnement réel : la règle
+"Tâches multiples" n'apparaît pas dans `/export-profiles` pour le profil par défaut existant.
+
+**Comportement attendu** : au démarrage, en complément du seeding initial (profil absent →
+création complète, comportement T5 inchangé), ajouter une vérification **ciblée et distincte** :
+si le profil d'export par défaut (retrouvé par son Guid stable) existe déjà **et ne contient
+aucune `SheetGenerationRule` avec `PivotSource = TacheMultiple`**, ajouter uniquement cette règle
+(celle définie en T5) à ce profil existant, sans toucher aux règles `Parents`/`Enfants` existantes
+ni à une éventuelle personnalisation admin de celles-ci.
+
+Ce n'est pas un réseeding généralisé : un admin ayant explicitement retiré la règle Tâches
+Multiples plus tard ne doit pas se la voir réimposée indéfiniment à chaque démarrage — cette
+migration ne doit s'appliquer qu'une fois, tant que la règle n'a jamais existé sur ce profil.
+Le critère retenu ici (absence de la règle ⇒ ajout) est délibérément le plus simple possible,
+sans marqueur de migration dédié ; **à revoir avec Simon si ce critère se révèle trop grossier**
+(ex. si un admin retire la règle et qu'elle réapparaît au redémarrage suivant — comportement à
+observer avant d'introduire un flag de migration séparé, pas à anticiper ici).
+
+**Tests** (Infrastructure) :
+- Profil d'export pré-existant en base **sans** la règle Tâches Multiples → migration l'ajoute une
+  fois, les règles `Parents`/`Enfants` existantes restent structurellement inchangées
+  (non-régression explicite).
+- Profil déjà à jour (règle déjà présente) → aucune modification apportée, pas de doublon de
+  règle créé.
+- Ré-exécution multiple du processus de seeding/migration (simulateur de plusieurs redémarrages)
+  → toujours exactement une seule règle Tâches Multiples sur le profil (idempotence de la
+  migration elle-même, pas seulement du seeding initial).
+- Non-régression : `DefaultProfileSeederPipelineIntegrationTests` existants (contre les 3
+  fixtures réelles) restent verts après ajout de cette migration.
+
+---
+
 ## Note d'efficacité d'implémentation
 
-Ordre recommandé pour limiter les allers-retours : **T1 → T2 → T3 → T4 → T5 → T6 → T7**. T1-T4
+Ordre recommandé pour limiter les allers-retours : **T1 → T2 → T3 → T4 → T5 → T6 → T7 → T8**. T1-T4
 (Domain/Application) sont indépendants de toute UI et peuvent être validés intégralement par tests
 unitaires/intégration avant de toucher à Blazor (T6/T7), qui ne fait que refléter un modèle déjà
 stable. Avant de commencer T5, vérifier concrètement (via les 3 fichiers fixtures réels ou les
 tests d'intégration existants du pipeline d'extraction) quelles fixtures produisent effectivement
 des `TacheMultiplePivot` et avec quels codes — évite d'écrire un test T5 contre une fixture qui ne
-contient en réalité aucune tâche multiple.
+contient en réalité aucune tâche multiple. **T8 est un correctif post-livraison** : à n'exécuter
+que sur un environnement où T1-T7 sont déjà déployés et où le profil par défaut a déjà été seedé
+avant l'ajout de la règle T5 — inutile (et sans effet) sur un environnement seedé pour la première
+fois après T5, où la règle est créée directement par le chemin nominal.

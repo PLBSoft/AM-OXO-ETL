@@ -63,13 +63,37 @@ public class DefaultProfileSeeder(
     private async Task SeedExportProfileAsync(CancellationToken cancellationToken)
     {
         var existing = await exportProfileStore.GetByIdAsync(ExportProfileId, cancellationToken);
-        if (existing is not null)
+        if (existing is null)
+        {
+            await exportProfileStore.SaveAsync(BuildDefaultExportProfile(), cancellationToken);
+            logger.LogInformation("Seeded default export profile {ProfileId}", ExportProfileId);
+            return;
+        }
+
+        await MigrateTacheMultipleSheetRuleIfMissingAsync(existing, cancellationToken);
+    }
+
+    // T8 (docs/tickets-tdd-export-taches-multiples.md): a profile seeded before this lot's SheetRules
+    // list gained the TacheMultiple rule (Lot M) never receives it, since SeedExportProfileAsync's own
+    // "never touch an existing profile" rule (client-confirmed, see this class's own header comment)
+    // means the nominal seeding path above is a no-op for it forever. This is a narrow, one-time,
+    // additive migration -- not a general reseed: it only ever appends the exact rule T5 already
+    // defines, only when no TacheMultiple rule exists yet, and never touches the Parents/Enfants rules
+    // (or any admin customization already made to them). An admin who later deliberately removes the
+    // TacheMultiple rule will see it reappear on the next restart under this simple "absent => add"
+    // check -- flagged in the ticket as the simplest workable rule for now, to be revisited with a
+    // dedicated migration marker only if that turns out to be a real problem in practice.
+    private async Task MigrateTacheMultipleSheetRuleIfMissingAsync(ExportProfile existing, CancellationToken cancellationToken)
+    {
+        if (existing.SheetRules.Any(rule => rule.PivotSource == PivotSource.TacheMultiple))
         {
             return;
         }
 
-        await exportProfileStore.SaveAsync(BuildDefaultExportProfile(), cancellationToken);
-        logger.LogInformation("Seeded default export profile {ProfileId}", ExportProfileId);
+        var migrated = new ExportProfile(existing.Id, existing.Name, [.. existing.SheetRules, BuildTacheMultipleSheetRule()]);
+        await exportProfileStore.SaveAsync(migrated, cancellationToken);
+        logger.LogInformation(
+            "Migrated default export profile {ProfileId}: added the missing TacheMultiple sheet rule", ExportProfileId);
     }
 
     // Coordinates transcribed from spec-extraction-fichier-source-oxo.md, verified word for word
@@ -189,10 +213,11 @@ public class DefaultProfileSeeder(
     //
     // The third rule (Tâches multiples, Lot T) needs no Guid of its own, unlike ImportProfileId/
     // ExportProfileId above -- SheetGenerationRule is a plain record with no identity property (see
-    // its own Domain source comment), not an aggregate root. Idempotence for this rule is already fully
-    // covered by ExportProfileId: SeedExportProfileAsync only ever calls BuildDefaultExportProfile()
-    // once, the very first time no profile exists under that Id, so this rule can never be
-    // re-created/duplicated on a later restart either.
+    // its own Domain source comment), not an aggregate root. For a brand-new profile, idempotence is
+    // fully covered by ExportProfileId: this method only ever runs once, the very first time no
+    // profile exists under that Id. For a profile seeded before this rule existed, T8's own
+    // MigrateTacheMultipleSheetRuleIfMissingAsync is the (separate, narrower) idempotence guarantee --
+    // see its own comment below.
     private static ExportProfile BuildDefaultExportProfile() => new(
         ExportProfileId, ProfileName,
         [
@@ -242,16 +267,21 @@ public class DefaultProfileSeeder(
                     new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
                 ]),
-            new SheetGenerationRule(
-                "Tâches multiples",
-                PivotSource.TacheMultiple,
-                [
-                    new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
-                    new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
-                    new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
-                    new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
-                    new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
-                ],
-                [])
+            BuildTacheMultipleSheetRule()
         ]);
+
+    // Extracted (T8) so the exact same rule definition is shared between the nominal seeding path
+    // above (brand-new profile) and the migration path (MigrateTacheMultipleSheetRuleIfMissingAsync,
+    // an already-seeded profile that predates this rule) -- one definition, never two copies to drift.
+    private static SheetGenerationRule BuildTacheMultipleSheetRule() => new(
+        "Tâches multiples",
+        PivotSource.TacheMultiple,
+        [
+            new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
+            new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
+            new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
+            new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
+            new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
+        ],
+        []);
 }

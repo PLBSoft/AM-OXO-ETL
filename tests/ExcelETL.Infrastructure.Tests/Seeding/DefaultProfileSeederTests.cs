@@ -217,4 +217,102 @@ public class DefaultProfileSeederTests
         parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().BeEquivalentTo(
             ["TRAVAUX COMPLET", "TRAVAUX DETAIL"]);
     }
+
+    // T8 (docs/tickets-tdd-export-taches-multiples.md): simulates a profile seeded before this lot
+    // (Lot M-era, Parents/Enfants only) still sitting under the stable ExportProfileId -- built and
+    // saved directly through the store, bypassing the seeder entirely, exactly like a real profile
+    // that predates the TacheMultiple rule would look today.
+    private async Task<ExportProfile> SeedPreExistingProfileWithoutTacheMultipleRuleAsync(
+        IExportProfileStore exportProfileStore, string name = "Profil OXO standard")
+    {
+        var preExisting = new ExportProfile(
+            DefaultProfileSeeder.ExportProfileId, name,
+            [
+                new SheetGenerationRule(
+                    "Parents", PivotSource.Equipement,
+                    [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "TRAVAUX COMPLET")]),
+                new SheetGenerationRule(
+                    "Enfants", PivotSource.Isolement,
+                    [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)],
+                    [new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES")])
+            ]);
+
+        await exportProfileStore.SaveAsync(preExisting);
+        return preExisting;
+    }
+
+    [Fact]
+    public async Task SeedAsync_WhenExistingExportProfileLacksTacheMultipleRule_AddsItOnce()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await SeedPreExistingProfileWithoutTacheMultipleRuleAsync(exportProfileStore);
+
+        await seeder.SeedAsync();
+
+        var migrated = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+        // Order among owned SheetRules isn't guaranteed by the EF Core InMemory provider across a
+        // delete+reinsert round trip (no explicit ordering column is configured) -- T8 only cares that
+        // all 3 rules are present, not their relative order, so this asserts membership, not sequence.
+        migrated!.SheetRules.Select(r => r.SheetName).Should().BeEquivalentTo(["Parents", "Enfants", "Tâches multiples"]);
+
+        var tachesMultiples = migrated.SheetRules.Single(r => r.SheetName == "Tâches multiples");
+        tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
+        tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
+        tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
+        [
+            PivotFieldRef.TacheMultipleOrdre,
+            PivotFieldRef.TacheMultipleAction,
+            PivotFieldRef.TacheMultipleActeur,
+            PivotFieldRef.TacheMultipleRisques,
+            PivotFieldRef.TacheMultipleDateValidation
+        ]);
+    }
+
+    [Fact]
+    public async Task SeedAsync_WhenExistingExportProfileLacksTacheMultipleRule_LeavesParentsAndEnfantsStructurallyUnchanged()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        var preExisting = await SeedPreExistingProfileWithoutTacheMultipleRuleAsync(exportProfileStore, "Renamed by an admin");
+
+        await seeder.SeedAsync();
+
+        var migrated = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        // Admin customizations (a renamed profile, a trimmed-down Point column set) must survive the
+        // migration untouched -- only the missing rule is appended.
+        migrated!.Name.Should().Be("Renamed by an admin");
+        migrated.SheetRules.Should().Contain(preExisting.SheetRules[0]);
+        migrated.SheetRules.Should().Contain(preExisting.SheetRules[1]);
+    }
+
+    [Fact]
+    public async Task SeedAsync_WhenExistingExportProfileAlreadyHasTacheMultipleRule_DoesNotModifyIt()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await seeder.SeedAsync(); // creates the full profile, TacheMultiple rule included from the start
+
+        var beforeSecondRun = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        await seeder.SeedAsync();
+
+        var afterSecondRun = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+        afterSecondRun.Should().BeEquivalentTo(beforeSecondRun);
+        afterSecondRun!.SheetRules.Count(r => r.PivotSource == PivotSource.TacheMultiple).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SeedAsync_CalledRepeatedlyAfterMigration_NeverCreatesMoreThanOneTacheMultipleRule()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await SeedPreExistingProfileWithoutTacheMultipleRuleAsync(exportProfileStore);
+
+        await seeder.SeedAsync();
+        await seeder.SeedAsync();
+        await seeder.SeedAsync();
+
+        var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+        profile!.SheetRules.Count(r => r.PivotSource == PivotSource.TacheMultiple).Should().Be(1);
+        profile.SheetRules.Select(r => r.SheetName).Should().BeEquivalentTo(["Parents", "Enfants", "Tâches multiples"]);
+    }
 }
