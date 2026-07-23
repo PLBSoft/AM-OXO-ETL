@@ -94,40 +94,41 @@ else
                             </li>
                         }
                     </ul>
-                    @if (rule.UnconditionalColonneNames.Count > 0 || rule.PointRules.Count > 0)
-                    {
-                        <details class="sheet-rule-sublist-details">
-                            <summary id="@($"sheet-rule-details-toggle-{index}")"
-                                     @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
-                                @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count]
-                            </summary>
-                            @if (_expandedSheetRuleDetails.Contains(index))
-                            {
-                                <div id="@($"sheet-rule-details-content-{index}")">
-                                    @if (rule.UnconditionalColonneNames.Count > 0)
-                                    {
-                                        <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
-                                        <ul>
-                                            @foreach (var colonneName in rule.UnconditionalColonneNames)
-                                            {
-                                                <li>@colonneName</li>
-                                            }
-                                        </ul>
-                                    }
-                                    @if (rule.PointRules.Count > 0)
-                                    {
-                                        <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
-                                        <ul>
-                                            @foreach (var pointRule in rule.PointRules)
-                                            {
-                                                <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
-                                            }
-                                        </ul>
-                                    }
-                                </div>
-                            }
-                        </details>
-                    }
+                    <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">
+                        <summary id="@($"sheet-rule-details-toggle-{index}")"
+                                 @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
+                            @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count]
+                        </summary>
+                        @if (_expandedSheetRuleDetails.Contains(index))
+                        {
+                            <div id="@($"sheet-rule-details-content-{index}")">
+                                @if (rule.UnconditionalColonneNames.Count > 0)
+                                {
+                                    <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
+                                    <ul>
+                                        @foreach (var colonneName in rule.UnconditionalColonneNames)
+                                        {
+                                            <li>@colonneName</li>
+                                        }
+                                    </ul>
+                                }
+                                @if (rule.PointRules.Count > 0)
+                                {
+                                    <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
+                                    <ul>
+                                        @foreach (var pointRule in rule.PointRules)
+                                        {
+                                            <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+                                        }
+                                    </ul>
+                                }
+                                @if (rule.UnconditionalColonneNames.Count == 0 && rule.PointRules.Count == 0)
+                                {
+                                    <p>@Loc["ImportProfileEditor_NoSheetRuleSublistItems"]</p>
+                                }
+                            </div>
+                        }
+                    </details>
                     @if (_pendingDeleteIndex == index)
                     {
                         <div class="right-aligned-actions mt-2">

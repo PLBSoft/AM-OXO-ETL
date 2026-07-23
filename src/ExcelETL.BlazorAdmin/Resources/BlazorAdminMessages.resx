@@ -415,6 +415,9 @@
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
     <value>{0} unconditional colonnes, {1} conditional rules</value>
   </data>
+  <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
+    <value>No unconditional colonnes or conditional point rules for this sheet.</value>
+  </data>
   <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
     <value>Source field name</value>
   </data>
@@ -654,6 +657,9 @@
   </data>
   <data name="ExportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
     <value>{0} columns, {1} point columns</value>
+  </data>
+  <data name="ExportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
+    <value>No columns or point columns for this sheet.</value>
   </data>
   <data name="ExportProfileEditor_SourceLabel" xml:space="preserve">
     <value>Source field</value>

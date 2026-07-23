@@ -72,16 +72,16 @@ else
                             <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
                             <span class="sheet-rule-card-meta text-muted">@Loc["ExportProfileEditor_SheetMetadata", rule.PivotSource]</span>
                         </div>
-                        @if (rule.ColumnDefinitions.Count > 0 || rule.PointColumnDefinitions.Count > 0)
-                        {
-                            <details class="sheet-rule-sublist-details">
-                                <summary id="@($"sheet-rule-details-toggle-{index}")"
-                                         @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
-                                    @Loc["ExportProfileEditor_SheetRuleDetailsSummary", rule.ColumnDefinitions.Count, rule.PointColumnDefinitions.Count]
-                                </summary>
-                                @if (_expandedSheetRuleDetails.Contains(index))
-                                {
-                                    <div id="@($"sheet-rule-details-content-{index}")">
+                        <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">
+                            <summary id="@($"sheet-rule-details-toggle-{index}")"
+                                     @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
+                                @Loc["ExportProfileEditor_SheetRuleDetailsSummary", rule.ColumnDefinitions.Count, rule.PointColumnDefinitions.Count]
+                            </summary>
+                            @if (_expandedSheetRuleDetails.Contains(index))
+                            {
+                                <div id="@($"sheet-rule-details-content-{index}")">
+                                    @if (rule.ColumnDefinitions.Count > 0 || rule.PointColumnDefinitions.Count > 0)
+                                    {
                                         <ul class="block-field-list block-field-grid">
                                             @foreach (var column in rule.ColumnDefinitions)
                                             {
@@ -102,10 +102,14 @@ else
                                                 </li>
                                             }
                                         </ul>
-                                    </div>
-                                }
-                            </details>
-                        }
+                                    }
+                                    else
+                                    {
+                                        <p>@Loc["ExportProfileEditor_NoSheetRuleSublistItems"]</p>
+                                    }
+                                </div>
+                            }
+                        </details>
                         @if (_pendingDeleteIndex == index)
                         {
                             <div class="right-aligned-actions mt-2">

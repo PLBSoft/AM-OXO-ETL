@@ -383,6 +383,87 @@ public class ExportProfileEditorTests : BunitContext
         cut.Markup.Should().Contain("TRAVAUX COMPLET");
     });
 
+    // Ticket R3 (correctif): clicking the summary a second time must collapse the sublist again.
+    [Fact]
+    public void SheetRuleSublistDetails_ClickingSummaryTwice_CollapsesAgain() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        var toggle = cut.Find("#sheet-rule-details-toggle-0");
+
+        toggle.Click();
+        cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+
+        toggle.Click();
+        cut.FindAll("#sheet-rule-details-content-0").Should().BeEmpty();
+    });
+
+    // Ticket R3 (correctif): expanding one card's sublist must not affect any other card's state.
+    [Fact]
+    public void SheetRuleSublistDetails_ExpandingOneCard_DoesNotAffectOtherCards() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+        cut.Find("#column-header-input").Change("Numéro");
+        cut.Find("#column-source-select").Change(nameof(PivotFieldRef.IsolementRepere));
+        cut.Find("#add-column-definition-button").Click();
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+
+        cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+        cut.FindAll("#sheet-rule-details-content-1").Should().BeEmpty();
+    });
+
+    // Ticket R3 (correctif): a sheet rule with neither columns nor point columns must still expose
+    // a working, clickable toggle -- previously the whole <details> block was omitted entirely.
+    [Fact]
+    public void SheetRuleSublistDetails_WithEmptySublist_StillRendersToggle() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("0");
+    });
+
+    [Fact]
+    public void SheetRuleSublistDetails_WithEmptySublist_ClickingShowsCoherentEmptyState() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+
+        cut.Find("#sheet-rule-details-content-0").TextContent
+            .Should().Contain("No columns or point columns for this sheet.");
+    });
+
+    // Ticket R3 (correctif), Refactor step: the native <details> element's `open` attribute must
+    // reflect the C# expansion state so assistive technology gets correct disclosure semantics.
+    [Fact]
+    public void SheetRuleSublistDetails_OpenAttribute_ReflectsExpandedState() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+        var details = cut.Find("details.sheet-rule-sublist-details");
+        details.HasAttribute("open").Should().BeFalse();
+
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+        details = cut.Find("details.sheet-rule-sublist-details");
+        details.HasAttribute("open").Should().BeTrue();
+    });
+
     // Ticket's own requirement: the count shown in the (still-collapsed) summary must reflect
     // whatever the list currently holds, not a value captured at first render.
     [Fact]

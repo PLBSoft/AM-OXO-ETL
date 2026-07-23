@@ -624,6 +624,107 @@ public class ImportProfileEditorTests : BunitContext
             cut.Markup.Should().Contain("PROLOCK VANNES");
         });
 
+    // Ticket R3 (correctif): clicking the summary a second time must collapse the sublist again --
+    // no prior test exercised this bidirectional toggle explicitly.
+    [Fact]
+    public async Task SheetRuleSublistDetails_ClickingSummaryTwice_CollapsesAgain() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            var toggle = cut.Find("#sheet-rule-details-toggle-0");
+
+            toggle.Click();
+            cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+
+            toggle.Click();
+            cut.FindAll("#sheet-rule-details-content-0").Should().BeEmpty();
+        });
+
+    // Ticket R3 (correctif): expanding one card's sublist must not affect any other card's state.
+    [Fact]
+    public async Task SheetRuleSublistDetails_ExpandingOneCard_DoesNotAffectOtherCards() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            cut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
+            cut.FindAll("#sheet-rule-details-content-1").Should().BeEmpty();
+        });
+
+    // Ticket R3 (correctif): a sheet rule with neither unconditional colonnes nor conditional point
+    // rules must still expose a working, clickable toggle -- previously the whole <details> block
+    // was omitted for this case, so there was nothing to click at all.
+    [Fact]
+    public async Task SheetRuleSublistDetails_WithEmptySublist_StillRendersToggle() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithEmptySublistSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#sheet-rule-details-toggle-0").TextContent.Should().Contain("0");
+        });
+
+    [Fact]
+    public async Task SheetRuleSublistDetails_WithEmptySublist_ClickingShowsCoherentEmptyState() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithEmptySublistSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            cut.Find("#sheet-rule-details-content-0").TextContent
+                .Should().Contain("No unconditional colonnes or conditional point rules for this sheet.");
+            cut.Find("li.sheet-rule-card").QuerySelectorAll("h5").Should().BeEmpty();
+        });
+
+    // Ticket R3 (correctif), Refactor step: the native <details> element's `open` attribute must
+    // reflect the C# expansion state so assistive technology gets correct disclosure semantics --
+    // the click handler prevents the browser's own native toggle (@onclick:preventDefault), so
+    // without this binding `open` would never be set by anything.
+    [Fact]
+    public async Task SheetRuleSublistDetails_OpenAttribute_ReflectsExpandedState() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            var details = cut.Find("details.sheet-rule-sublist-details");
+            details.HasAttribute("open").Should().BeFalse();
+
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+            details = cut.Find("details.sheet-rule-sublist-details");
+            details.HasAttribute("open").Should().BeTrue();
+        });
+
+    private static ImportProfile BuildProfileWithEmptySublistSheetRule(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "PROCEDURE",
+            firstBlockStartRow: 9,
+            step: 1,
+            stopFieldName: "Action",
+            fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+
+        var sheetRule = new SheetExtractionRule(
+            "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
+
+        return new ImportProfile(name, equipementTypeElementNom, [sheetRule]);
+    }
+
     // Ticket's own requirement: the count shown in the (still-collapsed) summary must reflect
     // whatever the list currently holds, not a value captured at first render.
     [Fact]
