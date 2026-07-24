@@ -656,6 +656,35 @@ public class ExportProfileTestTests : BunitContext
         source.Should().NotContain("IExcelDownloadInterop");
     }
 
+    // V13: result block as a card component instead of a plain alert, content unchanged.
+    [Fact]
+    public async Task GeneratedWorkbookResultBlock_IsACardWithShadowAndSuccessTint_NotAPlainAlert() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#download-generated-workbook-link").Should().NotBeEmpty());
+
+            var resultBlock = cut.Find("#download-generated-workbook-link").ParentElement!.ParentElement!;
+            resultBlock.ClassList.Should().Contain("card");
+            resultBlock.ClassList.Should().Contain("shadow-sm");
+            resultBlock.ClassList.Should().Contain("bg-success-subtle");
+            resultBlock.ClassList.Should().NotContain("alert-success");
+            cut.Find("#generated-sheet-Parents-table").Should().NotBeNull();
+        });
+
     // V11: large (44-48px) touch targets on the selects and action buttons.
     [Fact]
     public void ImportProfileSelect_HasLargeSizeClass() => WithCulture("en-US", () =>

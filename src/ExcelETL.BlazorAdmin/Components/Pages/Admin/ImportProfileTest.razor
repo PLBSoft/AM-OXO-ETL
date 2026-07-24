@@ -100,7 +100,11 @@ else
         }
         else
         {
-            <div id="test-status" class="alert alert-success">
+            <!-- V13: result block as a card component (shadow + success-tinted background) instead
+                 of a plain alert -- the ticket's own "aperçu tabulaire" wording, not a transient
+                 status message like the Processing/Error branches above, which stay plain alerts. -->
+            <div id="test-status" class="card shadow-sm bg-success-subtle">
+              <div class="card-body">
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("equipement"))">
                     <summary id="equipement-details-toggle" @onclick='() => ToggleSection("equipement")' @onclick:preventDefault="true">
                         @Loc["ImportProfileTest_EquipementHeading"]
@@ -264,6 +268,7 @@ else
                         }
                     </details>
                 }
+              </div>
             </div>
         }
     }

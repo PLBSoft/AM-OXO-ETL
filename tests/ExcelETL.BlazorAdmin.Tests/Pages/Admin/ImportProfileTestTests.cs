@@ -220,6 +220,28 @@ public class ImportProfileTestTests : BunitContext
                 [])
         ]);
 
+    // V13: result block as a card component instead of a plain alert, content unchanged.
+    [Fact]
+    public async Task Run_C7401Fixture_ResultBlock_IsACardWithShadowAndSuccessTint_NotAPlainAlert() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#equipement-table").Should().NotBeEmpty());
+
+            var resultBlock = cut.Find("#test-status");
+            resultBlock.ClassList.Should().Contain("card");
+            resultBlock.ClassList.Should().Contain("shadow-sm");
+            resultBlock.ClassList.Should().Contain("bg-success-subtle");
+            resultBlock.ClassList.Should().NotContain("alert-success");
+            cut.Find("#equipement-table").Should().NotBeNull();
+        });
+
     // V11: large (44-48px) touch targets -- bUnit can't measure real pixels, so this checks the
     // Bootstrap size classes that produce them.
     [Fact]
