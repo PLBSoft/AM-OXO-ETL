@@ -55,13 +55,17 @@ else
                     <td>@profile.EquipementTypeElementNom</td>
                     <td>@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</td>
                     <td>
-                        <button id="edit-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                        <button id="edit-profile-button-@profile.Id" type="button"
+                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
                                 @onclick="() => EditProfile(profile)">
-                            @Loc["ImportProfiles_Edit"]
+                            @((MarkupString)PencilIconMarkup)
                         </button>
-                        <button id="duplicate-profile-button-@profile.Id" class="btn btn-secondary btn-sm"
+                        <button id="duplicate-profile-button-@profile.Id" type="button"
+                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
                                 @onclick="() => DuplicateProfileAsync(profile)">
-                            @Loc["ImportProfiles_Duplicate"]
+                            @((MarkupString)CopyIconMarkup)
                         </button>
                     </td>
                 </tr>
@@ -80,13 +84,17 @@ else
                     </p>
                     <p class="card-text">@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</p>
                     <div class="right-aligned-actions">
-                        <button id="edit-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                        <button id="edit-profile-button-card-@profile.Id" type="button"
+                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
                                 @onclick="() => EditProfile(profile)">
-                            @Loc["ImportProfiles_Edit"]
+                            @((MarkupString)PencilIconMarkup)
                         </button>
-                        <button id="duplicate-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                        <button id="duplicate-profile-button-card-@profile.Id" type="button"
+                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
                                 @onclick="() => DuplicateProfileAsync(profile)">
-                            @Loc["ImportProfiles_Duplicate"]
+                            @((MarkupString)CopyIconMarkup)
                         </button>
                     </div>
                 </div>
@@ -96,6 +104,19 @@ else
 }
 
 @code {
+    // V3: icon-only row actions (grid row is too tight for text labels). Reuses SheetRuleForm.razor's
+    // "Modifier" icon shape (bi-pencil-square, not the ticket's literally-named bi-pencil, for visual
+    // consistency with the app's other Modify icons) and .block-field-icon-btn's 34px square sizing
+    // (a generic icon-button utility despite its "block-field" name, see ExportProfileEditor's own
+    // documented reuse of the same class for the same reason). No bootstrap-icons font/CSS is loaded
+    // anywhere in this project (see NavMenu.razor.css) -- icons are inline SVG shapes, not `bi bi-*`
+    // classes, which would render nothing.
+    private const string PencilIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" /><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /></svg>""";
+
+    private const string CopyIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" /><path d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" /></svg>""";
+
     private List<ImportProfile>? _profiles;
 
     protected override async Task OnInitializedAsync() => await LoadProfilesAsync();

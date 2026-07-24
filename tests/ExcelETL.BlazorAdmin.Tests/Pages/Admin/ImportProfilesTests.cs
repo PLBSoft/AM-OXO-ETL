@@ -159,6 +159,30 @@ public class ImportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles/test");
     });
 
+    // V3: row actions are icon-only (no visible text) -- must still carry an explicit aria-label
+    // and title per convention-ui-blazor-icones-boutons.md's A11Y rule for icon-only buttons.
+    [Fact]
+    public async Task RowActionButtons_AreIconOnly_WithAriaLabelAndTitle_InBothTableAndCardTemplates() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+
+            foreach (var idPrefix in new[] { "edit-profile-button", "duplicate-profile-button" })
+            {
+                foreach (var id in new[] { $"{idPrefix}-{profile.Id}", $"{idPrefix}-card-{profile.Id}" })
+                {
+                    var button = cut.Find($"#{id}");
+                    button.TextContent.Trim().Should().BeEmpty();
+                    button.QuerySelector("svg").Should().NotBeNull();
+                    button.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
+                    button.GetAttribute("title").Should().NotBeNullOrWhiteSpace();
+                }
+            }
+        });
+
     [Fact]
     public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
         await WithCultureAsync("en-US", async () =>
