@@ -86,6 +86,7 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
     private static GeneratedSheet GenerateSheet(SheetGenerationRule rule, ImportResult importResult)
     {
         var headers = rule.ColumnDefinitions.Select(column => column.Header)
+            .Concat(rule.ApplicationColumnDefinitions.Select(application => application.Header))
             .Concat(rule.PointColumnDefinitions.Select(point => point.Header))
             .ToList();
 
@@ -109,10 +110,12 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         var equipement = importResult.Equipement;
         var descriptiveCells = rule.ColumnDefinitions.Select(
             column => column.Source is null ? string.Empty : PivotFieldResolver.Resolve(equipement, column.Source.Value));
+        var applicationCells = rule.ApplicationColumnDefinitions.Select(
+            application => HasApplication(equipement.Applications, application.ApplicationNom) ? application.MarkValue : string.Empty);
         var pointCells = rule.PointColumnDefinitions.Select(
             point => HasPoint(importResult.Points, equipement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
 
-        return [new GeneratedRow([.. descriptiveCells, .. pointCells])];
+        return [new GeneratedRow([.. descriptiveCells, .. applicationCells, .. pointCells])];
     }
 
     private static List<GeneratedRow> GenerateIsolementRows(SheetGenerationRule rule, ImportResult importResult) =>
@@ -120,12 +123,20 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         {
             var descriptiveCells = rule.ColumnDefinitions.Select(
                 column => column.Source is null ? string.Empty : PivotFieldResolver.Resolve(isolement, column.Source.Value));
+            var applicationCells = rule.ApplicationColumnDefinitions.Select(
+                application => HasApplication(isolement.Applications, application.ApplicationNom) ? application.MarkValue : string.Empty);
             var pointCells = rule.PointColumnDefinitions.Select(
                 point => HasPoint(importResult.Points, isolement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
 
-            return new GeneratedRow([.. descriptiveCells, .. pointCells]);
+            return new GeneratedRow([.. descriptiveCells, .. applicationCells, .. pointCells]);
         }).ToList();
 
     private static bool HasPoint(IReadOnlyList<PointPivot> points, string parentRepere, string colonneNom) =>
         points.Any(point => point.ParentRepere == parentRepere && point.ColonneNom == colonneNom);
+
+    // Trimmed + case-insensitive, same recommendation transverse as TypeElement/Colonne.Nom comparisons
+    // elsewhere in the pipeline (spec §7) -- real fixtures/profiles can differ by trailing whitespace or
+    // casing.
+    private static bool HasApplication(IReadOnlyList<string> applications, string applicationNom) =>
+        applications.Any(application => string.Equals(application.Trim(), applicationNom.Trim(), StringComparison.OrdinalIgnoreCase));
 }

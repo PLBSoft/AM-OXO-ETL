@@ -272,4 +272,114 @@ public class SheetGenerationEngineTests
 
         workbook.Sheets.Select(sheet => sheet.Name).Should().Equal("TM_PROC_MAD", "TM_PROC_REL");
     }
+
+    // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U5: Tableaux (a plain
+    // ColumnDefinition rendering a comma-joined list via PivotFieldResolver, no engine change needed --
+    // see U4) and Applications (a new dedicated column kind, tested here).
+    private static SheetGenerationRule ParentsRuleWithTableauxAndApplicationColumns() => new(
+        "Parents",
+        PivotSource.Equipement,
+        [
+            new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
+            new ColumnDefinition("Tableaux", PivotFieldRef.EquipementTableaux)
+        ],
+        [],
+        [new ApplicationColumnDefinition("PROGRESS", "PROGRESS", "O")]);
+
+    [Fact]
+    public void Generate_ForEquipementSheet_RendersTableauxColumnAsCommaJoinedList()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX")
+                with { Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"] },
+            [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[1].Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_WithEmptyTableaux_RendersEmptyCellWithoutThrowing()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
+
+        var act = () => _sut.Generate(importResult, profile);
+
+        act.Should().NotThrow();
+        act().Sheets[0].Rows[0].Cells[1].Should().Be("");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_WritesHeaderInDescriptiveThenApplicationThenPointOrder()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Headers.Should().Equal("Repère", "Tableaux", "PROGRESS");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksApplicationColumnWhenPivotApplicationsContainsName()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX") with { Applications = ["PROGRESS"] },
+            [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("O");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_LeavesApplicationColumnEmptyWhenPivotApplicationsDoesNotContainName()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX") with { Applications = ["AUTRE_APP"] },
+            [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksApplicationColumn_TrimmedAndCaseInsensitive()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRuleWithTableauxAndApplicationColumns()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX") with { Applications = ["progress "] },
+            [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("O");
+    }
+
+    [Fact]
+    public void Generate_ForIsolementSheet_MarksApplicationColumnWhenPivotApplicationsContainsName()
+    {
+        var rule = new SheetGenerationRule(
+            "Enfants", PivotSource.Isolement,
+            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)],
+            [],
+            [new ApplicationColumnDefinition("PROGRESS", "PROGRESS", "O")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { Applications = ["PROGRESS"] }],
+            [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[1].Should().Be("O");
+    }
 }
