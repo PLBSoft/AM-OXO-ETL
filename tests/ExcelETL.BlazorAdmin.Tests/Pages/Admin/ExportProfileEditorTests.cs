@@ -1,5 +1,6 @@
 using System.Globalization;
 using Bunit;
+using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
@@ -1046,10 +1047,26 @@ public class ExportProfileEditorTests : BunitContext
         cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Deprolock vannes");
     });
 
+    // X11 (Lot X): back link now lives in the shared top-row banner via SectionContent/
+    // SectionOutlet -- see ImportProfileTestTests' identical comment/host for the rationale.
+    private IRenderedComponent<SectionOutletTestHost> RenderWithBackNavHost(Guid? id = null)
+        => Render<SectionOutletTestHost>(parameters => parameters.Add(
+            p => p.ChildContent,
+            (RenderFragment)(b =>
+            {
+                b.OpenComponent<ExportProfileEditor>(0);
+                if (id.HasValue)
+                {
+                    b.AddComponentParameter(1, nameof(ExportProfileEditor.Id), id.Value);
+                }
+
+                b.CloseComponent();
+            })));
+
     [Fact]
     public void BackToListButton_NavigatesToProfileList() => WithCulture("en-US", () =>
     {
-        var cut = Render<ExportProfileEditor>();
+        var cut = RenderWithBackNavHost();
         var navigationManager = Services.GetRequiredService<NavigationManager>();
 
         cut.Find("#back-to-export-profiles-button").Click();
@@ -1060,8 +1077,130 @@ public class ExportProfileEditorTests : BunitContext
     [Fact]
     public void BackToListButton_IsStillShown_WhenProfileNotFound() => WithCulture("en-US", () =>
     {
-        var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, Guid.NewGuid()));
+        var cut = RenderWithBackNavHost(Guid.NewGuid());
 
         cut.FindAll("#back-to-export-profiles-button").Should().HaveCount(1);
     });
+
+    [Fact]
+    public void BackToListButton_LivesInsideTheSharedTopRow_AlongsideTheBrandLink() => WithCulture("en-US", () =>
+    {
+        var cut = RenderWithBackNavHost();
+
+        var topRow = cut.Find(".top-row");
+        topRow.QuerySelector("#back-to-export-profiles-button").Should().NotBeNull();
+        topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
+    });
+
+    // --- Lot X (mobile-first polish) ---------------------------------------------------------
+
+    // X3: root/subform fields stack full-width (form-floating wrappers, no side-by-side row/col).
+    [Fact]
+    public void RootAndSubformFields_AreWrappedInFormFloating_NotSideBySideColumns() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#export-profile-name-input").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#sheet-generation-rule-name-input").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#sheet-generation-rule-pivot-source-select").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#column-header-input").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#column-source-select").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#point-column-nom-input").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#point-column-header-input").ParentElement!.ClassList.Should().Contain("form-floating");
+        cut.Find("#point-column-mark-value-input").ParentElement!.ClassList.Should().Contain("form-floating");
+
+        // No two-column row/col grid left for these fields.
+        cut.FindAll(".row.g-2").Should().BeEmpty();
+    });
+
+    // X4: nested Columns/Point columns/Application columns subforms get a bg-light box-in-box,
+    // and label/for keeps matching its input id under form-floating.
+    [Fact]
+    public void NestedSubformSections_HaveBgLightCard_AndConsistentLabelFor() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        var cards = cut.FindAll(".card.bg-light");
+        cards.Should().HaveCountGreaterOrEqualTo(2);
+
+        var nameLabel = cut.Find("label[for='sheet-generation-rule-name-input']");
+        nameLabel.GetAttribute("for").Should().Be(cut.Find("#sheet-generation-rule-name-input").GetAttribute("id"));
+
+        var headerLabel = cut.Find("label[for='column-header-input']");
+        headerLabel.GetAttribute("for").Should().Be(cut.Find("#column-header-input").GetAttribute("id"));
+    });
+
+    // X5: intermediate "Add"/"Save changes" buttons are outline + full width, and never carry the
+    // solid color reserved for the final profile-save button.
+    [Fact]
+    public void IntermediateAddButtons_AreOutlineFullWidth_AndNeverShareSolidColorWithFinalSave() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var addSheetRule = cut.Find("#add-sheet-generation-rule-button");
+            var addColumn = cut.Find("#add-column-definition-button");
+            var addPointColumn = cut.Find("#add-point-column-definition-button");
+            var addApplicationColumn = cut.Find("#add-application-column-definition-button");
+            var saveProfile = cut.Find("#save-export-profile-button");
+
+            foreach (var addButton in new[] { addSheetRule, addColumn, addPointColumn, addApplicationColumn })
+            {
+                addButton.ClassList.Should().Contain("w-100");
+                addButton.ClassList.Should().Contain("mt-3");
+                addButton.ClassList.Should().Contain("btn-outline-secondary");
+                addButton.ClassList.Should().NotContain("btn-primary");
+                addButton.ClassList.Should().NotContain("btn-danger");
+            }
+
+            saveProfile.ClassList.Should().Contain("btn-primary");
+        });
+
+    // X6: root container carries the container-fluid/px-3 fix for the mobile overflow bug.
+    [Fact]
+    public void RootContainer_HasContainerFluidWithPadding() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        var container = cut.Find(".container-fluid.px-3");
+        container.Should().NotBeNull();
+    });
+
+    // X7/X8/X9: an already-configured sheet rule renders as a card, its Modify/Delete actions are
+    // icon-only with aria-label/title, and its metadata is text-muted, never red.
+    [Fact]
+    public async Task ConfiguredSheetRule_IsACard_WithIconOnlyActions_AndMutedMetadata() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
+            cut.Find("#add-sheet-generation-rule-button").Click();
+
+            // X9: still (already) rendered as a .sheet-rule-card, not a plain separator list.
+            var card = cut.Find("li.sheet-rule-card");
+            card.Should().NotBeNull();
+
+            // X7: icon-only actions, no visible text, with accessible labels.
+            var modifyButton = cut.Find("#modify-sheet-generation-rule-button-0");
+            var deleteButton = cut.Find("#delete-sheet-generation-rule-button-0");
+
+            modifyButton.TextContent.Trim().Should().BeEmpty();
+            deleteButton.TextContent.Trim().Should().BeEmpty();
+            modifyButton.QuerySelector("svg").Should().NotBeNull();
+            deleteButton.QuerySelector("svg").Should().NotBeNull();
+            modifyButton.GetAttribute("aria-label").Should().NotBeNullOrEmpty();
+            modifyButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+            deleteButton.GetAttribute("aria-label").Should().NotBeNullOrEmpty();
+            deleteButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+
+            // X8: metadata is muted, never carries a red/danger color class.
+            var meta = cut.Find(".sheet-rule-card-meta");
+            meta.ClassList.Should().Contain("text-muted");
+            meta.ClassList.Should().NotContain("text-danger");
+            meta.TextContent.Should().Contain(nameof(PivotSource.Equipement));
+
+            await Task.CompletedTask;
+        });
 }

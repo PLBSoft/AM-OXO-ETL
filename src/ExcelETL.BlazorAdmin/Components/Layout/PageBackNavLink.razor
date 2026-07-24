@@ -1,0 +1,31 @@
+<!--
+    X11 (Lot X): shared back-nav link, projected into NavMenu's top-row banner via SectionContent
+    targeting NavMenu.PageBackNavSectionName. Replaces the Lot V8 per-page "page-banner" div --
+    every one of the 4 pages that had its own back link (ImportProfileTest/ExportProfileTest,
+    ImportProfileEditor/ExportProfileEditor) now renders this component instead, so the icon markup
+    and styling live in exactly one place. Pages that render no <PageBackNavLink> leave the
+    SectionOutlet slot empty (native SectionOutlet behavior), matching the "no arrow on top-level
+    list pages" requirement.
+-->
+<SectionContent SectionName="@NavMenu.PageBackNavSectionName">
+    <button id="@Id" type="button" class="btn btn-link top-row-back-link"
+            aria-label="@Label" title="@Label"
+            @onclick="OnClick">
+        @((MarkupString)ArrowLeftIconMarkup)
+        <span class="d-none d-md-inline">@Label</span>
+    </button>
+</SectionContent>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Id { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public string Label { get; set; } = default!;
+
+    [Parameter, EditorRequired]
+    public EventCallback OnClick { get; set; }
+
+    private const string ArrowLeftIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8" /></svg>""";
+}

@@ -19,18 +19,9 @@
 
 <PageTitle>@Loc["ImportProfileTest_PageTitle"]</PageTitle>
 
-<!-- V8: page-to-page navigation (breadcrumb-equivalent), not a content action -- so an icon-only
-     link is appropriate here even though convention-ui-blazor-icones-boutons.md says "no icon for
-     a secondary action": that rule targets buttons operating on a form/card's own content
-     (Cancel/Close), a distinct category from inter-page navigation. -->
-<div class="page-banner">
-    <button id="back-to-import-profiles-button" type="button" class="btn btn-link page-banner-back-link"
-            aria-label="@Loc["ImportProfileTest_BackToListButton"]" title="@Loc["ImportProfileTest_BackToListButton"]"
-            @onclick="BackToList">
-        @((MarkupString)ArrowLeftIconMarkup)
-        <span class="d-none d-md-inline">@Loc["ImportProfileTest_BackToListButton"]</span>
-    </button>
-</div>
+<!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent, replacing
+     the Lot V8 per-page "page-banner" div -- see PageBackNavLink.razor. -->
+<PageBackNavLink Id="back-to-import-profiles-button" Label="@Loc["ImportProfileTest_BackToListButton"]" OnClick="BackToList" />
 
 <h1>@Loc["ImportProfileTest_PageTitle"]</h1>
 
@@ -288,9 +279,6 @@ else
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" /><path d="M8.5 11.5a.5.5 0 0 1-1 0V8.707L6.354 9.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707z" /></svg>""";
 
     // V8: same inline-SVG rationale, bi-arrow-left shape.
-    private const string ArrowLeftIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8" /></svg>""";
-
     private void BackToList() => NavigationManager.NavigateTo("import-profiles");
 
     private List<ImportProfile>? _profiles;

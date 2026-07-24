@@ -1,5 +1,6 @@
 using System.Globalization;
 using Bunit;
+using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
@@ -721,7 +722,34 @@ public class ExportProfileTestTests : BunitContext
 
             cut.WaitForAssertion(() => cut.FindAll("#download-generated-workbook-link").Should().NotBeEmpty());
             cut.Find("#download-generated-workbook-link").ClassList.Should().Contain("btn-lg");
-            cut.Find("#download-generated-workbook-link").ClassList.Should().NotContain("w-100");
+        });
+
+    // X1 (Lot X): download button marks the successful end of the process -- green, full width,
+    // large touch target, consistent with V11/V12's other buttons on this page.
+    [Fact]
+    public async Task DownloadButton_UsesSuccessColorAndFullWidth() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#download-generated-workbook-link").Should().NotBeEmpty());
+            var downloadLink = cut.Find("#download-generated-workbook-link");
+            downloadLink.ClassList.Should().Contain("btn-success");
+            downloadLink.ClassList.Should().Contain("w-100");
+            downloadLink.ClassList.Should().Contain("btn-lg");
+            downloadLink.ClassList.Should().NotContain("btn-secondary");
         });
 
     // V9: same de-emphasized intro paragraph as ImportProfileTestTests.
@@ -734,10 +762,20 @@ public class ExportProfileTestTests : BunitContext
         intro.TextContent.Should().Contain("Upload an .xlsx file to run it through the extraction pipeline");
     });
 
+    // X11 (Lot X): same shared-top-row-host rendering as ImportProfileTestTests -- see its comment.
+    private IRenderedComponent<SectionOutletTestHost> RenderWithBackNavHost()
+        => Render<SectionOutletTestHost>(parameters => parameters.Add(
+            p => p.ChildContent,
+            (RenderFragment)(b =>
+            {
+                b.OpenComponent<ExportProfileTest>(0);
+                b.CloseComponent();
+            })));
+
     [Fact]
     public void BackToListButton_NavigatesToExportProfileList() => WithCulture("en-US", () =>
     {
-        var cut = Render<ExportProfileTest>();
+        var cut = RenderWithBackNavHost();
         var navigationManager = Services.GetRequiredService<NavigationManager>();
 
         cut.Find("#back-to-export-profiles-button").Click();
@@ -745,16 +783,19 @@ public class ExportProfileTestTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles");
     });
 
-    // V8: same page-banner treatment as ImportProfileTestTests -- see its comment.
+    // X11: back link now lives in the shared top-row banner -- see ImportProfileTestTests' comment.
     [Fact]
-    public void BackToListButton_HasAriaLabel_AndLivesInsideThePageBanner() => WithCulture("en-US", () =>
+    public void BackToListButton_HasAriaLabel_AndLivesInsideTheSharedTopRow() => WithCulture("en-US", () =>
     {
-        var cut = Render<ExportProfileTest>();
+        var cut = RenderWithBackNavHost();
 
         var backButton = cut.Find("#back-to-export-profiles-button");
         backButton.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
         backButton.QuerySelector("svg").Should().NotBeNull();
-        backButton.ParentElement!.ClassList.Should().Contain("page-banner");
+
+        var topRow = cut.Find(".top-row");
+        topRow.QuerySelector("#back-to-export-profiles-button").Should().NotBeNull();
+        topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
     });
 
     // V10: same Bootstrap-native upload styling as ImportProfileTestTests -- see its comment.

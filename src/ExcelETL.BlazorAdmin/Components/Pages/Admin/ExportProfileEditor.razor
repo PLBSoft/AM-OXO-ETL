@@ -16,11 +16,13 @@
 
 <PageTitle>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</PageTitle>
 
+<div class="container-fluid px-3">
+
 <h1>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</h1>
 
-<button id="back-to-export-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
-    @Loc["ExportProfileEditor_BackToListButton"]
-</button>
+<!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
+     PageBackNavLink.razor. Replaces the previous in-content btn-secondary button. -->
+<PageBackNavLink Id="back-to-export-profiles-button" Label="@Loc["ExportProfileEditor_BackToListButton"]" OnClick="BackToList" />
 
 @if (_notFound)
 {
@@ -33,11 +35,11 @@ else
         <div class="alert alert-danger">@_profileErrorMessage</div>
     }
 
-    <div class="row g-2 mb-3">
-        <div class="col">
-            <label class="form-label" for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
+    <div class="mb-3">
+        <div class="form-floating">
             <input id="export-profile-name-input" class="form-control" @bind="_name"
                    placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
+            <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
         </div>
     </div>
 
@@ -125,11 +127,23 @@ else
                         else
                         {
                             <div class="right-aligned-actions">
-                                <button id="@($"modify-sheet-generation-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
-                                    @Loc["ExportProfileEditor_ModifyButton"]
+                                <button id="@($"modify-sheet-generation-rule-button-{index}")" type="button"
+                                        class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                        aria-label="@Loc["ExportProfileEditor_ModifyButton"]" title="@Loc["ExportProfileEditor_ModifyButton"]"
+                                        @onclick="() => _editingIndex = index">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                    </svg>
                                 </button>
-                                <button id="@($"delete-sheet-generation-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => _pendingDeleteIndex = index">
-                                    @Loc["ExportProfileEditor_DeleteButton"]
+                                <button id="@($"delete-sheet-generation-rule-button-{index}")" type="button"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                        aria-label="@Loc["ExportProfileEditor_DeleteButton"]" title="@Loc["ExportProfileEditor_DeleteButton"]"
+                                        @onclick="() => _pendingDeleteIndex = index">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                    </svg>
                                 </button>
                             </div>
                         }
@@ -152,6 +166,8 @@ else
         </button>
     </div>
 }
+
+</div>
 
 @code {
     [Parameter]

@@ -19,9 +19,9 @@
 
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
-<button id="back-to-import-profiles-button" class="btn btn-secondary mb-3" @onclick="BackToList">
-    @Loc["ImportProfileEditor_BackToListButton"]
-</button>
+<!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
+     PageBackNavLink.razor. Replaces the previous in-content btn-secondary button. -->
+<PageBackNavLink Id="back-to-import-profiles-button" Label="@Loc["ImportProfileEditor_BackToListButton"]" OnClick="BackToList" />
 
 @if (_notFound)
 {

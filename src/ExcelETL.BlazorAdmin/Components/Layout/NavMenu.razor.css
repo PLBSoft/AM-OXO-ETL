@@ -24,6 +24,24 @@
     font-size: 1.1rem;
 }
 
+/* X11 (Lot X): back-nav link projected via SectionOutlet/PageBackNavLink into this same top-row --
+   text-white matches navbar-dark's brand-text color explicitly rather than relying only on
+   inheritance, since PageBackNavLink is a separately-scoped component. */
+::deep .top-row-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: white;
+    text-decoration: none;
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+}
+
+::deep .top-row-back-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
 .bi {
     display: inline-block;
     position: relative;

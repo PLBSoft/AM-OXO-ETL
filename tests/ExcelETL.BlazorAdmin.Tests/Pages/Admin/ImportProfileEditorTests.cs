@@ -1,5 +1,6 @@
 using System.Globalization;
 using Bunit;
+using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
@@ -1243,10 +1244,26 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#delete-block-field-button-0").GetAttribute("aria-label").Should().Be("Delete");
     });
 
+    // X11 (Lot X): back link now lives in the shared top-row banner via SectionContent/
+    // SectionOutlet -- see ImportProfileTestTests' identical comment/host for the rationale.
+    private IRenderedComponent<SectionOutletTestHost> RenderWithBackNavHost(Guid? id = null)
+        => Render<SectionOutletTestHost>(parameters => parameters.Add(
+            p => p.ChildContent,
+            (RenderFragment)(b =>
+            {
+                b.OpenComponent<ImportProfileEditor>(0);
+                if (id.HasValue)
+                {
+                    b.AddComponentParameter(1, nameof(ImportProfileEditor.Id), id.Value);
+                }
+
+                b.CloseComponent();
+            })));
+
     [Fact]
     public void BackToListButton_NavigatesToProfileList() => WithCulture("en-US", () =>
     {
-        var cut = Render<ImportProfileEditor>();
+        var cut = RenderWithBackNavHost();
         var navigationManager = Services.GetRequiredService<NavigationManager>();
 
         cut.Find("#back-to-import-profiles-button").Click();
@@ -1257,9 +1274,19 @@ public class ImportProfileEditorTests : BunitContext
     [Fact]
     public void BackToListButton_IsStillShown_WhenProfileNotFound() => WithCulture("en-US", () =>
     {
-        var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, Guid.NewGuid()));
+        var cut = RenderWithBackNavHost(Guid.NewGuid());
 
         cut.FindAll("#back-to-import-profiles-button").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void BackToListButton_LivesInsideTheSharedTopRow_AlongsideTheBrandLink() => WithCulture("en-US", () =>
+    {
+        var cut = RenderWithBackNavHost();
+
+        var topRow = cut.Find(".top-row");
+        topRow.QuerySelector("#back-to-import-profiles-button").Should().NotBeNull();
+        topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
     });
 
     // Lot W: edit/delete of an already-added UnconditionalColonneName.

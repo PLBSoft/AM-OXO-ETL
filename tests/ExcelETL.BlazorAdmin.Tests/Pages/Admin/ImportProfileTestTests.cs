@@ -1,5 +1,6 @@
 using System.Globalization;
 using Bunit;
+using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
@@ -288,10 +289,24 @@ public class ImportProfileTestTests : BunitContext
         wrapper.QuerySelector(".input-group-text svg").Should().NotBeNull();
     });
 
+    // X11 (Lot X): the back link is now projected into the shared top-row banner via
+    // SectionContent/SectionOutlet, no longer rendered in the page's own content flow -- rendering
+    // ImportProfileTest alone (as before X11) would leave the SectionContent's content unrendered
+    // anywhere (native SectionOutlet behavior with no matching outlet), so these tests now render
+    // it inside SectionOutletTestHost, representative of NavMenu's real top-row.
+    private IRenderedComponent<SectionOutletTestHost> RenderWithBackNavHost()
+        => Render<SectionOutletTestHost>(parameters => parameters.Add(
+            p => p.ChildContent,
+            (RenderFragment)(b =>
+            {
+                b.OpenComponent<ImportProfileTest>(0);
+                b.CloseComponent();
+            })));
+
     [Fact]
     public void BackToListButton_NavigatesToImportProfileList() => WithCulture("en-US", () =>
     {
-        var cut = Render<ImportProfileTest>();
+        var cut = RenderWithBackNavHost();
         var navigationManager = Services.GetRequiredService<NavigationManager>();
 
         cut.Find("#back-to-import-profiles-button").Click();
@@ -299,16 +314,37 @@ public class ImportProfileTestTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles");
     });
 
-    // V8: back link moved into a thin page banner, icon-only styling, but same id/navigation.
+    // X11: back link now lives in the shared top-row banner (common ancestor with the brand link),
+    // not the page's own content -- same id/navigation/aria-label as the Lot V8 page-banner it
+    // replaces.
     [Fact]
-    public void BackToListButton_HasAriaLabel_AndLivesInsideThePageBanner() => WithCulture("en-US", () =>
+    public void BackToListButton_HasAriaLabel_AndLivesInsideTheSharedTopRow() => WithCulture("en-US", () =>
     {
-        var cut = Render<ImportProfileTest>();
+        var cut = RenderWithBackNavHost();
 
         var backButton = cut.Find("#back-to-import-profiles-button");
         backButton.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
         backButton.QuerySelector("svg").Should().NotBeNull();
-        backButton.ParentElement!.ClassList.Should().Contain("page-banner");
+
+        var topRow = cut.Find(".top-row");
+        topRow.QuerySelector("#back-to-import-profiles-button").Should().NotBeNull();
+        topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
+    });
+
+    // X11: non-collision -- both the back link and the brand text are present simultaneously in
+    // the same top-row container, neither one displacing the other.
+    [Fact]
+    public void BackToListButton_AndBrandLink_BothPresentSimultaneously_InTheSameTopRow() => WithCulture("en-US", () =>
+    {
+        var cut = RenderWithBackNavHost();
+
+        var topRow = cut.Find(".top-row");
+        var backButton = topRow.QuerySelector("#back-to-import-profiles-button");
+        var brandLink = topRow.QuerySelector(".navbar-brand");
+
+        backButton.Should().NotBeNull();
+        brandLink.Should().NotBeNull();
+        brandLink!.TextContent.Should().Contain("Alpha - MAD / REL OXO");
     });
 
     [Fact]

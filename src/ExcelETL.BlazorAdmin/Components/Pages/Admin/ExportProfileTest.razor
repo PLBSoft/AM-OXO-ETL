@@ -24,15 +24,9 @@
 
 <PageTitle>@Loc["ExportProfileTest_PageTitle"]</PageTitle>
 
-<!-- V8: same page-to-page navigation banner as ImportProfileTest.razor -- see its comment. -->
-<div class="page-banner">
-    <button id="back-to-export-profiles-button" type="button" class="btn btn-link page-banner-back-link"
-            aria-label="@Loc["ExportProfileTest_BackToListButton"]" title="@Loc["ExportProfileTest_BackToListButton"]"
-            @onclick="BackToList">
-        @((MarkupString)ArrowLeftIconMarkup)
-        <span class="d-none d-md-inline">@Loc["ExportProfileTest_BackToListButton"]</span>
-    </button>
-</div>
+<!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
+     PageBackNavLink.razor / ImportProfileTest.razor's identical comment. -->
+<PageBackNavLink Id="back-to-export-profiles-button" Label="@Loc["ExportProfileTest_BackToListButton"]" OnClick="BackToList" />
 
 <h1>@Loc["ExportProfileTest_PageTitle"]</h1>
 
@@ -131,7 +125,7 @@ else
                      instead of a plain alert, same treatment as ImportProfileTest.razor. -->
                 <div class="card shadow-sm bg-success-subtle">
                   <div class="card-body">
-                    <a id="download-generated-workbook-link" class="btn btn-secondary btn-lg mb-3"
+                    <a id="download-generated-workbook-link" class="btn btn-success w-100 btn-lg mb-3"
                        href="@_downloadDataUrl" download="@_downloadFileName">
                         @Loc["ExportProfileTest_DownloadLinkText"]
                     </a>
@@ -186,10 +180,6 @@ else
     // V10: same icon shape as ImportProfileTest.razor -- see its comment.
     private const string FileUploadIconMarkup =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" /><path d="M8.5 11.5a.5.5 0 0 1-1 0V8.707L6.354 9.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707z" /></svg>""";
-
-    // V8: same icon shape/rationale as ImportProfileTest.razor -- see its comment.
-    private const string ArrowLeftIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8" /></svg>""";
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 

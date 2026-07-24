@@ -3,6 +3,7 @@ using Bunit;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
@@ -159,6 +160,17 @@ public class ImportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles/test");
     });
 
+    // X2 (Lot X): parity with ExportProfiles.razor -- both header action buttons must carry
+    // w-100 individually (not just their right-aligned-actions/d-grid container).
+    [Fact]
+    public void HeaderActionButtons_AreIndividuallyFullWidth() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfiles>();
+
+        cut.Find("#test-import-profile-button").ClassList.Should().Contain("w-100");
+        cut.Find("#create-profile-button").ClassList.Should().Contain("w-100");
+    });
+
     // V3: row actions are icon-only (no visible text) -- must still carry an explicit aria-label
     // and title per convention-ui-blazor-icones-boutons.md's A11Y rule for icon-only buttons.
     [Fact]
@@ -274,4 +286,23 @@ public class ImportProfilesTests : BunitContext
             all.Should().HaveCount(2);
             all.Should().Contain(p => p.Name == "MAD OXO (Copy)" && p.Id != original.Id);
         });
+
+    // X11 (Lot X): top-level list pages define no <PageBackNavLink>/<SectionContent>, so the
+    // shared top-row's <SectionOutlet> stays genuinely empty here -- real DOM absence, not a
+    // display:none check (same rule already applied to L2/NavMenu's own tests).
+    [Fact]
+    public void RenderedInsideTheSharedTopRowHost_ShowsNoBackNavLink() => WithCulture("en-US", () =>
+    {
+        var cut = Render<SectionOutletTestHost>(parameters => parameters.Add(
+            p => p.ChildContent,
+            (Microsoft.AspNetCore.Components.RenderFragment)(b =>
+            {
+                b.OpenComponent<ImportProfiles>(0);
+                b.CloseComponent();
+            })));
+
+        var topRow = cut.Find(".top-row");
+        topRow.QuerySelectorAll("button, a[id]").Should().BeEmpty();
+        topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
+    });
 }
