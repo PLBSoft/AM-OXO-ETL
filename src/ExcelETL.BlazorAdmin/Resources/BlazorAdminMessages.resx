@@ -412,6 +412,9 @@
   <data name="ImportProfileEditor_AddColonneButton" xml:space="preserve">
     <value>Add colonne</value>
   </data>
+  <data name="ImportProfileEditor_EmptyColonneNameError" xml:space="preserve">
+    <value>Colonne name must not be empty.</value>
+  </data>
   <data name="ImportProfileEditor_DefaultTableauxHeading" xml:space="preserve">
     <value>Tableaux</value>
   </data>

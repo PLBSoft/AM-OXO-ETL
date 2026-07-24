@@ -1261,4 +1261,326 @@ public class ImportProfileEditorTests : BunitContext
 
         cut.FindAll("#back-to-import-profiles-button").Should().HaveCount(1);
     });
+
+    // Lot W: edit/delete of an already-added UnconditionalColonneName.
+
+    [Fact]
+    public void UnconditionalColonne_ClickingModify_ShowsPrefilledEditInput_AndRemovesStaticText() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#edit-unconditional-colonne-button-0").Click();
+
+            cut.Find("#unconditional-colonne-edit-input-0").GetAttribute("value").Should().Be("PROLOCK VANNES");
+            cut.FindAll(".block-field-name").Should().NotContain(e => e.TextContent == "PROLOCK VANNES");
+        });
+
+    [Fact]
+    public void UnconditionalColonne_SaveChanges_UpdatesValueInPlace_AndClosesEditMode() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#edit-unconditional-colonne-button-0").Click();
+            cut.Find("#unconditional-colonne-edit-input-0").Change("DEPROLOCK VANNES");
+            cut.Find("#save-unconditional-colonne-button-0").Click();
+
+            cut.FindAll("#unconditional-colonne-edit-input-0").Should().BeEmpty();
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "DEPROLOCK VANNES");
+        });
+
+    [Fact]
+    public void UnconditionalColonne_SaveWithEmptyValue_ShowsError_AndKeepsEditModeOpen() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#edit-unconditional-colonne-button-0").Click();
+            cut.Find("#unconditional-colonne-edit-input-0").Change("   ");
+            cut.Find("#save-unconditional-colonne-button-0").Click();
+
+            cut.Markup.Should().Contain("Colonne name must not be empty.");
+            cut.FindAll("#unconditional-colonne-edit-input-0").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public void UnconditionalColonne_Cancel_DiscardsChanges_RestoresOriginalValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#edit-unconditional-colonne-button-0").Click();
+            cut.Find("#unconditional-colonne-edit-input-0").Change("DEPROLOCK VANNES");
+            cut.Find("#cancel-unconditional-colonne-edit-button-0").Click();
+
+            cut.FindAll("#unconditional-colonne-edit-input-0").Should().BeEmpty();
+            cut.Find(".block-field-name").TextContent.Should().Be("PROLOCK VANNES");
+        });
+
+    [Fact]
+    public void UnconditionalColonne_EditingOneItem_DoesNotAffectOtherItemInSameList() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+            cut.Find("#unconditional-colonne-name-input").Change("DEPROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#edit-unconditional-colonne-button-1").Click();
+
+            cut.FindAll("#unconditional-colonne-edit-input-0").Should().BeEmpty();
+            cut.Find("#unconditional-colonne-edit-input-1").GetAttribute("value").Should().Be("DEPROLOCK VANNES");
+            cut.Find(".block-field-name").TextContent.Should().Be("PROLOCK VANNES");
+        });
+
+    [Fact]
+    public void UnconditionalColonne_Delete_RemovesFromList_WithoutAffectingOtherItems() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+            cut.Find("#unconditional-colonne-name-input").Change("DEPROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#delete-unconditional-colonne-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "DEPROLOCK VANNES");
+        });
+
+    [Fact]
+    public void UnconditionalColonne_DeletingLastRemainingItem_LeavesEmptyListWithNoError() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
+            cut.Find("#add-unconditional-colonne-button").Click();
+
+            cut.Find("#delete-unconditional-colonne-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task UnconditionalColonne_EditWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-edit-unconditional-colonne-button-0").Click();
+            cut.Find("#edit-0-unconditional-colonne-edit-input-0").Change("DEPROLOCK VANNES");
+            cut.Find("#edit-0-save-unconditional-colonne-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().SheetRules.Single().UnconditionalColonneNames.Should().ContainSingle("DEPROLOCK VANNES");
+        });
+
+    [Fact]
+    public async Task UnconditionalColonne_DeleteWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-delete-unconditional-colonne-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().SheetRules.Single().UnconditionalColonneNames.Should().BeEmpty();
+        });
+
+    // Lot W: edit/delete of an already-added ConditionalPointRule.
+
+    private static void AddPointRule(IRenderedComponent<ImportProfileEditor> cut, string colonneName, string sourceFieldName,
+        string operatorValue, string comparisonValue)
+    {
+        cut.Find("#point-rule-colonne-name-input").Change(colonneName);
+        cut.Find("#point-rule-source-field-name-input").Change(sourceFieldName);
+        cut.Find("#point-rule-operator-select").Change(operatorValue);
+        cut.Find("#point-rule-comparison-value-input").Change(comparisonValue);
+        cut.Find("#add-point-rule-button").Click();
+    }
+
+    [Fact]
+    public void ConditionalPointRule_ClickingModify_ShowsPrefilledEditFields_IncludingOperatorSelect() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "NotEquals", "TUBING");
+
+            cut.Find("#edit-conditional-point-rule-button-0").Click();
+
+            cut.Find("#conditional-point-rule-edit-colonne-name-input-0").GetAttribute("value").Should().Be("ZERO ENERGIE");
+            cut.Find("#conditional-point-rule-edit-source-field-input-0").GetAttribute("value").Should().Be("TypeElement");
+            cut.Find("#conditional-point-rule-edit-operator-select-0").GetAttribute("value").Should().Be("NotEquals");
+            cut.Find("#conditional-point-rule-edit-comparison-value-input-0").GetAttribute("value").Should().Be("TUBING");
+        });
+
+    [Fact]
+    public void ConditionalPointRule_SaveChanges_WithOnlyOneFieldModified_UpdatesOnlyThatField() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+
+            cut.Find("#edit-conditional-point-rule-button-0").Click();
+            cut.Find("#conditional-point-rule-edit-comparison-value-input-0").Change("TUYAUTERIE");
+            cut.Find("#save-conditional-point-rule-button-0").Click();
+
+            cut.FindAll("#conditional-point-rule-edit-colonne-name-input-0").Should().BeEmpty();
+            cut.Find(".block-field-name").TextContent.Should().Be("ZERO ENERGIE");
+            cut.Find(".block-field-range").TextContent.Should().Be("TypeElement Equals TUYAUTERIE");
+        });
+
+    [Theory]
+    [InlineData("", "TypeElement", "TUBING")]
+    [InlineData("ZERO ENERGIE", "", "TUBING")]
+    [InlineData("ZERO ENERGIE", "TypeElement", "")]
+    public void ConditionalPointRule_SaveWithAnyFieldEmpty_ShowsError_AndKeepsEditModeOpen(
+        string colonneName, string sourceFieldName, string comparisonValue) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+
+            cut.Find("#edit-conditional-point-rule-button-0").Click();
+            cut.Find("#conditional-point-rule-edit-colonne-name-input-0").Change(colonneName);
+            cut.Find("#conditional-point-rule-edit-source-field-input-0").Change(sourceFieldName);
+            cut.Find("#conditional-point-rule-edit-comparison-value-input-0").Change(comparisonValue);
+            cut.Find("#save-conditional-point-rule-button-0").Click();
+
+            cut.FindAll(".alert-danger").Should().HaveCount(1);
+            cut.FindAll("#conditional-point-rule-edit-colonne-name-input-0").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public void ConditionalPointRule_Cancel_DiscardsChanges_RestoresOriginalValues() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+
+            cut.Find("#edit-conditional-point-rule-button-0").Click();
+            cut.Find("#conditional-point-rule-edit-comparison-value-input-0").Change("TUYAUTERIE");
+            cut.Find("#cancel-conditional-point-rule-edit-button-0").Click();
+
+            cut.FindAll("#conditional-point-rule-edit-comparison-value-input-0").Should().BeEmpty();
+            cut.Find(".block-field-range").TextContent.Should().Be("TypeElement Equals TUBING");
+        });
+
+    [Fact]
+    public void ConditionalPointRule_Delete_RemovesFromList_WithoutAffectingOtherItems() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+            AddPointRule(cut, "SOUPAPE", "TypeElement", "Equals", "SOUPAPE");
+
+            cut.Find("#delete-conditional-point-rule-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "SOUPAPE");
+        });
+
+    [Fact]
+    public void ConditionalPointRule_DeletingLastRemainingItem_LeavesEmptyListWithNoError() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+
+            cut.Find("#delete-conditional-point-rule-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task ConditionalPointRule_EditWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var locator = new RepeatingBlockLocator(
+                "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            var sheetRule = new SheetExtractionRule(
+                "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
+                unconditionalColonneNames: []);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-edit-conditional-point-rule-button-0").Click();
+            cut.Find("#edit-0-conditional-point-rule-edit-comparison-value-input-0").Change("TUYAUTERIE");
+            cut.Find("#edit-0-save-conditional-point-rule-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().SheetRules.Single().PointRules.Single().ComparisonValue.Should().Be("TUYAUTERIE");
+        });
+
+    [Fact]
+    public async Task ConditionalPointRule_DeleteWithinExistingSheetRule_PersistsAfterSavingRuleAndProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var locator = new RepeatingBlockLocator(
+                "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            var sheetRule = new SheetExtractionRule(
+                "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
+                unconditionalColonneNames: []);
+            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-delete-conditional-point-rule-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().SheetRules.Single().PointRules.Should().BeEmpty();
+        });
+
+    [Fact]
+    public void ConditionalPointRule_IconButtons_HaveAriaLabels() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        AddPointRule(cut, "ZERO ENERGIE", "TypeElement", "Equals", "TUBING");
+
+        cut.Find("#edit-conditional-point-rule-button-0").GetAttribute("aria-label").Should().Be("Modify");
+        cut.Find("#delete-conditional-point-rule-button-0").GetAttribute("aria-label").Should().Be("Delete");
+    });
 }

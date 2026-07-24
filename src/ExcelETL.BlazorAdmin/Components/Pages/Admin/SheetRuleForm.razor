@@ -98,7 +98,77 @@
 <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
 @if (_unconditionalColonneNames.Count > 0)
 {
-    <p>@string.Join(", ", _unconditionalColonneNames)</p>
+    <ul class="block-field-list">
+        @for (var j = 0; j < _unconditionalColonneNames.Count; j++)
+        {
+            var itemIndex = j;
+            @if (_editingUnconditionalColonneIndex == itemIndex)
+            {
+                <li class="block-field-item-editing">
+                    @if (!string.IsNullOrEmpty(_unconditionalColonneEditError))
+                    {
+                        <div class="alert alert-danger">@_unconditionalColonneEditError</div>
+                    }
+                    <div class="row g-2 align-items-end">
+                        <div class="col">
+                            <input id="@($"{IdPrefix}unconditional-colonne-edit-input-{itemIndex}")" class="form-control"
+                                   @bind="_editingUnconditionalColonneValue" />
+                        </div>
+                        <div class="col-auto block-field-actions">
+                            <button id="@($"{IdPrefix}save-unconditional-colonne-button-{itemIndex}")" type="button"
+                                    class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                    title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                    @onclick="() => SaveUnconditionalColonneEdit(itemIndex)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                                </svg>
+                            </button>
+                            <button id="@($"{IdPrefix}cancel-unconditional-colonne-edit-button-{itemIndex}")" type="button"
+                                    class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                    title="@Loc["ImportProfileEditor_CancelButton"]"
+                                    @onclick="CancelUnconditionalColonneEdit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@_unconditionalColonneNames[itemIndex]</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}edit-unconditional-colonne-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                @onclick="() => StartUnconditionalColonneEdit(itemIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </button>
+                        <button id="@($"{IdPrefix}delete-unconditional-colonne-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteUnconditionalColonneName(itemIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
 }
 <div class="row g-2 mb-2">
     <div class="col">
@@ -116,10 +186,92 @@
 <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
 @if (_pointRules.Count > 0)
 {
-    <ul>
-        @foreach (var pointRule in _pointRules)
+    <ul class="block-field-list">
+        @for (var j = 0; j < _pointRules.Count; j++)
         {
-            <li>@pointRule.ColonneName (@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue)</li>
+            var itemIndex = j;
+            var pointRule = _pointRules[itemIndex];
+            @if (_editingPointRuleIndex == itemIndex)
+            {
+                <li class="block-field-item-editing">
+                    @if (!string.IsNullOrEmpty(_pointRuleEditError))
+                    {
+                        <div class="alert alert-danger">@_pointRuleEditError</div>
+                    }
+                    <div class="row g-2 align-items-end">
+                        <div class="col">
+                            <input id="@($"{IdPrefix}conditional-point-rule-edit-colonne-name-input-{itemIndex}")" class="form-control"
+                                   @bind="_editingPointRuleColonneName" />
+                        </div>
+                        <div class="col">
+                            <input id="@($"{IdPrefix}conditional-point-rule-edit-source-field-input-{itemIndex}")" class="form-control"
+                                   @bind="_editingPointRuleSourceFieldName" />
+                        </div>
+                        <div class="col">
+                            <select id="@($"{IdPrefix}conditional-point-rule-edit-operator-select-{itemIndex}")" class="form-select"
+                                    @bind="_editingPointRuleOperator">
+                                <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
+                                <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <input id="@($"{IdPrefix}conditional-point-rule-edit-comparison-value-input-{itemIndex}")" class="form-control"
+                                   @bind="_editingPointRuleComparisonValue" />
+                        </div>
+                        <div class="col-auto block-field-actions">
+                            <button id="@($"{IdPrefix}save-conditional-point-rule-button-{itemIndex}")" type="button"
+                                    class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                    title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                    @onclick="() => SavePointRuleEdit(itemIndex)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                                </svg>
+                            </button>
+                            <button id="@($"{IdPrefix}cancel-conditional-point-rule-edit-button-{itemIndex}")" type="button"
+                                    class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                    title="@Loc["ImportProfileEditor_CancelButton"]"
+                                    @onclick="CancelPointRuleEdit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@pointRule.ColonneName</span>
+                        <span class="block-field-range text-muted font-monospace">@pointRule.SourceFieldName @pointRule.Operator @pointRule.ComparisonValue</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}edit-conditional-point-rule-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                @onclick="() => StartPointRuleEdit(itemIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </button>
+                        <button id="@($"{IdPrefix}delete-conditional-point-rule-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeletePointRule(itemIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            }
         }
     </ul>
 }
@@ -206,6 +358,17 @@
     private ConditionOperator _newPointRuleOperator = ConditionOperator.Equals;
     private string _newPointRuleComparisonValue = string.Empty;
 
+    private int? _editingUnconditionalColonneIndex;
+    private string _editingUnconditionalColonneValue = string.Empty;
+    private string? _unconditionalColonneEditError;
+
+    private int? _editingPointRuleIndex;
+    private string _editingPointRuleColonneName = string.Empty;
+    private string _editingPointRuleSourceFieldName = string.Empty;
+    private ConditionOperator _editingPointRuleOperator = ConditionOperator.Equals;
+    private string _editingPointRuleComparisonValue = string.Empty;
+    private string? _pointRuleEditError;
+
     private string? _errorMessage;
 
     // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
@@ -255,6 +418,41 @@
         _newUnconditionalColonneName = string.Empty;
     }
 
+    private void StartUnconditionalColonneEdit(int itemIndex)
+    {
+        _editingUnconditionalColonneIndex = itemIndex;
+        _editingUnconditionalColonneValue = _unconditionalColonneNames[itemIndex];
+        _unconditionalColonneEditError = null;
+    }
+
+    private void SaveUnconditionalColonneEdit(int itemIndex)
+    {
+        if (string.IsNullOrWhiteSpace(_editingUnconditionalColonneValue))
+        {
+            _unconditionalColonneEditError = Loc["ImportProfileEditor_EmptyColonneNameError"];
+            return;
+        }
+
+        _unconditionalColonneNames[itemIndex] = _editingUnconditionalColonneValue;
+        _editingUnconditionalColonneIndex = null;
+        _unconditionalColonneEditError = null;
+    }
+
+    private void CancelUnconditionalColonneEdit()
+    {
+        _editingUnconditionalColonneIndex = null;
+        _unconditionalColonneEditError = null;
+    }
+
+    private void DeleteUnconditionalColonneName(int itemIndex)
+    {
+        _unconditionalColonneNames.RemoveAt(itemIndex);
+        if (_editingUnconditionalColonneIndex == itemIndex)
+        {
+            _editingUnconditionalColonneIndex = null;
+        }
+    }
+
     private void AddPointRule()
     {
         _errorMessage = null;
@@ -271,6 +469,48 @@
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void StartPointRuleEdit(int itemIndex)
+    {
+        var rule = _pointRules[itemIndex];
+        _editingPointRuleIndex = itemIndex;
+        _editingPointRuleColonneName = rule.ColonneName;
+        _editingPointRuleSourceFieldName = rule.SourceFieldName;
+        _editingPointRuleOperator = rule.Operator;
+        _editingPointRuleComparisonValue = rule.ComparisonValue;
+        _pointRuleEditError = null;
+    }
+
+    private void SavePointRuleEdit(int itemIndex)
+    {
+        _pointRuleEditError = null;
+
+        try
+        {
+            _pointRules[itemIndex] = new ConditionalPointRule(
+                _editingPointRuleSourceFieldName, _editingPointRuleOperator, _editingPointRuleComparisonValue, _editingPointRuleColonneName);
+            _editingPointRuleIndex = null;
+        }
+        catch (DomainValidationException ex)
+        {
+            _pointRuleEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private void CancelPointRuleEdit()
+    {
+        _editingPointRuleIndex = null;
+        _pointRuleEditError = null;
+    }
+
+    private void DeletePointRule(int itemIndex)
+    {
+        _pointRules.RemoveAt(itemIndex);
+        if (_editingPointRuleIndex == itemIndex)
+        {
+            _editingPointRuleIndex = null;
         }
     }
 
@@ -313,5 +553,9 @@
         _newPointRuleSourceFieldName = string.Empty;
         _newPointRuleOperator = ConditionOperator.Equals;
         _newPointRuleComparisonValue = string.Empty;
+        _editingUnconditionalColonneIndex = null;
+        _unconditionalColonneEditError = null;
+        _editingPointRuleIndex = null;
+        _pointRuleEditError = null;
     }
 }
