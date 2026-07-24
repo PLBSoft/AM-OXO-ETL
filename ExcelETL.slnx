@@ -1,6 +1,10 @@
 <Solution>
   <Folder Name="/legacy/">
+    <Project Path="legacy/ExcelProcessingClientService/ExcelProcessingClientService.csproj" />
     <Project Path="legacy/NewApiPingService/NewApiPingService.csproj" />
+  </Folder>
+  <Folder Name="/legacy/ExcelProcessingClientService.Tests/">
+    <Project Path="legacy/ExcelProcessingClientService.Tests/Legacy.ExcelProcessingClientService.Tests.csproj" />
   </Folder>
   <Folder Name="/legacy/NewApiPingService.Tests/">
     <Project Path="legacy/NewApiPingService.Tests/Legacy.NewApiPingService.Tests.csproj" />
