@@ -149,6 +149,17 @@ public class ExportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles/test");
     });
 
+    // X2 (Lot X): both header action buttons must carry w-100 individually (not just their
+    // right-aligned-actions/d-grid container) so they actually reach full width on mobile.
+    [Fact]
+    public void HeaderActionButtons_AreIndividuallyFullWidth() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfiles>();
+
+        cut.Find("#test-export-profile-button").ClassList.Should().Contain("w-100");
+        cut.Find("#create-export-profile-button").ClassList.Should().Contain("w-100");
+    });
+
     // V3: same icon-only row actions as ImportProfilesTests -- parity check.
     [Fact]
     public async Task RowActionButtons_AreIconOnly_WithAriaLabelAndTitle_InBothTableAndCardTemplates() =>

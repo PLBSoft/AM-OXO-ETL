@@ -10,34 +10,37 @@
     <div class="alert alert-danger">@_errorMessage</div>
 }
 
-<div class="row g-2 mb-3">
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}nom-input")">@Loc["ExportProfileEditor_ApplicationNomLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}nom-input")" class="form-control" @bind="_applicationNom"
                placeholder="@Loc["ExportProfileEditor_ApplicationNomPlaceholder"]" />
+        <label for="@($"{IdPrefix}nom-input")">@Loc["ExportProfileEditor_ApplicationNomLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
                placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+        <label for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}mark-value-input")">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}mark-value-input")" class="form-control" @bind="_markValue"
                placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
+        <label for="@($"{IdPrefix}mark-value-input")">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
     </div>
-    <div class="col-auto">
-        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
-            @SubmitLabel
-        </button>
-    </div>
+</div>
+
+<div class="right-aligned-actions">
+    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+        @SubmitLabel
+    </button>
     @if (ShowCancel)
     {
-        <div class="col-auto">
-            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
-                @Loc["ExportProfileEditor_CancelButton"]
-            </button>
-        </div>
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+            @Loc["ExportProfileEditor_CancelButton"]
+        </button>
     }
 </div>
 
