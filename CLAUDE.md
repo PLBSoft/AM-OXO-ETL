@@ -85,6 +85,13 @@ Apply a strict Test-First (Red-Green-Refactor) lifecycle:
 - Repositories that depend on ASP.NET Core Identity's `UserManager<T>`/`RoleManager<T>` (rather than an injected `IDbContextFactory<T>` directly) are tested with **Moq** instead, since those managers aren't meaningfully exercised against the InMemory provider alone.
 - Assertions use FluentAssertions exclusively (`.Should().Be(...)`, `.Should().BeEquivalentTo(...)`, `.Should().ThrowAsync<T>()`, etc.) — never xUnit's `Assert.*`.
 
+### Execution discipline per TDD step
+Full detail and ticket-authoring guidance: `docs/recommandations-tickets-tdd.md`.
+- Reserve deep/high-effort reasoning for the **Refactor** step — Red and Green are mechanical and don't need it.
+- Run tests with minimal noise: `dotnet test --verbosity quiet` (or `--logger "console;verbosity=minimal"`), filtered to the class/test under iteration via `--filter` rather than the whole suite on every cycle.
+- Prefer targeted diffs over re-reading whole files after each edit, unless the file is short or a full-picture view is actually needed.
+- On an unexpected test failure (Blazor/bUnit rendering, timing, generated markup, etc.), stop and inspect the diff instead of looping uncontrolled retries — then re-run one precise, targeted pass.
+
 ---
 
 ## I18N (ENGLISH/FRENCH) STRATEGY
