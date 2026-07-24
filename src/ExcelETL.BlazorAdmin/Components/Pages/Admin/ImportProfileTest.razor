@@ -104,6 +104,41 @@ else
                      not null` branch (the null/rejection case swaps in the "File rejected" alert instead),
                      so the count is always 1 in practice; the ternary still guards against the
                      theoretical null case rather than hardcoding 1. -->
+                @if (_result.Errors.Count > 0)
+                {
+                    <details class="test-table-details" open="@(!_collapsedSections.Contains("warnings"))">
+                        <summary id="warnings-details-toggle" @onclick='() => ToggleSection("warnings")' @onclick:preventDefault="true">
+                            @Loc["ImportProfileTest_WarningsHeading", _result.Errors.Count]
+                        </summary>
+                        @if (!_collapsedSections.Contains("warnings"))
+                        {
+                            <div class="test-table-scroll">
+                                <table id="warnings-table" class="table table-sm test-table">
+                                    <thead>
+                                        <tr>
+                                            <th>@Loc["ImportProfileTest_Sheet"]</th>
+                                            <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
+                                            <th>@Loc["ImportProfileTest_ErrorCode"]</th>
+                                            <th>@Loc["ImportProfileTest_Message"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var warning in _result.Errors)
+                                        {
+                                            <tr>
+                                                <td>@warning.Sheet</td>
+                                                <td>@warning.BlockIdentifier</td>
+                                                <td>@warning.Code</td>
+                                                <td>@warning.Message</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </details>
+                }
+
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("equipement"))">
                     <summary id="equipement-details-toggle" @onclick='() => ToggleSection("equipement")' @onclick:preventDefault="true">
                         @Loc["ImportProfileTest_EquipementHeading", _result.Equipement is null ? 0 : 1]
@@ -232,41 +267,6 @@ else
                         </div>
                     }
                 </details>
-
-                @if (_result.Errors.Count > 0)
-                {
-                    <details class="test-table-details" open="@(!_collapsedSections.Contains("warnings"))">
-                        <summary id="warnings-details-toggle" @onclick='() => ToggleSection("warnings")' @onclick:preventDefault="true">
-                            @Loc["ImportProfileTest_WarningsHeading", _result.Errors.Count]
-                        </summary>
-                        @if (!_collapsedSections.Contains("warnings"))
-                        {
-                            <div class="test-table-scroll">
-                                <table id="warnings-table" class="table table-sm test-table">
-                                    <thead>
-                                        <tr>
-                                            <th>@Loc["ImportProfileTest_Sheet"]</th>
-                                            <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
-                                            <th>@Loc["ImportProfileTest_ErrorCode"]</th>
-                                            <th>@Loc["ImportProfileTest_Message"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var warning in _result.Errors)
-                                        {
-                                            <tr>
-                                                <td>@warning.Sheet</td>
-                                                <td>@warning.BlockIdentifier</td>
-                                                <td>@warning.Code</td>
-                                                <td>@warning.Message</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                    </details>
-                }
               </div>
             </div>
         }
