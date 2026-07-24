@@ -15,7 +15,11 @@
 
 <h1>@Loc["ImportProfiles_PageTitle"]</h1>
 
-<div class="right-aligned-actions mb-3">
+<!-- V4: stacked-full-width on mobile, side-by-side natural width from md up -- the standard
+     Bootstrap "d-grid gap-2 d-md-flex" idiom (grid items stretch full-width by default below md,
+     flex items keep their natural width from md up), so no custom width utility is needed and
+     desktop sizing/layout is untouched. -->
+<div class="right-aligned-actions d-grid gap-2 d-md-flex mb-3">
     <button id="test-import-profile-button" class="btn btn-secondary" @onclick="TestProfile">
         @Loc["NavMenu_ImportProfileTest"]
     </button>
@@ -34,7 +38,7 @@ else if (_profiles.Count == 0)
 }
 else
 {
-    <table class="table">
+    <table class="table d-none d-md-table">
         <thead>
             <tr>
                 <th>@Loc["ImportProfiles_Name"]</th>
@@ -64,6 +68,31 @@ else
             }
         </tbody>
     </table>
+
+    <div class="d-md-none">
+        @foreach (var profile in _profiles)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@profile.Name</h5>
+                    <p class="card-text mb-1">
+                        <strong>@Loc["ImportProfiles_EquipementTypeElementNom"]:</strong> @profile.EquipementTypeElementNom
+                    </p>
+                    <p class="card-text">@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</p>
+                    <div class="right-aligned-actions">
+                        <button id="edit-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => EditProfile(profile)">
+                            @Loc["ImportProfiles_Edit"]
+                        </button>
+                        <button id="duplicate-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => DuplicateProfileAsync(profile)">
+                            @Loc["ImportProfiles_Duplicate"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 }
 
 @code {

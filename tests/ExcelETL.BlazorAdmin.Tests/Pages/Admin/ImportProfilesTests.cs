@@ -174,6 +174,61 @@ public class ImportProfilesTests : BunitContext
             navigationManager.Uri.Should().EndWith($"/import-profiles/{profile.Id}/edit");
         });
 
+    // V2: mobile-first table -> card fallback at the md (768px) breakpoint. bUnit doesn't compute
+    // real layout, so these tests assert on the responsive classes and on both templates being
+    // present in the DOM simultaneously (one hidden below md, the other above, via CSS only).
+    [Fact]
+    public async Task ImportProfiles_RendersBothTableAndCardTemplates_WithResponsiveClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await SeedProfileAsync(BuildProfileWithOneSheetRule());
+
+            var cut = Render<ImportProfiles>();
+
+            var table = cut.Find("table.table");
+            table.ClassList.Should().Contain("d-none");
+            table.ClassList.Should().Contain("d-md-table");
+
+            var cardContainer = cut.Find("div.d-md-none");
+            cardContainer.QuerySelectorAll(".card").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task ImportProfiles_CardTemplate_DisplaysSameContentAsTable() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+
+            var card = cut.Find("div.d-md-none .card");
+            card.TextContent.Should().Contain("MAD OXO");
+            card.TextContent.Should().Contain("MAD TRAVAUX");
+            card.TextContent.Should().Contain("1 sheet rule(s)");
+
+            card.QuerySelector($"#edit-profile-button-card-{profile.Id}").Should().NotBeNull();
+            card.QuerySelector($"#duplicate-profile-button-card-{profile.Id}").Should().NotBeNull();
+        });
+
+    // V4: the two header action buttons stack full-width on mobile via the "d-grid gap-2 d-md-flex"
+    // idiom on their shared wrapper (CSS Grid items stretch to fill by default below md; from md up,
+    // d-md-flex switches back to inline flex where buttons keep their natural side-by-side width).
+    [Fact]
+    public void ImportProfiles_HeaderButtons_ShareResponsiveStackingWrapper() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfiles>();
+
+        var testButton = cut.Find("#test-import-profile-button");
+        var createButton = cut.Find("#create-profile-button");
+        testButton.ParentElement.Should().BeSameAs(createButton.ParentElement);
+
+        var wrapper = testButton.ParentElement!;
+        wrapper.ClassList.Should().Contain("d-grid");
+        wrapper.ClassList.Should().Contain("gap-2");
+        wrapper.ClassList.Should().Contain("d-md-flex");
+    });
+
     [Fact]
     public async Task DuplicateButton_CreatesSuffixedCopyWithNewId_AndRefreshesListWithoutNavigating() =>
         await WithCultureAsync("en-US", async () =>

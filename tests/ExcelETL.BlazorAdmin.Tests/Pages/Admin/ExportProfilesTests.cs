@@ -164,6 +164,56 @@ public class ExportProfilesTests : BunitContext
             navigationManager.Uri.Should().EndWith($"/export-profiles/{profile.Id}/edit");
         });
 
+    // V2: same table -> card fallback as ImportProfilesTests, see comments there.
+    [Fact]
+    public async Task ExportProfiles_RendersBothTableAndCardTemplates_WithResponsiveClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await SeedProfileAsync(BuildProfileWithOneSheetRule());
+
+            var cut = Render<ExportProfiles>();
+
+            var table = cut.Find("table.table");
+            table.ClassList.Should().Contain("d-none");
+            table.ClassList.Should().Contain("d-md-table");
+
+            var cardContainer = cut.Find("div.d-md-none");
+            cardContainer.QuerySelectorAll(".card").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task ExportProfiles_CardTemplate_DisplaysSameContentAsTable() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ExportProfiles>();
+
+            var card = cut.Find("div.d-md-none .card");
+            card.TextContent.Should().Contain("MAD OXO export");
+            card.TextContent.Should().Contain("1 sheet rule(s)");
+
+            card.QuerySelector($"#edit-export-profile-button-card-{profile.Id}").Should().NotBeNull();
+            card.QuerySelector($"#duplicate-export-profile-button-card-{profile.Id}").Should().NotBeNull();
+        });
+
+    // V4: same header-button stacking wrapper as ImportProfilesTests.
+    [Fact]
+    public void ExportProfiles_HeaderButtons_ShareResponsiveStackingWrapper() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfiles>();
+
+        var testButton = cut.Find("#test-export-profile-button");
+        var createButton = cut.Find("#create-export-profile-button");
+        testButton.ParentElement.Should().BeSameAs(createButton.ParentElement);
+
+        var wrapper = testButton.ParentElement!;
+        wrapper.ClassList.Should().Contain("d-grid");
+        wrapper.ClassList.Should().Contain("gap-2");
+        wrapper.ClassList.Should().Contain("d-md-flex");
+    });
+
     [Fact]
     public async Task DuplicateButton_CreatesSuffixedCopyWithNewId_AndRefreshesListWithoutNavigating() =>
         await WithCultureAsync("en-US", async () =>

@@ -79,6 +79,22 @@ public class LogsTests : BunitContext
         indexOfNewer.Should().BeLessThan(indexOfOlder);
     });
 
+    // V2: explicit decision (see Lot V doc intro) -- Logs.razor keeps its native <table>, never
+    // gets the d-none/d-md-table + card-fallback treatment applied to the other list pages. Guards
+    // against an accidental generalization of that responsive pattern to this page.
+    [Fact]
+    public async Task Logs_TableNeverGetsResponsiveCardToggleClasses() => await WithCultureAsync("en-US", async () =>
+    {
+        await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", "Some entry", null));
+
+        var cut = Render<Logs>();
+
+        var table = cut.Find("table.table");
+        table.ClassList.Should().NotContain("d-none");
+        table.ClassList.Should().NotContain("d-md-table");
+        cut.FindAll("div.d-md-none").Should().BeEmpty();
+    });
+
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;

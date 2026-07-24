@@ -14,7 +14,9 @@
 
 <h1>@Loc["ExportProfiles_PageTitle"]</h1>
 
-<div class="right-aligned-actions mb-3">
+<!-- V4: same "d-grid gap-2 d-md-flex" stacking idiom as ImportProfiles.razor -- see the comment
+     there for rationale. -->
+<div class="right-aligned-actions d-grid gap-2 d-md-flex mb-3">
     <button id="test-export-profile-button" class="btn btn-secondary" @onclick="TestProfile">
         @Loc["NavMenu_ExportProfileTest"]
     </button>
@@ -33,7 +35,7 @@ else if (_profiles.Count == 0)
 }
 else
 {
-    <table class="table">
+    <table class="table d-none d-md-table">
         <thead>
             <tr>
                 <th>@Loc["ExportProfiles_Name"]</th>
@@ -61,6 +63,28 @@ else
             }
         </tbody>
     </table>
+
+    <div class="d-md-none">
+        @foreach (var profile in _profiles)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@profile.Name</h5>
+                    <p class="card-text">@Loc["ExportProfiles_SheetCount", profile.SheetRules.Count]</p>
+                    <div class="right-aligned-actions">
+                        <button id="edit-export-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => EditProfile(profile)">
+                            @Loc["ExportProfiles_Edit"]
+                        </button>
+                        <button id="duplicate-export-profile-button-card-@profile.Id" class="btn btn-secondary btn-sm"
+                                @onclick="() => DuplicateProfileAsync(profile)">
+                            @Loc["ExportProfiles_Duplicate"]
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 }
 
 @code {
