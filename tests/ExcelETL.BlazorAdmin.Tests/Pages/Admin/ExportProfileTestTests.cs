@@ -666,4 +666,19 @@ public class ExportProfileTestTests : BunitContext
 
         navigationManager.Uri.Should().EndWith("/export-profiles");
     });
+
+    // V10: same Bootstrap-native upload styling as ImportProfileTestTests -- see its comment.
+    [Fact]
+    public void FileInput_IsWrappedInInputGroupWithIcon_AndHasLargeSizeClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+
+        var inputFileElement = cut.Find("#export-test-file-input");
+        inputFileElement.ClassList.Should().Contain("form-control");
+        inputFileElement.ClassList.Should().Contain("form-control-lg");
+
+        var wrapper = inputFileElement.ParentElement!;
+        wrapper.ClassList.Should().Contain("input-group");
+        wrapper.QuerySelector(".input-group-text svg").Should().NotBeNull();
+    });
 }

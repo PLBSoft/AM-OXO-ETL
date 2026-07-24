@@ -57,7 +57,11 @@ else
 
     <div class="mb-3">
         <label class="form-label" for="export-test-file-input">@Loc["ExportProfileTest_FileLabel"]</label>
-        <InputFile id="export-test-file-input" class="form-control" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@processing" />
+        <!-- V10: same Bootstrap-native upload styling as ImportProfileTest.razor -- see its comment. -->
+        <div class="input-group">
+            <span class="input-group-text">@((MarkupString)FileUploadIconMarkup)</span>
+            <InputFile id="export-test-file-input" class="form-control form-control-lg" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@processing" />
+        </div>
     </div>
 
     @if (_state == State.Processing)
@@ -164,6 +168,10 @@ else
     private const long MaxFileSizeBytes = 10 * 1024 * 1024;
 
     private enum State { Idle, Processing, Success, Error }
+
+    // V10: same icon shape as ImportProfileTest.razor -- see its comment.
+    private const string FileUploadIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" /><path d="M8.5 11.5a.5.5 0 0 1-1 0V8.707L6.354 9.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707z" /></svg>""";
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 

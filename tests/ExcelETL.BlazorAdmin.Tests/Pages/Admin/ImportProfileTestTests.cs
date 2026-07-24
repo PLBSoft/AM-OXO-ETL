@@ -229,6 +229,23 @@ public class ImportProfileTestTests : BunitContext
         cut.Markup.Should().Contain("No import profiles exist yet.");
     });
 
+    // V10: Bootstrap-native upload styling -- the critical non-regression check is that
+    // FindComponent<InputFile>()/UploadFiles still work at all (proven unmodified by every other
+    // upload test in this file, per the ticket's own explicit instruction not to rewrite them).
+    [Fact]
+    public void FileInput_IsWrappedInInputGroupWithIcon_AndHasLargeSizeClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+
+        var inputFileElement = cut.Find("#test-file-input");
+        inputFileElement.ClassList.Should().Contain("form-control");
+        inputFileElement.ClassList.Should().Contain("form-control-lg");
+
+        var wrapper = inputFileElement.ParentElement!;
+        wrapper.ClassList.Should().Contain("input-group");
+        wrapper.QuerySelector(".input-group-text svg").Should().NotBeNull();
+    });
+
     [Fact]
     public void BackToListButton_NavigatesToImportProfileList() => WithCulture("en-US", () =>
     {
