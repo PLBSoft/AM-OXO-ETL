@@ -554,19 +554,19 @@
     <value>Fichier rejeté</value>
   </data>
   <data name="ImportProfileTest_WarningsHeading" xml:space="preserve">
-    <value>Avertissements non bloquants</value>
+    <value>Avertissements non bloquants ({0})</value>
   </data>
   <data name="ImportProfileTest_EquipementHeading" xml:space="preserve">
-    <value>Équipement</value>
+    <value>Équipement ({0})</value>
   </data>
   <data name="ImportProfileTest_IsolementsHeading" xml:space="preserve">
-    <value>Isolements</value>
+    <value>Isolements ({0})</value>
   </data>
   <data name="ImportProfileTest_PointsHeading" xml:space="preserve">
-    <value>Points</value>
+    <value>Points ({0})</value>
   </data>
   <data name="ImportProfileTest_TachesMultiplesHeading" xml:space="preserve">
-    <value>Tâches multiples</value>
+    <value>Tâches multiples ({0})</value>
   </data>
   <data name="ImportProfileTest_Repere" xml:space="preserve">
     <value>Repère</value>

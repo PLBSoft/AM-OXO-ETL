@@ -96,9 +96,17 @@ else
                  status message like the Processing/Error branches above, which stay plain alerts. -->
             <div id="test-status" class="card shadow-sm bg-success-subtle">
               <div class="card-body">
+                <!-- Lot 031: count in parens, same "{0} ({1})"-shaped format as ExportProfileTest.razor's
+                     ExportProfileTest_SheetNameWithCount -- not literally reused since the export page's
+                     titles are raw sheet names (data) while these are static localized labels, so the
+                     count is interpolated directly into each heading's own resx value instead. Equipement
+                     has no collection to .Count -- this section only renders in the `_result.Equipement is
+                     not null` branch (the null/rejection case swaps in the "File rejected" alert instead),
+                     so the count is always 1 in practice; the ternary still guards against the
+                     theoretical null case rather than hardcoding 1. -->
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("equipement"))">
                     <summary id="equipement-details-toggle" @onclick='() => ToggleSection("equipement")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_EquipementHeading"]
+                        @Loc["ImportProfileTest_EquipementHeading", _result.Equipement is null ? 0 : 1]
                     </summary>
                     @if (!_collapsedSections.Contains("equipement"))
                     {
@@ -127,7 +135,7 @@ else
 
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("isolements"))">
                     <summary id="isolements-details-toggle" @onclick='() => ToggleSection("isolements")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_IsolementsHeading"]
+                        @Loc["ImportProfileTest_IsolementsHeading", _result.Isolements.Count]
                     </summary>
                     @if (!_collapsedSections.Contains("isolements"))
                     {
@@ -161,7 +169,7 @@ else
 
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("points"))">
                     <summary id="points-details-toggle" @onclick='() => ToggleSection("points")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_PointsHeading"]
+                        @Loc["ImportProfileTest_PointsHeading", _result.Points.Count]
                     </summary>
                     @if (!_collapsedSections.Contains("points"))
                     {
@@ -189,7 +197,7 @@ else
 
                 <details class="test-table-details" open="@(!_collapsedSections.Contains("taches-multiples"))">
                     <summary id="taches-multiples-details-toggle" @onclick='() => ToggleSection("taches-multiples")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_TachesMultiplesHeading"]
+                        @Loc["ImportProfileTest_TachesMultiplesHeading", _result.TachesMultiples.Count]
                     </summary>
                     @if (!_collapsedSections.Contains("taches-multiples"))
                     {
@@ -229,7 +237,7 @@ else
                 {
                     <details class="test-table-details" open="@(!_collapsedSections.Contains("warnings"))">
                         <summary id="warnings-details-toggle" @onclick='() => ToggleSection("warnings")' @onclick:preventDefault="true">
-                            @Loc["ImportProfileTest_WarningsHeading"]
+                            @Loc["ImportProfileTest_WarningsHeading", _result.Errors.Count]
                         </summary>
                         @if (!_collapsedSections.Contains("warnings"))
                         {

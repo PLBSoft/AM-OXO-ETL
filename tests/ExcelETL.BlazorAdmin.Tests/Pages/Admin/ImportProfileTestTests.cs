@@ -9,8 +9,10 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
@@ -109,6 +111,17 @@ public class ImportProfileTestTests : BunitContext
     {
         var bytes = File.ReadAllBytes(FixturePath(fileName));
         return InputFileContent.CreateFromBinary(bytes, fileName);
+    }
+
+    // Lot 031: computes the expected element counts by running the real pipeline directly against
+    // the fixture, mirroring exactly what the page itself does -- so section-title assertions never
+    // pin a magic number that could silently drift from the actual orchestrator output.
+    private ImportResult RunOrchestratorDirectly(ImportProfile profile, string fixtureFileName)
+    {
+        var orchestrator = Services.GetRequiredService<IImportPipelineOrchestrator>();
+        using var stream = File.OpenRead(FixturePath(fixtureFileName));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+        return orchestrator.Run(workbookReader, profile);
     }
 
     private static string FixturePath(string fileName)
@@ -422,6 +435,61 @@ public class ImportProfileTestTests : BunitContext
             cut.FindAll("#isolements-table tbody tr").Should().HaveCount(67);
             cut.Markup.Should().Contain("Non-blocking warnings");
             cut.Markup.Should().Contain("UnrecognizedTypeElement");
+
+            // Lot 031: section title now shows the element count, same "{0} ({1})"-shaped format as
+            // ExportProfileTest.razor's sheet titles (e.g. "Parents (1)").
+            cut.Find("#isolements-details-toggle").TextContent.Should().Contain("Isolements (67)");
+        });
+
+    // Lot 031: one test per remaining section (Equipement, Points, Taches multiples, Warnings),
+    // computing the expected count by running the real pipeline directly against the same fixture
+    // rather than a hardcoded magic number, per the ticket's own explicit requirement.
+    [Fact]
+    public async Task Run_C7401Fixture_SectionTitles_ShowActualElementCounts_FromTheRealPipelineRun() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            const string fixtureFileName = "Dossier.de.MaD.IDL.-.C7401.xlsx";
+            var profile = await SeedRealProfileAsync();
+            var expected = RunOrchestratorDirectly(profile, fixtureFileName);
+
+            expected.Equipement.Should().NotBeNull();
+
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile(fixtureFileName));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("38-C7401"));
+
+            cut.Find("#equipement-details-toggle").TextContent.Should().Contain("Equipement (1)");
+            cut.Find("#points-details-toggle").TextContent.Should().Contain($"Points ({expected.Points.Count})");
+            cut.Find("#taches-multiples-details-toggle").TextContent.Should()
+                .Contain($"Taches multiples ({expected.TachesMultiples.Count})");
+            cut.Find("#isolements-details-toggle").TextContent.Should()
+                .Contain($"Isolements ({expected.Isolements.Count})");
+        });
+
+    [Fact]
+    public async Task Run_D8570Fixture_WarningsSectionTitle_ShowsActualNonBlockingErrorCount() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            const string fixtureFileName = "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx";
+            var profile = await SeedRealProfileAsync();
+            var expected = RunOrchestratorDirectly(profile, fixtureFileName);
+
+            expected.Errors.Should().NotBeEmpty();
+
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile(fixtureFileName));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+
+            cut.Find("#warnings-details-toggle").TextContent.Should()
+                .Contain($"Non-blocking warnings ({expected.Errors.Count})");
         });
 
     [Fact]
