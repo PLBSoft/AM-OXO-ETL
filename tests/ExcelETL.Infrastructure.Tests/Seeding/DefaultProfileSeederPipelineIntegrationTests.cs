@@ -170,6 +170,58 @@ public class DefaultProfileSeederPipelineIntegrationTests
         }
     }
 
+    // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U6: header order (and content)
+    // for the newly seeded Tableaux/PROGRESS/ELEMENT PARENT/Type Elément columns, against the profile
+    // as seeded and fetched back -- not a hand-built profile.
+    [Fact]
+    public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesExpectedHeaderOrderAndNewColumnValues()
+    {
+        var (importProfile, exportProfile) = await SeedAndFetchProfilesAsync();
+
+        ImportResult importResult;
+        using (var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx")))
+        using (var workbookReader = new ClosedXmlWorkbookReader(sourceStream))
+        {
+            importResult = _orchestrator.Run(workbookReader, importProfile);
+        }
+
+        var generatedWorkbook = _generationEngine.Generate(importResult, exportProfile);
+        using var destination = new MemoryStream();
+        _writer.Write(generatedWorkbook, destination);
+        using var reread = new XLWorkbook(destination);
+
+        var parents = reread.Worksheet("Parents");
+        parents.Cell(1, 1).GetString().Should().Be("Repère");
+        parents.Cell(1, 2).GetString().Should().Be("Type Elément");
+        parents.Cell(1, 3).GetString().Should().Be("Zone");
+        parents.Cell(1, 4).GetString().Should().Be("Désignation");
+        parents.Cell(1, 5).GetString().Should().Be("Tableaux");
+        parents.Cell(1, 6).GetString().Should().Be("PROGRESS");
+        parents.Cell(1, 7).GetString().Should().Be("TRAVAUX COMPLET");
+        parents.Cell(2, 5).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+        parents.Cell(2, 6).GetString().Should().Be("O");
+
+        var enfants = reread.Worksheet("Enfants");
+        enfants.Cell(1, 1).GetString().Should().Be("Numéro");
+        enfants.Cell(1, 2).GetString().Should().Be("Type Elément");
+        enfants.Cell(1, 3).GetString().Should().Be("Zone");
+        enfants.Cell(1, 4).GetString().Should().Be("ELEMENT PARENT");
+        enfants.Cell(1, 5).GetString().Should().Be("Désignation");
+        enfants.Cell(1, 6).GetString().Should().Be("Position à la pose");
+        enfants.Cell(1, 7).GetString().Should().Be("Tableaux");
+        enfants.Cell(1, 8).GetString().Should().Be("PROGRESS");
+        enfants.Cell(1, 9).GetString().Should().Be("PROLOCK VANNES");
+
+        // Every Enfants row (23 for C7401) shares the same ELEMENT PARENT/Tableaux/PROGRESS values --
+        // broadcast onto every Isolement of the run, same as Localisation.
+        foreach (var row in enfants.RowsUsed().Skip(1))
+        {
+            row.Cell(4).GetString().Should().Be("38-C7401");
+            row.Cell(7).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+            row.Cell(8).GetString().Should().Be("O");
+        }
+    }
+
     private ImportResult RunOnFixture(string fileName, ImportProfile profile)
     {
         using var stream = File.OpenRead(FixturePath(fileName));

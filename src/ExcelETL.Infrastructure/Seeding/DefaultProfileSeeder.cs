@@ -35,10 +35,10 @@ public class DefaultProfileSeeder(
     private const string IsolementZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
-    // PROCEDURE's 2 Points are hardcoded in ProcedureExtractionService itself (private consts,
-    // unconditional, independent of any profile) -- transcribed here only so the default export
-    // profile can reference their exact Colonne names, not because an import SheetExtractionRule
-    // configures them.
+    // PROCEDURE's 2 unconditional Points are driven by ImportProfile.DefaultTableaux since Lot U3 (no
+    // longer hardcoded in ProcedureExtractionService) -- these two consts are transcribed here purely
+    // so the default export profile can reference the same Colonne names, and are also the literal
+    // DefaultTableaux value seeded below.
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
 
@@ -218,6 +218,14 @@ public class DefaultProfileSeeder(
     // doesn't exist yet. Point column Headers reuse the raw Colonne name verbatim: no localized-label
     // catalogue exists for these yet, and inventing one wasn't asked for by this ticket.
     //
+    // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U6: both sheets gain a "Tableaux"
+    // descriptive column (comma-joined, positioned right after "Désignation") and a "PROGRESS"
+    // Application column (right after "Tableaux") -- both before the existing Point columns, which are
+    // otherwise unchanged. Enfants also gains "ELEMENT PARENT" (IsolementRepereParent, between "Zone"
+    // and "Désignation") and its "Type" column is renamed to "Type Elément" (same source field,
+    // IsolementTypeElementNom -- decision #5, no new pivot field needed) for naming consistency with
+    // Parents' own "Type Elément" column.
+    //
     // The third rule (Tâches multiples, Lot T) needs no Guid of its own, unlike ImportProfileId/
     // ExportProfileId above -- SheetGenerationRule is a plain record with no identity property (see
     // its own Domain source comment), not an aggregate root. For a brand-new profile, idempotence is
@@ -235,22 +243,25 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
                     new ColumnDefinition("Type Elément", PivotFieldRef.EquipementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.EquipementLocalisation),
-                    new ColumnDefinition("Désignation", PivotFieldRef.EquipementDesignation)
+                    new ColumnDefinition("Désignation", PivotFieldRef.EquipementDesignation),
+                    new ColumnDefinition("Tableaux", PivotFieldRef.EquipementTableaux)
                 ],
                 [
                     new PointColumnDefinition(TravauxCompletColonneName, TravauxCompletColonneName),
                     new PointColumnDefinition(TravauxDetailColonneName, TravauxDetailColonneName)
                 ],
-                []),
+                [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             new SheetGenerationRule(
                 "Enfants",
                 PivotSource.Isolement,
                 [
                     new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere),
-                    new ColumnDefinition("Type", PivotFieldRef.IsolementTypeElementNom),
+                    new ColumnDefinition("Type Elément", PivotFieldRef.IsolementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.IsolementLocalisation),
+                    new ColumnDefinition("ELEMENT PARENT", PivotFieldRef.IsolementRepereParent),
                     new ColumnDefinition("Désignation", PivotFieldRef.IsolementDesignation),
-                    new ColumnDefinition("Position à la pose", PivotFieldRef.IsolementPositionALaPose)
+                    new ColumnDefinition("Position à la pose", PivotFieldRef.IsolementPositionALaPose),
+                    new ColumnDefinition("Tableaux", PivotFieldRef.IsolementTableaux)
                 ],
                 [
                     new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES"),
@@ -275,7 +286,7 @@ public class DefaultProfileSeeder(
                     new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
-                []),
+                [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             BuildTacheMultipleSheetRule()
         ]);
 

@@ -154,9 +154,11 @@ public class DefaultProfileSeederTests
             PivotFieldRef.EquipementRepere,
             PivotFieldRef.EquipementTypeElementNom,
             PivotFieldRef.EquipementLocalisation,
-            PivotFieldRef.EquipementDesignation
+            PivotFieldRef.EquipementDesignation,
+            PivotFieldRef.EquipementTableaux
         ]);
         parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        parents.ApplicationColumnDefinitions.Should().ContainSingle(a => a.ApplicationNom == "PROGRESS" && a.MarkValue == "O");
 
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
         enfants.PivotSource.Should().Be(PivotSource.Isolement);
@@ -166,10 +168,15 @@ public class DefaultProfileSeederTests
             PivotFieldRef.IsolementRepere,
             PivotFieldRef.IsolementTypeElementNom,
             PivotFieldRef.IsolementLocalisation,
+            PivotFieldRef.IsolementRepereParent,
             PivotFieldRef.IsolementDesignation,
-            PivotFieldRef.IsolementPositionALaPose
+            PivotFieldRef.IsolementPositionALaPose,
+            PivotFieldRef.IsolementTableaux
         ]);
+        enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Type Elément" && c.Source == PivotFieldRef.IsolementTypeElementNom);
+        enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "ELEMENT PARENT" && c.Source == PivotFieldRef.IsolementRepereParent);
         enfants.PointColumnDefinitions.Should().HaveCount(17);
+        enfants.ApplicationColumnDefinitions.Should().ContainSingle(a => a.ApplicationNom == "PROGRESS" && a.MarkValue == "O");
 
         var tachesMultiples = profile.SheetRules.Single(r => r.SheetName == "Tâches multiples");
         tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
@@ -204,19 +211,40 @@ public class DefaultProfileSeederTests
     }
 
     [Fact]
-    public async Task SeedAsync_ExportParentsPointColumns_MatchProcedureExtractionServicesHardcodedTravauxColonneNames()
+    public async Task SeedAsync_ExportParentsPointColumns_MatchImportProfilesDefaultTableaux()
     {
-        // PROCEDURE's 2 Points are hardcoded in ProcedureExtractionService, not driven by the import
-        // SheetExtractionRule (see docs/tickets-tdd-seed-profils-defaut.md M2 §1) -- so this is a
-        // literal comparison, not a cross-profile aggregation like the Enfants test above.
-        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        // PROCEDURE's 2 Points are driven by ImportProfile.DefaultTableaux since Lot U3, not hardcoded
+        // in ProcedureExtractionService anymore -- so this is a real cross-profile comparison now, same
+        // shape as the Enfants test above (not a literal-vs-literal comparison anymore).
+        var seeder = CreateSeeder(out var importProfileStore, out var exportProfileStore);
         await seeder.SeedAsync();
 
+        var importProfile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
         var exportProfile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
         var parents = exportProfile!.SheetRules.Single(r => r.SheetName == "Parents");
 
-        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().BeEquivalentTo(
-            ["TRAVAUX COMPLET", "TRAVAUX DETAIL"]);
+        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().BeEquivalentTo(importProfile!.DefaultTableaux);
+    }
+
+    [Fact]
+    public async Task SeedAsync_ImportAndExportProfiles_ShareConsistentDefaultTableauxAndApplicationNames()
+    {
+        var seeder = CreateSeeder(out var importProfileStore, out var exportProfileStore);
+        await seeder.SeedAsync();
+
+        var importProfile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
+        var exportProfile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        importProfile!.DefaultTableaux.Should().NotBeEmpty();
+        importProfile.DefaultApplicationNames.Should().NotBeEmpty();
+
+        foreach (var rule in exportProfile!.SheetRules.Where(r => r.PivotSource != PivotSource.TacheMultiple))
+        {
+            foreach (var applicationColumn in rule.ApplicationColumnDefinitions)
+            {
+                importProfile.DefaultApplicationNames.Should().Contain(applicationColumn.ApplicationNom);
+            }
+        }
     }
 
     // T8 (docs/tickets-tdd-export-taches-multiples.md): simulates a profile seeded before this lot
