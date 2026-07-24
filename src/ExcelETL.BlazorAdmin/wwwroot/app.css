@@ -199,3 +199,19 @@ h1:focus {
 .sheet-rule-sublist-details > summary::-webkit-details-marker {
     display: none;
 }
+
+/* V8 (Lot V): thin page banner housing the back-to-list navigation link on
+   ImportProfileTest.razor/ExportProfileTest.razor -- kept global since both components share it
+   identically, same reuse precedent as the block-field-*/right-aligned-actions rules above. */
+.page-banner {
+    padding: 0.5rem 0;
+    margin-bottom: 0.75rem;
+}
+
+.page-banner-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    text-decoration: none;
+}

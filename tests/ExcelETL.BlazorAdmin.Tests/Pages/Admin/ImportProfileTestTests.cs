@@ -257,6 +257,18 @@ public class ImportProfileTestTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles");
     });
 
+    // V8: back link moved into a thin page banner, icon-only styling, but same id/navigation.
+    [Fact]
+    public void BackToListButton_HasAriaLabel_AndLivesInsideThePageBanner() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+
+        var backButton = cut.Find("#back-to-import-profiles-button");
+        backButton.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
+        backButton.QuerySelector("svg").Should().NotBeNull();
+        backButton.ParentElement!.ClassList.Should().Contain("page-banner");
+    });
+
     [Fact]
     public async Task SelectingFile_WithoutProfileSelected_ShowsErrorAndDoesNotProcess() =>
         await WithCultureAsync("en-US", async () =>

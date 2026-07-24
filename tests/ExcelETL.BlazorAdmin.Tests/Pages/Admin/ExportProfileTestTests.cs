@@ -667,6 +667,18 @@ public class ExportProfileTestTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles");
     });
 
+    // V8: same page-banner treatment as ImportProfileTestTests -- see its comment.
+    [Fact]
+    public void BackToListButton_HasAriaLabel_AndLivesInsideThePageBanner() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+
+        var backButton = cut.Find("#back-to-export-profiles-button");
+        backButton.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
+        backButton.QuerySelector("svg").Should().NotBeNull();
+        backButton.ParentElement!.ClassList.Should().Contain("page-banner");
+    });
+
     // V10: same Bootstrap-native upload styling as ImportProfileTestTests -- see its comment.
     [Fact]
     public void FileInput_IsWrappedInInputGroupWithIcon_AndHasLargeSizeClass() => WithCulture("en-US", () =>
