@@ -44,7 +44,6 @@ public class ProcedureExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Errors.Should().BeEmpty();
         result.Equipement.Should().NotBeNull();
         result.Equipement!.Repere.Should().Be("38-C7401");
         result.Equipement.Designation.Should().Be("Rév 2 du 12/12/2025");
@@ -60,6 +59,32 @@ public class ProcedureExtractionServiceIntegrationTests
         result.TachesMultiples[0].Action.Should().Be("1-MANOEUVRES PREPARATOIRES");
         result.TachesMultiples[1].Ordre.Should().Be(1);
         result.TachesMultiples[1].EstFactice.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Extract_C7401Fixture_DetectsExactlyOneTypeIncoherence_SandwichedMadRunInsideMiseEnServiceSection()
+    {
+        // Lot 032 (docs/tickets-tdd-lot-032-detection-incoherence-type-procedure.md) ground truth:
+        // "10-MISE EN SERVICE DU COMPRESSEUR" (tasks 49-88) has 3 TYPE runs -- REL 49-72, MAD 73-78,
+        // REL 79-88 -- the only such section across all 3 real fixtures (calibration check in the
+        // ticket's own preamble).
+        var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
+
+        result.Errors.Should().ContainSingle();
+        var error = result.Errors[0];
+        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Sheet.Should().Be(Sheet);
+        error.BlockIdentifier.Should().Be("10-MISE EN SERVICE DU COMPRESSEUR (tâches 73-78)");
+        error.Message.Should().Be(
+            "Incohérence de TYPE détectée dans la tâche multiple \"10-MISE EN SERVICE DU COMPRESSEUR\" : " +
+            "tâches 73–78 en TM_PROC_MAD, encadrées par des tâches en TM_PROC_REL — vérifier une possible erreur de saisie.");
+
+        // Non-régression : l'anomalie ne bloque rien, les tâches 73-78 sont extraites normalement.
+        result.Equipement.Should().NotBeNull();
+        for (var ordre = 73; ordre <= 78; ordre++)
+        {
+            result.TachesMultiples.Should().Contain(t => t.Ordre == ordre && t.TypeTacheMultipleCode == "TM_PROC_MAD");
+        }
     }
 
     [Fact]
@@ -93,6 +118,18 @@ public class ProcedureExtractionServiceIntegrationTests
         result.TachesMultiples.Should().NotBeEmpty();
         result.TachesMultiples[0].Ordre.Should().Be(1);
         result.TachesMultiples[0].EstFactice.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx")]
+    [InlineData("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")]
+    public void Extract_HomogeneousFixtures_ProduceNoTypeIncoherenceWarning(string fileName)
+    {
+        // Explicit false-positive guard-rail (Lot 032's own calibration note): every section in these
+        // 2 fixtures is perfectly homogeneous, unlike C7401's single anomalous section above.
+        var result = ExtractFromFixture(fileName);
+
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
     }
 
     private ImportResult ExtractFromFixture(string fileName)

@@ -288,4 +288,124 @@ public class ProcedureExtractionServiceTests
 
         result.Equipement!.Designation.Should().Be("Rév 2 du 12/12/2025");
     }
+
+    // Lot 032 (docs/tickets-tdd-lot-032-detection-incoherence-type-procedure.md), 32.3: synthetic
+    // cases via Mock<IWorkbookReader> for the sandwich/bord/égalité-stricte wiring -- the C7401
+    // sandwich case, D8570/G6306B non-regression, are covered against the real fixtures in
+    // ProcedureExtractionServiceIntegrationTests (Infrastructure.Tests) instead.
+
+    private static void AddTaskRow(Dictionary<string, string?> cells, int row, int ordre, string action, string alias)
+    {
+        cells[$"B{row}"] = ordre.ToString();
+        cells[$"C{row}:L{row}"] = action;
+        cells[$"R{row}"] = alias;
+    }
+
+    [Fact]
+    public void Extract_WithMinorityTypeRunSurroundedByMajorityRuns_ProducesSandwichTypeIncoherenceWarning()
+    {
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = "1-SECTION";
+        AddTaskRow(cells, 10, 1, "Action 1", "REL");
+        AddTaskRow(cells, 11, 2, "Action 2", "MAD");
+        AddTaskRow(cells, 12, 3, "Action 3", "REL");
+        cells["C13:L13"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Errors.Should().ContainSingle();
+        var error = result.Errors[0];
+        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Sheet.Should().Be(Sheet);
+        error.BlockIdentifier.Should().Be("1-SECTION (tâches 2-2)");
+        error.Message.Should().Be(
+            "Incohérence de TYPE détectée dans la tâche multiple \"1-SECTION\" : tâches 2–2 en TM_PROC_MAD, " +
+            "encadrées par des tâches en TM_PROC_REL — vérifier une possible erreur de saisie.");
+        result.TachesMultiples.Should().HaveCount(4);
+        result.TachesMultiples.Should().Contain(t => t.Ordre == 2 && t.TypeTacheMultipleCode == "TM_PROC_MAD");
+    }
+
+    [Fact]
+    public void Extract_WithMinorityTypeRunAtTheStartOfSection_ProducesDebutDeSectionTypeIncoherenceWarning()
+    {
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = "1-SECTION";
+        AddTaskRow(cells, 10, 1, "Action 1", "MAD");
+        AddTaskRow(cells, 11, 2, "Action 2", "REL");
+        AddTaskRow(cells, 12, 3, "Action 3", "REL");
+        cells["C13:L13"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Errors.Should().ContainSingle();
+        var error = result.Errors[0];
+        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.BlockIdentifier.Should().Be("1-SECTION (tâches 1-1)");
+        error.Message.Should().Be(
+            "Incohérence de TYPE détectée dans la tâche multiple \"1-SECTION\" : tâches 1–1 en TM_PROC_MAD, " +
+            "en début de section, adjacentes à des tâches en TM_PROC_REL — vérifier une possible erreur de saisie.");
+    }
+
+    [Fact]
+    public void Extract_WithMinorityTypeRunAtTheEndOfSection_ProducesFinDeSectionTypeIncoherenceWarning()
+    {
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = "1-SECTION";
+        AddTaskRow(cells, 10, 1, "Action 1", "REL");
+        AddTaskRow(cells, 11, 2, "Action 2", "REL");
+        AddTaskRow(cells, 12, 3, "Action 3", "MAD");
+        cells["C13:L13"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Errors.Should().ContainSingle();
+        var error = result.Errors[0];
+        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.BlockIdentifier.Should().Be("1-SECTION (tâches 3-3)");
+        error.Message.Should().Be(
+            "Incohérence de TYPE détectée dans la tâche multiple \"1-SECTION\" : tâches 3–3 en TM_PROC_MAD, " +
+            "en fin de section, adjacentes à des tâches en TM_PROC_REL — vérifier une possible erreur de saisie.");
+    }
+
+    [Fact]
+    public void Extract_WithStrictlyEqualTypeSplit_ProducesSingleAmbiguousSectionWarning_NotOnePerType()
+    {
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = "1-SECTION";
+        AddTaskRow(cells, 10, 1, "Action 1", "REL");
+        AddTaskRow(cells, 11, 2, "Action 2", "MAD");
+        cells["C12:L12"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Errors.Should().ContainSingle();
+        var error = result.Errors[0];
+        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.BlockIdentifier.Should().Be("1-SECTION");
+        error.Message.Should().Be(
+            "Répartition de TYPE ambiguë dans la tâche multiple \"1-SECTION\" : TM_PROC_REL (1–1) et TM_PROC_MAD (2–2) " +
+            "se partagent la section à parts égales — impossible de déterminer le type correct, vérifier manuellement.");
+        result.TachesMultiples.Should().HaveCount(3);
+        result.TachesMultiples.Should().Contain(t => t.Ordre == 1 && t.TypeTacheMultipleCode == "TM_PROC_REL");
+        result.TachesMultiples.Should().Contain(t => t.Ordre == 2 && t.TypeTacheMultipleCode == "TM_PROC_MAD");
+    }
+
+    [Fact]
+    public void Extract_WithHomogeneousSection_ProducesNoTypeIncoherenceWarning()
+    {
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = "1-SECTION";
+        AddTaskRow(cells, 10, 1, "Action 1", "REL");
+        AddTaskRow(cells, 11, 2, "Action 2", "REL");
+        cells["C12:L12"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Errors.Should().BeEmpty();
+    }
 }

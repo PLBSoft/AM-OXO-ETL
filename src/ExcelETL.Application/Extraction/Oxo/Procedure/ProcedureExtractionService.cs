@@ -62,9 +62,76 @@ public sealed class ProcedureExtractionService(
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom);
         var points = defaultTableaux.Select(tableauName => new PointPivot(tableauName, repere)).ToList();
         var tachesMultiples = ReadTachesMultiples(workbookReader, sheetRule.Locator);
+        var typeCoherenceErrors = DetectTypeIncoherences(sheet, tachesMultiples);
 
-        return new ImportResult(equipement, [], points, tachesMultiples, []);
+        return new ImportResult(equipement, [], points, tachesMultiples, typeCoherenceErrors);
     }
+
+    // Lot 032 (docs/tickets-tdd-lot-032-detection-incoherence-type-procedure.md): a client
+    // data-entry-quality guard-rail cabled directly here (ticket decision 3), not a business rule
+    // generalized into ImportProfile/SheetExtractionRule -- consistent with the pre-existing
+    // Ordre/ligne factice rule on this same sheet. Non-blocking (decision 8): the TacheMultiplePivots
+    // themselves are always extracted normally regardless of what this detects.
+    private List<ExtractionError> DetectTypeIncoherences(string sheet, IReadOnlyList<TacheMultiplePivot> tachesMultiples)
+    {
+        var errors = new List<ExtractionError>();
+
+        foreach (var section in TacheMultipleSectionGrouper.GroupBySection(tachesMultiples))
+        {
+            var analysis = TacheMultipleTypeCoherenceAnalyzer.Analyze(section.Tasks);
+            foreach (var error in BuildTypeIncoherenceErrors(sheet, section.Title, analysis))
+            {
+                ExtractionErrorLogging.Log(logger, error);
+                errors.Add(error);
+            }
+        }
+
+        return errors;
+    }
+
+    private static IReadOnlyList<ExtractionError> BuildTypeIncoherenceErrors(
+        string sheet, string sectionTitle, TacheMultipleTypeCoherenceAnalysis analysis)
+    {
+        if (analysis.AmbiguousGroups.Count > 0)
+        {
+            var groupsText = JoinWithEt(analysis.AmbiguousGroups
+                .Select(group => $"{group.Type} ({string.Join(", ", group.Runs.Select(FormatRange))})")
+                .ToList());
+            var message =
+                $"Répartition de TYPE ambiguë dans la tâche multiple \"{sectionTitle}\" : {groupsText} " +
+                "se partagent la section à parts égales — impossible de déterminer le type correct, vérifier manuellement.";
+
+            return [new ExtractionError(
+                sheet, sectionTitle, ExtractionErrorCode.TypeIncoherenceDansTacheMultiple, message)];
+        }
+
+        var errors = new List<ExtractionError>();
+        foreach (var anomaly in analysis.MinorityRunAnomalies)
+        {
+            var run = anomaly.Run;
+            var blockIdentifier = $"{sectionTitle} (tâches {run.OrdreDebut}-{run.OrdreFin})";
+            var message = anomaly.Position == TypeRunPosition.Sandwich
+                ? $"Incohérence de TYPE détectée dans la tâche multiple \"{sectionTitle}\" : tâches " +
+                  $"{FormatRange(run)} en {run.Type}, encadrées par des tâches en {analysis.MajorityType} " +
+                  "— vérifier une possible erreur de saisie."
+                : $"Incohérence de TYPE détectée dans la tâche multiple \"{sectionTitle}\" : tâches " +
+                  $"{FormatRange(run)} en {run.Type}, en {DebutOuFin(anomaly.Position)} de section, adjacentes " +
+                  $"à des tâches en {analysis.MajorityType} — vérifier une possible erreur de saisie.";
+
+            errors.Add(new ExtractionError(
+                sheet, blockIdentifier, ExtractionErrorCode.TypeIncoherenceDansTacheMultiple, message));
+        }
+
+        return errors;
+    }
+
+    private static string DebutOuFin(TypeRunPosition position) =>
+        position == TypeRunPosition.DebutDeSection ? "début" : "fin";
+
+    private static string FormatRange(TypeRun run) => $"{run.OrdreDebut}–{run.OrdreFin}";
+
+    private static string JoinWithEt(IReadOnlyList<string> items) =>
+        items.Count == 1 ? items[0] : string.Join(", ", items.Take(items.Count - 1)) + " et " + items[^1];
 
     private string BuildDesignation(string numeroRevision, DateOnly dateRevision)
     {
