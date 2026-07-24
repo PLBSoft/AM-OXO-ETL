@@ -215,3 +215,12 @@ h1:focus {
     padding: 0.25rem 0.5rem;
     text-decoration: none;
 }
+
+/* V12 (Lot V): Bootstrap ships no responsive width utility (w-100 has no md-scoped counterpart) --
+   this is the one custom rule needed to reset ExportProfileTest.razor's primary action button back
+   to its natural width from md up, at the same 768px breakpoint V2 already established. */
+@media (min-width: 768px) {
+    .w-md-auto {
+        width: auto !important;
+    }
+}

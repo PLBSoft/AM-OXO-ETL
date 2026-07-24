@@ -113,7 +113,10 @@ else
                 }
             </div>
 
-            <button id="generate-workbook-button" class="btn btn-primary btn-lg mb-3" @onclick="GenerateWorkbook">
+            <!-- V12: primary action button only -- full width below md, natural width from md up.
+                 Bootstrap ships no responsive width utility, so w-md-auto is a small custom rule
+                 (see app.css) matching V2's already-established 768px breakpoint. -->
+            <button id="generate-workbook-button" class="btn btn-primary btn-lg w-100 w-md-auto mb-3" @onclick="GenerateWorkbook">
                 @Loc["ExportProfileTest_GenerateButton"]
             </button>
 

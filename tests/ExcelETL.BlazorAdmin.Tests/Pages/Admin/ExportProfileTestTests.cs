@@ -683,11 +683,16 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#export-test-export-profile-select").ClassList.Should().Contain("form-select-lg");
             cut.Find("#generate-workbook-button").ClassList.Should().Contain("btn-lg");
 
+            // V12: full width below md, natural width from md up -- the primary action button only.
+            cut.Find("#generate-workbook-button").ClassList.Should().Contain("w-100");
+            cut.Find("#generate-workbook-button").ClassList.Should().Contain("w-md-auto");
+
             SelectExportProfile(cut, exportProfile.Id);
             cut.Find("#generate-workbook-button").Click();
 
             cut.WaitForAssertion(() => cut.FindAll("#download-generated-workbook-link").Should().NotBeEmpty());
             cut.Find("#download-generated-workbook-link").ClassList.Should().Contain("btn-lg");
+            cut.Find("#download-generated-workbook-link").ClassList.Should().NotContain("w-100");
         });
 
     // V9: same de-emphasized intro paragraph as ImportProfileTestTests.
