@@ -2,6 +2,7 @@
 @page "/"
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
+@using System.Text.RegularExpressions
 @using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Identity
@@ -132,7 +133,7 @@ else
     private async Task DuplicateProfileAsync(ImportProfile profile)
     {
         var duplicate = new ImportProfile(
-            $"{profile.Name} {Loc["ImportProfiles_DuplicateSuffix"]}",
+            BuildAvailableDuplicateName(profile.Name),
             profile.ReperePrefix,
             profile.EquipementTypeElementNom,
             profile.DefaultTableaux,
@@ -141,5 +142,39 @@ else
 
         await ImportProfileStore.SaveAsync(duplicate);
         await LoadProfilesAsync();
+    }
+
+    // Lot 027 (27.4): resolves a name collision by auto-incrementing suffix rather than blocking or
+    // silently renaming -- "{Name} (Copy)" -> "{Name} (Copy 2)" -> "{Name} (Copy 3)"... Checked against
+    // the already-loaded _profiles list (no extra round trip to the Store). Stripping an already-present
+    // "(Copy[ N])" suffix off the clicked profile's own name first means duplicating either the original
+    // or one of its existing copies always increments from the same shared base name, per the ticket's
+    // own worked examples -- both land on the same next-available "(Copy N)", never a nested
+    // "(Copy) (Copy)".
+    private string BuildAvailableDuplicateName(string profileName)
+    {
+        var suffixText = Loc["ImportProfiles_DuplicateSuffix"].Value;
+        var innerSuffix = suffixText.Trim().TrimStart('(').TrimEnd(')').Trim();
+
+        var suffixPattern = new Regex($@"^(?<base>.+) \({Regex.Escape(innerSuffix)}(?: \d+)?\)$");
+        var match = suffixPattern.Match(profileName);
+        var baseName = match.Success ? match.Groups["base"].Value : profileName;
+
+        var attempt = 1;
+        while (true)
+        {
+            var candidate = attempt == 1
+                ? $"{baseName} ({innerSuffix})"
+                : $"{baseName} ({innerSuffix} {attempt})";
+
+            var isTaken = _profiles!.Any(
+                p => string.Equals(p.Name.Trim(), candidate.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (!isTaken)
+            {
+                return candidate;
+            }
+
+            attempt++;
+        }
     }
 }

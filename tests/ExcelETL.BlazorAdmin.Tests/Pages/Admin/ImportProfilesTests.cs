@@ -287,6 +287,59 @@ public class ImportProfilesTests : BunitContext
             all.Should().Contain(p => p.Name == "MAD OXO (Copy)" && p.Id != original.Id);
         });
 
+    [Fact]
+    public async Task DuplicateButton_WhenProfileAndItsCopyAlreadyExist_IncrementsSuffixToCopy2() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO");
+            await SeedProfileAsync(original);
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO (Copy)"));
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#duplicate-profile-button-{original.Id}").Click();
+
+            var store = Services.GetRequiredService<IImportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(3);
+            all.Should().Contain(p => p.Name == "MAD OXO (Copy 2)");
+        });
+
+    [Fact]
+    public async Task DuplicateButton_ClickedOnTheCopyItself_AlsoIncrementsFromTheSharedBaseName() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO");
+            await SeedProfileAsync(original);
+            var copy = BuildProfileWithOneSheetRule("MAD OXO (Copy)");
+            await SeedProfileAsync(copy);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#duplicate-profile-button-{copy.Id}").Click();
+
+            var store = Services.GetRequiredService<IImportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(3);
+            all.Should().Contain(p => p.Name == "MAD OXO (Copy 2)");
+        });
+
+    [Fact]
+    public async Task DuplicateButton_WithThreeCollisionLevelsAlreadyPresent_ProducesCopy3() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO");
+            await SeedProfileAsync(original);
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO (Copy)"));
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO (Copy 2)"));
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#duplicate-profile-button-{original.Id}").Click();
+
+            var store = Services.GetRequiredService<IImportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(4);
+            all.Should().Contain(p => p.Name == "MAD OXO (Copy 3)");
+        });
+
     // X11 (Lot X): top-level list pages define no <PageBackNavLink>/<SectionContent>, so the
     // shared top-row's <SectionOutlet> stays genuinely empty here -- real DOM absence, not a
     // display:none check (same rule already applied to L2/NavMenu's own tests).

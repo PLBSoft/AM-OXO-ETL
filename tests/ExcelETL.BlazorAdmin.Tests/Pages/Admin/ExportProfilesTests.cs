@@ -270,4 +270,57 @@ public class ExportProfilesTests : BunitContext
             all.Should().Contain(p => p.Name == "MAD OXO export (Copy)" && p.Id != original.Id);
             all.Single(p => p.Id != original.Id).SheetRules.Should().BeEquivalentTo(original.SheetRules);
         });
+
+    [Fact]
+    public async Task DuplicateButton_WhenProfileAndItsCopyAlreadyExist_IncrementsSuffixToCopy2() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO export");
+            await SeedProfileAsync(original);
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO export (Copy)"));
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#duplicate-export-profile-button-{original.Id}").Click();
+
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(3);
+            all.Should().Contain(p => p.Name == "MAD OXO export (Copy 2)");
+        });
+
+    [Fact]
+    public async Task DuplicateButton_ClickedOnTheCopyItself_AlsoIncrementsFromTheSharedBaseName() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO export");
+            await SeedProfileAsync(original);
+            var copy = BuildProfileWithOneSheetRule("MAD OXO export (Copy)");
+            await SeedProfileAsync(copy);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#duplicate-export-profile-button-{copy.Id}").Click();
+
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(3);
+            all.Should().Contain(p => p.Name == "MAD OXO export (Copy 2)");
+        });
+
+    [Fact]
+    public async Task DuplicateButton_WithThreeCollisionLevelsAlreadyPresent_ProducesCopy3() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var original = BuildProfileWithOneSheetRule("MAD OXO export");
+            await SeedProfileAsync(original);
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO export (Copy)"));
+            await SeedProfileAsync(BuildProfileWithOneSheetRule("MAD OXO export (Copy 2)"));
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#duplicate-export-profile-button-{original.Id}").Click();
+
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().HaveCount(4);
+            all.Should().Contain(p => p.Name == "MAD OXO export (Copy 3)");
+        });
 }
