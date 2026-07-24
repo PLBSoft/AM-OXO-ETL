@@ -12,9 +12,21 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
 
         builder.HasKey(p => p.Id);
 
+        // Max length mirrors ImportProfile.MaxNameLength (Domain constructor is the source of truth
+        // for the invariant; this column length just matches it). Unique index enforces name
+        // uniqueness at the DB level as a defense-in-depth/race-condition safety net -- the primary
+        // uniqueness check lives in EfImportProfileStore.SaveAsync (see ProfileNameAlreadyExistsException),
+        // not here. Relies on the target database's default collation being case-insensitive
+        // (SQL Server's usual default, e.g. SQL_Latin1_General_CP1_CI_AS) to match the Store's
+        // OrdinalIgnoreCase comparison -- no explicit collation is set here since every environment
+        // this project targets uses that default; revisit if a target database is ever provisioned
+        // with a case-sensitive collation.
         builder.Property(p => p.Name)
             .IsRequired()
-            .HasMaxLength(200);
+            .HasMaxLength(ImportProfile.MaxNameLength);
+
+        builder.HasIndex(p => p.Name)
+            .IsUnique();
 
         builder.Property(p => p.ReperePrefix)
             .IsRequired()

@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Generation.Profile;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,19 @@ public class EfExportProfileStore(IDbContextFactory<ExcelEtlDbContext> dbContext
     public async Task SaveAsync(ExportProfile profile, CancellationToken cancellationToken = default)
     {
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        // See EfImportProfileStore.SaveAsync for the rationale (normalized Trim + OrdinalIgnoreCase
+        // check, own Id excluded, unique index is a defense-in-depth safety net only).
+        var candidates = await context.ExportProfiles
+            .Where(p => p.Id != profile.Id)
+            .Select(p => p.Name)
+            .ToListAsync(cancellationToken);
+        var trimmedName = profile.Name.Trim();
+        if (candidates.Any(name => string.Equals(name.Trim(), trimmedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ProfileNameAlreadyExistsException(profile.Name);
+        }
+
         var existing = await context.ExportProfiles.FirstOrDefaultAsync(p => p.Id == profile.Id, cancellationToken);
         if (existing is not null)
         {

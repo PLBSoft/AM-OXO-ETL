@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -214,5 +215,74 @@ public class EfImportProfileStoreTests
         var act = async () => await store.DeleteAsync(Guid.NewGuid());
 
         await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNameOfAnAlreadyExistingProfile_ThrowsProfileNameAlreadyExistsException_AndInsertsNothing()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateSampleProfile("Profil A"));
+
+        var act = async () => await store.SaveAsync(CreateSampleProfile("Profil A"));
+
+        (await act.Should().ThrowAsync<ProfileNameAlreadyExistsException>())
+            .Which.Name.Should().Be("Profil A");
+        var all = await store.GetAllAsync();
+        all.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task SaveAsync_UpdateWithOwnUnchangedName_DoesNotThrow()
+    {
+        var profile = CreateSampleProfile("Profil A");
+        var store = CreateStore();
+        await store.SaveAsync(profile);
+
+        var edited = new ImportProfile(
+            profile.Id, "Profil A", profile.ReperePrefix, profile.EquipementTypeElementNom, [], [], [.. profile.SheetRules]);
+
+        var act = async () => await store.SaveAsync(edited);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task SaveAsync_UpdateWithAnotherExistingProfilesName_ThrowsProfileNameAlreadyExistsException()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateSampleProfile("Profil A"));
+        var second = CreateSampleProfile("Profil B");
+        await store.SaveAsync(second);
+
+        var edited = new ImportProfile(
+            second.Id, "Profil A", second.ReperePrefix, second.EquipementTypeElementNom, [], [], [.. second.SheetRules]);
+
+        var act = async () => await store.SaveAsync(edited);
+
+        await act.Should().ThrowAsync<ProfileNameAlreadyExistsException>();
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNameCollidingOnlyAfterTrimAndCaseNormalization_ThrowsProfileNameAlreadyExistsException()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateSampleProfile("Profil A"));
+
+        var act = async () => await store.SaveAsync(CreateSampleProfile("  profil a  "));
+
+        await act.Should().ThrowAsync<ProfileNameAlreadyExistsException>();
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithTwoGenuinelyDistinctNames_DoesNotThrow_BothCoexist()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateSampleProfile("Profil A"));
+
+        var act = async () => await store.SaveAsync(CreateSampleProfile("Profil B"));
+
+        await act.Should().NotThrowAsync();
+        var all = await store.GetAllAsync();
+        all.Should().HaveCount(2);
     }
 }

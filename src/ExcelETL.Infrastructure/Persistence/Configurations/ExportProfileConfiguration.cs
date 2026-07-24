@@ -12,9 +12,15 @@ public class ExportProfileConfiguration : IEntityTypeConfiguration<ExportProfile
 
         builder.HasKey(p => p.Id);
 
+        // See ImportProfileConfiguration's Name mapping for the rationale (max length mirrors the
+        // Domain constructor's invariant, unique index is a defense-in-depth safety net -- the
+        // primary uniqueness check lives in EfExportProfileStore.SaveAsync).
         builder.Property(p => p.Name)
             .IsRequired()
-            .HasMaxLength(200);
+            .HasMaxLength(ExportProfile.MaxNameLength);
+
+        builder.HasIndex(p => p.Name)
+            .IsUnique();
 
         // SheetGenerationRule has no identity of its own -- owned by ExportProfile, not a sibling
         // entity. Same shadow "Id" key convention as ImportProfileConfiguration's SheetRules.

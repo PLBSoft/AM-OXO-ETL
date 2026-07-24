@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Domain.Extraction.Profile;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,21 @@ public class EfImportProfileStore(IDbContextFactory<ExcelEtlDbContext> dbContext
     public async Task SaveAsync(ImportProfile profile, CancellationToken cancellationToken = default)
     {
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+        // Normalized (Trim + OrdinalIgnoreCase) name-uniqueness check, own Id excluded so a no-op
+        // rename during an update never collides with itself. This is the primary path for
+        // ProfileNameAlreadyExistsException -- the unique index on Name (ImportProfileConfiguration)
+        // is a defense-in-depth safety net for races, not relied on here.
+        var candidates = await context.ImportProfiles
+            .Where(p => p.Id != profile.Id)
+            .Select(p => p.Name)
+            .ToListAsync(cancellationToken);
+        var trimmedName = profile.Name.Trim();
+        if (candidates.Any(name => string.Equals(name.Trim(), trimmedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new ProfileNameAlreadyExistsException(profile.Name);
+        }
+
         var existing = await context.ImportProfiles.FirstOrDefaultAsync(p => p.Id == profile.Id, cancellationToken);
         if (existing is not null)
         {
