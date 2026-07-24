@@ -656,6 +656,16 @@ public class ExportProfileTestTests : BunitContext
         source.Should().NotContain("IExcelDownloadInterop");
     }
 
+    // V9: same de-emphasized intro paragraph as ImportProfileTestTests.
+    [Fact]
+    public void IntroParagraph_IsDeEmphasized_ButTextIsUnchanged() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+
+        var intro = cut.Find("p.text-muted.small");
+        intro.TextContent.Should().Contain("Upload an .xlsx file to run it through the extraction pipeline");
+    });
+
     [Fact]
     public void BackToListButton_NavigatesToExportProfileList() => WithCulture("en-US", () =>
     {

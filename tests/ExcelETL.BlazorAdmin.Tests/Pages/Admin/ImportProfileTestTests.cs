@@ -220,6 +220,16 @@ public class ImportProfileTestTests : BunitContext
                 [])
         ]);
 
+    // V9: de-emphasized intro paragraph -- text unchanged (same resx key), only presentation.
+    [Fact]
+    public void IntroParagraph_IsDeEmphasized_ButTextIsUnchanged() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+
+        var intro = cut.Find("p.text-muted.small");
+        intro.TextContent.Should().Contain("Upload an .xlsx file to run it through the extraction pipeline in memory");
+    });
+
     [Fact]
     public void ImportProfileTest_WithNoProfiles_RendersFileInputAndNoProfilesMessage() => WithCulture("en-US", () =>
     {
