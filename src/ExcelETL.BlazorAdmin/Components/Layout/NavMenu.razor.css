@@ -20,13 +20,29 @@
     background-color: rgba(0, 0, 0, 0.15);
 }
 
+/* Y1 (Lot Y): the hamburger toggler (below, `.navbar-toggler`) is a sibling of `.top-row`, not one
+   of its flex children -- it stays absolutely positioned (top:0.5rem; right:1rem; width:3.5rem, see
+   the rule below) rather than being a real flex participant, since it also needs to remain a
+   sibling of `.nav-scrollable` for the `.navbar-toggler:checked ~ .nav-scrollable` CSS-only toggle
+   to keep working. This padding-right reserves that same visual space inside `.container-fluid`'s
+   flex row so `.navbar-brand`'s `text-truncate` stops short of the toggler's overlay area instead of
+   running underneath it -- root cause of the client-reported title/hamburger collision on mobile. */
+.container-fluid {
+    padding-right: 4.5rem;
+}
+
 .navbar-brand {
     font-size: 1.1rem;
+    /* Required for text-truncate to take effect inside a flex child -- a flex item's default
+       min-width:auto otherwise prevents it from ever shrinking below its content's natural width. */
+    min-width: 0;
 }
 
 /* X11 (Lot X): back-nav link projected via SectionOutlet/PageBackNavLink into this same top-row --
    text-white matches navbar-dark's brand-text color explicitly rather than relying only on
-   inheritance, since PageBackNavLink is a separately-scoped component. */
+   inheritance, since PageBackNavLink is a separately-scoped component. Y1's flex-shrink-0 (keeping
+   it from ever being compressed by the brand link's flex-grow-1) is a Bootstrap utility class on the
+   button itself, see PageBackNavLink.razor. */
 ::deep .top-row-back-link {
     display: inline-flex;
     align-items: center;

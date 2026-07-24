@@ -6,13 +6,13 @@
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
 <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
+    <div class="container-fluid d-flex align-items-center">
         <SectionOutlet SectionName="@PageBackNavSectionName" />
-        <a class="navbar-brand" href="">Alpha - MAD / REL OXO</a>
+        <a class="navbar-brand text-truncate flex-grow-1" href="">Alpha - MAD / REL OXO</a>
     </div>
 </div>
 
-<input type="checkbox" title="@Loc["NavMenu_ToggleTitle"]" class="navbar-toggler" />
+<input type="checkbox" title="@Loc["NavMenu_ToggleTitle"]" class="navbar-toggler flex-shrink-0" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">

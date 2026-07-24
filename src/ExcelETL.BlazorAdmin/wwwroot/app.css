@@ -138,6 +138,18 @@ h1:focus {
     gap: 1.5rem;
 }
 
+/* Y4 (Lot Y): minmax(480px, ...)'s 480px floor is wider than any mobile viewport -- CSS Grid never
+   shrinks a track below its minmax minimum, so on mobile the grid itself (and everything after it in
+   the page) was forced wider than the viewport, producing page-wide horizontal scroll and the
+   client-reported left/right text truncation in ExportProfileEditor.razor's edit route. Below the
+   same 768px breakpoint already used elsewhere (V2/w-md-auto), collapse to a single natural-width
+   column instead. */
+@media (max-width: 767.98px) {
+    .sheet-rule-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .sheet-rule-card {
     display: flex;
     flex-direction: column;

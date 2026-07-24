@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using Bunit;
 using ExcelETL.BlazorAdmin.Tests.Layout;
 using ExcelETL.Application.Exceptions;
@@ -1203,4 +1204,150 @@ public class ExportProfileEditorTests : BunitContext
 
             await Task.CompletedTask;
         });
+
+    // --- Lot Y (post-mobile-review corrections) -----------------------------------------------
+
+    // Y2: "Colonne name" (PointColumnDefinitionForm) already respects form-floating's two hard
+    // requirements -- input before label in the DOM, and a non-empty placeholder -- confirmed
+    // structurally correct as of Y0's investigation (X4 already merged). This is a regression guard,
+    // not a fix: it would fail if a future change reintroduced the label-before-input/empty-placeholder
+    // violation the client screenshot originally showed.
+    [Fact]
+    public void ColonneNameField_RespectsFormFloatingStructure_InputBeforeLabel_WithNonEmptyPlaceholder() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var input = cut.Find("#point-column-nom-input");
+            var wrapper = input.ParentElement!;
+
+            wrapper.ClassList.Should().Contain("form-floating");
+            wrapper.Children.ElementAt(0).GetAttribute("id").Should().Be("point-column-nom-input");
+            wrapper.Children.ElementAt(1).TagName.Should().BeEquivalentTo("label");
+
+            input.GetAttribute("placeholder").Should().NotBeNullOrEmpty();
+        });
+
+    // Y2: same two checks, extended to every other form-floating input/select on this page's
+    // sub-forms (Y0's own instruction: extend to every affected field, not just the one named in the
+    // client screenshot, if the investigation shows the same structure is shared).
+    [Theory]
+    [InlineData("export-profile-name-input")]
+    [InlineData("sheet-generation-rule-name-input")]
+    [InlineData("sheet-generation-rule-pivot-source-select")]
+    [InlineData("column-header-input")]
+    [InlineData("column-source-select")]
+    [InlineData("point-column-header-input")]
+    [InlineData("point-column-mark-value-input")]
+    [InlineData("application-column-nom-input")]
+    [InlineData("application-column-header-input")]
+    [InlineData("application-column-mark-value-input")]
+    public void OtherFormFloatingFields_RespectStructure_InputBeforeLabel_WithNonEmptyPlaceholder(string id) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var input = cut.Find($"#{id}");
+            var wrapper = input.ParentElement!;
+
+            wrapper.ClassList.Should().Contain("form-floating");
+            wrapper.Children.ElementAt(0).GetAttribute("id").Should().Be(id);
+            wrapper.Children.ElementAt(1).TagName.Should().BeEquivalentTo("label");
+
+            // The two PivotSource <select> options both have their own resx placeholder key --
+            // only the plain-text inputs enforce the non-empty-placeholder mechanism.
+            if (input.TagName.Equals("input", StringComparison.OrdinalIgnoreCase))
+            {
+                input.GetAttribute("placeholder").Should().NotBeNullOrEmpty();
+            }
+        });
+
+    // Y2: non-regression -- typing in the "Colonne name" field still reaches the bound C# property
+    // and flows through to the created PointColumnDefinition.
+    [Fact]
+    public void ColonneNameField_Input_StillBindsToPointColumnDefinition() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("PROLOCK VANNES");
+        cut.Find("#point-column-header-input").Change("Prolock");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        cut.Find("#sheet-rule-details-toggle-0").Click();
+
+        cut.Markup.Should().Contain("PROLOCK VANNES");
+    });
+
+    // Y1: NavMenu's title/hamburger banner collision -- covered directly in NavMenuTests.cs (the
+    // component actually responsible), not duplicated here.
+
+    // Y3: #save-profile-button (final CTA) is full-width/large on mobile, natural-width on desktop
+    // (V12's w-md-auto pattern), with generous vertical margins, and never shares X5's outline style.
+    [Fact]
+    public void SaveProfileButton_IsFullWidthLargeCta_WithVerticalMargins_AndNeverOutlineStyled() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var saveButton = cut.Find("#save-export-profile-button");
+
+            saveButton.ClassList.Should().Contain("w-100");
+            saveButton.ClassList.Should().Contain("w-md-auto");
+            saveButton.ClassList.Should().Contain("btn-lg");
+            saveButton.ClassList.Should().Contain("mt-4");
+            saveButton.ClassList.Should().Contain("mb-4");
+
+            saveButton.ClassList.Where(c => c.StartsWith("btn-outline-", StringComparison.Ordinal))
+                .Should().BeEmpty();
+        });
+
+    // Y3: non-regression -- the button still saves and navigates back to the list.
+    [Fact]
+    public void SaveProfileButton_StillSavesAndNavigatesToList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#export-profile-name-input").Change("Profil Y3");
+        cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+        cut.Find("#add-sheet-generation-rule-button").Click();
+        cut.Find("#save-export-profile-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/export-profiles");
+    });
+
+    // Y4: root cause identified in Y0 -- .sheet-rule-grid's minmax(480px, ...) floor is wider than
+    // any mobile viewport, forcing page-wide horizontal overflow (not X6's already-fixed missing
+    // container). Below the 768px breakpoint it collapses to a single column instead.
+    [Fact]
+    public void SheetRuleGrid_CollapsesToSingleColumn_BelowMobileBreakpoint_ViaCorrectiveClass() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+            cut.Find("#add-sheet-generation-rule-button").Click();
+
+            // bUnit computes no real layout/media queries -- the corrective class's presence is the
+            // structural proof (see app.css's @media (max-width: 767.98px) rule for the actual fix).
+            cut.Find("ul.sheet-rule-list").ClassList.Should().Contain("sheet-rule-grid");
+        });
+
+    // Y4: non-regression -- long sheet-rule/column names stay fully present in the DOM (text-truncate
+    // never strips text, only affects display) so existing content assertions remain valid.
+    [Fact]
+    public void SheetRuleGrid_LongSheetName_RemainsFullyPresentInDom() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        const string longName = "UNE_FEUILLE_AVEC_UN_NOM_TRES_TRES_TRES_LONG_QUI_POURRAIT_DEBORDER";
+        cut.Find("#sheet-generation-rule-name-input").Change(longName);
+        cut.Find("#add-sheet-generation-rule-button").Click();
+
+        cut.Markup.Should().Contain(longName);
+    });
 }
