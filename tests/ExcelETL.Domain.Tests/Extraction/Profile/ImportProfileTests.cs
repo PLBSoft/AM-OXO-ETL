@@ -158,4 +158,36 @@ public class ImportProfileTests
 
         act.Should().Throw<ArgumentException>().WithParameterName("id");
     }
+
+    [Fact]
+    public void Constructor_WithNameOfExactly60Characters_CreatesImportProfile()
+    {
+        var name = new string('A', 60);
+
+        var profile = new ImportProfile(name, "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        profile.Name.Should().Be(name);
+    }
+
+    [Fact]
+    public void Constructor_WithNameOf61Characters_ThrowsDomainValidationException()
+    {
+        var name = new string('A', 61);
+
+        var act = () => new ImportProfile(name, "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("name")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_NameTooLong);
+    }
+
+    [Fact]
+    public void Constructor_WithNameOf65CharactersTrimmingTo60_CreatesImportProfile()
+    {
+        var name = " " + new string('A', 60) + "    ";
+
+        var profile = new ImportProfile(name, "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        profile.Name.Should().Be(name);
+    }
 }

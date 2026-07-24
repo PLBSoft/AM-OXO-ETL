@@ -76,6 +76,9 @@
   <data name="ImportProfile_NoSheetRules" xml:space="preserve">
     <value>La liste des règles de feuille doit contenir au moins une règle.</value>
   </data>
+  <data name="ImportProfile_NameTooLong" xml:space="preserve">
+    <value>Le nom ne doit pas dépasser {0} caractères.</value>
+  </data>
   <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
     <value>Le nom de la feuille ne doit pas être vide.</value>
   </data>
@@ -87,6 +90,9 @@
   </data>
   <data name="ExportProfile_NoSheetRules" xml:space="preserve">
     <value>La liste des règles de feuille doit contenir au moins une règle.</value>
+  </data>
+  <data name="ExportProfile_NameTooLong" xml:space="preserve">
+    <value>Le nom ne doit pas dépasser {0} caractères.</value>
   </data>
   <data name="SheetGenerationRule_EmptySheetName" xml:space="preserve">
     <value>Le nom de la feuille ne doit pas être vide.</value>

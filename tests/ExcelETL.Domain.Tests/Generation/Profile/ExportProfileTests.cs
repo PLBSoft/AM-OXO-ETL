@@ -103,4 +103,36 @@ public class ExportProfileTests
 
         first.Should().NotBe(second);
     }
+
+    [Fact]
+    public void Constructor_WithNameOfExactly60Characters_CreatesExportProfile()
+    {
+        var name = new string('A', 60);
+
+        var profile = new ExportProfile(name, [ValidRule()]);
+
+        profile.Name.Should().Be(name);
+    }
+
+    [Fact]
+    public void Constructor_WithNameOf61Characters_ThrowsDomainValidationException()
+    {
+        var name = new string('A', 61);
+
+        var act = () => new ExportProfile(name, [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("name")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExportProfile_NameTooLong);
+    }
+
+    [Fact]
+    public void Constructor_WithNameOf65CharactersTrimmingTo60_CreatesExportProfile()
+    {
+        var name = " " + new string('A', 60) + "    ";
+
+        var profile = new ExportProfile(name, [ValidRule()]);
+
+        profile.Name.Should().Be(name);
+    }
 }
