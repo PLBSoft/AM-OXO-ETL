@@ -37,7 +37,7 @@ else
 
     <div class="mb-3">
         <div class="form-floating">
-            <input id="export-profile-name-input" class="form-control" @bind="_name"
+            <input id="export-profile-name-input" class="form-control" @bind="_name" maxlength="@ExportProfile.MaxNameLength"
                    placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
             <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
         </div>
@@ -249,6 +249,10 @@ else
             NavigationManager.NavigateTo("export-profiles");
         }
         catch (DomainValidationException ex)
+        {
+            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+        catch (ProfileNameAlreadyExistsException ex)
         {
             _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
         }

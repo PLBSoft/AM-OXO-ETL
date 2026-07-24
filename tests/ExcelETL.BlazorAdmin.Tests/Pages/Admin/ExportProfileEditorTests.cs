@@ -122,6 +122,33 @@ public class ExportProfileEditorTests : BunitContext
         });
 
     [Fact]
+    public void NameInput_HasMaxLength60Attribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#export-profile-name-input").GetAttribute("maxlength").Should().Be("60");
+    });
+
+    [Fact]
+    public async Task Save_WithNameOver60Characters_DisplaysLocalizedErrorAndDoesNotNavigate() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#export-profile-name-input").Change(new string('A', 61));
+            AddValidSheetRule(cut);
+
+            cut.Find("#save-export-profile-button").Click();
+
+            cut.Markup.Should().Contain("Name must not exceed 60 characters.");
+            navigationManager.Uri.Should().NotEndWith("/export-profiles");
+
+            var all = await Store.GetAllAsync();
+            all.Should().BeEmpty();
+        });
+
+    [Fact]
     public void Save_WithNoSheetRulesAdded_DisplaysLocalizedError() => WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfileEditor>();
@@ -309,6 +336,44 @@ public class ExportProfileEditorTests : BunitContext
             rule.PivotSource.Should().Be(PivotSource.Equipement);
             rule.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Repère" && c.Source == PivotFieldRef.EquipementRepere);
             rule.PointColumnDefinitions.Should().ContainSingle(p => p.ColonneNom == "TRAVAUX COMPLET" && p.Header == "Travaux complet");
+        });
+
+    [Fact]
+    public async Task Save_WithNameOfAnAlreadyExistingProfile_DisplaysLocalizedErrorAndDoesNotNavigate() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await Store.SaveAsync(BuildProfileWithOneSheetRule("Profil export OXO"));
+
+            var cut = Render<ExportProfileEditor>();
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#export-profile-name-input").Change("Profil export OXO");
+            AddValidSheetRule(cut);
+
+            cut.Find("#save-export-profile-button").Click();
+
+            cut.Markup.Should().Contain("A profile named 'Profil export OXO' already exists.");
+            navigationManager.Uri.Should().NotEndWith("/export-profiles");
+
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
+        });
+
+    [Fact]
+    public async Task Save_EditWithUnchangedName_SucceedsNormally_NoFalsePositiveOnSelf() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule("Profil export OXO");
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#save-export-profile-button").Click();
+
+            navigationManager.Uri.Should().EndWith("/export-profiles");
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
         });
 
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), out-of-scope note: minimal form

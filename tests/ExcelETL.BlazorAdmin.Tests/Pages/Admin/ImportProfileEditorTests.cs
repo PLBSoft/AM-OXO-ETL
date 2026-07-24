@@ -265,6 +265,37 @@ public class ImportProfileEditorTests : BunitContext
             rule.PointRules.Should().ContainSingle(r => r.ColonneName == "ZÉRO ENERGIE..." && r.ComparisonValue == "ZERO ENERGIE");
         });
 
+    [Fact]
+    public void NameInput_HasMaxLength60Attribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#profile-name-input").GetAttribute("maxlength").Should().Be("60");
+    });
+
+    [Fact]
+    public async Task Save_WithNameOver60Characters_DisplaysLocalizedErrorAndDoesNotNavigate() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            // Bypasses the #profile-name-input maxlength="60" HTML attribute -- .Change() sets the
+            // bound model value directly, same as a user editing the DOM/devtools around the client-side
+            // guard. The Domain constructor is the only real source of truth (see ImportProfile.MaxNameLength).
+            cut.Find("#profile-name-input").Change(new string('A', 61));
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            AddValidSheetRule(cut);
+
+            cut.Find("#save-profile-button").Click();
+
+            cut.Markup.Should().Contain("Name must not exceed 60 characters.");
+            navigationManager.Uri.Should().NotEndWith("/import-profiles");
+
+            var all = await Store.GetAllAsync();
+            all.Should().BeEmpty();
+        });
+
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;
@@ -279,6 +310,45 @@ public class ImportProfileEditorTests : BunitContext
             CultureInfo.CurrentUICulture = originalCulture;
         }
     }
+
+    [Fact]
+    public async Task Save_WithNameOfAnAlreadyExistingProfile_DisplaysLocalizedErrorAndDoesNotNavigate() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await Store.SaveAsync(BuildProfileWithOneSheetRule("Profil OXO standard"));
+
+            var cut = Render<ImportProfileEditor>();
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#profile-name-input").Change("Profil OXO standard");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            AddValidSheetRule(cut);
+
+            cut.Find("#save-profile-button").Click();
+
+            cut.Markup.Should().Contain("A profile named 'Profil OXO standard' already exists.");
+            navigationManager.Uri.Should().NotEndWith("/import-profiles");
+
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
+        });
+
+    [Fact]
+    public async Task Save_EditWithUnchangedName_SucceedsNormally_NoFalsePositiveOnSelf() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule("Profil OXO standard");
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+            cut.Find("#save-profile-button").Click();
+
+            navigationManager.Uri.Should().EndWith("/import-profiles");
+            var all = await Store.GetAllAsync();
+            all.Should().ContainSingle();
+        });
 
     [Fact]
     public async Task EditRoute_WithExistingProfile_PrefillsRootFieldsAndSheetRules() =>

@@ -37,7 +37,7 @@ else
 <div class="row g-2 mb-3">
     <div class="col">
         <label class="form-label" for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
-        <input id="profile-name-input" class="form-control" @bind="_name"
+        <input id="profile-name-input" class="form-control" @bind="_name" maxlength="@ImportProfile.MaxNameLength"
                placeholder="@Loc["ImportProfileEditor_NamePlaceholder"]" />
     </div>
     <div class="col">
@@ -324,6 +324,10 @@ else
             NavigationManager.NavigateTo("import-profiles");
         }
         catch (DomainValidationException ex)
+        {
+            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+        catch (ProfileNameAlreadyExistsException ex)
         {
             _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
         }
