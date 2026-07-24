@@ -220,6 +220,16 @@ public class ImportProfileTestTests : BunitContext
                 [])
         ]);
 
+    // V11: large (44-48px) touch targets -- bUnit can't measure real pixels, so this checks the
+    // Bootstrap size classes that produce them.
+    [Fact]
+    public void ProfileSelect_HasLargeSizeClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+
+        cut.Find("#test-profile-select").ClassList.Should().Contain("form-select-lg");
+    });
+
     // V9: de-emphasized intro paragraph -- text unchanged (same resx key), only presentation.
     [Fact]
     public void IntroParagraph_IsDeEmphasized_ButTextIsUnchanged() => WithCulture("en-US", () =>

@@ -656,6 +656,40 @@ public class ExportProfileTestTests : BunitContext
         source.Should().NotContain("IExcelDownloadInterop");
     }
 
+    // V11: large (44-48px) touch targets on the selects and action buttons.
+    [Fact]
+    public void ImportProfileSelect_HasLargeSizeClass() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+
+        cut.Find("#export-test-import-profile-select").ClassList.Should().Contain("form-select-lg");
+    });
+
+    [Fact]
+    public async Task ExportProfileSelectAndActionButtons_HaveLargeSizeClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            cut.Find("#export-test-export-profile-select").ClassList.Should().Contain("form-select-lg");
+            cut.Find("#generate-workbook-button").ClassList.Should().Contain("btn-lg");
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.FindAll("#download-generated-workbook-link").Should().NotBeEmpty());
+            cut.Find("#download-generated-workbook-link").ClassList.Should().Contain("btn-lg");
+        });
+
     // V9: same de-emphasized intro paragraph as ImportProfileTestTests.
     [Fact]
     public void IntroParagraph_IsDeEmphasized_ButTextIsUnchanged() => WithCulture("en-US", () =>

@@ -48,7 +48,7 @@ else
 
     <div class="mb-3">
         <label class="form-label" for="test-profile-select">@Loc["ImportProfileTest_ProfileLabel"]</label>
-        <select id="test-profile-select" class="form-select" @bind="_selectedProfileId" disabled="@processing">
+        <select id="test-profile-select" class="form-select form-select-lg" @bind="_selectedProfileId" disabled="@processing">
             <option value="">@Loc["ImportProfileTest_ProfilePlaceholder"]</option>
             @foreach (var profile in _profiles)
             {
