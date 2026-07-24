@@ -150,16 +150,20 @@ public class ExportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles/test");
     });
 
-    // X2 (Lot X): both header action buttons must carry w-100 individually (not just their
-    // right-aligned-actions/d-grid container) so they actually reach full width on mobile.
+    // Lot 030 (30.7): reopens V4/X2's mobile stacking decision on explicit client request -- the
+    // two buttons now share the row's width equally (flex-fill) instead of each going full-width
+    // on its own line.
     [Fact]
-    public void HeaderActionButtons_AreIndividuallyFullWidth() => WithCulture("en-US", () =>
-    {
-        var cut = Render<ExportProfiles>();
+    public void HeaderActionButtons_ShareWidthEqually_AndAreNoLongerIndividuallyFullWidth() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfiles>();
 
-        cut.Find("#test-export-profile-button").ClassList.Should().Contain("w-100");
-        cut.Find("#create-export-profile-button").ClassList.Should().Contain("w-100");
-    });
+            cut.Find("#test-export-profile-button").ClassList.Should().Contain("flex-fill");
+            cut.Find("#test-export-profile-button").ClassList.Should().NotContain("w-100");
+            cut.Find("#create-export-profile-button").ClassList.Should().Contain("flex-fill");
+            cut.Find("#create-export-profile-button").ClassList.Should().NotContain("w-100");
+        });
 
     // V3: same icon-only row actions as ImportProfilesTests -- parity check.
     [Fact]
@@ -233,9 +237,10 @@ public class ExportProfilesTests : BunitContext
             card.QuerySelector($"#duplicate-export-profile-button-card-{profile.Id}").Should().NotBeNull();
         });
 
-    // V4: same header-button stacking wrapper as ImportProfilesTests.
+    // Lot 030 (30.7): same single-row flex wrapper reversal as ImportProfilesTests.
     [Fact]
-    public void ExportProfiles_HeaderButtons_ShareResponsiveStackingWrapper() => WithCulture("en-US", () =>
+    public void ExportProfiles_HeaderButtons_ShareASingleRowFlexWrapper_AtEveryBreakpoint() =>
+        WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfiles>();
 
@@ -244,9 +249,10 @@ public class ExportProfilesTests : BunitContext
         testButton.ParentElement.Should().BeSameAs(createButton.ParentElement);
 
         var wrapper = testButton.ParentElement!;
-        wrapper.ClassList.Should().Contain("d-grid");
+        wrapper.ClassList.Should().Contain("d-flex");
         wrapper.ClassList.Should().Contain("gap-2");
-        wrapper.ClassList.Should().Contain("d-md-flex");
+        wrapper.ClassList.Should().NotContain("d-grid");
+        wrapper.ClassList.Should().NotContain("d-md-flex");
     });
 
     [Fact]

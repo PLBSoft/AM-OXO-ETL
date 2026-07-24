@@ -241,7 +241,13 @@
   <data name="Profile_FirstNameLabel" xml:space="preserve">
     <value>First Name</value>
   </data>
+  <data name="Profile_FirstNamePlaceholder" xml:space="preserve">
+    <value>First Name</value>
+  </data>
   <data name="Profile_LastNameLabel" xml:space="preserve">
+    <value>Last Name</value>
+  </data>
+  <data name="Profile_LastNamePlaceholder" xml:space="preserve">
     <value>Last Name</value>
   </data>
   <data name="Profile_UpdateInfoButton" xml:space="preserve">
@@ -256,10 +262,19 @@
   <data name="Profile_CurrentPasswordLabel" xml:space="preserve">
     <value>Current Password</value>
   </data>
+  <data name="Profile_CurrentPasswordPlaceholder" xml:space="preserve">
+    <value>Current Password</value>
+  </data>
   <data name="Profile_NewPasswordLabel" xml:space="preserve">
     <value>New Password</value>
   </data>
+  <data name="Profile_NewPasswordPlaceholder" xml:space="preserve">
+    <value>New Password</value>
+  </data>
   <data name="Profile_ConfirmNewPasswordLabel" xml:space="preserve">
+    <value>Confirm New Password</value>
+  </data>
+  <data name="Profile_ConfirmNewPasswordPlaceholder" xml:space="preserve">
     <value>Confirm New Password</value>
   </data>
   <data name="Profile_ChangePasswordButton" xml:space="preserve">

@@ -36,14 +36,17 @@ h1:focus {
     border-color: #929292;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
-    text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-    text-align: start;
-}
+/* Lot 030 (30.6): removed a scaffolded-template override that set the placeholder's color to
+   var(--bs-secondary-color) (visible) instead of Bootstrap's own default transparent -- harmless
+   for Login/Register, whose placeholder text ("username"/"password") only differed from its label
+   ("Username"/"Password") by casing, so the visible duplicate was subtle enough nobody noticed.
+   Every *Placeholder resx key added since (Export Lot J, Import this lot) intentionally holds the
+   *same* text as its *Label counterpart (see e.g. ImportProfileEditor_ColonneNameLabel/Placeholder)
+   -- with the placeholder made visible, an empty field rendered the label and the placeholder on
+   top of each other showing the same string twice, which is exactly the "label overlapping the
+   text" bug reported on /export-profiles' "Nom de la colonne" field. Bootstrap's own default
+   (transparent placeholder, label is the only visible text at rest) is what every field in this
+   project actually wants, so the override is removed rather than patched per-field. */
 
 /* Block-field name/range rows: shared between the read-only sheet-rule summary
    (ImportProfileEditor.razor) and the editable sheet-rule form (SheetRuleForm.razor) so both

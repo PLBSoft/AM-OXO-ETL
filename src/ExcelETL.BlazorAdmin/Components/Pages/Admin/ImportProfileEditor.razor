@@ -34,21 +34,25 @@ else
     <div class="alert alert-danger">@_profileErrorMessage</div>
 }
 
-<div class="row g-2 mb-3">
-    <div class="col">
-        <label class="form-label" for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="profile-name-input" class="form-control" @bind="_name" maxlength="@ImportProfile.MaxNameLength"
                placeholder="@Loc["ImportProfileEditor_NamePlaceholder"]" />
+        <label for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix"
                placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
+        <label for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom"
                placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
+        <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
     </div>
 </div>
 
@@ -57,16 +61,20 @@ else
 {
     <p id="default-tableaux-summary">@string.Join(", ", _defaultTableaux)</p>
 }
-<div class="row g-2 mb-3">
-    <div class="col">
-        <label class="form-label" for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
-        <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
-               placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
-    </div>
-    <div class="col-auto">
-        <button id="add-default-tableau-button" class="btn btn-secondary" @onclick="AddDefaultTableau">
-            @Loc["ImportProfileEditor_AddTableauButton"]
-        </button>
+<div class="card bg-light mb-3">
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
+                       placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
+                <label for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
+            </div>
+        </div>
+        <div class="right-aligned-actions">
+            <button id="add-default-tableau-button" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddDefaultTableau">
+                @Loc["ImportProfileEditor_AddTableauButton"]
+            </button>
+        </div>
     </div>
 </div>
 
@@ -75,16 +83,20 @@ else
 {
     <p id="default-application-names-summary">@string.Join(", ", _defaultApplicationNames)</p>
 }
-<div class="row g-2 mb-3">
-    <div class="col">
-        <label class="form-label" for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
-        <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
-               placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
-    </div>
-    <div class="col-auto">
-        <button id="add-default-application-name-button" class="btn btn-secondary" @onclick="AddDefaultApplicationName">
-            @Loc["ImportProfileEditor_AddApplicationButton"]
-        </button>
+<div class="card bg-light mb-3">
+    <div class="card-body">
+        <div class="mb-3">
+            <div class="form-floating">
+                <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
+                       placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
+                <label for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
+            </div>
+        </div>
+        <div class="right-aligned-actions">
+            <button id="add-default-application-name-button" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddDefaultApplicationName">
+                @Loc["ImportProfileEditor_AddApplicationButton"]
+            </button>
+        </div>
     </div>
 </div>
 

@@ -410,6 +410,120 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("label[for='profile-equipement-type-element-nom-input']").TextContent.Should().Be("Equipement type element name");
     });
 
+    // Lot 030 (30.1/30.2): extends ExportProfileEditor's already-delivered X3 (full-width vertical
+    // stacking, no col-md-* grid) and X4 (form-floating) patterns to the import side -- the reference
+    // is Export's *actual* markup (a plain "mb-3" div, no "row"/"col-*" at all), not the ticket's own
+    // "col-12" wording, confirmed by reading ExportProfileEditor.razor directly in 30.0.
+    [Theory]
+    [InlineData("profile-name-input")]
+    [InlineData("profile-repere-prefix-input")]
+    [InlineData("profile-equipement-type-element-nom-input")]
+    public void RootField_ContainerIsFullWidthFormFloating_WithNoColumnGridClass(string inputId) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var floatingDiv = cut.Find($"#{inputId}").ParentElement!;
+            floatingDiv.GetAttribute("class").Should().Be("form-floating");
+
+            var container = floatingDiv.ParentElement!;
+            container.GetAttribute("class").Should().Be("mb-3");
+            container.GetAttribute("class").Should().NotContain("col-");
+            container.GetAttribute("class").Should().NotContain("row");
+        });
+
+    [Fact]
+    public void DefaultTableauxAndApplications_AddFields_AreFullWidthFormFloating_InsideABgLightCard() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var tableauFloatingDiv = cut.Find("#default-tableau-name-input").ParentElement!;
+            tableauFloatingDiv.GetAttribute("class").Should().Be("form-floating");
+            tableauFloatingDiv.ParentElement!.GetAttribute("class").Should().Be("mb-3");
+
+            var tableauCard = cut.Find("#default-tableau-name-input").Closest("div.card")!;
+            tableauCard.GetAttribute("class").Should().Be("card bg-light mb-3");
+
+            var applicationFloatingDiv = cut.Find("#default-application-name-input").ParentElement!;
+            applicationFloatingDiv.GetAttribute("class").Should().Be("form-floating");
+            applicationFloatingDiv.ParentElement!.GetAttribute("class").Should().Be("mb-3");
+
+            var applicationCard = cut.Find("#default-application-name-input").Closest("div.card")!;
+            applicationCard.GetAttribute("class").Should().Be("card bg-light mb-3");
+        });
+
+    [Fact]
+    public void AddDefaultTableauAndApplication_AddButtons_AreFullWidthOutlineButtons() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#add-default-tableau-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cut.Find("#add-default-application-name-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+        });
+
+    [Theory]
+    [InlineData("sheet-rule-name-input")]
+    [InlineData("sheet-rule-first-block-start-row-input")]
+    [InlineData("sheet-rule-step-input")]
+    [InlineData("sheet-rule-stop-field-name-input")]
+    [InlineData("block-field-name-input")]
+    [InlineData("block-field-absolute-range-input")]
+    [InlineData("unconditional-colonne-name-input")]
+    [InlineData("point-rule-colonne-name-input")]
+    [InlineData("point-rule-source-field-name-input")]
+    [InlineData("point-rule-comparison-value-input")]
+    public void SheetRuleForm_Field_ContainerIsFullWidthFormFloating_WithNoColumnGridClass(string inputId) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var floatingDiv = cut.Find($"#{inputId}").ParentElement!;
+            floatingDiv.GetAttribute("class").Should().Be("form-floating");
+
+            var container = floatingDiv.ParentElement!;
+            container.GetAttribute("class").Should().Be("mb-3");
+            container.GetAttribute("class").Should().NotContain("col-");
+            container.GetAttribute("class").Should().NotContain("row");
+        });
+
+    [Fact]
+    public void SheetRuleForm_FieldsPointRulesAndUnconditionalColonnesSubforms_AreEachWrappedInABgLightCard() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#block-field-name-input").Closest("div.card")!.GetAttribute("class").Should().Be("card bg-light mb-3");
+            cut.Find("#unconditional-colonne-name-input").Closest("div.card")!.GetAttribute("class").Should().Be("card bg-light mb-3");
+            cut.Find("#point-rule-colonne-name-input").Closest("div.card")!.GetAttribute("class").Should().Be("card bg-light mb-3");
+        });
+
+    // Lot 030 (30.3): "Ajouter le tableau"/"Ajouter l'application"/"Ajouter le champ"/"Ajouter une
+    // règle de feuille" (and, for full parity with every "Add" button on the export side, the
+    // unconditional-colonne/point-rule add buttons too) become full-width outline buttons so they
+    // don't visually compete with the final "Enregistrer le profil" CTA -- reusing X5's exact
+    // export-side color choice (btn-outline-secondary), not a new decision.
+    [Fact]
+    public void SheetRuleForm_IntermediateAddButtons_AreFullWidthOutlineButtons() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#add-block-field-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+        cut.Find("#add-unconditional-colonne-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+        cut.Find("#add-point-rule-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+        cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+    });
+
+    [Fact]
+    public void SaveProfileButton_KeepsItsFullPrimaryClass_WhileIntermediateButtonsAreOutline() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#save-profile-button").GetAttribute("class").Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4");
+        });
+
     [Fact]
     public async Task ExistingSheetRule_DisplaysModifyButton() =>
         await WithCultureAsync("en-US", async () =>

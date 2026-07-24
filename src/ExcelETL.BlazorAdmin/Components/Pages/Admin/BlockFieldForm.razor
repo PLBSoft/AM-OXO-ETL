@@ -15,29 +15,30 @@
     <div class="alert alert-warning">@_warningMessage</div>
 }
 
-<div class="row g-2 mb-2">
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}name-input")">@Loc["ImportProfileEditor_FieldNameLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}name-input")" class="form-control" @bind="_name"
                placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}name-input")">@Loc["ImportProfileEditor_FieldNameLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
                placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
+        <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
     </div>
-    <div class="col-auto">
-        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
-            @SubmitLabel
-        </button>
-    </div>
+</div>
+
+<div class="right-aligned-actions">
+    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+        @SubmitLabel
+    </button>
     @if (ShowCancel)
     {
-        <div class="col-auto">
-            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
-                @Loc["ImportProfileEditor_CancelButton"]
-            </button>
-        </div>
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+            @Loc["ImportProfileEditor_CancelButton"]
+        </button>
     }
 </div>
 

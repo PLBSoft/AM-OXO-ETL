@@ -153,6 +153,76 @@ public class ProfileEditorParityTests : BunitContext
             exportCut.FindAll("#sheet-rule-details-content-0").Should().HaveCount(1);
         });
 
+    // Lot 030 (30.5): explicit structural-parity guard-rail for the X3/X4/X5/Y3 patterns Part A of
+    // this lot extended from ExportProfileEditor to ImportProfileEditor -- string comparison, not
+    // just "both non-empty", per the ticket's own requirement, mirroring R1-R3's precedent above.
+    [Fact]
+    public void RootFieldContainer_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importContainerClass = importCut.Find("#profile-name-input").ParentElement!.ParentElement!.GetAttribute("class");
+        var exportContainerClass = exportCut.Find("#export-profile-name-input").ParentElement!.ParentElement!.GetAttribute("class");
+
+        importContainerClass.Should().Be(exportContainerClass);
+        importContainerClass.Should().Be("mb-3");
+    });
+
+    [Fact]
+    public void SubformCardContainer_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importCardClass = importCut.Find("div.card.bg-light").GetAttribute("class");
+        var exportCardClass = exportCut.Find("div.card.bg-light").GetAttribute("class");
+
+        importCardClass.Should().Be(exportCardClass);
+        importCardClass.Should().Be("card bg-light mb-3");
+    });
+
+    [Fact]
+    public void IntermediateAddButton_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importAddButtonClass = importCut.Find("#add-block-field-button").GetAttribute("class");
+        var exportAddButtonClass = exportCut.Find("#add-column-definition-button").GetAttribute("class");
+
+        importAddButtonClass.Should().Be(exportAddButtonClass);
+        importAddButtonClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+    });
+
+    [Fact]
+    public void FinalSaveButton_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importSaveButtonClass = importCut.Find("#save-profile-button").GetAttribute("class");
+        var exportSaveButtonClass = exportCut.Find("#save-export-profile-button").GetAttribute("class");
+
+        importSaveButtonClass.Should().Be(exportSaveButtonClass);
+        importSaveButtonClass.Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4");
+    });
+
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+
+        try
+        {
+            action();
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;

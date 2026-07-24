@@ -29,17 +29,17 @@ else
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger" role="alert" />
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.FirstName" id="Info.FirstName" class="form-control" />
+                    <InputText @bind-Value="InfoInput.FirstName" id="Info.FirstName" class="form-control" placeholder="@Loc["Profile_FirstNamePlaceholder"]" />
                     <label for="Info.FirstName">@Loc["Profile_FirstNameLabel"]</label>
                     <ValidationMessage For="() => InfoInput.FirstName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.LastName" id="Info.LastName" class="form-control" />
+                    <InputText @bind-Value="InfoInput.LastName" id="Info.LastName" class="form-control" placeholder="@Loc["Profile_LastNamePlaceholder"]" />
                     <label for="Info.LastName">@Loc["Profile_LastNameLabel"]</label>
                     <ValidationMessage For="() => InfoInput.LastName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.Email" id="Info.Email" class="form-control" autocomplete="email" />
+                    <InputText @bind-Value="InfoInput.Email" id="Info.Email" class="form-control" autocomplete="email" placeholder="@Loc["Account_EmailPlaceholder"]" />
                     <label for="Info.Email">@Loc["Account_EmailLabel"]</label>
                     <ValidationMessage For="() => InfoInput.Email" class="text-danger" />
                 </div>
@@ -63,17 +63,17 @@ else
                     <DataAnnotationsValidator />
                     <ValidationSummary class="text-danger" role="alert" />
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.CurrentPassword" id="Password.Current" class="form-control" autocomplete="current-password" />
+                        <InputText type="password" @bind-Value="PasswordInput.CurrentPassword" id="Password.Current" class="form-control" autocomplete="current-password" placeholder="@Loc["Profile_CurrentPasswordPlaceholder"]" />
                         <label for="Password.Current">@Loc["Profile_CurrentPasswordLabel"]</label>
                         <ValidationMessage For="() => PasswordInput.CurrentPassword" class="text-danger" />
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.NewPassword" id="Password.New" class="form-control" autocomplete="new-password" />
+                        <InputText type="password" @bind-Value="PasswordInput.NewPassword" id="Password.New" class="form-control" autocomplete="new-password" placeholder="@Loc["Profile_NewPasswordPlaceholder"]" />
                         <label for="Password.New">@Loc["Profile_NewPasswordLabel"]</label>
                         <ValidationMessage For="() => PasswordInput.NewPassword" class="text-danger" />
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.ConfirmNewPassword" id="Password.Confirm" class="form-control" autocomplete="new-password" />
+                        <InputText type="password" @bind-Value="PasswordInput.ConfirmNewPassword" id="Password.Confirm" class="form-control" autocomplete="new-password" placeholder="@Loc["Profile_ConfirmNewPasswordPlaceholder"]" />
                         <label for="Password.Confirm">@Loc["Profile_ConfirmNewPasswordLabel"]</label>
                         <ValidationMessage For="() => PasswordInput.ConfirmNewPassword" class="text-danger" />
                     </div>

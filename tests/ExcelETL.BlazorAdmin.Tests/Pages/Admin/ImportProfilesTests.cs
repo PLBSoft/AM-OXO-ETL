@@ -161,16 +161,20 @@ public class ImportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles/test");
     });
 
-    // X2 (Lot X): parity with ExportProfiles.razor -- both header action buttons must carry
-    // w-100 individually (not just their right-aligned-actions/d-grid container).
+    // Lot 030 (30.7): reopens V4/X2's mobile stacking decision on explicit client request -- the
+    // two buttons now share the row's width equally (flex-fill) instead of each going full-width
+    // on its own line.
     [Fact]
-    public void HeaderActionButtons_AreIndividuallyFullWidth() => WithCulture("en-US", () =>
-    {
-        var cut = Render<ImportProfiles>();
+    public void HeaderActionButtons_ShareWidthEqually_AndAreNoLongerIndividuallyFullWidth() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfiles>();
 
-        cut.Find("#test-import-profile-button").ClassList.Should().Contain("w-100");
-        cut.Find("#create-profile-button").ClassList.Should().Contain("w-100");
-    });
+            cut.Find("#test-import-profile-button").ClassList.Should().Contain("flex-fill");
+            cut.Find("#test-import-profile-button").ClassList.Should().NotContain("w-100");
+            cut.Find("#create-profile-button").ClassList.Should().Contain("flex-fill");
+            cut.Find("#create-profile-button").ClassList.Should().NotContain("w-100");
+        });
 
     // V3: row actions are icon-only (no visible text) -- must still carry an explicit aria-label
     // and title per convention-ui-blazor-icones-boutons.md's A11Y rule for icon-only buttons.
@@ -248,23 +252,25 @@ public class ImportProfilesTests : BunitContext
             card.QuerySelector($"#duplicate-profile-button-card-{profile.Id}").Should().NotBeNull();
         });
 
-    // V4: the two header action buttons stack full-width on mobile via the "d-grid gap-2 d-md-flex"
-    // idiom on their shared wrapper (CSS Grid items stretch to fill by default below md; from md up,
-    // d-md-flex switches back to inline flex where buttons keep their natural side-by-side width).
+    // Lot 030 (30.7): the two header action buttons now stay on one row at every breakpoint via a
+    // plain "d-flex gap-2" wrapper -- reopens V4's "d-grid gap-2 d-md-flex" stacking idiom, which
+    // used to go full-width-stacked below the md breakpoint.
     [Fact]
-    public void ImportProfiles_HeaderButtons_ShareResponsiveStackingWrapper() => WithCulture("en-US", () =>
-    {
-        var cut = Render<ImportProfiles>();
+    public void ImportProfiles_HeaderButtons_ShareASingleRowFlexWrapper_AtEveryBreakpoint() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfiles>();
 
-        var testButton = cut.Find("#test-import-profile-button");
-        var createButton = cut.Find("#create-profile-button");
-        testButton.ParentElement.Should().BeSameAs(createButton.ParentElement);
+            var testButton = cut.Find("#test-import-profile-button");
+            var createButton = cut.Find("#create-profile-button");
+            testButton.ParentElement.Should().BeSameAs(createButton.ParentElement);
 
-        var wrapper = testButton.ParentElement!;
-        wrapper.ClassList.Should().Contain("d-grid");
-        wrapper.ClassList.Should().Contain("gap-2");
-        wrapper.ClassList.Should().Contain("d-md-flex");
-    });
+            var wrapper = testButton.ParentElement!;
+            wrapper.ClassList.Should().Contain("d-flex");
+            wrapper.ClassList.Should().Contain("gap-2");
+            wrapper.ClassList.Should().NotContain("d-grid");
+            wrapper.ClassList.Should().NotContain("d-md-flex");
+        });
 
     [Fact]
     public async Task DuplicateButton_CreatesSuffixedCopyWithNewId_AndRefreshesListWithoutNavigating() =>

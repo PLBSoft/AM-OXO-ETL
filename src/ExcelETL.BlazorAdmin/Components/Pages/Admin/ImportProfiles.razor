@@ -16,15 +16,17 @@
 
 <h1>@Loc["ImportProfiles_PageTitle"]</h1>
 
-<!-- V4: stacked-full-width on mobile, side-by-side natural width from md up -- the standard
-     Bootstrap "d-grid gap-2 d-md-flex" idiom (grid items stretch full-width by default below md,
-     flex items keep their natural width from md up), so no custom width utility is needed and
-     desktop sizing/layout is untouched. -->
-<div class="right-aligned-actions d-grid gap-2 d-md-flex mb-3">
-    <button id="test-import-profile-button" class="btn btn-secondary w-100 mb-2" @onclick="TestProfile">
+<!-- Lot 030 (30.7): reopens V4/X2's mobile stacking decision on explicit client request -- the two
+     buttons now stay on one row at every breakpoint, sharing the available width equally
+     (flex-fill) instead of each going full-width on its own line. If a button's label doesn't fit
+     on one line at the resulting width, it wraps to two lines *inside* the button (native <button>
+     behavior, no extra CSS) -- an accepted trade-off, distinct from the original bug (two buttons
+     on two lines). -->
+<div class="right-aligned-actions d-flex gap-2 mb-3">
+    <button id="test-import-profile-button" class="btn btn-secondary flex-fill" @onclick="TestProfile">
         @Loc["NavMenu_ImportProfileTest"]
     </button>
-    <button id="create-profile-button" class="btn btn-primary w-100" @onclick="CreateProfile">
+    <button id="create-profile-button" class="btn btn-primary flex-fill" @onclick="CreateProfile">
         @Loc["ImportProfiles_Create"]
     </button>
 </div>

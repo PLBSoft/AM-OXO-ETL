@@ -15,13 +15,13 @@
 
 <h1>@Loc["ExportProfiles_PageTitle"]</h1>
 
-<!-- V4: same "d-grid gap-2 d-md-flex" stacking idiom as ImportProfiles.razor -- see the comment
-     there for rationale. -->
-<div class="right-aligned-actions d-grid gap-2 d-md-flex mb-3">
-    <button id="test-export-profile-button" class="btn btn-secondary w-100 mb-2" @onclick="TestProfile">
+<!-- Lot 030 (30.7): same "single row at every breakpoint, flex-fill" reversal as ImportProfiles.razor
+     -- see the comment there for rationale. -->
+<div class="right-aligned-actions d-flex gap-2 mb-3">
+    <button id="test-export-profile-button" class="btn btn-secondary flex-fill" @onclick="TestProfile">
         @Loc["NavMenu_ExportProfileTest"]
     </button>
-    <button id="create-export-profile-button" class="btn btn-primary w-100" @onclick="CreateProfile">
+    <button id="create-export-profile-button" class="btn btn-primary flex-fill" @onclick="CreateProfile">
         @Loc["ExportProfiles_Create"]
     </button>
 </div>

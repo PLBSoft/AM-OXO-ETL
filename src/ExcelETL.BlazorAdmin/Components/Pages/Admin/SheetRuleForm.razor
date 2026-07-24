@@ -12,29 +12,37 @@
     <div class="alert alert-danger">@_errorMessage</div>
 }
 
-<div class="row g-2 mb-2">
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}sheet-rule-name-input")">@Loc["ImportProfileEditor_SheetNameLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName"
                placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-name-input")">@Loc["ImportProfileEditor_SheetNameLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}sheet-rule-first-block-start-row-input")">@Loc["ImportProfileEditor_FirstBlockStartRowLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow"
                placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-first-block-start-row-input")">@Loc["ImportProfileEditor_FirstBlockStartRowLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}sheet-rule-step-input")">@Loc["ImportProfileEditor_StepLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step"
                placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-step-input")">@Loc["ImportProfileEditor_StepLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName"
                placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
     </div>
 </div>
 
+<div class="card bg-light mb-3">
+<div class="card-body">
 <h5>@Loc["ImportProfileEditor_FieldsHeading"]</h5>
 @if (_fields.Count > 0)
 {
@@ -94,7 +102,11 @@
                 SubmitButtonId="@($"{IdPrefix}add-block-field-button")"
                 SubmitLabel="@Loc["ImportProfileEditor_AddFieldButton"]"
                 OnSubmit="AddBlockField" />
+</div>
+</div>
 
+<div class="card bg-light mb-3">
+<div class="card-body">
 <h5>@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h5>
 @if (_unconditionalColonneNames.Count > 0)
 {
@@ -170,19 +182,23 @@
         }
     </ul>
 }
-<div class="row g-2 mb-2">
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}unconditional-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}unconditional-colonne-name-input")" class="form-control" @bind="_newUnconditionalColonneName"
                placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
-    </div>
-    <div class="col-auto">
-        <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-secondary" @onclick="AddUnconditionalColonneName">
-            @Loc["ImportProfileEditor_AddColonneButton"]
-        </button>
+        <label for="@($"{IdPrefix}unconditional-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
     </div>
 </div>
+<div class="right-aligned-actions">
+    <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddUnconditionalColonneName">
+        @Loc["ImportProfileEditor_AddColonneButton"]
+    </button>
+</div>
+</div>
+</div>
 
+<div class="card bg-light mb-3">
+<div class="card-body">
 <h5>@Loc["ImportProfileEditor_PointRulesHeading"]</h5>
 @if (_pointRules.Count > 0)
 {
@@ -275,43 +291,51 @@
         }
     </ul>
 }
-<div class="row g-2 mb-3">
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}point-rule-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}point-rule-colonne-name-input")" class="form-control" @bind="_newPointRuleColonneName"
                placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}point-rule-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}point-rule-source-field-name-input")">@Loc["ImportProfileEditor_SourceFieldNameLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-control" @bind="_newPointRuleSourceFieldName"
                placeholder="@Loc["ImportProfileEditor_SourceFieldNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}point-rule-source-field-name-input")">@Loc["ImportProfileEditor_SourceFieldNameLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}point-rule-operator-select")">@Loc["ImportProfileEditor_OperatorLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="_newPointRuleOperator">
             <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
             <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
         </select>
+        <label for="@($"{IdPrefix}point-rule-operator-select")">@Loc["ImportProfileEditor_OperatorLabel"]</label>
     </div>
-    <div class="col">
-        <label class="form-label" for="@($"{IdPrefix}point-rule-comparison-value-input")">@Loc["ImportProfileEditor_ComparisonValueLabel"]</label>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
         <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="_newPointRuleComparisonValue"
                placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
+        <label for="@($"{IdPrefix}point-rule-comparison-value-input")">@Loc["ImportProfileEditor_ComparisonValueLabel"]</label>
     </div>
-    <div class="col-auto">
-        <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary" @onclick="AddPointRule">
-            @Loc["ImportProfileEditor_AddPointRuleButton"]
-        </button>
-    </div>
+</div>
+<div class="right-aligned-actions">
+    <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddPointRule">
+        @Loc["ImportProfileEditor_AddPointRuleButton"]
+    </button>
+</div>
+</div>
 </div>
 
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-primary" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
         @SubmitLabel
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
             @Loc["ImportProfileEditor_CancelButton"]
         </button>
     }
