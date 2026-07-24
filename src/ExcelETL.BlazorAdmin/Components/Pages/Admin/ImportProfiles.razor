@@ -56,18 +56,43 @@ else
                     <td>@profile.EquipementTypeElementNom</td>
                     <td>@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</td>
                     <td>
-                        <button id="edit-profile-button-@profile.Id" type="button"
-                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
-                                @onclick="() => EditProfile(profile)">
-                            @((MarkupString)PencilIconMarkup)
-                        </button>
-                        <button id="duplicate-profile-button-@profile.Id" type="button"
-                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
-                                @onclick="() => DuplicateProfileAsync(profile)">
-                            @((MarkupString)CopyIconMarkup)
-                        </button>
+                        @if (_profileIdPendingDeletion == profile.Id)
+                        {
+                            <div id="@($"delete-profile-confirm-{profile.Id}")" class="right-aligned-actions">
+                                <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmDeleteMessage", _profileNamePendingDeletion]</span>
+                                <button id="@($"confirm-delete-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-danger"
+                                        @onclick="() => ConfirmDeleteProfileAsync(profile.Id)">
+                                    @Loc["ImportProfiles_ConfirmDeleteButton"]
+                                </button>
+                                <button id="@($"cancel-delete-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        @onclick="CancelDeleteProfile">
+                                    @Loc["ImportProfiles_CancelDeleteButton"]
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <button id="edit-profile-button-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
+                                    @onclick="() => EditProfile(profile)">
+                                @((MarkupString)PencilIconMarkup)
+                            </button>
+                            <button id="duplicate-profile-button-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
+                                    @onclick="() => DuplicateProfileAsync(profile)">
+                                @((MarkupString)CopyIconMarkup)
+                            </button>
+                            <button id="delete-profile-button-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
+                                    @onclick="() => RequestDeleteProfile(profile)">
+                                @((MarkupString)TrashIconMarkup)
+                            </button>
+                        }
                     </td>
                 </tr>
             }
@@ -84,20 +109,45 @@ else
                         <strong>@Loc["ImportProfiles_EquipementTypeElementNom"]:</strong> @profile.EquipementTypeElementNom
                     </p>
                     <p class="card-text">@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</p>
-                    <div class="right-aligned-actions">
-                        <button id="edit-profile-button-card-@profile.Id" type="button"
-                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
-                                @onclick="() => EditProfile(profile)">
-                            @((MarkupString)PencilIconMarkup)
-                        </button>
-                        <button id="duplicate-profile-button-card-@profile.Id" type="button"
-                                class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
-                                @onclick="() => DuplicateProfileAsync(profile)">
-                            @((MarkupString)CopyIconMarkup)
-                        </button>
-                    </div>
+                    @if (_profileIdPendingDeletion == profile.Id)
+                    {
+                        <div id="@($"delete-profile-confirm-card-{profile.Id}")" class="right-aligned-actions">
+                            <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmDeleteMessage", _profileNamePendingDeletion]</span>
+                            <button id="@($"confirm-delete-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-danger"
+                                    @onclick="() => ConfirmDeleteProfileAsync(profile.Id)">
+                                @Loc["ImportProfiles_ConfirmDeleteButton"]
+                            </button>
+                            <button id="@($"cancel-delete-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-secondary"
+                                    @onclick="CancelDeleteProfile">
+                                @Loc["ImportProfiles_CancelDeleteButton"]
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="right-aligned-actions">
+                            <button id="edit-profile-button-card-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
+                                    @onclick="() => EditProfile(profile)">
+                                @((MarkupString)PencilIconMarkup)
+                            </button>
+                            <button id="duplicate-profile-button-card-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
+                                    @onclick="() => DuplicateProfileAsync(profile)">
+                                @((MarkupString)CopyIconMarkup)
+                            </button>
+                            <button id="delete-profile-button-card-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
+                                    @onclick="() => RequestDeleteProfile(profile)">
+                                @((MarkupString)TrashIconMarkup)
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -118,7 +168,17 @@ else
     private const string CopyIconMarkup =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" /><path d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" /></svg>""";
 
+    // Lot 028 (28.2): same icon-only-row-action reuse as pencil/copy above -- the ticket's own
+    // literal test example ("<span class=\"bi bi-trash\">") assumes this project loads Bootstrap
+    // Icons as a font, which it never has (see NavMenu.razor.css) -- every row icon here is an
+    // inline SVG constant instead, so this follows that established pattern rather than the
+    // ticket's example markup verbatim.
+    private const string TrashIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L13.882 4zM2.5 3V2h11v1z" /></svg>""";
+
     private List<ImportProfile>? _profiles;
+    private Guid? _profileIdPendingDeletion;
+    private string? _profileNamePendingDeletion;
 
     protected override async Task OnInitializedAsync() => await LoadProfilesAsync();
 
@@ -129,6 +189,26 @@ else
     private void TestProfile() => NavigationManager.NavigateTo("import-profiles/test");
 
     private void EditProfile(ImportProfile profile) => NavigationManager.NavigateTo($"import-profiles/{profile.Id}/edit");
+
+    private void RequestDeleteProfile(ImportProfile profile)
+    {
+        _profileIdPendingDeletion = profile.Id;
+        _profileNamePendingDeletion = profile.Name;
+    }
+
+    private void CancelDeleteProfile()
+    {
+        _profileIdPendingDeletion = null;
+        _profileNamePendingDeletion = null;
+    }
+
+    private async Task ConfirmDeleteProfileAsync(Guid id)
+    {
+        await ImportProfileStore.DeleteAsync(id);
+        _profileIdPendingDeletion = null;
+        _profileNamePendingDeletion = null;
+        await LoadProfilesAsync();
+    }
 
     private async Task DuplicateProfileAsync(ImportProfile profile)
     {

@@ -10,6 +10,7 @@ using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
@@ -170,7 +171,7 @@ public class ExportProfilesTests : BunitContext
 
             var cut = Render<ExportProfiles>();
 
-            foreach (var idPrefix in new[] { "edit-export-profile-button", "duplicate-export-profile-button" })
+            foreach (var idPrefix in new[] { "edit-export-profile-button", "duplicate-export-profile-button", "delete-export-profile-button" })
             {
                 foreach (var id in new[] { $"{idPrefix}-{profile.Id}", $"{idPrefix}-card-{profile.Id}" })
                 {
@@ -322,5 +323,104 @@ public class ExportProfilesTests : BunitContext
             var all = await store.GetAllAsync();
             all.Should().HaveCount(4);
             all.Should().Contain(p => p.Name == "MAD OXO export (Copy 3)");
+        });
+
+    // Lot 028 (28.2/28.3): mirrors ImportProfilesTests' symmetric coverage -- see there for the
+    // fuller rationale comments (Mock<IExportProfileStore> override for the Times.Never/Once
+    // verifications, per the ticket's own explicit instruction).
+    [Fact]
+    public void DeleteButton_DoesNotCallDeleteAsyncImmediately_OnlyOpensConfirmation() => WithCulture("en-US", () =>
+    {
+        var profile = BuildProfileWithOneSheetRule();
+        var storeMock = new Mock<IExportProfileStore>();
+        storeMock.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([profile]);
+        Services.AddSingleton(storeMock.Object);
+
+        var cut = Render<ExportProfiles>();
+        cut.Find($"#delete-export-profile-button-{profile.Id}").Click();
+
+        cut.Find($"#delete-export-profile-confirm-{profile.Id}").Should().NotBeNull();
+        storeMock.Verify(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+    });
+
+    [Fact]
+    public void DeleteButton_OpensConfirmation_ShowingTheTargetedProfileName() => WithCulture("en-US", () =>
+    {
+        var profile = BuildProfileWithOneSheetRule("MAD OXO export to delete");
+        var storeMock = new Mock<IExportProfileStore>();
+        storeMock.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([profile]);
+        Services.AddSingleton(storeMock.Object);
+
+        var cut = Render<ExportProfiles>();
+        cut.Find($"#delete-export-profile-button-{profile.Id}").Click();
+
+        cut.Find($"#delete-export-profile-confirm-{profile.Id}").TextContent.Should().Contain("MAD OXO export to delete");
+    });
+
+    [Fact]
+    public void CancelDeleteButton_ClosesConfirmation_WithoutCallingDeleteAsync_AndOtherActionsStillWork() =>
+        WithCulture("en-US", () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            var storeMock = new Mock<IExportProfileStore>();
+            storeMock.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([profile]);
+            Services.AddSingleton(storeMock.Object);
+
+            var cut = Render<ExportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+            cut.Find($"#delete-export-profile-button-{profile.Id}").Click();
+
+            cut.Find($"#cancel-delete-export-profile-button-{profile.Id}").Click();
+
+            cut.FindAll($"#delete-export-profile-confirm-{profile.Id}").Should().BeEmpty();
+            storeMock.Verify(s => s.DeleteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+
+            cut.Find($"#edit-export-profile-button-{profile.Id}").Click();
+            navigationManager.Uri.Should().EndWith($"/export-profiles/{profile.Id}/edit");
+        });
+
+    [Fact]
+    public async Task ConfirmDeleteButton_CallsDeleteAsyncWithExactId_AndRemovesProfileFromReloadedList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var toDelete = BuildProfileWithOneSheetRule("MAD OXO export to delete");
+            var toKeep = BuildProfileWithOneSheetRule("MAD OXO export to keep");
+            await SeedProfileAsync(toDelete);
+            await SeedProfileAsync(toKeep);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#delete-export-profile-button-{toDelete.Id}").Click();
+            cut.Find($"#confirm-delete-export-profile-button-{toDelete.Id}").Click();
+
+            cut.Markup.Should().NotContain("MAD OXO export to delete");
+            cut.Markup.Should().Contain("MAD OXO export to keep");
+
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().NotContain(p => p.Id == toDelete.Id);
+            all.Should().ContainSingle(p => p.Id == toKeep.Id);
+        });
+
+    [Fact]
+    public async Task OpeningConfirmationOnAnotherRow_ClosesThePreviousOne_WithoutDeletingIt() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profileA = BuildProfileWithOneSheetRule("MAD OXO export A");
+            var profileB = BuildProfileWithOneSheetRule("MAD OXO export B");
+            await SeedProfileAsync(profileA);
+            await SeedProfileAsync(profileB);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#delete-export-profile-button-{profileA.Id}").Click();
+            cut.FindAll($"#delete-export-profile-confirm-{profileA.Id}").Should().HaveCount(1);
+
+            cut.Find($"#delete-export-profile-button-{profileB.Id}").Click();
+
+            cut.FindAll($"#delete-export-profile-confirm-{profileA.Id}").Should().BeEmpty();
+            cut.FindAll($"#delete-export-profile-confirm-{profileB.Id}").Should().HaveCount(1);
+
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().Contain(p => p.Id == profileA.Id);
         });
 }

@@ -205,6 +205,12 @@ public class EfImportProfileStoreTests
 
         var result = await store.GetByIdAsync(profile.Id);
         result.Should().BeNull();
+
+        // Lot 028 (28.1): the ticket's own expected behavior also covers GetAllAsync, not just
+        // GetByIdAsync -- both were already true given DeleteAsync's implementation, just not
+        // previously asserted together.
+        var all = await store.GetAllAsync();
+        all.Should().NotContain(p => p.Id == profile.Id);
     }
 
     [Fact]

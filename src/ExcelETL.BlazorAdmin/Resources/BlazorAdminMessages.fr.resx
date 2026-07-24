@@ -307,6 +307,18 @@
   <data name="ImportProfiles_DuplicateSuffix" xml:space="preserve">
     <value>(Copie)</value>
   </data>
+  <data name="ImportProfiles_Delete" xml:space="preserve">
+    <value>Supprimer le profil {0}</value>
+  </data>
+  <data name="ImportProfiles_ConfirmDeleteMessage" xml:space="preserve">
+    <value>Supprimer le profil « {0} » ? Cette action est irréversible.</value>
+  </data>
+  <data name="ImportProfiles_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirmer la suppression</value>
+  </data>
+  <data name="ImportProfiles_CancelDeleteButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
   <data name="ImportProfileEditor_PageTitle" xml:space="preserve">
     <value>Nouveau profil d'import</value>
   </data>
@@ -630,6 +642,18 @@
   </data>
   <data name="ExportProfiles_DuplicateSuffix" xml:space="preserve">
     <value>(Copie)</value>
+  </data>
+  <data name="ExportProfiles_Delete" xml:space="preserve">
+    <value>Supprimer le profil {0}</value>
+  </data>
+  <data name="ExportProfiles_ConfirmDeleteMessage" xml:space="preserve">
+    <value>Supprimer le profil « {0} » ? Cette action est irréversible.</value>
+  </data>
+  <data name="ExportProfiles_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirmer la suppression</value>
+  </data>
+  <data name="ExportProfiles_CancelDeleteButton" xml:space="preserve">
+    <value>Annuler</value>
   </data>
   <data name="ExportProfileEditor_PageTitle" xml:space="preserve">
     <value>Nouveau profil d'export</value>

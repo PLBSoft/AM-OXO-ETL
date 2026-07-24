@@ -164,6 +164,11 @@ public class EfExportProfileStoreTests
 
         var result = await store.GetByIdAsync(profile.Id);
         result.Should().BeNull();
+
+        // Lot 028 (28.1): see EfImportProfileStoreTests' symmetric addition -- GetAllAsync no longer
+        // contains the deleted profile either, per the ticket's own stated expected behavior.
+        var all = await store.GetAllAsync();
+        all.Should().NotContain(p => p.Id == profile.Id);
     }
 
     [Fact]
