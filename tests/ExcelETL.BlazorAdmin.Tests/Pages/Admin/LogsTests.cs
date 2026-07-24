@@ -95,6 +95,82 @@ public class LogsTests : BunitContext
         cut.FindAll("div.d-md-none").Should().BeEmpty();
     });
 
+    // V5: message truncation + <details>/<summary> accordion for the full text.
+    [Fact]
+    public async Task Logs_LongMessage_IsTruncatedTo50CharsWithEllipsis_UntilExpanded() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var longMessage = "SELECT * FROM VeryLongTableName WHERE Column1 = 'value' AND Column2 = 'other value'";
+            await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", longMessage, null));
+
+            var cut = Render<Logs>();
+
+            var expectedTruncated = longMessage[..50] + "…";
+            var summary = cut.Find("#view-log-details-button-1");
+            summary.TextContent.Trim().Should().Be(expectedTruncated);
+            cut.Markup.Should().NotContain(longMessage);
+            cut.FindAll("pre code").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task Logs_ShortMessage_IsDisplayedInFull_WithNoTruncationOrDetailsLink() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var shortMessage = "Short message under 50 chars";
+            await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", shortMessage, null));
+
+            var cut = Render<Logs>();
+
+            cut.Markup.Should().Contain(shortMessage);
+            cut.Markup.Should().NotContain("…");
+            cut.FindAll("#view-log-details-button-1").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task Logs_ClickingViewDetails_RevealsFullMessageInPreCode() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var longMessage = "SELECT * FROM VeryLongTableName WHERE Column1 = 'value' AND Column2 = 'other value'";
+            await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", longMessage, null));
+
+            var cut = Render<Logs>();
+            cut.FindAll("pre code").Should().BeEmpty();
+
+            cut.Find("#view-log-details-button-1").Click();
+
+            var codeElements = cut.FindAll("pre code");
+            codeElements.Should().NotBeEmpty();
+            codeElements[0].TextContent.Should().Be(longMessage);
+        });
+
+    [Fact]
+    public async Task Logs_MessageWithSpecialSqlCharacters_RendersWithoutBreakingPageHtml() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var sqlMessage = "SELECT * FROM Foo WHERE Bar = 'it''s <a value>' AND Baz > 1 AND Qux < 2";
+            await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", sqlMessage, null));
+
+            var cut = Render<Logs>();
+
+            cut.Find("#view-log-details-button-1").Click();
+
+            var codeElements = cut.FindAll("pre code");
+            codeElements.Should().NotBeEmpty();
+            codeElements[0].TextContent.Should().Be(sqlMessage);
+        });
+
+    [Fact]
+    public async Task Logs_FilterControls_HaveLargeSizeClasses() => await WithCultureAsync("en-US", async () =>
+    {
+        await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", "Some entry", null));
+
+        var cut = Render<Logs>();
+
+        cut.Find("#log-level-filter").ClassList.Should().Contain("form-select-lg");
+        cut.Find("#log-time-filter").ClassList.Should().Contain("form-select-lg");
+        cut.Find("#log-search").ClassList.Should().Contain("form-control-lg");
+    });
+
     private static async Task WithCultureAsync(string cultureName, Func<Task> action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;

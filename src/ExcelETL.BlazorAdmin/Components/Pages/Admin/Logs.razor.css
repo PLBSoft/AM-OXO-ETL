@@ -21,3 +21,16 @@
     .log-copy-btn:hover {
         color: var(--bs-body-color);
     }
+
+/* V5: <details>/<summary> disclosure for the full (untruncated) message, same idiom as
+   ImportProfileEditor.razor's sheet-rule-sublist-details -- cursor + no default marker on the
+   clickable summary, since the toggle is driven by component state, not the native marker. */
+.log-message-details > summary {
+    cursor: pointer;
+    color: var(--bs-link-color);
+    list-style: none;
+}
+
+.log-message-details > summary::-webkit-details-marker {
+    display: none;
+}

@@ -29,7 +29,7 @@ else
 {
     <div class="row g-2 mb-3">
         <div class="col-md-3">
-            <select class="form-select" id="log-level-filter" @bind="_levelFilter">
+            <select class="form-select form-select-lg" id="log-level-filter" @bind="_levelFilter">
                 <option value="">@Loc["Logs_AllLevels"]</option>
                 @foreach (var level in AvailableLevels)
                 {
@@ -38,7 +38,7 @@ else
             </select>
         </div>
         <div class="col-md-3">
-            <select class="form-select" id="log-time-filter" @bind="_timeFilter">
+            <select class="form-select form-select-lg" id="log-time-filter" @bind="_timeFilter">
                 <option value="">@Loc["Logs_TimeAll"]</option>
                 <option value="lastHour">@Loc["Logs_TimeLastHour"]</option>
                 <option value="today">@Loc["Logs_TimeToday"]</option>
@@ -46,7 +46,7 @@ else
             </select>
         </div>
         <div class="col-md-6">
-            <input type="search" class="form-control" id="log-search" placeholder="@Loc["Logs_SearchPlaceholder"]"
+            <input type="search" class="form-control form-control-lg" id="log-search" placeholder="@Loc["Logs_SearchPlaceholder"]"
                    @bind="_searchText" @bind:event="oninput" />
         </div>
     </div>
@@ -76,7 +76,23 @@ else
                         <td>
                             <div class="d-flex align-items-start gap-2">
                                 <div class="flex-grow-1">
-                                    @entry.Message
+                                    @if (IsMessageTruncated(entry.Message))
+                                    {
+                                        <details class="log-message-details" open="@_expandedMessageIds.Contains(entry.Id)">
+                                            <summary id="view-log-details-button-@entry.Id"
+                                                     @onclick="() => ToggleMessageDetails(entry.Id)" @onclick:preventDefault="true">
+                                                @TruncateMessage(entry.Message)
+                                            </summary>
+                                            @if (_expandedMessageIds.Contains(entry.Id))
+                                            {
+                                                <pre class="mb-0"><code>@entry.Message</code></pre>
+                                            }
+                                        </details>
+                                    }
+                                    else
+                                    {
+                                        <span>@entry.Message</span>
+                                    }
                                     @if (!string.IsNullOrEmpty(entry.Exception))
                                     {
                                         <pre class="mb-0 small text-muted">@entry.Exception</pre>
@@ -115,8 +131,10 @@ else
 
 @code {
     private const int PageSize = 100;
+    private const int MessageTruncationLength = 50;
 
     private IReadOnlyList<SystemLogEntry>? _logs;
+    private readonly HashSet<int> _expandedMessageIds = [];
     private bool _isLoading;
     private bool _hasMore = true;
     private int _displayCount = PageSize;
@@ -197,6 +215,22 @@ else
         {
             _copiedEntryId = null;
             StateHasChanged();
+        }
+    }
+
+    // V5: 50-char truncation with a <details>/<summary> disclosure for the full message -- same
+    // "content genuinely absent from the DOM while collapsed" idiom as ImportProfileEditor.razor's
+    // R3 sheet-rule sub-lists (a Razor @if on component state, not native <details> open/closed CSS).
+    private static bool IsMessageTruncated(string message) => message.Length > MessageTruncationLength;
+
+    private static string TruncateMessage(string message) =>
+        IsMessageTruncated(message) ? message[..MessageTruncationLength] + "…" : message;
+
+    private void ToggleMessageDetails(int entryId)
+    {
+        if (!_expandedMessageIds.Add(entryId))
+        {
+            _expandedMessageIds.Remove(entryId);
         }
     }
 
