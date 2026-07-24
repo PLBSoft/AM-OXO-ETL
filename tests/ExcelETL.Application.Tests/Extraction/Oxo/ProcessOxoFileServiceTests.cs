@@ -46,7 +46,7 @@ public class ProcessOxoFileServiceTests
     private static ExportProfile CreateExportProfile() => new(
         "Profil export test",
         [new SheetGenerationRule(
-            "Parents", PivotSource.Equipement, [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)], [])]);
+            "Parents", PivotSource.Equipement, [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)], [], [])]);
 
     private static ImportResult AcceptedImportResult() => new(
         new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);

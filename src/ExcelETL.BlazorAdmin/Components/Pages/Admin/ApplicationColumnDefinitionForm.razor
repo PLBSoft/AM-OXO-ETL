@@ -1,0 +1,120 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Generation.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger">@_errorMessage</div>
+}
+
+<div class="row g-2 mb-3">
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}nom-input")">@Loc["ExportProfileEditor_ApplicationNomLabel"]</label>
+        <input id="@($"{IdPrefix}nom-input")" class="form-control" @bind="_applicationNom"
+               placeholder="@Loc["ExportProfileEditor_ApplicationNomPlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
+        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
+               placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
+    </div>
+    <div class="col">
+        <label class="form-label" for="@($"{IdPrefix}mark-value-input")">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
+        <input id="@($"{IdPrefix}mark-value-input")" class="form-control" @bind="_markValue"
+               placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
+    </div>
+    <div class="col-auto">
+        <button id="@SubmitButtonId" class="btn btn-secondary" @onclick="Submit">
+            @SubmitLabel
+        </button>
+    </div>
+    @if (ShowCancel)
+    {
+        <div class="col-auto">
+            <button id="@CancelButtonId" class="btn btn-secondary" @onclick="Cancel">
+                @Loc["ExportProfileEditor_CancelButton"]
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    // The Blazor-only default of "O" (distinct from ApplicationColumnDefinition.DefaultMarkValue's "X")
+    // matches the one real seeded Application today (PROGRESS -> "O") -- a UX pre-fill choice, not a
+    // Domain-level default.
+    private const string DefaultMarkValue = "O";
+
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public ApplicationColumnDefinition? InitialApplicationColumn { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-application-column-definition-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-application-column-definition-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<ApplicationColumnDefinition> OnSubmit { get; set; }
+
+    private string _applicationNom = string.Empty;
+    private string _header = string.Empty;
+    private string _markValue = DefaultMarkValue;
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- same reasoning as PointColumnDefinitionForm's own
+    // OnInitialized: the parent gives an edit-mode instance a fresh component identity, so
+    // InitialApplicationColumn never changes underneath an already-initialized instance.
+    protected override void OnInitialized()
+    {
+        if (InitialApplicationColumn is null)
+        {
+            return;
+        }
+
+        _applicationNom = InitialApplicationColumn.ApplicationNom;
+        _header = InitialApplicationColumn.Header;
+        _markValue = InitialApplicationColumn.MarkValue;
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            var applicationColumn = new ApplicationColumnDefinition(_applicationNom, _header, _markValue);
+
+            await OnSubmit.InvokeAsync(applicationColumn);
+
+            ResetForm();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _applicationNom = string.Empty;
+        _header = string.Empty;
+        _markValue = DefaultMarkValue;
+    }
+}

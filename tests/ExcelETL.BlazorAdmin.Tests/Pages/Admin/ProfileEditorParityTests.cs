@@ -69,11 +69,13 @@ public class ProfileEditorParityTests : BunitContext
                     "Parents",
                     PivotSource.Equipement,
                     [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
-                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")]),
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+                    []),
                 new SheetGenerationRule(
                     "Enfants",
                     PivotSource.Isolement,
                     [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)],
+                    [],
                     [])
             ]);
 

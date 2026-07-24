@@ -12,6 +12,7 @@ public class ExportProfileTests
         sheetName,
         PivotSource.Equipement,
         [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+        [],
         []);
 
     [Fact]

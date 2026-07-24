@@ -103,6 +103,12 @@
   <data name="SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple" xml:space="preserve">
     <value>La feuille '{0}' utilise la source pivot TacheMultiple, qui n'a pas de Point associé -- les colonnes Point ne sont pas autorisées.</value>
   </data>
+  <data name="SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple" xml:space="preserve">
+    <value>La feuille '{0}' utilise la source pivot TacheMultiple, qui n'a pas d'Application associée -- les colonnes Application ne sont pas autorisées.</value>
+  </data>
+  <data name="SheetGenerationRule_DuplicateApplicationNom" xml:space="preserve">
+    <value>Le nom d'application '{0}' est utilisé plus d'une fois dans cette feuille.</value>
+  </data>
   <data name="ColumnDefinition_EmptyHeader" xml:space="preserve">
     <value>L'en-tête ne doit pas être vide.</value>
   </data>
@@ -113,6 +119,15 @@
     <value>Le nom de colonne ne doit pas être vide.</value>
   </data>
   <data name="PointColumnDefinition_EmptyMarkValue" xml:space="preserve">
+    <value>La valeur de marquage ne doit pas être vide.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyApplicationNom" xml:space="preserve">
+    <value>Le nom d'application ne doit pas être vide.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>L'en-tête ne doit pas être vide.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyMarkValue" xml:space="preserve">
     <value>La valeur de marquage ne doit pas être vide.</value>
   </data>
 </root>

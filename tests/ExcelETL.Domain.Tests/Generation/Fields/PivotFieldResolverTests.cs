@@ -9,9 +9,12 @@ namespace ExcelETL.Domain.Tests.Generation.Fields;
 public class PivotFieldResolverTests
 {
     private static EquipementPivot Equipement() =>
-        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX") with { Localisation = "ZONE 1" };
+        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX")
+            with { Localisation = "ZONE 1", Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"] };
 
-    private static IsolementPivot Isolement() => new("C7401-V4", "Vanne 4", "VANNE", "MAD", "ZONE 1");
+    private static IsolementPivot Isolement() =>
+        new IsolementPivot("C7401-V4", "Vanne 4", "VANNE", "MAD", "ZONE 1")
+            with { Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], RepereParent = "38-C7401" };
 
     private static TacheMultiplePivot TacheMultiple() => new(
         ordre: 3, action: "Consigner", acteur: "ADF", risques: "Aucun",
@@ -39,6 +42,20 @@ public class PivotFieldResolverTests
     public void Resolve_EquipementLocalisation_ReturnsLocalisation()
     {
         PivotFieldResolver.Resolve(Equipement(), PivotFieldRef.EquipementLocalisation).Should().Be("ZONE 1");
+    }
+
+    [Fact]
+    public void Resolve_EquipementTableaux_ReturnsCommaJoinedTableaux()
+    {
+        PivotFieldResolver.Resolve(Equipement(), PivotFieldRef.EquipementTableaux).Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+    }
+
+    [Fact]
+    public void Resolve_EquipementTableauxWhenEmpty_ReturnsEmptyString()
+    {
+        var equipement = new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX");
+
+        PivotFieldResolver.Resolve(equipement, PivotFieldRef.EquipementTableaux).Should().BeEmpty();
     }
 
     [Fact]
@@ -80,6 +97,18 @@ public class PivotFieldResolverTests
     }
 
     [Fact]
+    public void Resolve_IsolementTableaux_ReturnsCommaJoinedTableaux()
+    {
+        PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.IsolementTableaux).Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+    }
+
+    [Fact]
+    public void Resolve_IsolementRepereParent_ReturnsRepereParent()
+    {
+        PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.IsolementRepereParent).Should().Be("38-C7401");
+    }
+
+    [Fact]
     public void Resolve_IsolementPivotWithEquipementFieldRef_ThrowsInvalidOperationException()
     {
         var act = () => PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.EquipementRepere);
@@ -92,11 +121,14 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.EquipementDesignation, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.EquipementTypeElementNom, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.EquipementLocalisation, PivotSource.Equipement)]
+    [InlineData(PivotFieldRef.EquipementTableaux, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.IsolementRepere, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementDesignation, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementTypeElementNom, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementPositionALaPose, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementLocalisation, PivotSource.Isolement)]
+    [InlineData(PivotFieldRef.IsolementTableaux, PivotSource.Isolement)]
+    [InlineData(PivotFieldRef.IsolementRepereParent, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.TacheMultipleOrdre, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleAction, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleActeur, PivotSource.TacheMultiple)]

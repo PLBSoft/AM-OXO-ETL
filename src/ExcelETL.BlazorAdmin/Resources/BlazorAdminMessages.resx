@@ -721,6 +721,18 @@
   <data name="ExportProfileEditor_AddPointColumnButton" xml:space="preserve">
     <value>Add point column</value>
   </data>
+  <data name="ExportProfileEditor_ApplicationColumnsHeading" xml:space="preserve">
+    <value>Application columns</value>
+  </data>
+  <data name="ExportProfileEditor_ApplicationNomLabel" xml:space="preserve">
+    <value>Application name</value>
+  </data>
+  <data name="ExportProfileEditor_ApplicationNomPlaceholder" xml:space="preserve">
+    <value>Application name</value>
+  </data>
+  <data name="ExportProfileEditor_AddApplicationColumnButton" xml:space="preserve">
+    <value>Add application column</value>
+  </data>
   <data name="ExportProfileEditor_AddSheetButton" xml:space="preserve">
     <value>Add sheet rule</value>
   </data>

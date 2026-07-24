@@ -240,7 +240,8 @@ public class DefaultProfileSeeder(
                 [
                     new PointColumnDefinition(TravauxCompletColonneName, TravauxCompletColonneName),
                     new PointColumnDefinition(TravauxDetailColonneName, TravauxDetailColonneName)
-                ]),
+                ],
+                []),
             new SheetGenerationRule(
                 "Enfants",
                 PivotSource.Isolement,
@@ -273,7 +274,8 @@ public class DefaultProfileSeeder(
                         "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
                     new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
-                ]),
+                ],
+                []),
             BuildTacheMultipleSheetRule()
         ]);
 
@@ -290,5 +292,6 @@ public class DefaultProfileSeeder(
             new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
             new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
         ],
+        [],
         []);
 }

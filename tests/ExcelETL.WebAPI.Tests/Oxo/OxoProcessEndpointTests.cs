@@ -304,7 +304,8 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 [
                     new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet"),
                     new PointColumnDefinition("TRAVAUX DETAIL", "Travaux détail")
-                ]),
+                ],
+                []),
             new SheetGenerationRule(
                 "Enfants",
                 PivotSource.Isolement,
@@ -316,7 +317,8 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 [
                     new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes"),
                     new PointColumnDefinition("DEPROLOCK VANNES", "Deprolock vannes")
-                ])
+                ],
+                [])
         ]);
 
     private static MemoryStream BuildRejectedSourceWorkbook()

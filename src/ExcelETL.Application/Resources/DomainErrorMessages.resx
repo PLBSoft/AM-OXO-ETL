@@ -103,6 +103,12 @@
   <data name="SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple" xml:space="preserve">
     <value>Sheet '{0}' uses the TacheMultiple pivot source, which has no associated Point -- Point columns are not allowed.</value>
   </data>
+  <data name="SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple" xml:space="preserve">
+    <value>Sheet '{0}' uses the TacheMultiple pivot source, which has no associated Application -- Application columns are not allowed.</value>
+  </data>
+  <data name="SheetGenerationRule_DuplicateApplicationNom" xml:space="preserve">
+    <value>Application nom '{0}' is used more than once in this sheet.</value>
+  </data>
   <data name="ColumnDefinition_EmptyHeader" xml:space="preserve">
     <value>Header must not be empty.</value>
   </data>
@@ -113,6 +119,15 @@
     <value>Colonne nom must not be empty.</value>
   </data>
   <data name="PointColumnDefinition_EmptyMarkValue" xml:space="preserve">
+    <value>Mark value must not be empty.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyApplicationNom" xml:space="preserve">
+    <value>Application nom must not be empty.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>Header must not be empty.</value>
+  </data>
+  <data name="ApplicationColumnDefinition_EmptyMarkValue" xml:space="preserve">
     <value>Mark value must not be empty.</value>
   </data>
 </root>

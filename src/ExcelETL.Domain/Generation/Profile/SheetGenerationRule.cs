@@ -23,17 +23,20 @@ public sealed record SheetGenerationRule
     // navigation.
     private readonly List<ColumnDefinition> _columnDefinitions = [];
     private readonly List<PointColumnDefinition> _pointColumnDefinitions = [];
+    private readonly List<ApplicationColumnDefinition> _applicationColumnDefinitions = [];
 
     public string SheetName { get; }
     public PivotSource PivotSource { get; }
     public IReadOnlyList<ColumnDefinition> ColumnDefinitions => _columnDefinitions;
     public IReadOnlyList<PointColumnDefinition> PointColumnDefinitions => _pointColumnDefinitions;
+    public IReadOnlyList<ApplicationColumnDefinition> ApplicationColumnDefinitions => _applicationColumnDefinitions;
 
     public SheetGenerationRule(
         string sheetName,
         PivotSource pivotSource,
         IReadOnlyList<ColumnDefinition> columnDefinitions,
-        IReadOnlyList<PointColumnDefinition> pointColumnDefinitions)
+        IReadOnlyList<PointColumnDefinition> pointColumnDefinitions,
+        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -43,6 +46,7 @@ public sealed record SheetGenerationRule
 
         ArgumentNullException.ThrowIfNull(columnDefinitions);
         ArgumentNullException.ThrowIfNull(pointColumnDefinitions);
+        ArgumentNullException.ThrowIfNull(applicationColumnDefinitions);
 
         var incompatibleColumn = columnDefinitions.FirstOrDefault(
             column => column.Source is not null && PivotFieldResolver.GetPivotSource(column.Source.Value) != pivotSource);
@@ -65,8 +69,17 @@ public sealed record SheetGenerationRule
                 DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
         }
 
+        if (pivotSource == PivotSource.TacheMultiple && applicationColumnDefinitions.Count > 0)
+        {
+            throw new DomainRuleViolationException(
+                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Application -- " +
+                "ApplicationColumnDefinitions are not allowed for this pivot source.",
+                DomainErrorCode.SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
+        }
+
         var duplicateHeader = columnDefinitions.Select(c => c.Header)
             .Concat(pointColumnDefinitions.Select(p => p.Header))
+            .Concat(applicationColumnDefinitions.Select(a => a.Header))
             .GroupBy(header => header)
             .FirstOrDefault(group => group.Count() > 1);
 
@@ -88,10 +101,23 @@ public sealed record SheetGenerationRule
                 nameof(pointColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateColonneNom, duplicateColonneNom.Key);
         }
 
+        var duplicateApplicationNom = applicationColumnDefinitions
+            .GroupBy(application => application.ApplicationNom)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateApplicationNom is not null)
+        {
+            throw new DomainValidationException(
+                $"Application nom '{duplicateApplicationNom.Key}' is used more than once in sheet '{sheetName}'.",
+                nameof(applicationColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom,
+                duplicateApplicationNom.Key);
+        }
+
         SheetName = sheetName;
         PivotSource = pivotSource;
         _columnDefinitions = [.. columnDefinitions];
         _pointColumnDefinitions = [.. pointColumnDefinitions];
+        _applicationColumnDefinitions = [.. applicationColumnDefinitions];
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately
@@ -106,7 +132,8 @@ public sealed record SheetGenerationRule
         && SheetName == other.SheetName
         && PivotSource == other.PivotSource
         && ColumnDefinitions.SequenceEqual(other.ColumnDefinitions)
-        && PointColumnDefinitions.SequenceEqual(other.PointColumnDefinitions);
+        && PointColumnDefinitions.SequenceEqual(other.PointColumnDefinitions)
+        && ApplicationColumnDefinitions.SequenceEqual(other.ApplicationColumnDefinitions);
 
     public override int GetHashCode()
     {
@@ -121,6 +148,11 @@ public sealed record SheetGenerationRule
         foreach (var point in PointColumnDefinitions)
         {
             hash.Add(point);
+        }
+
+        foreach (var application in ApplicationColumnDefinitions)
+        {
+            hash.Add(application);
         }
 
         return hash.ToHashCode();

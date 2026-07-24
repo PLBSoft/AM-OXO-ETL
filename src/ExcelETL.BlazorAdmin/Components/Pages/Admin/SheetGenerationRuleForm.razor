@@ -151,6 +151,64 @@
                            SubmitButtonId="@($"{IdPrefix}add-point-column-definition-button")"
                            SubmitLabel="@Loc["ExportProfileEditor_AddPointColumnButton"]"
                            OnSubmit="AddPointColumn" />
+
+<h5>@Loc["ExportProfileEditor_ApplicationColumnsHeading"]</h5>
+@if (_applicationColumns.Count > 0)
+{
+    <ul class="block-field-list">
+        @for (var j = 0; j < _applicationColumns.Count; j++)
+        {
+            var applicationColumnIndex = j;
+            var applicationColumn = _applicationColumns[applicationColumnIndex];
+            @if (_editingApplicationColumnIndex == applicationColumnIndex)
+            {
+                <li class="block-field-item-editing">
+                    <ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
+                                                      InitialApplicationColumn="applicationColumn"
+                                                      SubmitButtonId="@($"{IdPrefix}save-application-column-definition-button-{applicationColumnIndex}")"
+                                                      SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
+                                                      ShowCancel="true"
+                                                      CancelButtonId="@($"{IdPrefix}cancel-application-column-definition-button-{applicationColumnIndex}")"
+                                                      OnCancel="() => _editingApplicationColumnIndex = null"
+                                                      OnSubmit="(ApplicationColumnDefinition updated) => HandleSaveApplicationColumn(applicationColumnIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@applicationColumn.Header</span>
+                        <span class="block-field-range text-muted font-monospace">@applicationColumn.ApplicationNom · @applicationColumn.MarkValue</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-application-column-definition-button-{applicationColumnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingApplicationColumnIndex = applicationColumnIndex">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </button>
+                        <button id="@($"{IdPrefix}delete-application-column-definition-button-{applicationColumnIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteApplicationColumn(applicationColumnIndex)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-")"
+                                 SubmitButtonId="@($"{IdPrefix}add-application-column-definition-button")"
+                                 SubmitLabel="@Loc["ExportProfileEditor_AddApplicationColumnButton"]"
+                                 OnSubmit="AddApplicationColumn" />
 }
 
 <div class="right-aligned-actions">
@@ -194,9 +252,11 @@
     private PivotSource _pivotSource = PivotSource.Equipement;
     private readonly List<ColumnDefinition> _columns = [];
     private readonly List<PointColumnDefinition> _pointColumns = [];
+    private readonly List<ApplicationColumnDefinition> _applicationColumns = [];
 
     private int? _editingColumnIndex;
     private int? _editingPointColumnIndex;
+    private int? _editingApplicationColumnIndex;
 
     private string? _errorMessage;
 
@@ -214,19 +274,32 @@
         _pivotSource = InitialRule.PivotSource;
         _columns.AddRange(InitialRule.ColumnDefinitions);
         _pointColumns.AddRange(InitialRule.PointColumnDefinitions);
+        _applicationColumns.AddRange(InitialRule.ApplicationColumnDefinitions);
     }
 
-    // PointColumnDefinitions have no meaning for TacheMultiple (Domain rejects them outright, T2) and
-    // the subform that adds them is hidden the moment this pivot source is selected -- clearing any
-    // already-added ones here avoids a confusing submit-time DomainRuleViolationException for state the
-    // user can no longer even see. Switching back to Equipement/Isolement only restores the ability to
-    // add new Point columns, it does not resurrect ones cleared by an earlier switch to TacheMultiple.
+    // PointColumnDefinitions/ApplicationColumnDefinitions have no meaning for TacheMultiple (Domain
+    // rejects them outright, T2/U4) and the subforms that add them are hidden the moment this pivot
+    // source is selected -- clearing any already-added ones here avoids a confusing submit-time
+    // DomainRuleViolationException for state the user can no longer even see. Switching back to
+    // Equipement/Isolement only restores the ability to add new Point/Application columns, it does not
+    // resurrect ones cleared by an earlier switch to TacheMultiple.
     private void OnPivotSourceChanged()
     {
-        if (_pivotSource == PivotSource.TacheMultiple && _pointColumns.Count > 0)
+        if (_pivotSource != PivotSource.TacheMultiple)
+        {
+            return;
+        }
+
+        if (_pointColumns.Count > 0)
         {
             _pointColumns.Clear();
             _editingPointColumnIndex = null;
+        }
+
+        if (_applicationColumns.Count > 0)
+        {
+            _applicationColumns.Clear();
+            _editingApplicationColumnIndex = null;
         }
     }
 
@@ -264,16 +337,33 @@
         }
     }
 
+    private void AddApplicationColumn(ApplicationColumnDefinition applicationColumn) => _applicationColumns.Add(applicationColumn);
+
+    private void HandleSaveApplicationColumn(int index, ApplicationColumnDefinition updated)
+    {
+        _applicationColumns[index] = updated;
+        _editingApplicationColumnIndex = null;
+    }
+
+    private void DeleteApplicationColumn(int index)
+    {
+        _applicationColumns.RemoveAt(index);
+        if (_editingApplicationColumnIndex == index)
+        {
+            _editingApplicationColumnIndex = null;
+        }
+    }
+
     private async Task Submit()
     {
         _errorMessage = null;
 
         try
         {
-            // SheetGenerationRule's constructor snapshots both lists itself ([.. columnDefinitions]),
-            // unlike the import side's SheetExtractionRule.UnconditionalColonneNames -- no defensive
-            // copy needed here before ResetForm() clears _columns/_pointColumns below.
-            var rule = new SheetGenerationRule(_sheetName, _pivotSource, _columns, _pointColumns);
+            // SheetGenerationRule's constructor snapshots all three lists itself ([.. ...]), unlike the
+            // import side's SheetExtractionRule.UnconditionalColonneNames -- no defensive copy needed
+            // here before ResetForm() clears _columns/_pointColumns/_applicationColumns below.
+            var rule = new SheetGenerationRule(_sheetName, _pivotSource, _columns, _pointColumns, _applicationColumns);
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -293,7 +383,9 @@
         _pivotSource = PivotSource.Equipement;
         _columns.Clear();
         _pointColumns.Clear();
+        _applicationColumns.Clear();
         _editingColumnIndex = null;
         _editingPointColumnIndex = null;
+        _editingApplicationColumnIndex = null;
     }
 }

@@ -84,7 +84,8 @@ public class ExportProfileEditorTests : BunitContext
                     "Parents",
                     PivotSource.Equipement,
                     [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
-                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")])
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+                    [])
             ]);
 
     private static ExportProfile BuildProfileWithTwoSheetRules(string name = "Profil export OXO") =>
@@ -94,11 +95,13 @@ public class ExportProfileEditorTests : BunitContext
                     "Parents",
                     PivotSource.Equipement,
                     [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
-                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")]),
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+                    []),
                 new SheetGenerationRule(
                     "Enfants",
                     PivotSource.Isolement,
                     [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)],
+                    [],
                     [])
             ]);
 
@@ -305,6 +308,61 @@ public class ExportProfileEditorTests : BunitContext
             rule.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Repère" && c.Source == PivotFieldRef.EquipementRepere);
             rule.PointColumnDefinitions.Should().ContainSingle(p => p.ColonneNom == "TRAVAUX COMPLET" && p.Header == "Travaux complet");
         });
+
+    // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), out-of-scope note: minimal form
+    // fields to enter ApplicationColumnDefinition on the always-present "Add a sheet rule" card.
+    [Fact]
+    public async Task Save_WithAddedApplicationColumn_PersistsApplicationColumnDefinition() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#export-profile-name-input").Change("Profil export OXO");
+            cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
+
+            cut.Find("#column-header-input").Change("Repère");
+            cut.Find("#column-source-select").Change(nameof(PivotFieldRef.EquipementRepere));
+            cut.Find("#add-column-definition-button").Click();
+
+            cut.Find("#application-column-nom-input").Change("PROGRESS");
+            cut.Find("#application-column-header-input").Change("PROGRESS");
+            cut.Find("#application-column-mark-value-input").Change("O");
+            cut.Find("#add-application-column-definition-button").Click();
+
+            cut.Find("#add-sheet-generation-rule-button").Click();
+            cut.Find("#save-export-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            var saved = all.Should().ContainSingle().Subject;
+            var rule = saved.SheetRules.Should().ContainSingle().Which;
+
+            var applicationColumn = rule.ApplicationColumnDefinitions.Should().ContainSingle().Which;
+            applicationColumn.ApplicationNom.Should().Be("PROGRESS");
+            applicationColumn.Header.Should().Be("PROGRESS");
+            applicationColumn.MarkValue.Should().Be("O");
+        });
+
+    [Fact]
+    public void ApplicationColumnInputs_HaveVisibleLabels() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("label[for='application-column-nom-input']").TextContent.Should().Be("Application name");
+        cut.Find("label[for='application-column-header-input']").TextContent.Should().Be("Header");
+        cut.Find("label[for='application-column-mark-value-input']").TextContent.Should().Be("Mark value");
+    });
+
+    [Fact]
+    public void PivotSourceSelect_WhenTacheMultipleSelected_HidesApplicationColumnSubform() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.TacheMultiple));
+
+        cut.FindAll("#add-application-column-definition-button").Should().BeEmpty();
+        cut.FindAll("#application-column-nom-input").Should().BeEmpty();
+    });
 
     [Fact]
     public async Task EditRoute_WithExistingProfile_PrefillsNameAndSheetRules() =>

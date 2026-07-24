@@ -25,7 +25,8 @@ public class EfExportProfileStoreTests
                     new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
                     new ColumnDefinition("Colonne libre", null)
                 ],
-                [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")])
+                [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+                [new ApplicationColumnDefinition("PROGRESS", "PROGRESS", "O")])
         ]);
 
     [Fact]
@@ -54,6 +55,12 @@ public class EfExportProfileStoreTests
         pointColumn.ColonneNom.Should().Be("TRAVAUX COMPLET");
         pointColumn.Header.Should().Be("Travaux complet");
         pointColumn.MarkValue.Should().Be("X");
+
+        rule.ApplicationColumnDefinitions.Should().ContainSingle();
+        var applicationColumn = rule.ApplicationColumnDefinitions.Single();
+        applicationColumn.ApplicationNom.Should().Be("PROGRESS");
+        applicationColumn.Header.Should().Be("PROGRESS");
+        applicationColumn.MarkValue.Should().Be("O");
     }
 
     [Fact]
@@ -75,7 +82,8 @@ public class EfExportProfileStoreTests
         var parentsRule = new SheetGenerationRule(
             "Parents", PivotSource.Equipement,
             [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
-            [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")]);
+            [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+            []);
 
         var enfantsRule = new SheetGenerationRule(
             "Enfants", PivotSource.Isolement,
@@ -83,7 +91,8 @@ public class EfExportProfileStoreTests
             [
                 new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes"),
                 new PointColumnDefinition("DEPROLOCK VANNES", "Deprolock vannes")
-            ]);
+            ],
+            []);
 
         var profile = new ExportProfile("Profil export test", [parentsRule, enfantsRule]);
         var store = CreateStore();
@@ -130,7 +139,7 @@ public class EfExportProfileStoreTests
         await store.SaveAsync(original);
 
         var editedRule = new SheetGenerationRule(
-            "Enfants", PivotSource.Isolement, [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)], []);
+            "Enfants", PivotSource.Isolement, [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)], [], []);
         var edited = new ExportProfile(original.Id, "Profil export OXO (édité)", [editedRule]);
 
         await store.SaveAsync(edited);

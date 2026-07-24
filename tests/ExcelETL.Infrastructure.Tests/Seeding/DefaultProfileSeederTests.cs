@@ -232,11 +232,13 @@ public class DefaultProfileSeederTests
                 new SheetGenerationRule(
                     "Parents", PivotSource.Equipement,
                     [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
-                    [new PointColumnDefinition("TRAVAUX COMPLET", "TRAVAUX COMPLET")]),
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "TRAVAUX COMPLET")],
+                    []),
                 new SheetGenerationRule(
                     "Enfants", PivotSource.Isolement,
                     [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)],
-                    [new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES")])
+                    [new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES")],
+                    [])
             ]);
 
         await exportProfileStore.SaveAsync(preExisting);

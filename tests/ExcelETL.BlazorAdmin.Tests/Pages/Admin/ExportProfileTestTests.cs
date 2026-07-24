@@ -280,7 +280,8 @@ public class ExportProfileTestTests : BunitContext
                 [
                     new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet"),
                     new PointColumnDefinition("TRAVAUX DETAIL", "Travaux détail")
-                ]),
+                ],
+                []),
             new SheetGenerationRule(
                 "Enfants",
                 PivotSource.Isolement,
@@ -297,7 +298,8 @@ public class ExportProfileTestTests : BunitContext
                     new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes"),
                     new PointColumnDefinition("DEPROLOCK VANNES", "Deprolock vannes"),
                     new PointColumnDefinition(ZeroEnergieColonneName, "Zéro énergie en présence EE (PS941)")
-                ])
+                ],
+                [])
         ]);
 
     [Fact]
@@ -399,6 +401,7 @@ public class ExportProfileTestTests : BunitContext
                         new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
                         new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
                     ],
+                    [],
                     [])
             ]);
     }

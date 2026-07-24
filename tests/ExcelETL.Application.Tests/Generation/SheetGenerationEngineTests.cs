@@ -23,7 +23,8 @@ public class SheetGenerationEngineTests
         [
             new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet"),
             new PointColumnDefinition("TRAVAUX DETAIL", "Travaux détail")
-        ]);
+        ],
+        []);
 
     private static SheetGenerationRule EnfantsRule() => new(
         "Enfants",
@@ -32,7 +33,8 @@ public class SheetGenerationEngineTests
             new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere),
             new ColumnDefinition("Désignation", PivotFieldRef.IsolementDesignation)
         ],
-        [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")]);
+        [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")],
+        []);
 
     private static SheetGenerationRule TachesMultiplesRule() => new(
         "Tâches multiples",
@@ -44,6 +46,7 @@ public class SheetGenerationEngineTests
             new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
             new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
         ],
+        [],
         []);
 
     private static ImportResult ImportResultWith(params TacheMultiplePivot[] tachesMultiples) => new(

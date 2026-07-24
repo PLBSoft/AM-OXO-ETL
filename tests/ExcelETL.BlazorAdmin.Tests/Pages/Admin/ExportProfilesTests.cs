@@ -67,6 +67,7 @@ public class ExportProfilesTests : BunitContext
                     "Parents",
                     PivotSource.Equipement,
                     [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                    [],
                     [])
             ]);
 

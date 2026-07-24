@@ -16,12 +16,15 @@ public static class PivotFieldResolver
         PivotFieldRef.EquipementRepere
             or PivotFieldRef.EquipementDesignation
             or PivotFieldRef.EquipementTypeElementNom
-            or PivotFieldRef.EquipementLocalisation => PivotSource.Equipement,
+            or PivotFieldRef.EquipementLocalisation
+            or PivotFieldRef.EquipementTableaux => PivotSource.Equipement,
         PivotFieldRef.IsolementRepere
             or PivotFieldRef.IsolementDesignation
             or PivotFieldRef.IsolementTypeElementNom
             or PivotFieldRef.IsolementPositionALaPose
-            or PivotFieldRef.IsolementLocalisation => PivotSource.Isolement,
+            or PivotFieldRef.IsolementLocalisation
+            or PivotFieldRef.IsolementTableaux
+            or PivotFieldRef.IsolementRepereParent => PivotSource.Isolement,
         PivotFieldRef.TacheMultipleOrdre
             or PivotFieldRef.TacheMultipleAction
             or PivotFieldRef.TacheMultipleActeur
@@ -40,6 +43,7 @@ public static class PivotFieldResolver
         PivotFieldRef.EquipementDesignation => equipement.Designation,
         PivotFieldRef.EquipementTypeElementNom => equipement.TypeElementNom,
         PivotFieldRef.EquipementLocalisation => equipement.Localisation,
+        PivotFieldRef.EquipementTableaux => string.Join(", ", equipement.Tableaux),
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Equipement row. This should have been rejected at profile construction.")
     };
@@ -51,6 +55,8 @@ public static class PivotFieldResolver
         PivotFieldRef.IsolementTypeElementNom => isolement.TypeElementNom,
         PivotFieldRef.IsolementPositionALaPose => isolement.PositionALaPose,
         PivotFieldRef.IsolementLocalisation => isolement.Localisation,
+        PivotFieldRef.IsolementTableaux => string.Join(", ", isolement.Tableaux),
+        PivotFieldRef.IsolementRepereParent => isolement.RepereParent,
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Isolement row. This should have been rejected at profile construction.")
     };

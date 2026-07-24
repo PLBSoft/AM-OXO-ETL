@@ -20,24 +20,30 @@ public class SheetGenerationRuleTests
         new PointColumnDefinition("DEPROLOCK VANNES", "Deprolock vannes")
     ];
 
+    private static IReadOnlyList<ApplicationColumnDefinition> ValidApplications() =>
+    [
+        new ApplicationColumnDefinition("PROGRESS", "PROGRESS", "O")
+    ];
+
     [Fact]
     public void Constructor_WithValidArguments_CreatesSheetGenerationRule()
     {
         var columns = ValidColumns();
         var points = ValidPoints();
 
-        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, columns, points);
+        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, columns, points, []);
 
         rule.SheetName.Should().Be("Parents");
         rule.PivotSource.Should().Be(PivotSource.Equipement);
         rule.ColumnDefinitions.Should().BeEquivalentTo(columns);
         rule.PointColumnDefinitions.Should().BeEquivalentTo(points);
+        rule.ApplicationColumnDefinitions.Should().BeEmpty();
     }
 
     [Fact]
     public void Constructor_WithEmptyColumnDefinitions_CreatesSheetGenerationRule()
     {
-        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, [], ValidPoints());
+        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, [], ValidPoints(), []);
 
         rule.ColumnDefinitions.Should().BeEmpty();
     }
@@ -45,9 +51,19 @@ public class SheetGenerationRuleTests
     [Fact]
     public void Constructor_WithEmptyPointColumnDefinitions_CreatesSheetGenerationRule()
     {
-        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), []);
+        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), [], []);
 
         rule.PointColumnDefinitions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationColumnDefinitions_CreatesSheetGenerationRule()
+    {
+        var applications = ValidApplications();
+
+        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), applications);
+
+        rule.ApplicationColumnDefinitions.Should().BeEquivalentTo(applications);
     }
 
     [Theory]
@@ -56,7 +72,7 @@ public class SheetGenerationRuleTests
     [InlineData(null)]
     public void Constructor_WithInvalidSheetName_ThrowsDomainValidationException(string? invalidSheetName)
     {
-        var act = () => new SheetGenerationRule(invalidSheetName!, PivotSource.Equipement, ValidColumns(), ValidPoints());
+        var act = () => new SheetGenerationRule(invalidSheetName!, PivotSource.Equipement, ValidColumns(), ValidPoints(), []);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("sheetName")
@@ -66,7 +82,7 @@ public class SheetGenerationRuleTests
     [Fact]
     public void Constructor_WithNullColumnDefinitions_ThrowsArgumentNullException()
     {
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, null!, ValidPoints());
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, null!, ValidPoints(), []);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -74,7 +90,15 @@ public class SheetGenerationRuleTests
     [Fact]
     public void Constructor_WithNullPointColumnDefinitions_ThrowsArgumentNullException()
     {
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), null!);
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), null!, []);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_WithNullApplicationColumnDefinitions_ThrowsArgumentNullException()
+    {
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), null!);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -86,7 +110,7 @@ public class SheetGenerationRuleTests
         // the profile is built, not silently ignored (or thrown) later when a file is generated.
         IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Position MAD", PivotFieldRef.IsolementPositionALaPose)];
 
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, []);
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, [], []);
 
         act.Should().Throw<DomainRuleViolationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource);
@@ -97,7 +121,7 @@ public class SheetGenerationRuleTests
     {
         IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Position MAD", PivotFieldRef.IsolementPositionALaPose)];
 
-        var rule = new SheetGenerationRule("Enfants", PivotSource.Isolement, columns, []);
+        var rule = new SheetGenerationRule("Enfants", PivotSource.Isolement, columns, [], []);
 
         rule.ColumnDefinitions.Should().BeEquivalentTo(columns);
     }
@@ -111,7 +135,7 @@ public class SheetGenerationRuleTests
             new ColumnDefinition("Repère", PivotFieldRef.EquipementDesignation)
         ];
 
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, []);
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, [], []);
 
         act.Should().Throw<DomainValidationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateHeader);
@@ -123,7 +147,19 @@ public class SheetGenerationRuleTests
         IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Prolock vannes", null)];
         IReadOnlyList<PointColumnDefinition> points = [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")];
 
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, points);
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, points, []);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateHeader);
+    }
+
+    [Fact]
+    public void Constructor_WithHeaderCollisionBetweenColumnAndApplicationDefinitions_ThrowsDomainValidationException()
+    {
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("PROGRESS", null)];
+        IReadOnlyList<ApplicationColumnDefinition> applications = [new ApplicationColumnDefinition("PROGRESS", "PROGRESS")];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, [], applications);
 
         act.Should().Throw<DomainValidationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateHeader);
@@ -138,10 +174,25 @@ public class SheetGenerationRuleTests
             new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes (bis)")
         ];
 
-        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, [], points);
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, [], points, []);
 
         act.Should().Throw<DomainValidationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateColonneNom);
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicateApplicationNomAmongApplicationColumnDefinitions_ThrowsDomainValidationException()
+    {
+        IReadOnlyList<ApplicationColumnDefinition> applications =
+        [
+            new ApplicationColumnDefinition("PROGRESS", "PROGRESS"),
+            new ApplicationColumnDefinition("PROGRESS", "PROGRESS (bis)")
+        ];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, [], [], applications);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom);
     }
 
     [Fact]
@@ -149,7 +200,7 @@ public class SheetGenerationRuleTests
     {
         IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)];
 
-        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, []);
+        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, [], []);
 
         act.Should().Throw<DomainRuleViolationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource);
@@ -160,10 +211,21 @@ public class SheetGenerationRuleTests
     {
         IReadOnlyList<PointColumnDefinition> points = [new PointColumnDefinition("PROLOCK VANNES", "Prolock vannes")];
 
-        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, [], points);
+        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, [], points, []);
 
         act.Should().Throw<DomainRuleViolationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple);
+    }
+
+    [Fact]
+    public void Constructor_WithTacheMultiplePivotSourceAndApplicationColumnDefinitions_ThrowsDomainRuleViolationException()
+    {
+        IReadOnlyList<ApplicationColumnDefinition> applications = [new ApplicationColumnDefinition("PROGRESS", "PROGRESS")];
+
+        var act = () => new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, [], [], applications);
+
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple);
     }
 
     [Fact]
@@ -171,30 +233,33 @@ public class SheetGenerationRuleTests
     {
         IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction)];
 
-        var rule = new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, []);
+        var rule = new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, columns, [], []);
 
         rule.PivotSource.Should().Be(PivotSource.TacheMultiple);
         rule.ColumnDefinitions.Should().BeEquivalentTo(columns);
         rule.PointColumnDefinitions.Should().BeEmpty();
+        rule.ApplicationColumnDefinitions.Should().BeEmpty();
     }
 
     [Fact]
     public void Constructor_WithEquipementOrIsolementPivotSource_IsUnaffectedByTacheMultipleValidations()
     {
-        var equipementRule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints());
+        var equipementRule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), ValidApplications());
         var isolementRule = new SheetGenerationRule(
             "Enfants", PivotSource.Isolement,
-            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)], ValidPoints());
+            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)], ValidPoints(), ValidApplications());
 
         equipementRule.PointColumnDefinitions.Should().BeEquivalentTo(ValidPoints());
+        equipementRule.ApplicationColumnDefinitions.Should().BeEquivalentTo(ValidApplications());
         isolementRule.PointColumnDefinitions.Should().BeEquivalentTo(ValidPoints());
+        isolementRule.ApplicationColumnDefinitions.Should().BeEquivalentTo(ValidApplications());
     }
 
     [Fact]
     public void Equality_WithSameValues_AreEqual()
     {
-        var first = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints());
-        var second = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints());
+        var first = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), ValidApplications());
+        var second = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), ValidApplications());
 
         first.Should().Be(second);
     }

@@ -72,6 +72,26 @@ public class ExportProfileConfiguration : IEntityTypeConfiguration<ExportProfile
                     .IsRequired()
                     .HasMaxLength(50);
             });
+
+            rules.OwnsMany(r => r.ApplicationColumnDefinitions, applications =>
+            {
+                applications.ToTable("ExportProfileSheetRuleApplicationColumnDefinitions");
+                applications.WithOwner().HasForeignKey("SheetGenerationRuleId");
+                applications.Property<int>("Id");
+                applications.HasKey("Id");
+
+                applications.Property(a => a.ApplicationNom)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                applications.Property(a => a.Header)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                applications.Property(a => a.MarkValue)
+                    .IsRequired()
+                    .HasMaxLength(50);
+            });
         });
     }
 }
