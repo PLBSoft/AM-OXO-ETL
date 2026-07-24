@@ -9,7 +9,7 @@ public class ApplicationIdentityDbContextFactory : IDesignTimeDbContextFactory<A
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationIdentityDbContext>();
         optionsBuilder.UseSqlServer(
-            "Server=localhost;Database=ExcelEtl;Trusted_Connection=True;TrustServerCertificate=True;",
+            "Server=localhost;Database=AM-OXO-ETL-MAD-REL;Trusted_Connection=True;TrustServerCertificate=True;",
             sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity"));
 
         return new ApplicationIdentityDbContext(optionsBuilder.Options);

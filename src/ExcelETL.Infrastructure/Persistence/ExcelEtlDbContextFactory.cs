@@ -9,7 +9,7 @@ public class ExcelEtlDbContextFactory : IDesignTimeDbContextFactory<ExcelEtlDbCo
     {
         var optionsBuilder = new DbContextOptionsBuilder<ExcelEtlDbContext>();
         optionsBuilder.UseSqlServer(
-            "Server=localhost;Database=ExcelEtl;Trusted_Connection=True;TrustServerCertificate=True;",
+            "Server=localhost;Database=AM-OXO-ETL-MAD-REL;Trusted_Connection=True;TrustServerCertificate=True;",
             sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl"));
 
         return new ExcelEtlDbContext(optionsBuilder.Options);
