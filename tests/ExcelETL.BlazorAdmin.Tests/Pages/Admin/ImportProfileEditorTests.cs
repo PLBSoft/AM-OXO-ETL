@@ -802,6 +802,43 @@ public class ImportProfileEditorTests : BunitContext
             .Should().Contain("right-aligned-actions");
     });
 
+    // Lot Y (Y3, extended to the import side on client request): #save-profile-button is a
+    // full-width/large CTA on mobile, natural-width on desktop (same V12 w-md-auto pattern already
+    // applied to ExportProfileEditor's #save-export-profile-button), on both the /new and /edit
+    // routes since they're the same component/button.
+    [Fact]
+    public void SaveProfileButton_IsFullWidthLargeCta_WithVerticalMargins_OnNewRoute() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var saveButton = cut.Find("#save-profile-button");
+
+            saveButton.ClassList.Should().Contain("w-100");
+            saveButton.ClassList.Should().Contain("w-md-auto");
+            saveButton.ClassList.Should().Contain("btn-lg");
+            saveButton.ClassList.Should().Contain("mt-4");
+            saveButton.ClassList.Should().Contain("mb-4");
+        });
+
+    [Fact]
+    public async Task SaveProfileButton_IsFullWidthLargeCta_WithVerticalMargins_OnEditRoute() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var saveButton = cut.Find("#save-profile-button");
+
+            saveButton.ClassList.Should().Contain("w-100");
+            saveButton.ClassList.Should().Contain("w-md-auto");
+            saveButton.ClassList.Should().Contain("btn-lg");
+            saveButton.ClassList.Should().Contain("mt-4");
+            saveButton.ClassList.Should().Contain("mb-4");
+        });
+
     [Fact]
     public async Task SaveChanges_UpdatesTheRuleInPlace_AndClosesEditMode_WithoutDuplicating() =>
         await WithCultureAsync("en-US", async () =>
