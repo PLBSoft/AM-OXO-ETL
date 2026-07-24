@@ -43,7 +43,7 @@ else
                     <label for="Info.Email">@Loc["Account_EmailLabel"]</label>
                     <ValidationMessage For="() => InfoInput.Email" class="text-danger" />
                 </div>
-                <button type="submit" class="btn btn-primary" disabled="@_isUpdatingInfo">
+                <button type="submit" class="btn btn-primary w-100 btn-lg" disabled="@_isUpdatingInfo">
                     @Loc["Profile_UpdateInfoButton"]
                 </button>
             </EditForm>
@@ -52,7 +52,7 @@ else
 
     <hr />
 
-    <div class="row">
+    <div class="row mt-5">
         <div class="col-lg-6">
             <h2>@Loc["Profile_SecurityHeading"]</h2>
 
@@ -77,7 +77,7 @@ else
                         <label for="Password.Confirm">@Loc["Profile_ConfirmNewPasswordLabel"]</label>
                         <ValidationMessage For="() => PasswordInput.ConfirmNewPassword" class="text-danger" />
                     </div>
-                    <button type="submit" class="btn btn-primary" disabled="@_isChangingPassword">
+                    <button type="submit" class="btn btn-primary w-100 btn-lg" disabled="@_isChangingPassword">
                         @Loc["Profile_ChangePasswordButton"]
                     </button>
                 </EditForm>

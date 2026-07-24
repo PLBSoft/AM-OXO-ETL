@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using System.Security.Claims;
 using Bunit;
 using ExcelETL.Application.Identity;
@@ -155,5 +156,31 @@ public class ProfileTests : BunitContext
         cut.Find("#profile-info-form").Submit();
 
         cut.Markup.Should().Contain("Vos informations ont été mises à jour.");
+    });
+
+    // V6: full-width, large buttons + extra spacing above the Security section on mobile.
+    [Fact]
+    public void Profile_UpdateInfoAndChangePasswordButtons_AreFullWidthAndLarge() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Profile>();
+
+        var updateInfoButton = cut.Find("#profile-info-form button[type=submit]");
+        updateInfoButton.ClassList.Should().Contain("w-100");
+        updateInfoButton.ClassList.Should().Contain("btn-lg");
+
+        var changePasswordButton = cut.Find("#profile-password-form button[type=submit]");
+        changePasswordButton.ClassList.Should().Contain("w-100");
+        changePasswordButton.ClassList.Should().Contain("btn-lg");
+    });
+
+    [Fact]
+    public void Profile_SecurityHeadingContainer_HasAdditionalTopMargin() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Profile>();
+
+        var securityHeading = cut.FindAll("h2").Single(h => h.TextContent.Contains("Security"));
+        var rowContainer = securityHeading.ParentElement!.ParentElement!;
+        rowContainer.ClassList.Should().Contain("row");
+        rowContainer.ClassList.Should().Contain("mt-5");
     });
 }
