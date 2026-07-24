@@ -57,10 +57,12 @@ else
         <!-- V10: Bootstrap-native upload styling (no custom dropzone) -- InputFile stays displayed
              and clickable as-is (never hidden/overlaid), just wrapped in an input-group with an
              icon, per the ticket's own explicit decision to avoid a CSS-positioned overlay for a
-             marginal UX gain. form-control-lg alone already covers the 44-48px touch target. -->
+             marginal UX gain. form-control-lg alone already covers the 44-48px touch target.
+             Lot 033: `multiple` accepts 1-N files transparently -- OpenReadStream's maxAllowedSize
+             is already fixed to BatchUploadLimits.MaxFileSizeBytes below, per file. -->
         <div class="input-group">
             <span class="input-group-text">@((MarkupString)FileUploadIconMarkup)</span>
-            <InputFile id="test-file-input" class="form-control form-control-lg" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@processing" />
+            <InputFile id="test-file-input" class="form-control form-control-lg" accept=".xlsx" multiple OnChange="OnInputFileChangeAsync" disabled="@processing" />
         </div>
     </div>
 
@@ -75,210 +77,230 @@ else
     {
         <div id="test-status" class="alert alert-danger">@_errorMessage</div>
     }
-    else if (_result is not null)
+    else if (_batchResults is not null)
     {
-        if (_result.Equipement is null)
-        {
-            <div id="test-status" class="alert alert-danger">
-                <h4>@Loc["ImportProfileTest_RejectedFileHeading"]</h4>
-                <ul>
-                    @foreach (var error in _result.Errors)
+        <!-- V13: result block as a card component (shadow + success-tinted background) instead
+             of a plain alert -- the ticket's own "aperçu tabulaire" wording, not a transient
+             status message like the Processing/Error branches above, which stay plain alerts.
+             Lot 033: now wraps a batch summary + one collapsible section per uploaded file,
+             reusing the same .test-table-details accordion pattern (Lot V8/R3) for the new
+             per-file level. -->
+        <div id="test-status" class="card shadow-sm bg-success-subtle">
+          <div class="card-body">
+            <p id="batch-summary">@BuildBatchSummaryText()</p>
+
+            @{ var singleFile = _batchResults.Count == 1; }
+
+            @foreach (var (fileResult, index) in _batchResults.Select((r, i) => (r, i)))
+            {
+                var suffix = singleFile ? "" : $"-{index}";
+                var isFileCollapsed = _collapsedFileSections.Contains(index);
+
+                <details class="test-table-details batch-file-details" open="@(!isFileCollapsed)">
+                    <summary id="file-details-toggle-@index" @onclick="() => ToggleFileSection(index)" @onclick:preventDefault="true">
+                        <span class="batch-file-name">@fileResult.FileName</span>
+                        <span class="badge @GetStatusBadgeClass(fileResult.Status)">@GetStatusLabel(fileResult.Status)</span>
+                    </summary>
+                    @if (!isFileCollapsed)
                     {
-                        <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
-                    }
-                </ul>
-            </div>
-        }
-        else
-        {
-            <!-- V13: result block as a card component (shadow + success-tinted background) instead
-                 of a plain alert -- the ticket's own "aperçu tabulaire" wording, not a transient
-                 status message like the Processing/Error branches above, which stay plain alerts. -->
-            <div id="test-status" class="card shadow-sm bg-success-subtle">
-              <div class="card-body">
-                <!-- Lot 031: count in parens, same "{0} ({1})"-shaped format as ExportProfileTest.razor's
-                     ExportProfileTest_SheetNameWithCount -- not literally reused since the export page's
-                     titles are raw sheet names (data) while these are static localized labels, so the
-                     count is interpolated directly into each heading's own resx value instead. Equipement
-                     has no collection to .Count -- this section only renders in the `_result.Equipement is
-                     not null` branch (the null/rejection case swaps in the "File rejected" alert instead),
-                     so the count is always 1 in practice; the ternary still guards against the
-                     theoretical null case rather than hardcoding 1. -->
-                @if (_result.Errors.Count > 0)
-                {
-                    <details class="test-table-details" open="@(!_collapsedSections.Contains("warnings"))">
-                        <summary id="warnings-details-toggle" @onclick='() => ToggleSection("warnings")' @onclick:preventDefault="true">
-                            @Loc["ImportProfileTest_WarningsHeading", _result.Errors.Count]
-                        </summary>
-                        @if (!_collapsedSections.Contains("warnings"))
-                        {
-                            <div class="test-table-scroll">
-                                <table id="warnings-table" class="table table-sm test-table">
-                                    <thead>
-                                        <tr>
-                                            <th>@Loc["ImportProfileTest_Sheet"]</th>
-                                            <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
-                                            <th>@Loc["ImportProfileTest_ErrorCode"]</th>
-                                            <th>@Loc["ImportProfileTest_Message"]</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var warning in _result.Errors)
+                        <div class="batch-file-content">
+                            @if (fileResult.Status == BatchFileStatus.TechnicalError)
+                            {
+                                <div id="@($"technical-error{suffix}")" class="alert alert-secondary">
+                                    <h4>@Loc["ImportProfileTest_StatusTechnicalError"]</h4>
+                                    <p>@fileResult.TechnicalErrorMessage</p>
+                                </div>
+                            }
+                            else if (fileResult.ImportResult!.Equipement is null)
+                            {
+                                <div id="@($"rejected{suffix}")" class="alert alert-danger">
+                                    <h4>@Loc["ImportProfileTest_RejectedFileHeading"]</h4>
+                                    <ul>
+                                        @foreach (var error in fileResult.ImportResult.Errors)
                                         {
-                                            <tr>
-                                                <td>@warning.Sheet</td>
-                                                <td>@warning.BlockIdentifier</td>
-                                                <td>@warning.Code</td>
-                                                <td>@warning.Message</td>
-                                            </tr>
+                                            <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
                                         }
-                                    </tbody>
-                                </table>
-                            </div>
-                        }
-                    </details>
-                }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                var result = fileResult.ImportResult;
 
-                <details class="test-table-details" open="@(!_collapsedSections.Contains("equipement"))">
-                    <summary id="equipement-details-toggle" @onclick='() => ToggleSection("equipement")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_EquipementHeading", _result.Equipement is null ? 0 : 1]
-                    </summary>
-                    @if (!_collapsedSections.Contains("equipement"))
-                    {
-                        <div class="test-table-scroll">
-                            <table id="equipement-table" class="table table-sm test-table">
-                                <thead>
-                                    <tr>
-                                        <th>@Loc["ImportProfileTest_Repere"]</th>
-                                        <th>@Loc["ImportProfileTest_Designation"]</th>
-                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
-                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>@_result.Equipement.Repere</td>
-                                        <td>@_result.Equipement.Designation</td>
-                                        <td>@_result.Equipement.TypeElementNom</td>
-                                        <td>@_result.Equipement.Localisation</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </details>
+                                @if (result.Errors.Count > 0)
+                                {
+                                    <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:warnings"))">
+                                        <summary id="@($"warnings-details-toggle{suffix}")" @onclick='() => ToggleSection(index, "warnings")' @onclick:preventDefault="true">
+                                            @Loc["ImportProfileTest_WarningsHeading", result.Errors.Count]
+                                        </summary>
+                                        @if (!_collapsedSections.Contains($"{index}:warnings"))
+                                        {
+                                            <div class="test-table-scroll">
+                                                <table id="@($"warnings-table{suffix}")" class="table table-sm test-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>@Loc["ImportProfileTest_Sheet"]</th>
+                                                            <th>@Loc["ImportProfileTest_BlockIdentifier"]</th>
+                                                            <th>@Loc["ImportProfileTest_ErrorCode"]</th>
+                                                            <th>@Loc["ImportProfileTest_Message"]</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var warning in result.Errors)
+                                                        {
+                                                            <tr>
+                                                                <td>@warning.Sheet</td>
+                                                                <td>@warning.BlockIdentifier</td>
+                                                                <td>@warning.Code</td>
+                                                                <td>@warning.Message</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    </details>
+                                }
 
-                <details class="test-table-details" open="@(!_collapsedSections.Contains("isolements"))">
-                    <summary id="isolements-details-toggle" @onclick='() => ToggleSection("isolements")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_IsolementsHeading", _result.Isolements.Count]
-                    </summary>
-                    @if (!_collapsedSections.Contains("isolements"))
-                    {
-                        <div class="test-table-scroll">
-                            <table id="isolements-table" class="table table-sm test-table">
-                                <thead>
-                                    <tr>
-                                        <th>@Loc["ImportProfileTest_Repere"]</th>
-                                        <th>@Loc["ImportProfileTest_Designation"]</th>
-                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
-                                        <th>@Loc["ImportProfileTest_PositionALaPose"]</th>
-                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var isolement in _result.Isolements)
+                                <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:equipement"))">
+                                    <summary id="@($"equipement-details-toggle{suffix}")" @onclick='() => ToggleSection(index, "equipement")' @onclick:preventDefault="true">
+                                        @Loc["ImportProfileTest_EquipementHeading", result.Equipement is null ? 0 : 1]
+                                    </summary>
+                                    @if (!_collapsedSections.Contains($"{index}:equipement"))
                                     {
-                                        <tr>
-                                            <td>@isolement.Repere</td>
-                                            <td>@isolement.Designation</td>
-                                            <td>@isolement.TypeElementNom</td>
-                                            <td>@isolement.PositionALaPose</td>
-                                            <td>@isolement.Localisation</td>
-                                        </tr>
+                                        <div class="test-table-scroll">
+                                            <table id="@($"equipement-table{suffix}")" class="table table-sm test-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>@Loc["ImportProfileTest_Repere"]</th>
+                                                        <th>@Loc["ImportProfileTest_Designation"]</th>
+                                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
+                                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>@result.Equipement!.Repere</td>
+                                                        <td>@result.Equipement.Designation</td>
+                                                        <td>@result.Equipement.TypeElementNom</td>
+                                                        <td>@result.Equipement.Localisation</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </details>
+                                </details>
 
-                <details class="test-table-details" open="@(!_collapsedSections.Contains("points"))">
-                    <summary id="points-details-toggle" @onclick='() => ToggleSection("points")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_PointsHeading", _result.Points.Count]
-                    </summary>
-                    @if (!_collapsedSections.Contains("points"))
-                    {
-                        <div class="test-table-scroll">
-                            <table id="points-table" class="table table-sm test-table">
-                                <thead>
-                                    <tr>
-                                        <th>@Loc["ImportProfileTest_ColonneNom"]</th>
-                                        <th>@Loc["ImportProfileTest_ParentRepere"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var point in _result.Points)
+                                <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:isolements"))">
+                                    <summary id="@($"isolements-details-toggle{suffix}")" @onclick='() => ToggleSection(index, "isolements")' @onclick:preventDefault="true">
+                                        @Loc["ImportProfileTest_IsolementsHeading", result.Isolements.Count]
+                                    </summary>
+                                    @if (!_collapsedSections.Contains($"{index}:isolements"))
                                     {
-                                        <tr>
-                                            <td>@point.ColonneNom</td>
-                                            <td>@point.ParentRepere</td>
-                                        </tr>
+                                        <div class="test-table-scroll">
+                                            <table id="@($"isolements-table{suffix}")" class="table table-sm test-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>@Loc["ImportProfileTest_Repere"]</th>
+                                                        <th>@Loc["ImportProfileTest_Designation"]</th>
+                                                        <th>@Loc["ImportProfileTest_TypeElementNom"]</th>
+                                                        <th>@Loc["ImportProfileTest_PositionALaPose"]</th>
+                                                        <th>@Loc["ImportProfileTest_Localisation"]</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var isolement in result.Isolements)
+                                                    {
+                                                        <tr>
+                                                            <td>@isolement.Repere</td>
+                                                            <td>@isolement.Designation</td>
+                                                            <td>@isolement.TypeElementNom</td>
+                                                            <td>@isolement.PositionALaPose</td>
+                                                            <td>@isolement.Localisation</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </details>
+                                </details>
 
-                <details class="test-table-details" open="@(!_collapsedSections.Contains("taches-multiples"))">
-                    <summary id="taches-multiples-details-toggle" @onclick='() => ToggleSection("taches-multiples")' @onclick:preventDefault="true">
-                        @Loc["ImportProfileTest_TachesMultiplesHeading", _result.TachesMultiples.Count]
-                    </summary>
-                    @if (!_collapsedSections.Contains("taches-multiples"))
-                    {
-                        <div class="test-table-scroll">
-                            <table id="taches-multiples-table" class="table table-sm test-table">
-                                <thead>
-                                    <tr>
-                                        <th>@Loc["ImportProfileTest_Ordre"]</th>
-                                        <th>@Loc["ImportProfileTest_Action"]</th>
-                                        <th>@Loc["ImportProfileTest_Acteur"]</th>
-                                        <th>@Loc["ImportProfileTest_Risques"]</th>
-                                        <th>@Loc["ImportProfileTest_TypeTacheMultipleCode"]</th>
-                                        <th>@Loc["ImportProfileTest_DateValidation"]</th>
-                                        <th>@Loc["ImportProfileTest_EstFactice"]</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var tache in _result.TachesMultiples)
+                                <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:points"))">
+                                    <summary id="@($"points-details-toggle{suffix}")" @onclick='() => ToggleSection(index, "points")' @onclick:preventDefault="true">
+                                        @Loc["ImportProfileTest_PointsHeading", result.Points.Count]
+                                    </summary>
+                                    @if (!_collapsedSections.Contains($"{index}:points"))
                                     {
-                                        <tr>
-                                            <td>@tache.Ordre</td>
-                                            <td>@tache.Action</td>
-                                            <td>@tache.Acteur</td>
-                                            <td>@tache.Risques</td>
-                                            <td>@tache.TypeTacheMultipleCode</td>
-                                            <td>@tache.DateValidation</td>
-                                            <td>@tache.EstFactice</td>
-                                        </tr>
+                                        <div class="test-table-scroll">
+                                            <table id="@($"points-table{suffix}")" class="table table-sm test-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>@Loc["ImportProfileTest_ColonneNom"]</th>
+                                                        <th>@Loc["ImportProfileTest_ParentRepere"]</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var point in result.Points)
+                                                    {
+                                                        <tr>
+                                                            <td>@point.ColonneNom</td>
+                                                            <td>@point.ParentRepere</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     }
-                                </tbody>
-                            </table>
+                                </details>
+
+                                <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:taches-multiples"))">
+                                    <summary id="@($"taches-multiples-details-toggle{suffix}")" @onclick='() => ToggleSection(index, "taches-multiples")' @onclick:preventDefault="true">
+                                        @Loc["ImportProfileTest_TachesMultiplesHeading", result.TachesMultiples.Count]
+                                    </summary>
+                                    @if (!_collapsedSections.Contains($"{index}:taches-multiples"))
+                                    {
+                                        <div class="test-table-scroll">
+                                            <table id="@($"taches-multiples-table{suffix}")" class="table table-sm test-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>@Loc["ImportProfileTest_Ordre"]</th>
+                                                        <th>@Loc["ImportProfileTest_Action"]</th>
+                                                        <th>@Loc["ImportProfileTest_Acteur"]</th>
+                                                        <th>@Loc["ImportProfileTest_Risques"]</th>
+                                                        <th>@Loc["ImportProfileTest_TypeTacheMultipleCode"]</th>
+                                                        <th>@Loc["ImportProfileTest_DateValidation"]</th>
+                                                        <th>@Loc["ImportProfileTest_EstFactice"]</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var tache in result.TachesMultiples)
+                                                    {
+                                                        <tr>
+                                                            <td>@tache.Ordre</td>
+                                                            <td>@tache.Action</td>
+                                                            <td>@tache.Acteur</td>
+                                                            <td>@tache.Risques</td>
+                                                            <td>@tache.TypeTacheMultipleCode</td>
+                                                            <td>@tache.DateValidation</td>
+                                                            <td>@tache.EstFactice</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                </details>
+                            }
                         </div>
                     }
                 </details>
-              </div>
-            </div>
-        }
+            }
+          </div>
+        </div>
     }
 }
 
 @code {
-    // Matches the Web API's UploadLimits.MaxExcelFileSizeBytes -- this page enforces the same limit,
-    // while staying under Blazor Server's default SignalR message size (bypassed via
-    // InputFile.OpenReadStream's own maxAllowedSize parameter).
-    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
-
     private enum State { Idle, Processing, Success, Error }
 
     // V10: inline SVG (bi-file-earmark-arrow-up shape) -- no bootstrap-icons font/CSS is loaded in
@@ -293,15 +315,82 @@ else
     private Guid? _selectedProfileId;
     private State _state = State.Idle;
     private string? _errorMessage;
-    private ImportResult? _result;
-    private readonly HashSet<string> _collapsedSections = [];
 
-    private void ToggleSection(string section)
+    // Lot 033 (33.4): the per-file import step is shared with ExportProfileTest.razor via
+    // BatchImportProcessing -- see that class's own comment for why the rest of this page's logic
+    // (summary/badges/accordion) stays page-local.
+    private List<BatchImportProcessing.Result>? _batchResults;
+    private readonly HashSet<string> _collapsedSections = [];
+    private readonly HashSet<int> _collapsedFileSections = [];
+
+    private void ToggleSection(int index, string section)
     {
-        if (!_collapsedSections.Add(section))
+        var key = $"{index}:{section}";
+        if (!_collapsedSections.Add(key))
         {
-            _collapsedSections.Remove(section);
+            _collapsedSections.Remove(key);
         }
+    }
+
+    // Lot 033: file-level accordion, one per batch entry -- distinct from ToggleSection above,
+    // which toggles the pre-existing per-result subsections (equipement/isolements/points/...)
+    // nested inside a file's own content once it's expanded.
+    private void ToggleFileSection(int index)
+    {
+        if (!_collapsedFileSections.Add(index))
+        {
+            _collapsedFileSections.Remove(index);
+        }
+    }
+
+    private static string GetStatusBadgeClass(BatchFileStatus status) => status switch
+    {
+        BatchFileStatus.Ok => "bg-success",
+        BatchFileStatus.Warning => "bg-warning text-dark",
+        BatchFileStatus.Rejected => "bg-danger",
+        BatchFileStatus.TechnicalError => "bg-dark",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusLabel(BatchFileStatus status) => status switch
+    {
+        BatchFileStatus.Ok => Loc["ImportProfileTest_StatusOk"],
+        BatchFileStatus.Warning => Loc["ImportProfileTest_StatusWarning"],
+        BatchFileStatus.Rejected => Loc["ImportProfileTest_StatusRejected"],
+        BatchFileStatus.TechnicalError => Loc["ImportProfileTest_StatusTechnicalError"],
+        _ => string.Empty
+    };
+
+    // Lot 033: only non-zero statuses are listed, so a batch with e.g. no rejections never shows
+    // "0 rejected" -- matches the ticket's own worked example and its explicit instruction to omit
+    // the Technical error count entirely when it's zero (generalized here to every status).
+    private string BuildBatchSummaryText()
+    {
+        var results = _batchResults!;
+        var okCount = results.Count(r => r.Status == BatchFileStatus.Ok);
+        var warningCount = results.Count(r => r.Status == BatchFileStatus.Warning);
+        var rejectedCount = results.Count(r => r.Status == BatchFileStatus.Rejected);
+        var technicalErrorCount = results.Count(r => r.Status == BatchFileStatus.TechnicalError);
+
+        var parts = new List<string>();
+        if (okCount > 0)
+        {
+            parts.Add(Loc["ImportProfileTest_BatchStatusOkCount", okCount]);
+        }
+        if (warningCount > 0)
+        {
+            parts.Add(Loc["ImportProfileTest_BatchStatusWarningCount", warningCount]);
+        }
+        if (rejectedCount > 0)
+        {
+            parts.Add(Loc["ImportProfileTest_BatchStatusRejectedCount", rejectedCount]);
+        }
+        if (technicalErrorCount > 0)
+        {
+            parts.Add(Loc["ImportProfileTest_BatchStatusTechnicalErrorCount", technicalErrorCount]);
+        }
+
+        return $"{Loc["ImportProfileTest_BatchSummaryHeading", results.Count]} {string.Join(", ", parts)}";
     }
 
     protected override async Task OnInitializedAsync()
@@ -316,12 +405,39 @@ else
             return;
         }
 
-        _result = null;
+        _batchResults = null;
 
         if (_selectedProfileId is not { } profileId)
         {
             _state = State.Error;
             _errorMessage = Loc["ImportProfileTest_SelectProfilePrompt"];
+            return;
+        }
+
+        // Lot 033: file count must be checked against e.FileCount *before* calling
+        // GetMultipleFiles -- that method itself throws if the real count exceeds the
+        // maxAllowedFiles argument, so a friendly rejection message has to come first.
+        var countFailure = BatchFileValidator.ValidateCount(e.FileCount);
+        if (countFailure is not null)
+        {
+            _state = State.Error;
+            _errorMessage = Loc["ImportProfileTest_BatchTooManyFilesError", countFailure.SelectedFileCount, BatchUploadLimits.MaxFilesPerBatch];
+            return;
+        }
+
+        var files = e.GetMultipleFiles(BatchUploadLimits.MaxFilesPerBatch);
+
+        var sizeFailure = BatchFileValidator.ValidateSizes(files);
+        if (sizeFailure is not null)
+        {
+            _state = State.Error;
+            _errorMessage = sizeFailure.Reason == BatchValidationFailureReason.FileTooLarge
+                ? Loc["ImportProfileTest_BatchFileTooLargeError",
+                    string.Join(", ", sizeFailure.OversizedFiles.Select(f => $"{f.Name} ({BatchFileValidator.FormatMegabytes(f.Size)} MB)")),
+                    BatchFileValidator.FormatMegabytes(BatchUploadLimits.MaxFileSizeBytes)]
+                : Loc["ImportProfileTest_BatchTotalSizeTooLargeError",
+                    BatchFileValidator.FormatMegabytes(sizeFailure.TotalSizeBytes),
+                    BatchFileValidator.FormatMegabytes(BatchUploadLimits.MaxTotalBatchSizeBytes)];
             return;
         }
 
@@ -331,27 +447,22 @@ else
         _errorMessage = null;
         StateHasChanged();
 
-        Stream? fileStream = null;
+        // Lot 033: sequential by decision (foreach, no parallelization) -- the pipeline stays fully
+        // in-memory and fast at the 20-file scale this page caps at; parallelizing would be a
+        // premature optimization and risks thread-safety on this component's own state.
+        var results = new List<BatchImportProcessing.Result>();
+        foreach (var file in files)
+        {
+            results.Add(await BatchImportProcessing.ProcessAsync(file, profile, ImportPipelineOrchestrator, BusinessExceptionLocalizer));
+        }
 
-        try
+        _batchResults = results;
+        _collapsedFileSections.Clear();
+        if (results.Count > 1)
         {
-            fileStream = e.File.OpenReadStream(MaxFileSizeBytes);
-            await using var buffered = await BrowserFileStreamBuffering.BufferToSeekableStreamAsync(fileStream);
-            using var workbookReader = new ClosedXmlWorkbookReader(buffered);
-            _result = ImportPipelineOrchestrator.Run(workbookReader, profile);
-            _state = State.Success;
+            _collapsedFileSections.UnionWith(Enumerable.Range(0, results.Count));
         }
-        catch (Exception ex)
-        {
-            _state = State.Error;
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-        }
-        finally
-        {
-            if (fileStream is not null)
-            {
-                await fileStream.DisposeAsync();
-            }
-        }
+
+        _state = State.Success;
     }
 }

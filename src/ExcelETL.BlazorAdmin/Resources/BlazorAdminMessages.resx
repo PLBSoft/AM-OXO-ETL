@@ -622,6 +622,42 @@
   <data name="ImportProfileTest_Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="ImportProfileTest_BatchTooManyFilesError" xml:space="preserve">
+    <value>{0} files selected, the maximum is {1}. No file was processed.</value>
+  </data>
+  <data name="ImportProfileTest_BatchFileTooLargeError" xml:space="preserve">
+    <value>The following file(s) exceed the maximum size of {1} MB: {0}. No file was processed.</value>
+  </data>
+  <data name="ImportProfileTest_BatchTotalSizeTooLargeError" xml:space="preserve">
+    <value>Total batch size is {0} MB, the maximum is {1} MB. No file was processed.</value>
+  </data>
+  <data name="ImportProfileTest_BatchSummaryHeading" xml:space="preserve">
+    <value>{0} file(s) processed:</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusOkCount" xml:space="preserve">
+    <value>{0} OK</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusWarningCount" xml:space="preserve">
+    <value>{0} non-blocking warning(s)</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusRejectedCount" xml:space="preserve">
+    <value>{0} rejected</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusTechnicalErrorCount" xml:space="preserve">
+    <value>{0} technical error(s)</value>
+  </data>
+  <data name="ImportProfileTest_StatusOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ImportProfileTest_StatusWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="ImportProfileTest_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="ImportProfileTest_StatusTechnicalError" xml:space="preserve">
+    <value>Technical error</value>
+  </data>
   <data name="NavMenu_ExportProfiles" xml:space="preserve">
     <value>Export Profiles</value>
   </data>
@@ -855,5 +891,41 @@
   </data>
   <data name="ExportProfileTest_SheetNameWithCount" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="ExportProfileTest_BatchTooManyFilesError" xml:space="preserve">
+    <value>{0} files selected, the maximum is {1}. No file was processed.</value>
+  </data>
+  <data name="ExportProfileTest_BatchFileTooLargeError" xml:space="preserve">
+    <value>The following file(s) exceed the maximum size of {1} MB: {0}. No file was processed.</value>
+  </data>
+  <data name="ExportProfileTest_BatchTotalSizeTooLargeError" xml:space="preserve">
+    <value>Total batch size is {0} MB, the maximum is {1} MB. No file was processed.</value>
+  </data>
+  <data name="ExportProfileTest_BatchSummaryHeading" xml:space="preserve">
+    <value>{0} file(s) processed:</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusOkCount" xml:space="preserve">
+    <value>{0} OK</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusWarningCount" xml:space="preserve">
+    <value>{0} non-blocking warning(s)</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusRejectedCount" xml:space="preserve">
+    <value>{0} rejected</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusTechnicalErrorCount" xml:space="preserve">
+    <value>{0} technical error(s)</value>
+  </data>
+  <data name="ExportProfileTest_StatusOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ExportProfileTest_StatusWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="ExportProfileTest_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="ExportProfileTest_StatusTechnicalError" xml:space="preserve">
+    <value>Technical error</value>
   </data>
 </root>

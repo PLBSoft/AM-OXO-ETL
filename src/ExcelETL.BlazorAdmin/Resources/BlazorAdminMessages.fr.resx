@@ -622,6 +622,42 @@
   <data name="ImportProfileTest_Message" xml:space="preserve">
     <value>Message</value>
   </data>
+  <data name="ImportProfileTest_BatchTooManyFilesError" xml:space="preserve">
+    <value>{0} fichiers sélectionnés, la limite est de {1}. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ImportProfileTest_BatchFileTooLargeError" xml:space="preserve">
+    <value>Le(s) fichier(s) suivant(s) dépasse(nt) la taille maximale de {1} Mo : {0}. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ImportProfileTest_BatchTotalSizeTooLargeError" xml:space="preserve">
+    <value>Le poids total du lot est de {0} Mo, la limite est de {1} Mo. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ImportProfileTest_BatchSummaryHeading" xml:space="preserve">
+    <value>{0} fichier(s) traité(s) :</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusOkCount" xml:space="preserve">
+    <value>{0} OK</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusWarningCount" xml:space="preserve">
+    <value>{0} avertissement(s) non bloquant(s)</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusRejectedCount" xml:space="preserve">
+    <value>{0} rejeté(s)</value>
+  </data>
+  <data name="ImportProfileTest_BatchStatusTechnicalErrorCount" xml:space="preserve">
+    <value>{0} erreur(s) technique(s)</value>
+  </data>
+  <data name="ImportProfileTest_StatusOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ImportProfileTest_StatusWarning" xml:space="preserve">
+    <value>Avertissement</value>
+  </data>
+  <data name="ImportProfileTest_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="ImportProfileTest_StatusTechnicalError" xml:space="preserve">
+    <value>Erreur technique</value>
+  </data>
   <data name="NavMenu_ExportProfiles" xml:space="preserve">
     <value>Profils d'export</value>
   </data>
@@ -855,5 +891,41 @@
   </data>
   <data name="ExportProfileTest_SheetNameWithCount" xml:space="preserve">
     <value>{0} ({1})</value>
+  </data>
+  <data name="ExportProfileTest_BatchTooManyFilesError" xml:space="preserve">
+    <value>{0} fichiers sélectionnés, la limite est de {1}. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ExportProfileTest_BatchFileTooLargeError" xml:space="preserve">
+    <value>Le(s) fichier(s) suivant(s) dépasse(nt) la taille maximale de {1} Mo : {0}. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ExportProfileTest_BatchTotalSizeTooLargeError" xml:space="preserve">
+    <value>Le poids total du lot est de {0} Mo, la limite est de {1} Mo. Aucun fichier n'a été traité.</value>
+  </data>
+  <data name="ExportProfileTest_BatchSummaryHeading" xml:space="preserve">
+    <value>{0} fichier(s) traité(s) :</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusOkCount" xml:space="preserve">
+    <value>{0} OK</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusWarningCount" xml:space="preserve">
+    <value>{0} avertissement(s) non bloquant(s)</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusRejectedCount" xml:space="preserve">
+    <value>{0} rejeté(s)</value>
+  </data>
+  <data name="ExportProfileTest_BatchStatusTechnicalErrorCount" xml:space="preserve">
+    <value>{0} erreur(s) technique(s)</value>
+  </data>
+  <data name="ExportProfileTest_StatusOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ExportProfileTest_StatusWarning" xml:space="preserve">
+    <value>Avertissement</value>
+  </data>
+  <data name="ExportProfileTest_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="ExportProfileTest_StatusTechnicalError" xml:space="preserve">
+    <value>Erreur technique</value>
   </data>
 </root>

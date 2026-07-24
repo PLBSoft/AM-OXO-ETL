@@ -58,10 +58,11 @@ else
 
     <div class="mb-3">
         <label class="form-label" for="export-test-file-input">@Loc["ExportProfileTest_FileLabel"]</label>
-        <!-- V10: same Bootstrap-native upload styling as ImportProfileTest.razor -- see its comment. -->
+        <!-- V10: same Bootstrap-native upload styling as ImportProfileTest.razor -- see its comment.
+             Lot 033: `multiple` accepts 1-N files transparently, mirroring the import page. -->
         <div class="input-group">
             <span class="input-group-text">@((MarkupString)FileUploadIconMarkup)</span>
-            <InputFile id="export-test-file-input" class="form-control form-control-lg" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@processing" />
+            <InputFile id="export-test-file-input" class="form-control form-control-lg" accept=".xlsx" multiple OnChange="OnInputFileChangeAsync" disabled="@processing" />
         </div>
     </div>
 
@@ -76,105 +77,139 @@ else
     {
         <div id="export-test-status" class="alert alert-danger">@_importErrorMessage</div>
     }
-    else if (_importResult is not null)
+    else if (_batchResults is not null)
     {
-        if (_importResult.Equipement is null)
-        {
-            <div id="export-test-status" class="alert alert-danger">
-                <h4>@Loc["ExportProfileTest_RejectedFileHeading"]</h4>
-                <ul>
-                    @foreach (var error in _importResult.Errors)
-                    {
-                        <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
-                    }
-                </ul>
-            </div>
-        }
-        else
-        {
-            <div class="mb-3">
-                <label class="form-label" for="export-test-export-profile-select">@Loc["ExportProfileTest_ExportProfileLabel"]</label>
-                <select id="export-test-export-profile-select" class="form-select form-select-lg" @bind="_selectedExportProfileId">
-                    <option value="">@Loc["ExportProfileTest_ExportProfilePlaceholder"]</option>
-                    @foreach (var profile in _exportProfiles)
-                    {
-                        <option value="@profile.Id">@profile.Name</option>
-                    }
-                </select>
-                @if (_exportProfiles.Count == 0)
-                {
-                    <div class="form-text">@Loc["ExportProfileTest_NoExportProfilesAvailable"]</div>
-                }
-            </div>
+        <div id="export-batch-results">
+            <p id="batch-summary">@BuildBatchSummaryText()</p>
 
-            <!-- V12: primary action button only -- full width below md, natural width from md up.
-                 Bootstrap ships no responsive width utility, so w-md-auto is a small custom rule
-                 (see app.css) matching V2's already-established 768px breakpoint. -->
-            <button id="generate-workbook-button" class="btn btn-primary btn-lg w-100 w-md-auto mb-3" @onclick="GenerateWorkbook">
-                @Loc["ExportProfileTest_GenerateButton"]
-            </button>
-
-            @if (!string.IsNullOrEmpty(_generationErrorMessage))
+            @if (_batchResults.Any(r => r.Status is BatchFileStatus.Ok or BatchFileStatus.Warning))
             {
-                <div class="alert alert-danger">@_generationErrorMessage</div>
+                <div class="mb-3">
+                    <label class="form-label" for="export-test-export-profile-select">@Loc["ExportProfileTest_ExportProfileLabel"]</label>
+                    <select id="export-test-export-profile-select" class="form-select form-select-lg" @bind="_selectedExportProfileId">
+                        <option value="">@Loc["ExportProfileTest_ExportProfilePlaceholder"]</option>
+                        @foreach (var profile in _exportProfiles)
+                        {
+                            <option value="@profile.Id">@profile.Name</option>
+                        }
+                    </select>
+                    @if (_exportProfiles.Count == 0)
+                    {
+                        <div class="form-text">@Loc["ExportProfileTest_NoExportProfilesAvailable"]</div>
+                    }
+                </div>
+
+                <!-- V12: primary action button only -- full width below md, natural width from md up. -->
+                <button id="generate-workbook-button" class="btn btn-primary btn-lg w-100 w-md-auto mb-3" @onclick="GenerateWorkbooksForBatch">
+                    @Loc["ExportProfileTest_GenerateButton"]
+                </button>
+
+                @if (!string.IsNullOrEmpty(_generationErrorMessage))
+                {
+                    <div class="alert alert-danger">@_generationErrorMessage</div>
+                }
             }
 
-            @if (_generatedWorkbook is not null)
-            {
-                <!-- V13: result block as a card component (shadow + success-tinted background)
-                     instead of a plain alert, same treatment as ImportProfileTest.razor. -->
-                <div class="card shadow-sm bg-success-subtle">
-                  <div class="card-body">
-                    <a id="download-generated-workbook-link" class="btn btn-success w-100 btn-lg mb-3"
-                       href="@_downloadDataUrl" download="@_downloadFileName">
-                        @Loc["ExportProfileTest_DownloadLinkText"]
-                    </a>
+            @{ var singleFile = _batchResults.Count == 1; }
 
-                    @foreach (var sheet in _generatedWorkbook.Sheets)
+            @foreach (var (fileResult, index) in _batchResults.Select((r, i) => (r, i)))
+            {
+                var suffix = singleFile ? "" : $"-{index}";
+                var isFileCollapsed = _collapsedFileSections.Contains(index);
+
+                <details class="test-table-details batch-file-details" open="@(!isFileCollapsed)">
+                    <summary id="file-details-toggle-@index" @onclick="() => ToggleFileSection(index)" @onclick:preventDefault="true">
+                        <span class="batch-file-name">@fileResult.FileName</span>
+                        <span class="badge @GetStatusBadgeClass(fileResult.Status)">@GetStatusLabel(fileResult.Status)</span>
+                    </summary>
+                    @if (!isFileCollapsed)
                     {
-                        <details class="test-table-details" open="@(!_collapsedSections.Contains(sheet.Name))">
-                            <summary id="generated-sheet-@(sheet.Name)-details-toggle" @onclick="() => ToggleSection(sheet.Name)" @onclick:preventDefault="true">
-                                @Loc["ExportProfileTest_SheetNameWithCount", sheet.Name, GetGeneratedSheetItemCount(sheet)]
-                            </summary>
-                            @if (!_collapsedSections.Contains(sheet.Name))
+                        <div class="batch-file-content">
+                            @if (fileResult.Status == BatchFileStatus.TechnicalError)
                             {
-                                <div class="generated-sheet-scroll">
-                                    <table id="generated-sheet-@(sheet.Name)-table" class="table table-sm table-striped generated-sheet-table">
-                                        <thead>
-                                            <tr>
-                                                @foreach (var header in sheet.Headers)
-                                                {
-                                                    <th>@header</th>
-                                                }
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var row in sheet.Rows)
-                                            {
-                                                <tr>
-                                                    @foreach (var cell in row.Cells)
-                                                    {
-                                                        <td>@cell</td>
-                                                    }
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
+                                <div id="@($"technical-error{suffix}")" class="alert alert-secondary">
+                                    <h4>@Loc["ExportProfileTest_StatusTechnicalError"]</h4>
+                                    <p>@fileResult.TechnicalErrorMessage</p>
                                 </div>
                             }
-                        </details>
+                            else if (fileResult.ImportResult!.Equipement is null)
+                            {
+                                <div id="@($"rejected{suffix}")" class="alert alert-danger">
+                                    <h4>@Loc["ExportProfileTest_RejectedFileHeading"]</h4>
+                                    <ul>
+                                        @foreach (var error in fileResult.ImportResult.Errors)
+                                        {
+                                            <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                            else
+                            {
+                                @if (!string.IsNullOrEmpty(fileResult.GenerationErrorMessage))
+                                {
+                                    <div class="alert alert-danger">@fileResult.GenerationErrorMessage</div>
+                                }
+
+                                @if (fileResult.GeneratedWorkbook is not null)
+                                {
+                                    <!-- V13: result block as a card component (shadow + success-tinted
+                                         background) instead of a plain alert, same treatment as
+                                         ImportProfileTest.razor -- one per generated file. -->
+                                    <div class="card shadow-sm bg-success-subtle">
+                                      <div class="card-body">
+                                        <a id="@($"download-generated-workbook-link{suffix}")" class="btn btn-success w-100 btn-lg mb-3"
+                                           href="@fileResult.DownloadDataUrl" download="@fileResult.DownloadFileName">
+                                            @Loc["ExportProfileTest_DownloadLinkText"]
+                                        </a>
+
+                                        @foreach (var sheet in fileResult.GeneratedWorkbook.Sheets)
+                                        {
+                                            <details class="test-table-details" open="@(!_collapsedSections.Contains($"{index}:{sheet.Name}"))">
+                                                <summary id="@($"generated-sheet-{sheet.Name}-details-toggle{suffix}")" @onclick="() => ToggleSection(index, sheet.Name)" @onclick:preventDefault="true">
+                                                    @Loc["ExportProfileTest_SheetNameWithCount", sheet.Name, GetGeneratedSheetItemCount(fileResult, sheet)]
+                                                </summary>
+                                                @if (!_collapsedSections.Contains($"{index}:{sheet.Name}"))
+                                                {
+                                                    <div class="generated-sheet-scroll">
+                                                        <table id="@($"generated-sheet-{sheet.Name}-table{suffix}")" class="table table-sm table-striped generated-sheet-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    @foreach (var header in sheet.Headers)
+                                                                    {
+                                                                        <th>@header</th>
+                                                                    }
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach (var row in sheet.Rows)
+                                                                {
+                                                                    <tr>
+                                                                        @foreach (var cell in row.Cells)
+                                                                        {
+                                                                            <td>@cell</td>
+                                                                        }
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            </details>
+                                        }
+                                      </div>
+                                    </div>
+                                }
+                            }
+                        </div>
                     }
-                  </div>
-                </div>
+                </details>
             }
-        }
+        </div>
     }
 }
 
 @code {
-    // Matches ImportProfileTest.razor's own cap (Web API's UploadLimits.MaxExcelFileSizeBytes).
-    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
-
     private enum State { Idle, Processing, Success, Error }
 
     // V10: same icon shape as ImportProfileTest.razor -- see its comment.
@@ -183,36 +218,116 @@ else
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
+    // Lot 033 (33.4): the import step itself is shared with ImportProfileTest.razor via
+    // BatchImportProcessing -- see that class's own comment. This page's result type extends the
+    // shared one with generation state filled in by a later, separate pass
+    // (GenerateWorkbooksForBatch) once an export profile is picked -- a plain mutable class, not a
+    // record, since those extra fields are set after construction.
+    private sealed class ExportBatchFileResult
+    {
+        public required string FileName { get; init; }
+        public required BatchFileStatus Status { get; init; }
+        public ImportResult? ImportResult { get; init; }
+        public string? TechnicalErrorMessage { get; init; }
+        public GeneratedWorkbook? GeneratedWorkbook { get; set; }
+        public string? DownloadDataUrl { get; set; }
+        public string? DownloadFileName { get; set; }
+        public string? GenerationErrorMessage { get; set; }
+
+        public static ExportBatchFileResult From(BatchImportProcessing.Result result) => new()
+        {
+            FileName = result.FileName,
+            Status = result.Status,
+            ImportResult = result.ImportResult,
+            TechnicalErrorMessage = result.TechnicalErrorMessage
+        };
+    }
+
     private List<ImportProfile>? _importProfiles;
     private List<ExportProfile>? _exportProfiles;
     private Guid? _selectedImportProfileId;
     private Guid? _selectedExportProfileId;
     private State _state = State.Idle;
     private string? _importErrorMessage;
-    private ImportResult? _importResult;
+    private List<ExportBatchFileResult>? _batchResults;
     private string? _generationErrorMessage;
-    private GeneratedWorkbook? _generatedWorkbook;
     private ExportProfile? _generatedExportProfile;
-    private string? _downloadDataUrl;
-    private string? _downloadFileName;
     private readonly HashSet<string> _collapsedSections = [];
+    private readonly HashSet<int> _collapsedFileSections = [];
 
-    private void ToggleSection(string section)
+    private void ToggleSection(int index, string section)
     {
-        if (!_collapsedSections.Add(section))
+        var key = $"{index}:{section}";
+        if (!_collapsedSections.Add(key))
         {
-            _collapsedSections.Remove(section);
+            _collapsedSections.Remove(key);
         }
     }
 
-    // A sheet's item count depends on which pivot fed it, which GeneratedSheet itself doesn't carry
-    // (it's just headers/rows) -- resolved via the ExportProfile rule that produced it instead.
-    // Equipement/Isolement rules always produce exactly one physically-named sheet (SheetName as-is);
-    // anything left over is, by elimination, a PivotSource.TacheMultiple dynamic sheet, matched back to
-    // its TypeTacheMultipleCode group via the same sanitizer the engine used to name it (Lot T3/T4).
-    private int GetGeneratedSheetItemCount(GeneratedSheet sheet)
+    private void ToggleFileSection(int index)
     {
-        if (_importResult is null || _generatedExportProfile is null)
+        if (!_collapsedFileSections.Add(index))
+        {
+            _collapsedFileSections.Remove(index);
+        }
+    }
+
+    private static string GetStatusBadgeClass(BatchFileStatus status) => status switch
+    {
+        BatchFileStatus.Ok => "bg-success",
+        BatchFileStatus.Warning => "bg-warning text-dark",
+        BatchFileStatus.Rejected => "bg-danger",
+        BatchFileStatus.TechnicalError => "bg-dark",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusLabel(BatchFileStatus status) => status switch
+    {
+        BatchFileStatus.Ok => Loc["ExportProfileTest_StatusOk"],
+        BatchFileStatus.Warning => Loc["ExportProfileTest_StatusWarning"],
+        BatchFileStatus.Rejected => Loc["ExportProfileTest_StatusRejected"],
+        BatchFileStatus.TechnicalError => Loc["ExportProfileTest_StatusTechnicalError"],
+        _ => string.Empty
+    };
+
+    private string BuildBatchSummaryText()
+    {
+        var results = _batchResults!;
+        var okCount = results.Count(r => r.Status == BatchFileStatus.Ok);
+        var warningCount = results.Count(r => r.Status == BatchFileStatus.Warning);
+        var rejectedCount = results.Count(r => r.Status == BatchFileStatus.Rejected);
+        var technicalErrorCount = results.Count(r => r.Status == BatchFileStatus.TechnicalError);
+
+        var parts = new List<string>();
+        if (okCount > 0)
+        {
+            parts.Add(Loc["ExportProfileTest_BatchStatusOkCount", okCount]);
+        }
+        if (warningCount > 0)
+        {
+            parts.Add(Loc["ExportProfileTest_BatchStatusWarningCount", warningCount]);
+        }
+        if (rejectedCount > 0)
+        {
+            parts.Add(Loc["ExportProfileTest_BatchStatusRejectedCount", rejectedCount]);
+        }
+        if (technicalErrorCount > 0)
+        {
+            parts.Add(Loc["ExportProfileTest_BatchStatusTechnicalErrorCount", technicalErrorCount]);
+        }
+
+        return $"{Loc["ExportProfileTest_BatchSummaryHeading", results.Count]} {string.Join(", ", parts)}";
+    }
+
+    // A sheet's item count depends on which pivot fed it, which GeneratedSheet itself doesn't carry
+    // (it's just headers/rows) -- resolved via the ExportProfile rule that produced it instead, scoped
+    // to the one file's own ImportResult. Equipement/Isolement rules always produce exactly one
+    // physically-named sheet (SheetName as-is); anything left over is, by elimination, a
+    // PivotSource.TacheMultiple dynamic sheet, matched back to its TypeTacheMultipleCode group via the
+    // same sanitizer the engine used to name it (Lot T3/T4).
+    private int GetGeneratedSheetItemCount(ExportBatchFileResult fileResult, GeneratedSheet sheet)
+    {
+        if (fileResult.ImportResult is null || _generatedExportProfile is null)
         {
             return 0;
         }
@@ -222,16 +337,15 @@ else
 
         if (rule is { PivotSource: PivotSource.Equipement })
         {
-            return _importResult.Equipement is null ? 0 : 1;
+            return fileResult.ImportResult.Equipement is null ? 0 : 1;
         }
 
         if (rule is { PivotSource: PivotSource.Isolement })
         {
-            return _importResult.Isolements.Count;
+            return fileResult.ImportResult.Isolements.Count;
         }
 
-        // TacheMultiple: exclude "ligne de mise en page" rows (EstFactice, blank Ordre) from the count.
-        return _importResult.TachesMultiples.Count(
+        return fileResult.ImportResult.TachesMultiples.Count(
             tache => tache.Ordre.HasValue && ExcelSheetNameSanitizer.Sanitize(tache.TypeTacheMultipleCode) == sheet.Name);
     }
 
@@ -248,16 +362,38 @@ else
             return;
         }
 
-        _importResult = null;
-        _generatedWorkbook = null;
-        _generatedExportProfile = null;
+        _batchResults = null;
         _generationErrorMessage = null;
-        _downloadDataUrl = null;
+        _generatedExportProfile = null;
 
         if (_selectedImportProfileId is not { } importProfileId)
         {
             _state = State.Error;
             _importErrorMessage = Loc["ExportProfileTest_SelectImportProfilePrompt"];
+            return;
+        }
+
+        var countFailure = BatchFileValidator.ValidateCount(e.FileCount);
+        if (countFailure is not null)
+        {
+            _state = State.Error;
+            _importErrorMessage = Loc["ExportProfileTest_BatchTooManyFilesError", countFailure.SelectedFileCount, BatchUploadLimits.MaxFilesPerBatch];
+            return;
+        }
+
+        var files = e.GetMultipleFiles(BatchUploadLimits.MaxFilesPerBatch);
+
+        var sizeFailure = BatchFileValidator.ValidateSizes(files);
+        if (sizeFailure is not null)
+        {
+            _state = State.Error;
+            _importErrorMessage = sizeFailure.Reason == BatchValidationFailureReason.FileTooLarge
+                ? Loc["ExportProfileTest_BatchFileTooLargeError",
+                    string.Join(", ", sizeFailure.OversizedFiles.Select(f => $"{f.Name} ({BatchFileValidator.FormatMegabytes(f.Size)} MB)")),
+                    BatchFileValidator.FormatMegabytes(BatchUploadLimits.MaxFileSizeBytes)]
+                : Loc["ExportProfileTest_BatchTotalSizeTooLargeError",
+                    BatchFileValidator.FormatMegabytes(sizeFailure.TotalSizeBytes),
+                    BatchFileValidator.FormatMegabytes(BatchUploadLimits.MaxTotalBatchSizeBytes)];
             return;
         }
 
@@ -267,38 +403,31 @@ else
         _importErrorMessage = null;
         StateHasChanged();
 
-        Stream? fileStream = null;
+        // Lot 033: sequential by decision -- see ImportProfileTest.razor's identical comment.
+        var results = new List<ExportBatchFileResult>();
+        foreach (var file in files)
+        {
+            var processed = await BatchImportProcessing.ProcessAsync(file, importProfile, ImportPipelineOrchestrator, BusinessExceptionLocalizer);
+            results.Add(ExportBatchFileResult.From(processed));
+        }
 
-        try
+        _batchResults = results;
+        _collapsedFileSections.Clear();
+        if (results.Count > 1)
         {
-            fileStream = e.File.OpenReadStream(MaxFileSizeBytes);
-            await using var buffered = await BrowserFileStreamBuffering.BufferToSeekableStreamAsync(fileStream);
-            using var workbookReader = new ClosedXmlWorkbookReader(buffered);
-            _importResult = ImportPipelineOrchestrator.Run(workbookReader, importProfile);
-            _state = State.Success;
+            _collapsedFileSections.UnionWith(Enumerable.Range(0, results.Count));
         }
-        catch (Exception ex)
-        {
-            _state = State.Error;
-            _importErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-        }
-        finally
-        {
-            if (fileStream is not null)
-            {
-                await fileStream.DisposeAsync();
-            }
-        }
+
+        _state = State.Success;
     }
 
-    private void GenerateWorkbook()
+    // Lot 033: one Export profile applies to the whole batch -- generates every non-rejected,
+    // non-technical-error file in the batch, each into its own download link/sheet preview. A
+    // per-file exception here (rare) is isolated the same way as the import step: it's recorded on
+    // that file's own GenerationErrorMessage, the rest of the batch is unaffected.
+    private void GenerateWorkbooksForBatch()
     {
-        _generationErrorMessage = null;
-        _generatedWorkbook = null;
-        _generatedExportProfile = null;
-        _downloadDataUrl = null;
-
-        if (_importResult?.Equipement is null)
+        if (_batchResults is null)
         {
             return;
         }
@@ -309,24 +438,36 @@ else
             return;
         }
 
+        _generationErrorMessage = null;
         var exportProfile = _exportProfiles!.First(p => p.Id == exportProfileId);
+        _generatedExportProfile = exportProfile;
 
-        try
+        foreach (var fileResult in _batchResults)
         {
-            _generatedWorkbook = SheetGenerationEngine.Generate(_importResult, exportProfile);
-            _generatedExportProfile = exportProfile;
+            if (fileResult.Status is BatchFileStatus.Rejected or BatchFileStatus.TechnicalError)
+            {
+                continue;
+            }
 
-            using var stream = new MemoryStream();
-            WorkbookWriter.Write(_generatedWorkbook, stream);
-            _downloadFileName = TargetWorkbookFileNameBuilder.Build(_importResult.Equipement.Repere, DateTime.UtcNow);
-            _downloadDataUrl =
-                $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(stream.ToArray())}";
-        }
-        catch (Exception ex)
-        {
-            _generatedWorkbook = null;
-            _generatedExportProfile = null;
-            _generationErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            try
+            {
+                var generatedWorkbook = SheetGenerationEngine.Generate(fileResult.ImportResult!, exportProfile);
+
+                using var stream = new MemoryStream();
+                WorkbookWriter.Write(generatedWorkbook, stream);
+
+                fileResult.GeneratedWorkbook = generatedWorkbook;
+                fileResult.DownloadFileName = $"{Path.GetFileNameWithoutExtension(fileResult.FileName)}_export.xlsx";
+                fileResult.DownloadDataUrl =
+                    $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(stream.ToArray())}";
+                fileResult.GenerationErrorMessage = null;
+            }
+            catch (Exception ex)
+            {
+                fileResult.GeneratedWorkbook = null;
+                fileResult.DownloadDataUrl = null;
+                fileResult.GenerationErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            }
         }
     }
 }

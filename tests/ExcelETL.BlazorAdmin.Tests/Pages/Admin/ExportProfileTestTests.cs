@@ -812,4 +812,208 @@ public class ExportProfileTestTests : BunitContext
         wrapper.ClassList.Should().Contain("input-group");
         wrapper.QuerySelector(".input-group-text svg").Should().NotBeNull();
     });
+
+    [Fact]
+    public void FileInput_HasMultipleAttribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileTest>();
+
+        cut.Find("#export-test-file-input").HasAttribute("multiple").Should().BeTrue();
+    });
+
+    // Lot 033: <InputFile multiple> batch validation (33.1) -- reject before any file is processed.
+    [Fact]
+    public async Task SelectingTwentyOneFiles_ShowsTooManyFilesError_AndProcessesNothing() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var files = Enumerable.Range(0, 21)
+                .Select(i => InputFileContent.CreateFromText("dummy", $"f{i}.xlsx"))
+                .ToArray();
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("21 files selected, the maximum is 20"));
+            cut.FindAll("#batch-summary").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task SelectingElevenMegabyteFile_ShowsFileTooLargeError_NamingTheFile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var bytes = new byte[11 * 1024 * 1024];
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(InputFileContent.CreateFromBinary(bytes, "big.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("big.xlsx"));
+            cut.Markup.Should().Contain("exceed the maximum size of 10 MB");
+            cut.FindAll("#batch-summary").Should().BeEmpty();
+        });
+
+    // Lot 033 (33.3): sequential batch processing + per-file generation/download, mirroring 33.2.
+    [Fact]
+    public async Task BatchOfThreeRealFixtures_GeneratesEachFile_WithDownloadNamedFromSourceFileName() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var fixtureNames = new[]
+            {
+                "Dossier.de.MaD.IDL.-.C7401.xlsx",
+                "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx",
+                "Dossier.de.MaD.IDL.-.G6306B.REV.xlsx"
+            };
+            var files = fixtureNames.Select(FixtureAsInputFile).ToArray();
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            for (var i = 0; i < 3; i++)
+            {
+                cut.Find($"#file-details-toggle-{i}").Click();
+            }
+
+            cut.WaitForAssertion(() => cut.FindAll("a[id^='download-generated-workbook-link']").Should().HaveCount(3));
+
+            foreach (var name in fixtureNames)
+            {
+                var expectedDownloadName = $"{Path.GetFileNameWithoutExtension(name)}_export.xlsx";
+                cut.Markup.Should().Contain($"download=\"{expectedDownloadName}\"");
+            }
+        });
+
+    [Fact]
+    public async Task BatchWithOneRejectedFile_SkipsGenerationForItOnly_OthersGeneratedNormally() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var mockEngine = new Mock<ISheetGenerationEngine>();
+            mockEngine.Setup(e => e.Generate(It.IsAny<ImportResult>(), It.IsAny<ExportProfile>()))
+                .Returns(new GeneratedWorkbook([]));
+            Services.AddSingleton(mockEngine.Object);
+
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            using var invalidWorkbook = new ClosedXML.Excel.XLWorkbook();
+            invalidWorkbook.Worksheets.Add("PROCEDURE"); // M2:O2 left blank -> whole-file rejection
+            using var invalidStream = new MemoryStream();
+            invalidWorkbook.SaveAs(invalidStream);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                InputFileContent.CreateFromBinary(invalidStream.ToArray(), "invalid.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            mockEngine.Verify(e => e.Generate(It.IsAny<ImportResult>(), It.IsAny<ExportProfile>()), Times.Exactly(2));
+
+            for (var i = 0; i < 3; i++)
+            {
+                cut.Find($"#file-details-toggle-{i}").Click();
+            }
+
+            cut.Markup.Should().Contain("File rejected");
+            cut.FindAll("#download-generated-workbook-link-1").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task BatchWithOneCorruptedFile_ShowsTechnicalError_OthersGeneratedNormally() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                InputFileContent.CreateFromText("not an excel file", "corrupt.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("2 non-blocking warning(s)");
+            summary.Should().Contain("1 technical error(s)");
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            for (var i = 0; i < 3; i++)
+            {
+                cut.Find($"#file-details-toggle-{i}").Click();
+            }
+
+            cut.Find("#technical-error-1").Should().NotBeNull();
+            cut.FindAll("a[id^='download-generated-workbook-link']").Should().HaveCount(2);
+        });
+
+    [Fact]
+    public async Task SingleFileBatch_FileLevelAccordion_IsExpandedByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            cut.Find("#file-details-toggle-0").ParentElement!.HasAttribute("open").Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task MultiFileBatch_FileLevelAccordions_AreCollapsedByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            cut.Find("#file-details-toggle-0").ParentElement!.HasAttribute("open").Should().BeFalse();
+            cut.Find("#file-details-toggle-1").ParentElement!.HasAttribute("open").Should().BeFalse();
+        });
 }

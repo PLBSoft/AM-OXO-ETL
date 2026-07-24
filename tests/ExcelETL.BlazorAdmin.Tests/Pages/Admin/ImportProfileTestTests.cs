@@ -629,4 +629,239 @@ public class ImportProfileTestTests : BunitContext
             cut.Find("#warnings-details-toggle").Click();
             cut.Find("#warnings-table").Should().NotBeNull();
         });
+
+    // Lot 033: <InputFile multiple> batch validation (33.1) -- reject before any file is processed.
+    [Fact]
+    public async Task SelectingTwentyOneFiles_ShowsTooManyFilesError_AndProcessesNothing() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var files = Enumerable.Range(0, 21)
+                .Select(i => InputFileContent.CreateFromText("dummy", $"f{i}.xlsx"))
+                .ToArray();
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("21 files selected, the maximum is 20"));
+            cut.FindAll("#batch-summary").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task SelectingExactlyTwentyFiles_IsAccepted_LimitIsInclusive() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var files = Enumerable.Range(0, 20)
+                .Select(i => InputFileContent.CreateFromText("dummy", $"f{i}.xlsx"))
+                .ToArray();
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+            cut.Markup.Should().NotContain("files selected, the maximum is");
+            cut.Find("#batch-summary").TextContent.Should().Contain("20 file(s) processed:");
+        });
+
+    [Fact]
+    public async Task SelectingElevenMegabyteFile_ShowsFileTooLargeError_NamingTheFile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var bytes = new byte[11 * 1024 * 1024];
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(InputFileContent.CreateFromBinary(bytes, "big.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("big.xlsx"));
+            cut.Markup.Should().Contain("exceed the maximum size of 10 MB");
+            cut.FindAll("#batch-summary").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task SelectingExactlyTenMegabyteFile_IsAccepted_LimitIsInclusive() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var bytes = new byte[10 * 1024 * 1024];
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(InputFileContent.CreateFromBinary(bytes, "exact.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+            cut.Markup.Should().NotContain("exceed the maximum size");
+        });
+
+    // Lot 033 (33.2): sequential batch processing, summary, per-file accordion.
+    [Fact]
+    public async Task BatchOfThreeRealFixtures_ShowsSummaryAndPerFileAccordions_WithCorrectStatuses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            // All 3 real fixtures currently carry their own non-blocking warning (C7401: Lot 032
+            // TYPE-incoherence in PROCEDURE; D8570: the "VANNE" UnrecognizedTypeElement; G6306B: the
+            // "POINT DE FEU"/"POINT FEU" DIVERS spelling mismatch) -- none is a plain OK today.
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("3 file(s) processed:");
+            summary.Should().Contain("3 non-blocking warning(s)");
+            summary.Should().NotContain(" OK");
+
+            cut.FindAll(".batch-file-details").Should().HaveCount(3);
+            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.C7401.xlsx");
+            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
+        });
+
+    [Fact]
+    public async Task SingleFileBatch_FileLevelAccordion_IsExpandedByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("38-C7401"));
+
+            cut.Find("#file-details-toggle-0").ParentElement!.HasAttribute("open").Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task MultiFileBatch_FileLevelAccordions_AreCollapsedByDefault() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            cut.Find("#file-details-toggle-0").ParentElement!.HasAttribute("open").Should().BeFalse();
+            cut.Find("#file-details-toggle-1").ParentElement!.HasAttribute("open").Should().BeFalse();
+        });
+
+    [Fact]
+    public async Task BatchWithOneRejectedFile_MixedWithValidFixtures_OnlyThatFileShowsRejected() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            using var invalidWorkbook = new ClosedXML.Excel.XLWorkbook();
+            invalidWorkbook.Worksheets.Add("PROCEDURE"); // M2:O2 left blank -> whole-file rejection
+            using var invalidStream = new MemoryStream();
+            invalidWorkbook.SaveAs(invalidStream);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                InputFileContent.CreateFromBinary(invalidStream.ToArray(), "invalid.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            // C7401/G6306B each carry their own non-blocking warning today (see the batch-of-3 test
+            // above), so the two valid fixtures land as Warning, not OK.
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("2 non-blocking warning(s)");
+            summary.Should().Contain("1 rejected");
+
+            for (var i = 0; i < 3; i++)
+            {
+                cut.Find($"#file-details-toggle-{i}").Click();
+            }
+
+            cut.Markup.Should().Contain("File rejected");
+            cut.FindAll("#equipement-table-0").Should().NotBeEmpty();
+            cut.FindAll("#equipement-table-1").Should().BeEmpty();
+            cut.FindAll("#equipement-table-2").Should().NotBeEmpty();
+        });
+
+    [Fact]
+    public async Task BatchWithOneCorruptedFile_ShowsTechnicalError_OthersProcessNormally() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var files = new[]
+            {
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                InputFileContent.CreateFromText("not an excel file", "corrupt.xlsx"),
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
+            };
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(files);
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("2 non-blocking warning(s)");
+            summary.Should().Contain("1 technical error(s)");
+
+            for (var i = 0; i < 3; i++)
+            {
+                cut.Find($"#file-details-toggle-{i}").Click();
+            }
+
+            cut.Find("#technical-error-1").Should().NotBeNull();
+            cut.FindAll("#equipement-table-0").Should().NotBeEmpty();
+            cut.FindAll("#equipement-table-2").Should().NotBeEmpty();
+
+            // No exception bubbled up and broke rendering of the rest of the page.
+            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.C7401.xlsx");
+            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
+        });
+
+    [Fact]
+    public void FileInput_HasMultipleAttribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileTest>();
+
+        cut.Find("#test-file-input").HasAttribute("multiple").Should().BeTrue();
+    });
 }
