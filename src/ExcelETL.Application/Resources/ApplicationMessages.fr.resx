@@ -43,6 +43,9 @@
   <data name="ExportProfileNotFound" xml:space="preserve">
     <value>Le profil d'export '{0}' est introuvable.</value>
   </data>
+  <data name="ProfileNameAlreadyExists" xml:space="preserve">
+    <value>Un profil nommé '{0}' existe déjà.</value>
+  </data>
   <data name="OxoFileRejected" xml:space="preserve">
     <value>Le fichier envoyé a été rejeté : des données requises sont manquantes ou invalides.</value>
   </data>

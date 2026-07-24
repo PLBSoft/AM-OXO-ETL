@@ -8,5 +8,6 @@ public enum ApplicationErrorCode
     WorksheetNotFoundInUploadedWorkbook,
     UnknownFieldReference,
     ImportProfileNotFound,
-    ExportProfileNotFound
+    ExportProfileNotFound,
+    ProfileNameAlreadyExists
 }
