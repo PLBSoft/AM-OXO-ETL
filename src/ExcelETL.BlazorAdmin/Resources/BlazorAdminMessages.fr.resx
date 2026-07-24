@@ -289,6 +289,9 @@
   <data name="ImportProfiles_EquipementTypeElementNom" xml:space="preserve">
     <value>Type d'équipement</value>
   </data>
+  <data name="ImportProfiles_SheetCountHeader" xml:space="preserve">
+    <value>Règles de feuille</value>
+  </data>
   <data name="ImportProfiles_SheetCount" xml:space="preserve">
     <value>{0} règle(s) de feuille</value>
   </data>
@@ -606,6 +609,9 @@
   </data>
   <data name="ExportProfiles_Name" xml:space="preserve">
     <value>Nom</value>
+  </data>
+  <data name="ExportProfiles_SheetCountHeader" xml:space="preserve">
+    <value>Règles de feuille</value>
   </data>
   <data name="ExportProfiles_SheetCount" xml:space="preserve">
     <value>{0} règle(s) de feuille</value>

@@ -89,6 +89,34 @@ public class ImportProfilesTests : BunitContext
             cut.Markup.Should().Contain("1 sheet rule(s)");
         });
 
+    // V1: client-reported bug -- the sheet-rules-count column literally showed "{0} sheet rule(s)".
+    // Root cause: the <th> COLUMN HEADER reused Loc["ImportProfiles_SheetCount"] (the templated,
+    // "{0} sheet rule(s)" resx value) with no count argument -- the data cell itself was already
+    // correctly interpolated via Loc["ImportProfiles_SheetCount", count]. Fixed by giving the header
+    // its own plain-text key, ImportProfiles_SheetCountHeader ("Sheet rules"). This test asserts on
+    // the full markup (header + data) so a regression either way would be caught.
+    [Fact]
+    public async Task ImportProfiles_WithMultipleSheetRules_InterpolatesActualCount_NotLiteralPlaceholder() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            static RepeatingBlockLocator BuildLocator(string sheet) => new(
+                sheet, firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            var profile = new ImportProfile(
+                "MAD OXO multi", "MAD TRAVAUX", [], [],
+                [
+                    new SheetExtractionRule("ISOLEMENT", BuildLocator("ISOLEMENT"), pointRules: [], unconditionalColonneNames: ["A"]),
+                    new SheetExtractionRule("PLATINES", BuildLocator("PLATINES"), pointRules: [], unconditionalColonneNames: ["B"]),
+                    new SheetExtractionRule("DIVERS", BuildLocator("DIVERS"), pointRules: [], unconditionalColonneNames: ["C"])
+                ]);
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+
+            cut.Markup.Should().Contain("3 sheet rule(s)");
+            cut.Markup.Should().NotContain("{0}");
+        });
+
     [Fact]
     public async Task ImportProfiles_WithExistingProfile_AndFrenchCulture_DisplaysFrenchLabels() =>
         await WithCultureAsync("fr-FR", async () =>
