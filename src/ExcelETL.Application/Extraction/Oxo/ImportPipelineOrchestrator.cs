@@ -88,16 +88,7 @@ public sealed class ImportPipelineOrchestrator(
             isolements.AddRange(orificesCapacitesResult.Isolements);
             isolements.AddRange(autresJointsTouchesResult.Isolements);
             isolements.AddRange(diversResult.Isolements);
-            for (var i = 0; i < isolements.Count; i++)
-            {
-                isolements[i] = isolements[i] with
-                {
-                    Localisation = loc1,
-                    Tableaux = profile.DefaultTableaux,
-                    Applications = profile.DefaultApplicationNames,
-                    RepereParent = repereParent
-                };
-            }
+            BroadcastEquipementContext(isolements, loc1, profile, repereParent);
 
             var points = new List<PointPivot>();
             points.AddRange(procedureResult.Points);
@@ -137,4 +128,22 @@ public sealed class ImportPipelineOrchestrator(
 
     private static SheetExtractionRule FindRule(ImportProfile profile, string sheetName) =>
         profile.SheetRules.First(r => r.SheetName == sheetName);
+
+    // Broadcasts DIVERS' loc1 and the profile's DefaultTableaux/DefaultApplicationNames onto every
+    // isolement of the run, plus the parent Equipement's own Repere -- "sans exception" per spec §1.5,
+    // even when loc1 is blank (a no-op against the default-empty Localisation).
+    private static void BroadcastEquipementContext(
+        List<IsolementPivot> isolements, string loc1, ImportProfile profile, string repereParent)
+    {
+        for (var i = 0; i < isolements.Count; i++)
+        {
+            isolements[i] = isolements[i] with
+            {
+                Localisation = loc1,
+                Tableaux = profile.DefaultTableaux,
+                Applications = profile.DefaultApplicationNames,
+                RepereParent = repereParent
+            };
+        }
+    }
 }
