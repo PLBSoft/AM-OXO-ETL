@@ -38,80 +38,18 @@ public sealed record SheetGenerationRule
         IReadOnlyList<PointColumnDefinition> pointColumnDefinitions,
         IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
     {
-        if (string.IsNullOrWhiteSpace(sheetName))
-        {
-            throw new DomainValidationException(
-                "Sheet name must not be empty.", nameof(sheetName), DomainErrorCode.SheetGenerationRule_EmptySheetName);
-        }
+        ValidateSheetNameNotEmpty(sheetName);
 
         ArgumentNullException.ThrowIfNull(columnDefinitions);
         ArgumentNullException.ThrowIfNull(pointColumnDefinitions);
         ArgumentNullException.ThrowIfNull(applicationColumnDefinitions);
 
-        var incompatibleColumn = columnDefinitions.FirstOrDefault(
-            column => column.Source is not null && PivotFieldResolver.GetPivotSource(column.Source.Value) != pivotSource);
-
-        if (incompatibleColumn is not null)
-        {
-            var incompatibleFieldRef = incompatibleColumn.Source!.Value;
-            throw new DomainRuleViolationException(
-                $"Column '{incompatibleColumn.Header}' references field '{incompatibleFieldRef}', which belongs to " +
-                $"{PivotFieldResolver.GetPivotSource(incompatibleFieldRef)}, not this sheet's PivotSource ({pivotSource}).",
-                DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
-                incompatibleColumn.Header, incompatibleFieldRef, pivotSource);
-        }
-
-        if (pivotSource == PivotSource.TacheMultiple && pointColumnDefinitions.Count > 0)
-        {
-            throw new DomainRuleViolationException(
-                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Point -- " +
-                "PointColumnDefinitions are not allowed for this pivot source.",
-                DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
-        }
-
-        if (pivotSource == PivotSource.TacheMultiple && applicationColumnDefinitions.Count > 0)
-        {
-            throw new DomainRuleViolationException(
-                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Application -- " +
-                "ApplicationColumnDefinitions are not allowed for this pivot source.",
-                DomainErrorCode.SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
-        }
-
-        var duplicateHeader = columnDefinitions.Select(c => c.Header)
-            .Concat(pointColumnDefinitions.Select(p => p.Header))
-            .Concat(applicationColumnDefinitions.Select(a => a.Header))
-            .GroupBy(header => header)
-            .FirstOrDefault(group => group.Count() > 1);
-
-        if (duplicateHeader is not null)
-        {
-            throw new DomainValidationException(
-                $"Header '{duplicateHeader.Key}' is used more than once in sheet '{sheetName}'.",
-                nameof(columnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateHeader, duplicateHeader.Key);
-        }
-
-        var duplicateColonneNom = pointColumnDefinitions
-            .GroupBy(point => point.ColonneNom)
-            .FirstOrDefault(group => group.Count() > 1);
-
-        if (duplicateColonneNom is not null)
-        {
-            throw new DomainValidationException(
-                $"Colonne nom '{duplicateColonneNom.Key}' is used more than once in sheet '{sheetName}'.",
-                nameof(pointColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateColonneNom, duplicateColonneNom.Key);
-        }
-
-        var duplicateApplicationNom = applicationColumnDefinitions
-            .GroupBy(application => application.ApplicationNom)
-            .FirstOrDefault(group => group.Count() > 1);
-
-        if (duplicateApplicationNom is not null)
-        {
-            throw new DomainValidationException(
-                $"Application nom '{duplicateApplicationNom.Key}' is used more than once in sheet '{sheetName}'.",
-                nameof(applicationColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom,
-                duplicateApplicationNom.Key);
-        }
+        ValidateColumnPivotSourceCompatibility(columnDefinitions, pivotSource);
+        ValidateNoPointColumnsForTacheMultiple(sheetName, pivotSource, pointColumnDefinitions);
+        ValidateNoApplicationColumnsForTacheMultiple(sheetName, pivotSource, applicationColumnDefinitions);
+        ValidateNoDuplicateHeaders(sheetName, columnDefinitions, pointColumnDefinitions, applicationColumnDefinitions);
+        ValidateNoDuplicateColonneNom(sheetName, pointColumnDefinitions);
+        ValidateNoDuplicateApplicationNom(sheetName, applicationColumnDefinitions);
 
         SheetName = sheetName;
         PivotSource = pivotSource;
@@ -125,6 +63,107 @@ public sealed record SheetGenerationRule
     private SheetGenerationRule()
     {
         SheetName = string.Empty;
+    }
+
+    private static void ValidateSheetNameNotEmpty(string sheetName)
+    {
+        if (string.IsNullOrWhiteSpace(sheetName))
+        {
+            throw new DomainValidationException(
+                "Sheet name must not be empty.", nameof(sheetName), DomainErrorCode.SheetGenerationRule_EmptySheetName);
+        }
+    }
+
+    private static void ValidateColumnPivotSourceCompatibility(
+        IReadOnlyList<ColumnDefinition> columnDefinitions, PivotSource pivotSource)
+    {
+        var incompatibleColumn = columnDefinitions.FirstOrDefault(
+            column => column.Source is not null && PivotFieldResolver.GetPivotSource(column.Source.Value) != pivotSource);
+
+        if (incompatibleColumn is not null)
+        {
+            var incompatibleFieldRef = incompatibleColumn.Source!.Value;
+            throw new DomainRuleViolationException(
+                $"Column '{incompatibleColumn.Header}' references field '{incompatibleFieldRef}', which belongs to " +
+                $"{PivotFieldResolver.GetPivotSource(incompatibleFieldRef)}, not this sheet's PivotSource ({pivotSource}).",
+                DomainErrorCode.SheetGenerationRule_ColumnSourceIncompatibleWithPivotSource,
+                incompatibleColumn.Header, incompatibleFieldRef, pivotSource);
+        }
+    }
+
+    private static void ValidateNoPointColumnsForTacheMultiple(
+        string sheetName, PivotSource pivotSource, IReadOnlyList<PointColumnDefinition> pointColumnDefinitions)
+    {
+        if (pivotSource == PivotSource.TacheMultiple && pointColumnDefinitions.Count > 0)
+        {
+            throw new DomainRuleViolationException(
+                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Point -- " +
+                "PointColumnDefinitions are not allowed for this pivot source.",
+                DomainErrorCode.SheetGenerationRule_PointColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
+        }
+    }
+
+    private static void ValidateNoApplicationColumnsForTacheMultiple(
+        string sheetName, PivotSource pivotSource, IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
+    {
+        if (pivotSource == PivotSource.TacheMultiple && applicationColumnDefinitions.Count > 0)
+        {
+            throw new DomainRuleViolationException(
+                $"Sheet '{sheetName}' has PivotSource TacheMultiple, which has no associated Application -- " +
+                "ApplicationColumnDefinitions are not allowed for this pivot source.",
+                DomainErrorCode.SheetGenerationRule_ApplicationColumnDefinitionsNotAllowedForTacheMultiple, sheetName);
+        }
+    }
+
+    private static void ValidateNoDuplicateHeaders(
+        string sheetName,
+        IReadOnlyList<ColumnDefinition> columnDefinitions,
+        IReadOnlyList<PointColumnDefinition> pointColumnDefinitions,
+        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
+    {
+        var duplicateHeader = columnDefinitions.Select(c => c.Header)
+            .Concat(pointColumnDefinitions.Select(p => p.Header))
+            .Concat(applicationColumnDefinitions.Select(a => a.Header))
+            .GroupBy(header => header)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateHeader is not null)
+        {
+            throw new DomainValidationException(
+                $"Header '{duplicateHeader.Key}' is used more than once in sheet '{sheetName}'.",
+                nameof(columnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateHeader, duplicateHeader.Key);
+        }
+    }
+
+    private static void ValidateNoDuplicateColonneNom(
+        string sheetName, IReadOnlyList<PointColumnDefinition> pointColumnDefinitions)
+    {
+        var duplicateColonneNom = pointColumnDefinitions
+            .GroupBy(point => point.ColonneNom)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateColonneNom is not null)
+        {
+            throw new DomainValidationException(
+                $"Colonne nom '{duplicateColonneNom.Key}' is used more than once in sheet '{sheetName}'.",
+                nameof(pointColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateColonneNom, duplicateColonneNom.Key);
+        }
+    }
+
+    private static void ValidateNoDuplicateApplicationNom(
+        string sheetName, IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
+    {
+        var duplicateApplicationNom = applicationColumnDefinitions
+            .GroupBy(application => application.ApplicationNom)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateApplicationNom is not null)
+        {
+            throw new DomainValidationException(
+                $"Application nom '{duplicateApplicationNom.Key}' is used more than once in sheet '{sheetName}'.",
+                nameof(applicationColumnDefinitions), DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom,
+                duplicateApplicationNom.Key);
+        }
     }
 
     public bool Equals(SheetGenerationRule? other) =>
