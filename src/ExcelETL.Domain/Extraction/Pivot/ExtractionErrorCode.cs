@@ -8,5 +8,5 @@ public enum ExtractionErrorCode
     RequiredFieldMissing,
     UnparsableValue,
     UnrecognizedTypeElement,
-    TypeIncoherenceDansTacheMultiple
+    TacheMultipleTypeIncoherence
 }

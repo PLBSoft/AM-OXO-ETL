@@ -5,7 +5,7 @@ namespace ExcelETL.Application.Extraction.Oxo;
 
 // Every per-sheet extraction service logs its own ExtractionErrors through this one mapping so the
 // Warning/Error split stays consistent instead of being duplicated per service. UnrecognizedTypeElement
-// (model doc §3.2, e.g. ISOLEMENT's "VANNE" case) and TypeIncoherenceDansTacheMultiple (Lot 032,
+// (model doc §3.2, e.g. ISOLEMENT's "VANNE" case) and TacheMultipleTypeIncoherence (Lot 032,
 // decision 8: non-blocking) are the two codes explicitly non-blocking -> Warning; RequiredFieldMissing/
 // UnparsableValue mean a block (or, for PROCEDURE, the whole file) was skipped/rejected -> Error.
 internal static class ExtractionErrorLogging
@@ -13,7 +13,7 @@ internal static class ExtractionErrorLogging
     public static void Log(ILogger logger, ExtractionError error)
     {
         var level = error.Code is ExtractionErrorCode.UnrecognizedTypeElement
-            or ExtractionErrorCode.TypeIncoherenceDansTacheMultiple
+            or ExtractionErrorCode.TacheMultipleTypeIncoherence
             ? LogLevel.Warning
             : LogLevel.Error;
         logger.Log(

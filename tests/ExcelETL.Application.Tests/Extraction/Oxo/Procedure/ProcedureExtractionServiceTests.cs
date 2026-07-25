@@ -316,7 +316,7 @@ public class ProcedureExtractionServiceTests
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
-        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeIncoherence);
         error.Sheet.Should().Be(Sheet);
         error.BlockIdentifier.Should().Be("1-SECTION (tâches 2-2)");
         error.Message.Should().Be(
@@ -341,7 +341,7 @@ public class ProcedureExtractionServiceTests
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
-        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeIncoherence);
         error.BlockIdentifier.Should().Be("1-SECTION (tâches 1-1)");
         error.Message.Should().Be(
             "Incohérence de TYPE détectée dans la tâche multiple \"1-SECTION\" : tâches 1–1 en TM_PROC_MAD, " +
@@ -363,7 +363,7 @@ public class ProcedureExtractionServiceTests
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
-        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeIncoherence);
         error.BlockIdentifier.Should().Be("1-SECTION (tâches 3-3)");
         error.Message.Should().Be(
             "Incohérence de TYPE détectée dans la tâche multiple \"1-SECTION\" : tâches 3–3 en TM_PROC_MAD, " +
@@ -384,7 +384,7 @@ public class ProcedureExtractionServiceTests
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
-        error.Code.Should().Be(ExtractionErrorCode.TypeIncoherenceDansTacheMultiple);
+        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeIncoherence);
         error.BlockIdentifier.Should().Be("1-SECTION");
         error.Message.Should().Be(
             "Répartition de TYPE ambiguë dans la tâche multiple \"1-SECTION\" : TM_PROC_REL (1–1) et TM_PROC_MAD (2–2) " +
