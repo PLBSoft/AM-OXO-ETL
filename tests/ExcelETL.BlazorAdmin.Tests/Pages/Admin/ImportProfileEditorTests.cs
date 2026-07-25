@@ -1666,6 +1666,263 @@ public class ImportProfileEditorTests : BunitContext
             all.Single().SheetRules.Single().UnconditionalColonneNames.Should().BeEmpty();
         });
 
+    // Lot 035 (35.8): same edit/delete-in-place pattern as Lot W's UnconditionalColonneNames,
+    // applied to DefaultTableaux (Lot U1's add-only list).
+
+    [Fact]
+    public void DefaultTableau_ClickingModify_ShowsPrefilledEditInput_AndRemovesStaticText() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+
+            cut.Find("#default-tableau-edit-input-0").GetAttribute("value").Should().Be("TRAVAUX COMPLET");
+            cut.FindAll(".block-field-name").Should().NotContain(e => e.TextContent == "TRAVAUX COMPLET");
+        });
+
+    [Fact]
+    public void DefaultTableau_SaveChanges_UpdatesValueInPlace_AndClosesEditMode() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+            cut.Find("#default-tableau-edit-input-0").Change("TRAVAUX DETAIL");
+            cut.Find("#save-default-tableau-button-0").Click();
+
+            cut.FindAll("#default-tableau-edit-input-0").Should().BeEmpty();
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "TRAVAUX DETAIL");
+        });
+
+    [Fact]
+    public void DefaultTableau_SaveWithEmptyValue_ShowsError_AndKeepsEditModeOpen() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+            cut.Find("#default-tableau-edit-input-0").Change("   ");
+            cut.Find("#save-default-tableau-button-0").Click();
+
+            cut.Markup.Should().Contain("Tableau name must not be empty.");
+            cut.FindAll("#default-tableau-edit-input-0").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public void DefaultTableau_Cancel_DiscardsChanges_RestoresOriginalValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+            cut.Find("#default-tableau-edit-input-0").Change("TRAVAUX DETAIL");
+            cut.Find("#cancel-default-tableau-edit-button-0").Click();
+
+            cut.FindAll("#default-tableau-edit-input-0").Should().BeEmpty();
+            cut.Find(".block-field-name").TextContent.Should().Be("TRAVAUX COMPLET");
+        });
+
+    [Fact]
+    public void DefaultTableau_Delete_RemovesFromList_WithoutAffectingOtherItems() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX DETAIL");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#delete-default-tableau-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "TRAVAUX DETAIL");
+        });
+
+    [Fact]
+    public async Task DefaultTableau_AddThenEditThenSave_PersistsAfterSavingProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("Profil de test 35.8 tableaux");
+            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+            cut.Find("#default-tableau-edit-input-0").Change("TRAVAUX DETAIL");
+            cut.Find("#save-default-tableau-button-0").Click();
+
+            AddValidSheetRule(cut);
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().DefaultTableaux.Should().ContainSingle("TRAVAUX DETAIL");
+        });
+
+    [Fact]
+    public async Task DefaultTableau_AddThenDeleteThenSave_PersistsAfterSavingProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("Profil de test 35.8 tableaux suppression");
+            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+            cut.Find("#default-tableau-name-input").Change("TRAVAUX COMPLET");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#delete-default-tableau-button-0").Click();
+
+            AddValidSheetRule(cut);
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().DefaultTableaux.Should().BeEmpty();
+        });
+
+    // Lot 035 (35.8): same treatment for DefaultApplicationNames.
+
+    [Fact]
+    public void DefaultApplicationName_ClickingModify_ShowsPrefilledEditInput_AndRemovesStaticText() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+
+            cut.Find("#default-application-name-edit-input-0").GetAttribute("value").Should().Be("PROGRESS");
+            cut.FindAll(".block-field-name").Should().NotContain(e => e.TextContent == "PROGRESS");
+        });
+
+    [Fact]
+    public void DefaultApplicationName_SaveChanges_UpdatesValueInPlace_AndClosesEditMode() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+            cut.Find("#default-application-name-edit-input-0").Change("AUTRE");
+            cut.Find("#save-default-application-name-button-0").Click();
+
+            cut.FindAll("#default-application-name-edit-input-0").Should().BeEmpty();
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "AUTRE");
+        });
+
+    [Fact]
+    public void DefaultApplicationName_SaveWithEmptyValue_ShowsError_AndKeepsEditModeOpen() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+            cut.Find("#default-application-name-edit-input-0").Change("   ");
+            cut.Find("#save-default-application-name-button-0").Click();
+
+            cut.Markup.Should().Contain("Application name must not be empty.");
+            cut.FindAll("#default-application-name-edit-input-0").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public void DefaultApplicationName_Cancel_DiscardsChanges_RestoresOriginalValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+            cut.Find("#default-application-name-edit-input-0").Change("AUTRE");
+            cut.Find("#cancel-default-application-name-edit-button-0").Click();
+
+            cut.FindAll("#default-application-name-edit-input-0").Should().BeEmpty();
+            cut.Find(".block-field-name").TextContent.Should().Be("PROGRESS");
+        });
+
+    [Fact]
+    public void DefaultApplicationName_Delete_RemovesFromList_WithoutAffectingOtherItems() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+            cut.Find("#default-application-name-input").Change("AUTRE");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#delete-default-application-name-button-0").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "AUTRE");
+        });
+
+    [Fact]
+    public async Task DefaultApplicationName_AddThenEditThenSave_PersistsAfterSavingProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("Profil de test 35.8 applications");
+            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+            cut.Find("#default-application-name-edit-input-0").Change("AUTRE");
+            cut.Find("#save-default-application-name-button-0").Click();
+
+            AddValidSheetRule(cut);
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().DefaultApplicationNames.Should().ContainSingle("AUTRE");
+        });
+
+    [Fact]
+    public async Task DefaultApplicationName_AddThenDeleteThenSave_PersistsAfterSavingProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("Profil de test 35.8 applications suppression");
+            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#delete-default-application-name-button-0").Click();
+
+            AddValidSheetRule(cut);
+            cut.Find("#save-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            all.Single().DefaultApplicationNames.Should().BeEmpty();
+        });
+
     // Lot W: edit/delete of an already-added ConditionalPointRule.
 
     private static void AddPointRule(IRenderedComponent<ImportProfileEditor> cut, string colonneName, string sourceFieldName,

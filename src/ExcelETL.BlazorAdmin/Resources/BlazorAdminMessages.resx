@@ -466,6 +466,12 @@
   <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
     <value>Add application</value>
   </data>
+  <data name="ImportProfileEditor_EmptyTableauNameError" xml:space="preserve">
+    <value>Tableau name must not be empty.</value>
+  </data>
+  <data name="ImportProfileEditor_EmptyApplicationNameError" xml:space="preserve">
+    <value>Application name must not be empty.</value>
+  </data>
   <data name="ImportProfileEditor_PointRulesHeading" xml:space="preserve">
     <value>Conditional point rules</value>
   </data>

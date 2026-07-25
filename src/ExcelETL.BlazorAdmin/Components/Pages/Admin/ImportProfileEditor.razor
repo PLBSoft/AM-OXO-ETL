@@ -57,12 +57,82 @@ else
 </div>
 
 <h3>@Loc["ImportProfileEditor_DefaultTableauxHeading"]</h3>
-@if (_defaultTableaux.Count > 0)
-{
-    <p id="default-tableaux-summary">@string.Join(", ", _defaultTableaux)</p>
-}
 <div class="card bg-light mb-3">
     <div class="card-body">
+        @if (_defaultTableaux.Count > 0)
+        {
+            <ul class="block-field-list">
+                @for (var j = 0; j < _defaultTableaux.Count; j++)
+                {
+                    var itemIndex = j;
+                    @if (_editingDefaultTableauIndex == itemIndex)
+                    {
+                        <li class="block-field-item-editing">
+                            @if (!string.IsNullOrEmpty(_defaultTableauEditError))
+                            {
+                                <div class="alert alert-danger">@_defaultTableauEditError</div>
+                            }
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <input id="@($"default-tableau-edit-input-{itemIndex}")" class="form-control"
+                                           @bind="_editingDefaultTableauValue" />
+                                </div>
+                                <div class="col-auto block-field-actions">
+                                    <button id="@($"save-default-tableau-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            @onclick="() => SaveDefaultTableauEdit(itemIndex)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                                        </svg>
+                                    </button>
+                                    <button id="@($"cancel-default-tableau-edit-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                            title="@Loc["ImportProfileEditor_CancelButton"]"
+                                            @onclick="CancelDefaultTableauEdit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@_defaultTableaux[itemIndex]</span>
+                            </div>
+                            <div class="block-field-actions">
+                                <button id="@($"edit-default-tableau-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        @onclick="() => StartDefaultTableauEdit(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                    </svg>
+                                </button>
+                                <button id="@($"delete-default-tableau-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        @onclick="() => DeleteDefaultTableau(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>
+                    }
+                }
+            </ul>
+        }
         <div class="mb-3">
             <div class="form-floating">
                 <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
@@ -79,12 +149,82 @@ else
 </div>
 
 <h3>@Loc["ImportProfileEditor_DefaultApplicationNamesHeading"]</h3>
-@if (_defaultApplicationNames.Count > 0)
-{
-    <p id="default-application-names-summary">@string.Join(", ", _defaultApplicationNames)</p>
-}
 <div class="card bg-light mb-3">
     <div class="card-body">
+        @if (_defaultApplicationNames.Count > 0)
+        {
+            <ul class="block-field-list">
+                @for (var j = 0; j < _defaultApplicationNames.Count; j++)
+                {
+                    var itemIndex = j;
+                    @if (_editingDefaultApplicationNameIndex == itemIndex)
+                    {
+                        <li class="block-field-item-editing">
+                            @if (!string.IsNullOrEmpty(_defaultApplicationNameEditError))
+                            {
+                                <div class="alert alert-danger">@_defaultApplicationNameEditError</div>
+                            }
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <input id="@($"default-application-name-edit-input-{itemIndex}")" class="form-control"
+                                           @bind="_editingDefaultApplicationNameValue" />
+                                </div>
+                                <div class="col-auto block-field-actions">
+                                    <button id="@($"save-default-application-name-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            @onclick="() => SaveDefaultApplicationNameEdit(itemIndex)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                                        </svg>
+                                    </button>
+                                    <button id="@($"cancel-default-application-name-edit-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                            title="@Loc["ImportProfileEditor_CancelButton"]"
+                                            @onclick="CancelDefaultApplicationNameEdit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@_defaultApplicationNames[itemIndex]</span>
+                            </div>
+                            <div class="block-field-actions">
+                                <button id="@($"edit-default-application-name-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        @onclick="() => StartDefaultApplicationNameEdit(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                    </svg>
+                                </button>
+                                <button id="@($"delete-default-application-name-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        @onclick="() => DeleteDefaultApplicationName(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>
+                    }
+                }
+            </ul>
+        }
         <div class="mb-3">
             <div class="form-floating">
                 <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
@@ -236,6 +376,14 @@ else
     private string _newDefaultTableauName = string.Empty;
     private string _newDefaultApplicationName = string.Empty;
 
+    private int? _editingDefaultTableauIndex;
+    private string _editingDefaultTableauValue = string.Empty;
+    private string? _defaultTableauEditError;
+
+    private int? _editingDefaultApplicationNameIndex;
+    private string _editingDefaultApplicationNameValue = string.Empty;
+    private string? _defaultApplicationNameEditError;
+
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _editingIndex;
     private int? _pendingDeleteIndex;
@@ -286,6 +434,76 @@ else
 
         _defaultApplicationNames.Add(_newDefaultApplicationName);
         _newDefaultApplicationName = string.Empty;
+    }
+
+    private void StartDefaultTableauEdit(int itemIndex)
+    {
+        _editingDefaultTableauIndex = itemIndex;
+        _editingDefaultTableauValue = _defaultTableaux[itemIndex];
+        _defaultTableauEditError = null;
+    }
+
+    private void SaveDefaultTableauEdit(int itemIndex)
+    {
+        if (string.IsNullOrWhiteSpace(_editingDefaultTableauValue))
+        {
+            _defaultTableauEditError = Loc["ImportProfileEditor_EmptyTableauNameError"];
+            return;
+        }
+
+        _defaultTableaux[itemIndex] = _editingDefaultTableauValue;
+        _editingDefaultTableauIndex = null;
+        _defaultTableauEditError = null;
+    }
+
+    private void CancelDefaultTableauEdit()
+    {
+        _editingDefaultTableauIndex = null;
+        _defaultTableauEditError = null;
+    }
+
+    private void DeleteDefaultTableau(int itemIndex)
+    {
+        _defaultTableaux.RemoveAt(itemIndex);
+        if (_editingDefaultTableauIndex == itemIndex)
+        {
+            _editingDefaultTableauIndex = null;
+        }
+    }
+
+    private void StartDefaultApplicationNameEdit(int itemIndex)
+    {
+        _editingDefaultApplicationNameIndex = itemIndex;
+        _editingDefaultApplicationNameValue = _defaultApplicationNames[itemIndex];
+        _defaultApplicationNameEditError = null;
+    }
+
+    private void SaveDefaultApplicationNameEdit(int itemIndex)
+    {
+        if (string.IsNullOrWhiteSpace(_editingDefaultApplicationNameValue))
+        {
+            _defaultApplicationNameEditError = Loc["ImportProfileEditor_EmptyApplicationNameError"];
+            return;
+        }
+
+        _defaultApplicationNames[itemIndex] = _editingDefaultApplicationNameValue;
+        _editingDefaultApplicationNameIndex = null;
+        _defaultApplicationNameEditError = null;
+    }
+
+    private void CancelDefaultApplicationNameEdit()
+    {
+        _editingDefaultApplicationNameIndex = null;
+        _defaultApplicationNameEditError = null;
+    }
+
+    private void DeleteDefaultApplicationName(int itemIndex)
+    {
+        _defaultApplicationNames.RemoveAt(itemIndex);
+        if (_editingDefaultApplicationNameIndex == itemIndex)
+        {
+            _editingDefaultApplicationNameIndex = null;
+        }
     }
 
     private void HandleAddSheetRule(SheetExtractionRule rule) => _sheetRules.Add(rule);
