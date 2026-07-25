@@ -380,6 +380,47 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#generated-sheet-Enfants-table").InnerHtml.Should().Contain("VANNE");
         });
 
+    // Client-reported gap: a file badged "Warning" (BatchFileStatus.Warning, e.g. D8570's non-blocking
+    // "VANNE" UnrecognizedTypeElement) showed no way to see what the warning actually was on this page,
+    // unlike ImportProfileTest.razor's own warnings table -- fixed by rendering the same
+    // details/summary + table for ImportResult.Errors, right where the import page shows it.
+    [Fact]
+    public async Task Run_D8570Fixture_ShowsWarningsDetails_WithSameShapeAsImportPage() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("Non-blocking warnings"));
+
+            cut.Find("#warnings-table").Should().NotBeNull();
+            cut.Find("#warnings-table").InnerHtml.Should().Contain("UnrecognizedTypeElement");
+        });
+
+    [Fact]
+    public async Task WarningsDetails_TogglesOpenAndClosed() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+
+            cut.Find("#warnings-details-toggle").Click();
+            cut.FindAll("#warnings-table").Should().BeEmpty();
+
+            cut.Find("#warnings-details-toggle").Click();
+            cut.Find("#warnings-table").Should().NotBeNull();
+        });
+
     // Lot T (docs/tickets-tdd-export-taches-multiples.md, T7): the preview already renders one HTML
     // table per physically generated sheet (@foreach over _generatedWorkbook.Sheets) -- since
     // SheetGenerationEngine (T3) now emits one dynamic sheet per distinct TypeTacheMultipleCode, this

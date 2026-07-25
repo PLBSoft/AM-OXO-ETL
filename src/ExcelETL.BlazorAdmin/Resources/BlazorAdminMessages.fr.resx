@@ -871,6 +871,21 @@
   <data name="ExportProfileTest_RejectedFileHeading" xml:space="preserve">
     <value>Fichier rejeté</value>
   </data>
+  <data name="ExportProfileTest_WarningsHeading" xml:space="preserve">
+    <value>Avertissements non bloquants ({0})</value>
+  </data>
+  <data name="ExportProfileTest_Sheet" xml:space="preserve">
+    <value>Feuille</value>
+  </data>
+  <data name="ExportProfileTest_BlockIdentifier" xml:space="preserve">
+    <value>Identifiant du bloc</value>
+  </data>
+  <data name="ExportProfileTest_ErrorCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="ExportProfileTest_Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
   <data name="ExportProfileTest_ExportProfileLabel" xml:space="preserve">
     <value>Profil d'export</value>
   </data>
@@ -933,6 +948,9 @@
   </data>
   <data name="GeneratedFiles_PageTitle" xml:space="preserve">
     <value>Fichiers générés</value>
+  </data>
+  <data name="GeneratedFiles_ScopeNote" xml:space="preserve">
+    <value>Cette page liste uniquement les fichiers archivés via l'API (POST /api/oxo/process). Les fichiers générés depuis les pages de test des profils d'import/export ne sont pas archivés ici.</value>
   </data>
   <data name="GeneratedFiles_Loading" xml:space="preserve">
     <value>Chargement...</value>
