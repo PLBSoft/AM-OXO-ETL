@@ -208,6 +208,43 @@ public class ProfileEditorParityTests : BunitContext
         importSaveButtonClass.Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4");
     });
 
+    // Lot 037: closes the one sheet-rule-card element R1-R3/30.5 never compared -- the Modify/
+    // Delete buttons themselves. ExportProfileEditor.razor was already icon-only per
+    // convention-ui-blazor-icones-boutons.md; ImportProfileEditor.razor's own version was still
+    // plain text until this lot. Comparing the button's own class string plus its inner-markup
+    // shape (icon present, no visible text) guards against this specific point silently
+    // diverging a second time without being caught before a client-facing visual review.
+    [Fact]
+    public async Task SheetRuleCardModifyDeleteButtons_CssClassAndIconStructure_AreIdenticalBetweenImportAndExportEditors() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = BuildImportProfileWithTwoSheetRules();
+            await ImportStore.SaveAsync(importProfile);
+            var exportProfile = BuildExportProfileWithTwoSheetRules();
+            await ExportStore.SaveAsync(exportProfile);
+
+            var importCut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, importProfile.Id));
+            var exportCut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, exportProfile.Id));
+
+            var importModify = importCut.Find("#modify-sheet-rule-button-0");
+            var exportModify = exportCut.Find("#modify-sheet-generation-rule-button-0");
+            importModify.GetAttribute("class").Should().Be(exportModify.GetAttribute("class"));
+            importModify.GetAttribute("class").Should().Be("btn btn-sm btn-outline-secondary block-field-icon-btn");
+            importModify.TextContent.Trim().Should().BeEmpty();
+            exportModify.TextContent.Trim().Should().BeEmpty();
+            importModify.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            exportModify.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+
+            var importDelete = importCut.Find("#delete-sheet-rule-button-0");
+            var exportDelete = exportCut.Find("#delete-sheet-generation-rule-button-0");
+            importDelete.GetAttribute("class").Should().Be(exportDelete.GetAttribute("class"));
+            importDelete.GetAttribute("class").Should().Be("btn btn-sm btn-outline-danger block-field-icon-btn");
+            importDelete.TextContent.Trim().Should().BeEmpty();
+            exportDelete.TextContent.Trim().Should().BeEmpty();
+            importDelete.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            exportDelete.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
     private static void WithCulture(string cultureName, Action action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;

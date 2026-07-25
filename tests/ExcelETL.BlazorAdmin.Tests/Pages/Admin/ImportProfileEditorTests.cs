@@ -536,6 +536,34 @@ public class ImportProfileEditorTests : BunitContext
             cut.FindAll("#modify-sheet-rule-button-0").Should().HaveCount(1);
         });
 
+    // Lot 037: the sheet-rule-card's own Modify/Delete buttons were plain-text (btn-secondary/
+    // btn-danger), unlike every other CRUD-action button in this file (block fields, tableaux,
+    // applications, unconditional colonnes, point rules), all icon-only per
+    // convention-ui-blazor-icones-boutons.md and already matching ExportProfileEditor.razor's own
+    // sheet-rule-card buttons. IDs are unchanged -- only the button's internal content moves from
+    // visible text to an aria-hidden icon plus an aria-label/title.
+    [Fact]
+    public async Task SheetRuleCard_ModifyDeleteButtons_AreIconOnly_WithAriaLabelsAndNoVisibleText() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            var modifyButton = cut.Find("#modify-sheet-rule-button-0");
+            modifyButton.GetAttribute("aria-label").Should().Be("Modify");
+            modifyButton.GetAttribute("title").Should().Be("Modify");
+            modifyButton.TextContent.Trim().Should().BeEmpty();
+            modifyButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+
+            var deleteButton = cut.Find("#delete-sheet-rule-button-0");
+            deleteButton.GetAttribute("aria-label").Should().Be("Delete");
+            deleteButton.GetAttribute("title").Should().Be("Delete");
+            deleteButton.TextContent.Trim().Should().BeEmpty();
+            deleteButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
     [Fact]
     public async Task ClickingModify_SwitchesOnlyThatRuleIntoEditMode() =>
         await WithCultureAsync("en-US", async () =>
@@ -580,10 +608,16 @@ public class ImportProfileEditorTests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
-            cut.Markup.Should().Contain("B19:E20");
-            cut.Markup.Should().Contain("B22:E23");
-            cut.Markup.Should().NotContain("0-1");
-            cut.Markup.Should().NotContain("3-4");
+            // Scoped to the range-display elements themselves, not the whole page's markup --
+            // since Lot 037 gave the sheet-rule-card's own Modify/Delete buttons an inline SVG
+            // icon, the *unrelated* path data of that icon coincidentally contains the literal
+            // substring "0-1", which would make a page-wide NotContain("0-1") assertion fail for
+            // a reason that has nothing to do with the raw-row-offset regression this test guards.
+            var rangeTexts = cut.FindAll(".block-field-range").Select(e => e.TextContent).ToList();
+            rangeTexts.Should().Contain("B19:E20");
+            rangeTexts.Should().Contain("B22:E23");
+            rangeTexts.Should().NotContain("0-1");
+            rangeTexts.Should().NotContain("3-4");
         });
 
     // Client feedback (screenshot, 2026-07-22): the read-only sheet-rule summary's field ranges

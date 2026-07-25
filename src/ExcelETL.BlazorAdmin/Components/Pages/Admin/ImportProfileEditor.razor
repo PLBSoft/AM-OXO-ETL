@@ -5,6 +5,7 @@
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.BlazorAdmin.Formatting
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Identity
@@ -332,11 +333,17 @@ else
                     else
                     {
                         <div class="right-aligned-actions">
-                            <button id="@($"modify-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _editingIndex = index">
-                                @Loc["ImportProfileEditor_ModifyButton"]
+                            <button id="@($"modify-sheet-rule-button-{index}")" type="button"
+                                    class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_ModifyButton"]" title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                    @onclick="() => _editingIndex = index">
+                                @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
-                            <button id="@($"delete-sheet-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => _pendingDeleteIndex = index">
-                                @Loc["ImportProfileEditor_DeleteButton"]
+                            <button id="@($"delete-sheet-rule-button-{index}")" type="button"
+                                    class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfileEditor_DeleteButton"]" title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                    @onclick="() => _pendingDeleteIndex = index">
+                                @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         </div>
                     }
