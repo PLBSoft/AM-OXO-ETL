@@ -26,6 +26,30 @@ public class OxoController(
     public async Task<IActionResult> Process(
         [FromForm] ProcessOxoFileRequest request, CancellationToken cancellationToken)
     {
+        // Lot 036.1: checked before anything else, including the file check below -- a
+        // structurally-missing identifier is a malformed request, not the same condition as a
+        // syntactically-valid Guid matching no profile (404, via ImportProfileNotFoundException/
+        // ExportProfileNotFoundException further down). Each gets its own message rather than a
+        // merged "missing parameters" one, since either can be missing independently; when both are
+        // missing, only the first one checked (ImportProfileId) is reported.
+        if (request.ImportProfileId is null)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Detail = localizer["ImportProfileIdRequired"]
+            });
+        }
+
+        if (request.ExportProfileId is null)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Detail = localizer["ExportProfileIdRequired"]
+            });
+        }
+
         if (request.File is null || request.File.Length == 0)
         {
             return BadRequest(new ProblemDetails
@@ -48,7 +72,8 @@ public class OxoController(
 
         using var workbookReader = new ClosedXmlWorkbookReader(new MemoryStream(sourceFileContent));
         var command = new ProcessOxoFileCommand(
-            request.ImportProfileId, request.ExportProfileId, workbookReader, request.File.FileName, sourceFileContent);
+            request.ImportProfileId.Value, request.ExportProfileId.Value, workbookReader, request.File.FileName,
+            sourceFileContent);
 
         // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
         // exception are not caught here: GlobalExceptionHandler translates them into a localized

@@ -49,4 +49,10 @@
   <data name="OxoFileRejected" xml:space="preserve">
     <value>Le fichier envoyé a été rejeté : des données requises sont manquantes ou invalides.</value>
   </data>
+  <data name="ImportProfileIdRequired" xml:space="preserve">
+    <value>Le paramètre ImportProfileId est requis.</value>
+  </data>
+  <data name="ExportProfileIdRequired" xml:space="preserve">
+    <value>Le paramètre ExportProfileId est requis.</value>
+  </data>
 </root>

@@ -73,6 +73,73 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    // Lot 036.1: ImportProfileId/ExportProfileId totally absent from the multipart body must
+    // produce an explicit 400, distinct from the 404 "unknown profile" case below (which requires
+    // a syntactically-valid Guid).
+    [Fact]
+    public async Task Process_WithoutImportProfileIdField_ReturnsBadRequestMentioningImportProfileId()
+    {
+        var client = CreateAuthenticatedClient();
+        var (_, exportProfileId) = await SeedProfilesAsync();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        var fileContent = new StreamContent(sourceWorkbook);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var content = new MultipartFormDataContent
+        {
+            { new StringContent(exportProfileId.ToString()), "ExportProfileId" },
+            { fileContent, "File", "source.xlsx" }
+        };
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The ImportProfileId parameter is required.");
+    }
+
+    [Fact]
+    public async Task Process_WithoutExportProfileIdField_ReturnsBadRequestMentioningExportProfileId()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, _) = await SeedProfilesAsync();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        var fileContent = new StreamContent(sourceWorkbook);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var content = new MultipartFormDataContent
+        {
+            { new StringContent(importProfileId.ToString()), "ImportProfileId" },
+            { fileContent, "File", "source.xlsx" }
+        };
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The ExportProfileId parameter is required.");
+    }
+
+    [Fact]
+    public async Task Process_WithBothProfileIdFieldsMissing_ReturnsBadRequestMentioningImportProfileIdFirst()
+    {
+        // Documented, not assumed: both checks run sequentially in the controller, so when both
+        // fields are absent, only the first one checked (ImportProfileId) is reported.
+        var client = CreateAuthenticatedClient();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        var fileContent = new StreamContent(sourceWorkbook);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var content = new MultipartFormDataContent
+        {
+            { fileContent, "File", "source.xlsx" }
+        };
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The ImportProfileId parameter is required.");
+        body.Should().NotContain("The ExportProfileId parameter is required.");
+    }
+
     [Fact]
     public async Task Process_WithUnknownImportProfileId_ReturnsNotFound()
     {

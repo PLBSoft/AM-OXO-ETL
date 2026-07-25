@@ -49,4 +49,10 @@
   <data name="OxoFileRejected" xml:space="preserve">
     <value>The uploaded file was rejected: required data is missing or invalid.</value>
   </data>
+  <data name="ImportProfileIdRequired" xml:space="preserve">
+    <value>The ImportProfileId parameter is required.</value>
+  </data>
+  <data name="ExportProfileIdRequired" xml:space="preserve">
+    <value>The ExportProfileId parameter is required.</value>
+  </data>
 </root>
