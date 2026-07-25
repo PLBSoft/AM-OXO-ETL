@@ -1113,6 +1113,94 @@ public class ExportProfileEditorTests : BunitContext
         cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Deprolock vannes");
     });
 
+    // Lot 035 (35.7): coverage gap flagged by the Application-layer audit -- Modify/Delete of an
+    // already-added ApplicationColumnDefinition (Lot U4) had no test at all, only the Add path did
+    // (see Save_WithAddedApplicationColumn_PersistsApplicationColumnDefinition above). Pure test
+    // coverage, no production code change -- mirrors the PointColumnDefinition tests above exactly.
+
+    [Fact]
+    public void ApplicationColumn_AfterAdding_DisplaysModifyAndDeleteButtons() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.FindAll("#modify-application-column-definition-button-0").Should().HaveCount(1);
+        cut.FindAll("#delete-application-column-definition-button-0").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void ApplicationColumn_ClickingModify_PrefillsEditFormWithExistingValues() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#application-column-mark-value-input").Change("O");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#modify-application-column-definition-button-0").Click();
+
+        cut.Find("#application-column-0-nom-input").GetAttribute("value").Should().Be("PROGRESS");
+        cut.Find("#application-column-0-header-input").GetAttribute("value").Should().Be("PROGRESS");
+        cut.Find("#application-column-0-mark-value-input").GetAttribute("value").Should().Be("O");
+    });
+
+    [Fact]
+    public void ApplicationColumn_SaveChanges_UpdatesApplicationColumnInPlace_AndClosesEditMode() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#modify-application-column-definition-button-0").Click();
+        cut.Find("#application-column-0-header-input").Change("PROGRESS modifié");
+        cut.Find("#save-application-column-definition-button-0").Click();
+
+        cut.FindAll("#application-column-0-header-input").Should().BeEmpty();
+        cut.Find(".block-field-name").TextContent.Should().Be("PROGRESS modifié");
+        cut.FindAll("#modify-application-column-definition-button-1").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void ApplicationColumn_Cancel_DiscardsChanges() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#modify-application-column-definition-button-0").Click();
+        cut.Find("#application-column-0-header-input").Change("Ne sera jamais sauvegardé");
+        cut.Find("#cancel-application-column-definition-button-0").Click();
+
+        cut.Find(".block-field-name").TextContent.Should().Be("PROGRESS");
+        cut.FindAll("#application-column-0-header-input").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void ApplicationColumn_Delete_RemovesApplicationColumnFromList() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#application-column-nom-input").Change("AUTRE");
+        cut.Find("#application-column-header-input").Change("Autre");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#delete-application-column-definition-button-0").Click();
+
+        cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "Autre");
+    });
+
     // X11 (Lot X): back link now lives in the shared top-row banner via SectionContent/
     // SectionOutlet -- see ImportProfileTestTests' identical comment/host for the rationale.
     private IRenderedComponent<SectionOutletTestHost> RenderWithBackNavHost(Guid? id = null)
