@@ -1006,4 +1006,58 @@
   <data name="GeneratedFiles_StatusRejected" xml:space="preserve">
     <value>Rejeté</value>
   </data>
+  <data name="NavMenu_ApiTest" xml:space="preserve">
+    <value>Test API Web</value>
+  </data>
+  <data name="ApiTest_PageTitle" xml:space="preserve">
+    <value>Test du contrat Web API (M2M)</value>
+  </data>
+  <data name="ApiTest_Instructions" xml:space="preserve">
+    <value>Envoie une véritable requête HTTP au Web API déployé (POST /api/oxo/process) -- utile pour vérifier un déploiement, faire une démonstration du contrat, ou déboguer sans l'application legacy.</value>
+  </data>
+  <data name="ApiTest_Loading" xml:space="preserve">
+    <value>Chargement des profils...</value>
+  </data>
+  <data name="ApiTest_ImportProfileLabel" xml:space="preserve">
+    <value>Profil d'import</value>
+  </data>
+  <data name="ApiTest_ImportProfilePlaceholder" xml:space="preserve">
+    <value>Sélectionner un profil d'import...</value>
+  </data>
+  <data name="ApiTest_NoImportProfilesAvailable" xml:space="preserve">
+    <value>Aucun profil d'import disponible.</value>
+  </data>
+  <data name="ApiTest_ExportProfileLabel" xml:space="preserve">
+    <value>Profil d'export</value>
+  </data>
+  <data name="ApiTest_ExportProfilePlaceholder" xml:space="preserve">
+    <value>Sélectionner un profil d'export...</value>
+  </data>
+  <data name="ApiTest_NoExportProfilesAvailable" xml:space="preserve">
+    <value>Aucun profil d'export disponible.</value>
+  </data>
+  <data name="ApiTest_FileLabel" xml:space="preserve">
+    <value>Fichier source (.xlsx)</value>
+  </data>
+  <data name="ApiTest_ProcessButton" xml:space="preserve">
+    <value>Envoyer au Web API</value>
+  </data>
+  <data name="ApiTest_Processing" xml:space="preserve">
+    <value>Appel du Web API en cours -- cela peut prendre du temps pour les fichiers volumineux...</value>
+  </data>
+  <data name="ApiTest_SuccessMessage" xml:space="preserve">
+    <value>Le Web API a retourné le classeur généré : {0}</value>
+  </data>
+  <data name="ApiTest_DownloadButton" xml:space="preserve">
+    <value>Télécharger le classeur généré</value>
+  </data>
+  <data name="ApiTest_RejectedHeading" xml:space="preserve">
+    <value>Le fichier a été rejeté (422)</value>
+  </data>
+  <data name="ApiTest_UnauthorizedMessage" xml:space="preserve">
+    <value>Le Web API a rejeté la requête comme non authentifiée (401). Vérifier la configuration serveur OxoApiTestClient:ApiKey -- elle doit correspondre à celle du Web API (ApiKeyAuthentication:ApiKey).</value>
+  </data>
+  <data name="ApiTest_TechnicalErrorMessage" xml:space="preserve">
+    <value>Une erreur inattendue s'est produite lors de l'appel au Web API. Consulter les journaux serveur pour plus de détails.</value>
+  </data>
 </root>

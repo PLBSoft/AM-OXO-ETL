@@ -1,0 +1,189 @@
+@page "/api-test"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Services
+@using ExcelETL.Domain.Extraction.Profile
+@using ExcelETL.Domain.Generation.Profile
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IImportProfileStore ImportProfileStore
+@inject IExportProfileStore ExportProfileStore
+@inject IOxoApiTestClient OxoApiTestClient
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["ApiTest_PageTitle"]</PageTitle>
+
+<h1>@Loc["ApiTest_PageTitle"]</h1>
+
+<!-- Lot 038: real HTTP call to the deployed Web API (POST /api/oxo/process) -- a manual,
+     post-deployment verification/demo/debug tool, distinct from ImportProfileTest.razor/
+     ExportProfileTest.razor which run the pipeline in process. -->
+<p class="text-muted small">@Loc["ApiTest_Instructions"]</p>
+
+@if (_importProfiles is null || _exportProfiles is null)
+{
+    <p>@Loc["ApiTest_Loading"]</p>
+}
+else
+{
+    <div class="mb-3">
+        <label class="form-label" for="import-profile-select">@Loc["ApiTest_ImportProfileLabel"]</label>
+        <select id="import-profile-select" class="form-select form-select-lg" @bind="_selectedImportProfileId" disabled="@_processing">
+            <option value="">@Loc["ApiTest_ImportProfilePlaceholder"]</option>
+            @foreach (var profile in _importProfiles)
+            {
+                <option value="@profile.Id">@profile.Name</option>
+            }
+        </select>
+        @if (_importProfiles.Count == 0)
+        {
+            <div class="form-text">@Loc["ApiTest_NoImportProfilesAvailable"]</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="export-profile-select">@Loc["ApiTest_ExportProfileLabel"]</label>
+        <select id="export-profile-select" class="form-select form-select-lg" @bind="_selectedExportProfileId" disabled="@_processing">
+            <option value="">@Loc["ApiTest_ExportProfilePlaceholder"]</option>
+            @foreach (var profile in _exportProfiles)
+            {
+                <option value="@profile.Id">@profile.Name</option>
+            }
+        </select>
+        @if (_exportProfiles.Count == 0)
+        {
+            <div class="form-text">@Loc["ApiTest_NoExportProfilesAvailable"]</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="source-file-input">@Loc["ApiTest_FileLabel"]</label>
+        <div class="input-group">
+            <span class="input-group-text">@((MarkupString)FileUploadIconMarkup)</span>
+            <InputFile id="source-file-input" class="form-control form-control-lg" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@_processing" />
+        </div>
+    </div>
+
+    <div class="right-aligned-actions">
+        <button id="process-button" type="button" class="btn btn-primary btn-lg" disabled="@(!CanProcess || _processing)" @onclick="ProcessAsync">
+            @Loc["ApiTest_ProcessButton"]
+        </button>
+    </div>
+
+    @if (_processing)
+    {
+        <div id="api-test-status" class="alert alert-info d-flex align-items-center gap-2 mt-3">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>@Loc["ApiTest_Processing"]</span>
+        </div>
+    }
+    else if (_result is not null)
+    {
+        @switch (_result.Status)
+        {
+            case OxoApiTestResultStatus.Success:
+                <div id="api-test-result" class="card shadow-sm bg-success-subtle mt-3">
+                    <div class="card-body">
+                        <p>@Loc["ApiTest_SuccessMessage", _result.GeneratedFileName!]</p>
+                        <a id="download-generated-workbook-link" class="btn btn-success w-100 btn-lg"
+                           download="@_result.GeneratedFileName" href="@_downloadDataUri">
+                            @Loc["ApiTest_DownloadButton"]
+                        </a>
+                    </div>
+                </div>
+                break;
+
+            case OxoApiTestResultStatus.BusinessRejection:
+                <div id="api-test-result" class="alert alert-danger mt-3">
+                    <h4>@Loc["ApiTest_RejectedHeading"]</h4>
+                    <ul>
+                        @foreach (var error in _result.RejectionErrors)
+                        {
+                            <li>@error.Sheet / @error.BlockIdentifier: @error.Message</li>
+                        }
+                    </ul>
+                </div>
+                break;
+
+            case OxoApiTestResultStatus.ProfileNotFound:
+                <div id="api-test-result" class="alert alert-warning mt-3">@_result.ProfileNotFoundDetail</div>
+                break;
+
+            case OxoApiTestResultStatus.Unauthorized:
+                <div id="api-test-result" class="alert alert-danger mt-3">@Loc["ApiTest_UnauthorizedMessage"]</div>
+                break;
+
+            case OxoApiTestResultStatus.TechnicalError:
+                <div id="api-test-result" class="alert alert-secondary mt-3">@Loc["ApiTest_TechnicalErrorMessage"]</div>
+                break;
+        }
+    }
+}
+
+@code {
+    // Lot 038: same inline-SVG rationale as every other upload input in this project (V10) -- no
+    // bootstrap-icons font/CSS loaded anywhere here.
+    private const string FileUploadIconMarkup =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5zm0 1v2A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" /><path d="M8.5 11.5a.5.5 0 0 1-1 0V8.707L6.354 9.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707z" /></svg>""";
+
+    // Mono-fichier by contract decision (POST /api/oxo/process doesn't support multi-file, unlike
+    // Lot 033's in-process test pages) -- no multiplication of the multi-file complexity here.
+    private const long MaxFileSizeBytes = 10 * 1024 * 1024;
+
+    private List<ImportProfile>? _importProfiles;
+    private List<ExportProfile>? _exportProfiles;
+    private Guid? _selectedImportProfileId;
+    private Guid? _selectedExportProfileId;
+    private IBrowserFile? _selectedFile;
+    private bool _processing;
+    private OxoApiTestResult? _result;
+    private string? _downloadDataUri;
+
+    private bool CanProcess =>
+        _selectedImportProfileId is not null && _selectedExportProfileId is not null && _selectedFile is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _importProfiles = (await ImportProfileStore.GetAllAsync()).ToList();
+        _exportProfiles = (await ExportProfileStore.GetAllAsync()).ToList();
+    }
+
+    private void OnInputFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _result = null;
+        _downloadDataUri = null;
+    }
+
+    private async Task ProcessAsync()
+    {
+        if (!CanProcess || _processing)
+        {
+            return;
+        }
+
+        _processing = true;
+        _result = null;
+        _downloadDataUri = null;
+        StateHasChanged();
+
+        await using var stream = _selectedFile!.OpenReadStream(MaxFileSizeBytes);
+        var result = await OxoApiTestClient.ProcessAsync(
+            _selectedImportProfileId!.Value, _selectedExportProfileId!.Value, stream, _selectedFile.Name, CancellationToken.None);
+
+        if (result.Status == OxoApiTestResultStatus.Success)
+        {
+            using var memoryStream = new MemoryStream();
+            await result.GeneratedFileContent!.CopyToAsync(memoryStream);
+            _downloadDataUri =
+                $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(memoryStream.ToArray())}";
+        }
+
+        _result = result;
+        _processing = false;
+    }
+}

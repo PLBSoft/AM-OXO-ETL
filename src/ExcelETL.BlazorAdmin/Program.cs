@@ -10,6 +10,8 @@ using ExcelETL.Application.Generation;
 using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
+using ExcelETL.BlazorAdmin.Configuration;
+using ExcelETL.BlazorAdmin.Services;
 using ExcelETL.Hosting;
 using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.Infrastructure.Diagnostics;
@@ -23,6 +25,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,6 +99,28 @@ builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchest
 builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
 builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
 builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
+
+// Lot 038: this is a deliberate, conscious reopening of the "BlazorAdmin never talks to WebAPI
+// over HTTP" rule (see CLAUDE.md's BlazorAdmin-state bullet on Lot K4/UploadTest.razor's retired
+// typed HttpClient) -- ApiTest.razor is a new, explicit third tool for manual post-deployment
+// verification/demo/debug, not a resurrection of that old code. Mirrors
+// ExcelProcessingClientService's own contract (X-Api-Key header, same multipart shape) rather than
+// inventing a new one. No section in appsettings.json itself (production default), same
+// fail-fast-if-unset convention as ApiKeyAuthentication:ApiKey in ExcelETL.WebAPI/Program.cs -- the
+// real production BaseUrl/ApiKey are expected via user secrets/env var at deployment time, not
+// committed here.
+var oxoApiTestClientSection = builder.Configuration.GetSection("OxoApiTestClient");
+OxoApiTestClientOptionsValidator.ValidateOrThrow(
+    oxoApiTestClientSection["BaseUrl"], oxoApiTestClientSection["ApiKey"]);
+builder.Services.Configure<OxoApiTestClientOptions>(oxoApiTestClientSection);
+builder.Services.AddHttpClient<IOxoApiTestClient, OxoApiTestClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<OxoApiTestClientOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+    // Matches ExcelProcessingClientService.DefaultTimeout (legacy client) -- extraction is
+    // synchronous and can take several minutes for large, heavily merged-cell workbooks.
+    client.Timeout = TimeSpan.FromMinutes(6);
+});
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {

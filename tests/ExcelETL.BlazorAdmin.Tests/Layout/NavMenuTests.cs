@@ -115,6 +115,7 @@ public class NavMenuTests : BunitContext
         "nav-import-profiles-link",
         "nav-export-profiles-link",
         "nav-generated-files-link",
+        "nav-api-test-link",
     ];
 
     [Fact]
@@ -146,6 +147,17 @@ public class NavMenuTests : BunitContext
         }
 
         cut.FindAll("#nav-login-link").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorizedAsAdmin_ApiTestLink_NavigatesToApiTestRoute() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
+
+        var cut = Render<NavMenu>();
+
+        var apiTestLink = cut.Find("#nav-api-test-link");
+        apiTestLink.GetAttribute("href").Should().Be("api-test");
     });
 
     [Fact]
@@ -200,6 +212,7 @@ public class NavMenuTests : BunitContext
         {
             "nav-import-profiles-link",
             "nav-export-profiles-link",
+            "nav-api-test-link",
             "nav-users-link",
             "nav-generated-files-link",
             "nav-logs-link",

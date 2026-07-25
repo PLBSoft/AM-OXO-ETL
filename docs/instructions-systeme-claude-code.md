@@ -28,10 +28,14 @@ closed — ask before assuming, never silently redecide.
   (framework-free in the strict sense)
 - `ExcelETL.Infrastructure` : EF Core, ClosedXML, ASP.NET Core Identity live here only
 - `ExcelETL.WebAPI` : references Application + Infrastructure
-- `ExcelETL.BlazorAdmin` : references Application + Infrastructure — never WebAPI directly.
-  No HTTP call to the Web API exists in this app as of Lot K4 (`ExcelProcessingClient`/
-  `/upload-test` were removed along with the retired POC pipeline); `ImportProfileTest.razor`/
-  `ExportProfileTest.razor` run the OXO pipeline in-process instead.
+- `ExcelETL.BlazorAdmin` : references Application + Infrastructure — never WebAPI directly, with
+  **one deliberate, documented exception**: `ApiTest.razor` (`/api-test`, Lot 038) calls the real
+  Web API over HTTP via a typed `HttpClient` (`OxoApiTestClient`) for manual post-deployment
+  verification/demo/debug — the API key is read server-side from configuration
+  (`OxoApiTestClientOptions`), never entered by the admin in the browser. This is a conscious
+  reopening of the rule Lot K4 established (`ExcelProcessingClient`/`/upload-test` were removed
+  along with the retired POC pipeline), not a regression of it — every other page still runs the
+  OXO pipeline in process (`ImportProfileTest.razor`/`ExportProfileTest.razor`).
 - `legacy/` (ASP.NET MVC 5, .NET Framework 4.8): reference style for HTTP M2M client code, not
   part of the .NET 10 solution
 

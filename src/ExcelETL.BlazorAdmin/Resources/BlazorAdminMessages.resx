@@ -1006,4 +1006,58 @@
   <data name="GeneratedFiles_StatusRejected" xml:space="preserve">
     <value>Rejected</value>
   </data>
+  <data name="NavMenu_ApiTest" xml:space="preserve">
+    <value>Web API test</value>
+  </data>
+  <data name="ApiTest_PageTitle" xml:space="preserve">
+    <value>Web API contract test (M2M)</value>
+  </data>
+  <data name="ApiTest_Instructions" xml:space="preserve">
+    <value>Sends a real HTTP request to the deployed Web API (POST /api/oxo/process) -- useful for verifying a deployment, demonstrating the contract, or debugging without the legacy application.</value>
+  </data>
+  <data name="ApiTest_Loading" xml:space="preserve">
+    <value>Loading profiles...</value>
+  </data>
+  <data name="ApiTest_ImportProfileLabel" xml:space="preserve">
+    <value>Import profile</value>
+  </data>
+  <data name="ApiTest_ImportProfilePlaceholder" xml:space="preserve">
+    <value>Select an import profile...</value>
+  </data>
+  <data name="ApiTest_NoImportProfilesAvailable" xml:space="preserve">
+    <value>No import profiles available.</value>
+  </data>
+  <data name="ApiTest_ExportProfileLabel" xml:space="preserve">
+    <value>Export profile</value>
+  </data>
+  <data name="ApiTest_ExportProfilePlaceholder" xml:space="preserve">
+    <value>Select an export profile...</value>
+  </data>
+  <data name="ApiTest_NoExportProfilesAvailable" xml:space="preserve">
+    <value>No export profiles available.</value>
+  </data>
+  <data name="ApiTest_FileLabel" xml:space="preserve">
+    <value>Source file (.xlsx)</value>
+  </data>
+  <data name="ApiTest_ProcessButton" xml:space="preserve">
+    <value>Send to Web API</value>
+  </data>
+  <data name="ApiTest_Processing" xml:space="preserve">
+    <value>Calling the Web API -- this can take a while for large files...</value>
+  </data>
+  <data name="ApiTest_SuccessMessage" xml:space="preserve">
+    <value>The Web API returned the generated workbook: {0}</value>
+  </data>
+  <data name="ApiTest_DownloadButton" xml:space="preserve">
+    <value>Download generated workbook</value>
+  </data>
+  <data name="ApiTest_RejectedHeading" xml:space="preserve">
+    <value>The file was rejected (422)</value>
+  </data>
+  <data name="ApiTest_UnauthorizedMessage" xml:space="preserve">
+    <value>The Web API rejected the request as unauthenticated (401). Check the server's OxoApiTestClient:ApiKey configuration -- it must match the Web API's own ApiKeyAuthentication:ApiKey.</value>
+  </data>
+  <data name="ApiTest_TechnicalErrorMessage" xml:space="preserve">
+    <value>An unexpected error occurred while calling the Web API. Check the server logs for details.</value>
+  </data>
 </root>
