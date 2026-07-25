@@ -310,6 +310,47 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         sink.Entries.Should().Contain(e => e.Message.Contains("OXO egress") && e.Message.Contains("200"));
     }
 
+    // Lot 036.3: no production-code change here -- these tests only add the missing HTTP coverage.
+    // Investigation found the "no File field at all" case never reaches OxoController's own
+    // request.File is null check: [ApiController]'s automatic model-state validation treats the
+    // non-nullable IFormFile property as implicitly required and short-circuits with its own
+    // standard ProblemDetails body before the action runs -- verified here rather than assumed.
+    [Fact]
+    public async Task Process_WithoutFileFieldAtAll_ReturnsBadRequestFromAutomaticModelValidation()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+
+        using var content = new MultipartFormDataContent
+        {
+            { new StringContent(importProfileId.ToString()), "ImportProfileId" },
+            { new StringContent(exportProfileId.ToString()), "ExportProfileId" }
+        };
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The File field is required.");
+    }
+
+    [Fact]
+    public async Task Process_WithZeroLengthFile_ReturnsBadRequestWithSameMessageAsMissingFile()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var emptyStream = new MemoryStream();
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, emptyStream);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        // Same code path as the missing-file-field case (request.File.Length == 0), verified to
+        // produce byte-for-byte the same message rather than assumed.
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("A non-empty .xlsx file must be uploaded.");
+    }
+
     private HttpClient CreateAuthenticatedClient()
     {
         var client = _factory.CreateClient();
