@@ -1,3 +1,4 @@
+using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Generation.Profile;
@@ -10,7 +11,7 @@ namespace ExcelETL.Domain.Generation.Profile;
 // constructor-overload pattern for reconstructing an existing profile under its original Id.
 public sealed record ExportProfile
 {
-    public const int MaxNameLength = 60;
+    public const int MaxNameLength = ProfileNaming.MaxNameLength;
 
     // See RepeatingBlockLocator.Fields (Extraction/Primitives) for why this needs a backing field
     // instead of a plain auto-property: EF Core cannot constructor-bind an entity-collection

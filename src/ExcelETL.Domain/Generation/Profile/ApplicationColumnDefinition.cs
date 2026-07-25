@@ -1,3 +1,4 @@
+using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Generation.Profile;
@@ -9,7 +10,7 @@ namespace ExcelETL.Domain.Generation.Profile;
 // case-insensitive, see SheetGenerationEngine) to decide whether MarkValue is written for a given row.
 public sealed record ApplicationColumnDefinition
 {
-    public const string DefaultMarkValue = "X";
+    public const string DefaultMarkValue = ColumnMarking.DefaultMarkValue;
 
     public string ApplicationNom { get; }
     public string Header { get; }

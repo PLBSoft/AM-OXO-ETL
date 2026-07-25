@@ -1,3 +1,4 @@
+using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Exceptions;
 
 namespace ExcelETL.Domain.Generation.Profile;
@@ -9,7 +10,7 @@ namespace ExcelETL.Domain.Generation.Profile;
 // SheetExtractionRule.SheetName/Locator.Sheet on the import side).
 public sealed record PointColumnDefinition
 {
-    public const string DefaultMarkValue = "X";
+    public const string DefaultMarkValue = ColumnMarking.DefaultMarkValue;
 
     public string ColonneNom { get; }
     public string Header { get; }

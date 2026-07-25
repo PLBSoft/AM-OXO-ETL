@@ -10,7 +10,7 @@ namespace ExcelETL.Domain.Extraction.Profile;
 public sealed class ImportProfile : Entity
 {
     public const string DefaultReperePrefix = "MAD-OXO-";
-    public const int MaxNameLength = 60;
+    public const int MaxNameLength = ProfileNaming.MaxNameLength;
 
     // See RepeatingBlockLocator.Fields (Extraction/Primitives) for why SheetRules needs a backing
     // field instead of a plain auto-property: EF Core cannot constructor-bind an entity-collection
