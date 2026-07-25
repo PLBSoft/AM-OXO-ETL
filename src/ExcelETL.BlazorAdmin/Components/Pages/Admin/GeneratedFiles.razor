@@ -1,0 +1,217 @@
+@page "/generated-files"
+@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+
+@using ExcelETL.Application.Archiving
+@using ExcelETL.Domain.Archiving
+@using ExcelETL.Infrastructure.Archiving
+@using ExcelETL.Infrastructure.Identity
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.Extensions.Options
+
+@inject IGeneratedFileArchiveStore GeneratedFileArchiveStore
+@inject IOptions<GeneratedFilesArchiveOptions> ArchiveOptions
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["GeneratedFiles_PageTitle"]</PageTitle>
+
+<h1>@Loc["GeneratedFiles_PageTitle"]</h1>
+
+<div class="mb-3">
+    <label class="form-label" for="generated-files-search-input">@Loc["GeneratedFiles_SearchLabel"]</label>
+    <div class="input-group">
+        <input id="generated-files-search-input" type="text" class="form-control"
+               placeholder="@Loc["GeneratedFiles_SearchPlaceholder"]" @bind="_searchTerm" @bind:event="oninput" />
+        <button id="generated-files-search-button" type="button" class="btn btn-primary" @onclick="SearchAsync">
+            @Loc["GeneratedFiles_SearchButton"]
+        </button>
+        <button id="generated-files-clear-search-button" type="button" class="btn btn-outline-secondary" @onclick="ClearSearchAsync">
+            @Loc["GeneratedFiles_ClearSearchButton"]
+        </button>
+    </div>
+</div>
+
+@if (_records is null)
+{
+    <p>@Loc["GeneratedFiles_Loading"]</p>
+}
+else if (_records.Count == 0)
+{
+    <p>@Loc["GeneratedFiles_NoEntries"]</p>
+}
+else
+{
+    <table class="table d-none d-md-table">
+        <thead>
+            <tr>
+                <th>@Loc["GeneratedFiles_DateColumn"]</th>
+                <th>@Loc["GeneratedFiles_EquipementRepereColumn"]</th>
+                <th>@Loc["GeneratedFiles_StatusColumn"]</th>
+                <th>@Loc["GeneratedFiles_SourceFileColumn"]</th>
+                <th>@Loc["GeneratedFiles_TargetFileColumn"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in _records)
+            {
+                <tr>
+                    <td>@record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <td>@(record.EquipementRepere ?? "—")</td>
+                    <td><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></td>
+                    <td>
+                        @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHref))
+                        {
+                            <a id="@($"download-source-link-{record.Id}")" class="btn btn-outline-secondary btn-sm"
+                               href="@sourceHref" download="@record.SourceFileName">
+                                @Loc["GeneratedFiles_DownloadSourceButton"]
+                            </a>
+                        }
+                        else
+                        {
+                            <button id="@($"prepare-download-source-button-{record.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    @onclick="() => PrepareSourceDownloadAsync(record)">
+                                @Loc["GeneratedFiles_DownloadSourceButton"]
+                            </button>
+                        }
+                    </td>
+                    <td>
+                        @if (record.TargetFilePath is null)
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                        else if (_targetDownloadHrefs.TryGetValue(record.Id, out var targetHref))
+                        {
+                            <a id="@($"download-target-link-{record.Id}")" class="btn btn-outline-secondary btn-sm"
+                               href="@targetHref" download="@record.TargetFileName">
+                                @Loc["GeneratedFiles_DownloadTargetButton"]
+                            </a>
+                        }
+                        else
+                        {
+                            <button id="@($"prepare-download-target-button-{record.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    @onclick="() => PrepareTargetDownloadAsync(record)">
+                                @Loc["GeneratedFiles_DownloadTargetButton"]
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-md-none">
+        @foreach (var record in _records)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">@(record.EquipementRepere ?? "—")</h5>
+                    <p class="card-text mb-1">@record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                    <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
+                    <div class="d-flex gap-2">
+                        @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
+                        {
+                            <a id="@($"download-source-link-card-{record.Id}")" class="btn btn-outline-secondary btn-sm"
+                               href="@sourceHrefCard" download="@record.SourceFileName">
+                                @Loc["GeneratedFiles_DownloadSourceButton"]
+                            </a>
+                        }
+                        else
+                        {
+                            <button id="@($"prepare-download-source-button-card-{record.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    @onclick="() => PrepareSourceDownloadAsync(record)">
+                                @Loc["GeneratedFiles_DownloadSourceButton"]
+                            </button>
+                        }
+
+                        @if (record.TargetFilePath is null)
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                        else if (_targetDownloadHrefs.TryGetValue(record.Id, out var targetHrefCard))
+                        {
+                            <a id="@($"download-target-link-card-{record.Id}")" class="btn btn-outline-secondary btn-sm"
+                               href="@targetHrefCard" download="@record.TargetFileName">
+                                @Loc["GeneratedFiles_DownloadTargetButton"]
+                            </a>
+                        }
+                        else
+                        {
+                            <button id="@($"prepare-download-target-button-card-{record.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm"
+                                    @onclick="() => PrepareTargetDownloadAsync(record)">
+                                @Loc["GeneratedFiles_DownloadTargetButton"]
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<GeneratedFileRecord>? _records;
+    private string _searchTerm = "";
+    private readonly Dictionary<Guid, string> _sourceDownloadHrefs = new();
+    private readonly Dictionary<Guid, string> _targetDownloadHrefs = new();
+
+    protected override async Task OnInitializedAsync() => await LoadRecordsAsync();
+
+    private async Task LoadRecordsAsync() => _records = await GeneratedFileArchiveStore.SearchAsync(null);
+
+    private async Task SearchAsync() => _records = await GeneratedFileArchiveStore.SearchAsync(_searchTerm);
+
+    private async Task ClearSearchAsync()
+    {
+        _searchTerm = "";
+        await LoadRecordsAsync();
+    }
+
+    // Data: URI download, same no-JS-interop mechanism as ExportProfileTest.razor (Lot J3/X1) -- but
+    // built lazily per row on click rather than eagerly for the whole list, since this list has no
+    // purge policy yet (see the ticket) and reading every archived source/target file into memory on
+    // every page load would not scale as the archive grows. A synchronous File.ReadAllBytes (not
+    // ReadAllBytesAsync) is deliberate: these are small, occasional, one-shot admin reads (source
+    // ~1-6 MB, target ~20-100 KB per the ticket's own volume estimate), and a real cross-thread I/O
+    // continuation was observed to race past bUnit's render-completion wait in this component's own
+    // tests -- a synchronous read keeps the click handler's render commit fully deterministic.
+    private Task PrepareSourceDownloadAsync(GeneratedFileRecord record)
+    {
+        var bytes = File.ReadAllBytes(Path.Combine(ArchiveOptions.Value.RootPath, record.SourceFilePath));
+        _sourceDownloadHrefs[record.Id] = BuildDataUrl(bytes);
+        return Task.CompletedTask;
+    }
+
+    private Task PrepareTargetDownloadAsync(GeneratedFileRecord record)
+    {
+        if (record.TargetFilePath is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var bytes = File.ReadAllBytes(Path.Combine(ArchiveOptions.Value.RootPath, record.TargetFilePath));
+        _targetDownloadHrefs[record.Id] = BuildDataUrl(bytes);
+        return Task.CompletedTask;
+    }
+
+    private static string BuildDataUrl(byte[] bytes) =>
+        $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(bytes)}";
+
+    private static string GetStatusBadgeClass(GeneratedFileArchiveStatus status) => status switch
+    {
+        GeneratedFileArchiveStatus.Success => "bg-success",
+        GeneratedFileArchiveStatus.NonBlockingWarning => "bg-warning text-dark",
+        GeneratedFileArchiveStatus.Rejected => "bg-danger",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusLabel(GeneratedFileArchiveStatus status) => status switch
+    {
+        GeneratedFileArchiveStatus.Success => Loc["GeneratedFiles_StatusSuccess"],
+        GeneratedFileArchiveStatus.NonBlockingWarning => Loc["GeneratedFiles_StatusNonBlockingWarning"],
+        GeneratedFileArchiveStatus.Rejected => Loc["GeneratedFiles_StatusRejected"],
+        _ => status.ToString()
+    };
+}

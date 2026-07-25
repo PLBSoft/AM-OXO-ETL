@@ -114,6 +114,7 @@ public class NavMenuTests : BunitContext
         "nav-users-link",
         "nav-import-profiles-link",
         "nav-export-profiles-link",
+        "nav-generated-files-link",
     ];
 
     [Fact]
@@ -200,6 +201,7 @@ public class NavMenuTests : BunitContext
             "nav-import-profiles-link",
             "nav-export-profiles-link",
             "nav-users-link",
+            "nav-generated-files-link",
             "nav-logs-link",
             "nav-profile-link",
         };

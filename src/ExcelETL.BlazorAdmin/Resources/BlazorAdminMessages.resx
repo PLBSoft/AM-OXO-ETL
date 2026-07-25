@@ -928,4 +928,58 @@
   <data name="ExportProfileTest_StatusTechnicalError" xml:space="preserve">
     <value>Technical error</value>
   </data>
+  <data name="NavMenu_GeneratedFiles" xml:space="preserve">
+    <value>Generated files</value>
+  </data>
+  <data name="GeneratedFiles_PageTitle" xml:space="preserve">
+    <value>Generated files</value>
+  </data>
+  <data name="GeneratedFiles_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="GeneratedFiles_NoEntries" xml:space="preserve">
+    <value>No generated files found.</value>
+  </data>
+  <data name="GeneratedFiles_SearchLabel" xml:space="preserve">
+    <value>Search by equipment reference</value>
+  </data>
+  <data name="GeneratedFiles_SearchPlaceholder" xml:space="preserve">
+    <value>e.g. C7401</value>
+  </data>
+  <data name="GeneratedFiles_SearchButton" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="GeneratedFiles_ClearSearchButton" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="GeneratedFiles_DateColumn" xml:space="preserve">
+    <value>Generated on</value>
+  </data>
+  <data name="GeneratedFiles_EquipementRepereColumn" xml:space="preserve">
+    <value>Equipment reference</value>
+  </data>
+  <data name="GeneratedFiles_StatusColumn" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="GeneratedFiles_SourceFileColumn" xml:space="preserve">
+    <value>Source file</value>
+  </data>
+  <data name="GeneratedFiles_TargetFileColumn" xml:space="preserve">
+    <value>Target file</value>
+  </data>
+  <data name="GeneratedFiles_DownloadSourceButton" xml:space="preserve">
+    <value>Download source</value>
+  </data>
+  <data name="GeneratedFiles_DownloadTargetButton" xml:space="preserve">
+    <value>Download target</value>
+  </data>
+  <data name="GeneratedFiles_StatusSuccess" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="GeneratedFiles_StatusNonBlockingWarning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="GeneratedFiles_StatusRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
 </root>
