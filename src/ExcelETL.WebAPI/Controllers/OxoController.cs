@@ -42,9 +42,13 @@ public class OxoController(
             request.File.FileName, request.File.Length, HttpContext.Connection.RemoteIpAddress);
 
         await using var fileStream = request.File.OpenReadStream();
-        using var workbookReader = new ClosedXmlWorkbookReader(fileStream);
+        using var bufferedContent = new MemoryStream();
+        await fileStream.CopyToAsync(bufferedContent, cancellationToken);
+        var sourceFileContent = bufferedContent.ToArray();
+
+        using var workbookReader = new ClosedXmlWorkbookReader(new MemoryStream(sourceFileContent));
         var command = new ProcessOxoFileCommand(
-            request.ImportProfileId, request.ExportProfileId, workbookReader, request.File.FileName);
+            request.ImportProfileId, request.ExportProfileId, workbookReader, request.File.FileName, sourceFileContent);
 
         // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
         // exception are not caught here: GlobalExceptionHandler translates them into a localized

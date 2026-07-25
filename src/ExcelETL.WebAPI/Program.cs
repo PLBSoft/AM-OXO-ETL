@@ -1,3 +1,4 @@
+using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
@@ -7,6 +8,7 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Hosting;
+using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
@@ -53,6 +55,7 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
 
 builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
+builder.Services.Configure<GeneratedFilesArchiveOptions>(builder.Configuration.GetSection("GeneratedFilesArchive"));
 
 var apiKeySection = builder.Configuration.GetSection("ApiKeyAuthentication");
 if (string.IsNullOrWhiteSpace(apiKeySection["ApiKey"]))
@@ -73,6 +76,8 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddSingleton<IGeneratedFileWriter, FileSystemGeneratedFileWriter>();
+builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveStore>();
 
 // OXO pipeline (Lot K1/K2) -- since Lot K4's removal of the old ExtractionConfig/ProcessExcelFile
 // pipeline, the only pipeline this host exposes. Same registrations as

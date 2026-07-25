@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
+using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Generation;
+using ExcelETL.Domain.Archiving;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Fields;
@@ -17,6 +19,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Moq;
 using Xunit;
 using IsolementFieldNames = ExcelETL.Application.Extraction.Oxo.Isolement.IsolementFieldNames;
 using ProcedureFieldNames = ExcelETL.Application.Extraction.Oxo.Procedure.ProcedureFieldNames;
@@ -34,6 +37,8 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
     private readonly string _archiveDirectory = Path.Combine(Path.GetTempPath(), "OxoProcessEndpointTests_" + Guid.NewGuid());
+    private readonly string _generatedFilesArchiveRoot =
+        Path.Combine(Path.GetTempPath(), "OxoProcessEndpointTests_GeneratedFilesArchive_" + Guid.NewGuid());
     private readonly WebApplicationFactory<Program> _factory;
 
     public OxoProcessEndpointTests(WebApplicationFactory<Program> factory)
@@ -44,6 +49,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         {
             builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
             builder.UseSetting("FileStorage:ArchiveDirectory", _archiveDirectory);
+            builder.UseSetting("GeneratedFilesArchive:RootPath", _generatedFilesArchiveRoot);
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
             builder.UseSetting("Database:AutoMigrate", "false");
 
@@ -147,6 +153,132 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         using var generated = new XLWorkbook(new MemoryStream(bytes));
         var enfants = generated.Worksheet("Enfants");
         enfants.RowsUsed().Should().Contain(row => row.Cell(2).GetString() == "VANNE");
+    }
+
+    // Lot 034: the request/response contract is unchanged by any of the assertions above (still
+    // asserting 200/422/content-type exactly as Lot K did) -- these new tests only add archive-side
+    // assertions on top of the pre-existing, untouched ones.
+
+    [Fact]
+    public async Task Process_WithValidRequestAgainstC7401Fixture_PersistsArchiveRecordAndBothFilesOnDisk()
+    {
+        // C7401's real fixture carries its own non-blocking warning since Lot 032 (a TYPE-incoherence
+        // anomaly in PROCEDURE's tâches multiples) -- Status here is NonBlockingWarning, not Success;
+        // the genuine Success-status mapping is covered at the Application unit-test level instead
+        // (ProcessOxoFileServiceTests.ProcessAsync_WhenFileIsAccepted_...), where a zero-error
+        // ImportResult can be constructed directly rather than depending on a real fixture staying
+        // warning-free forever.
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var records = await SearchArchiveAsync();
+        var record = records.Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.NonBlockingWarning);
+        record.EquipementRepere.Should().Be("38-C7401");
+        record.SourceFileName.Should().Be("C7401.xlsx");
+        record.TargetFileName.Should().NotBeNull();
+        record.TargetFilePath.Should().NotBeNull();
+        record.ImportProfileId.Should().Be(importProfileId);
+        record.ExportProfileId.Should().Be(exportProfileId);
+
+        File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.SourceFilePath)).Should().BeTrue();
+        File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.TargetFilePath!)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Process_WithD8570Fixture_PersistsNonBlockingWarningArchiveRecordWithBothFiles()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "D8570.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var records = await SearchArchiveAsync();
+        var record = records.Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.NonBlockingWarning);
+        record.TargetFilePath.Should().NotBeNull();
+        File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.SourceFilePath)).Should().BeTrue();
+        File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.TargetFilePath!)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Process_WithRejectedFile_PersistsRejectedArchiveRecordWithSourceOnlyOnDisk()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceWorkbook, "corrompu.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+
+        var records = await SearchArchiveAsync();
+        var record = records.Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
+        record.EquipementRepere.Should().BeNull();
+        record.SourceFileName.Should().Be("corrompu.xlsx");
+        record.TargetFileName.Should().BeNull();
+        record.TargetFilePath.Should().BeNull();
+
+        File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.SourceFilePath)).Should().BeTrue();
+        Directory.GetFiles(_generatedFilesArchiveRoot, "*_target_*", SearchOption.AllDirectories).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Process_WhenArchivingFails_StillReturns200WithGeneratedFile_AndLogsTheFailure()
+    {
+        var sink = new CapturedLogEntries();
+        using var brokenArchiveFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.AddSingleton<ILogger<ProcessOxoFileService>>(new CapturingLogger<ProcessOxoFileService>(sink));
+
+                var throwingWriter = new Mock<IGeneratedFileWriter>();
+                throwingWriter
+                    .Setup(w => w.WriteSourceAsync(
+                        It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new IOException("simulated disk failure"));
+                services.RemoveAll<IGeneratedFileWriter>();
+                services.AddSingleton<IGeneratedFileWriter>(throwingWriter.Object);
+            });
+        });
+        var client = brokenArchiveFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(brokenArchiveFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should().Be(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        bytes.Should().NotBeEmpty();
+
+        sink.Entries.Should().Contain(e =>
+            e.Level == LogLevel.Error && e.Message.Contains("Failed to archive generated files"));
+
+        using var scope = brokenArchiveFactory.Services.CreateScope();
+        var archiveStore = scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>();
+        (await archiveStore.SearchAsync(null)).Should().BeEmpty();
+    }
+
+    private async Task<IReadOnlyList<GeneratedFileRecord>> SearchArchiveAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var archiveStore = scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>();
+        return await archiveStore.SearchAsync(null);
     }
 
     // K2: a successful call to the route produces an upload log entry and an egress log entry,
@@ -367,6 +499,11 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         if (Directory.Exists(_archiveDirectory))
         {
             Directory.Delete(_archiveDirectory, recursive: true);
+        }
+
+        if (Directory.Exists(_generatedFilesArchiveRoot))
+        {
+            Directory.Delete(_generatedFilesArchiveRoot, recursive: true);
         }
     }
 }

@@ -1,3 +1,4 @@
+using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
@@ -10,6 +11,7 @@ using ExcelETL.Application.Identity;
 using ExcelETL.BlazorAdmin.Components;
 using ExcelETL.BlazorAdmin.Components.Account;
 using ExcelETL.Hosting;
+using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.Infrastructure.Diagnostics;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Identity;
@@ -68,6 +70,13 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
 
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
+
+// Lot 034: read access to the generated-files archive (/generated-files admin page) -- same
+// GeneratedFilesArchive:RootPath section and registrations as ExcelETL.WebAPI/Program.cs, which is
+// the host that actually writes to this archive via POST /api/oxo/process.
+builder.Services.Configure<GeneratedFilesArchiveOptions>(builder.Configuration.GetSection("GeneratedFilesArchive"));
+builder.Services.AddSingleton<IGeneratedFileWriter, FileSystemGeneratedFileWriter>();
+builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveStore>();
 
 // The OXO extraction pipeline (Lot A-D), wired here so the /import-profiles/test admin page can run
 // it in-process against an uploaded file. All stateless, so Singleton.
