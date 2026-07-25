@@ -36,8 +36,8 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("Register");
-        cut.Markup.Should().Contain("Login");
+        cut.Find("#nav-register-link").TextContent.Should().Contain("Register");
+        cut.Find("#nav-login-link").TextContent.Should().Contain("Login");
     });
 
     [Fact]
@@ -47,8 +47,8 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().Contain("S'inscrire");
-        cut.Markup.Should().Contain("Connexion");
+        cut.Find("#nav-register-link").TextContent.Should().Contain("S'inscrire");
+        cut.Find("#nav-login-link").TextContent.Should().Contain("Connexion");
     });
 
     [Fact]
@@ -106,7 +106,7 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Markup.Should().NotContain("My Profile");
+        cut.FindAll("#nav-profile-link").Should().BeEmpty();
     });
 
     private static readonly string[] AdminLinkIds =
