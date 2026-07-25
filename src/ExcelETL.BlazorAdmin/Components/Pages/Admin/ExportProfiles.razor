@@ -1,8 +1,8 @@
 @page "/export-profiles"
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
-@using System.Text.RegularExpressions
 @using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Generation.Profile
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
@@ -73,19 +73,19 @@ else
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Edit"]" title="@Loc["ExportProfiles_Edit"]"
                                     @onclick="() => EditProfile(profile)">
-                                @((MarkupString)PencilIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="duplicate-export-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Duplicate"]" title="@Loc["ExportProfiles_Duplicate"]"
                                     @onclick="() => DuplicateProfileAsync(profile)">
-                                @((MarkupString)CopyIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-export-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
-                                @((MarkupString)TrashIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         }
                     </td>
@@ -124,19 +124,19 @@ else
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Edit"]" title="@Loc["ExportProfiles_Edit"]"
                                     @onclick="() => EditProfile(profile)">
-                                @((MarkupString)PencilIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="duplicate-export-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Duplicate"]" title="@Loc["ExportProfiles_Duplicate"]"
                                     @onclick="() => DuplicateProfileAsync(profile)">
-                                @((MarkupString)CopyIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-export-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
-                                @((MarkupString)TrashIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         </div>
                     }
@@ -147,20 +147,6 @@ else
 }
 
 @code {
-    // V3: same icon-only row actions as ImportProfiles.razor -- see the comment there for the
-    // pencil-square/copy shape choice and .block-field-icon-btn reuse rationale.
-    private const string PencilIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" /><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /></svg>""";
-
-    private const string CopyIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" /><path d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" /></svg>""";
-
-    // Lot 028 (28.2): same rationale as ImportProfiles.razor's own TrashIconMarkup -- inline SVG,
-    // not the ticket's literal "bi bi-trash" span example, for consistency with the project's
-    // no-font-icon convention.
-    private const string TrashIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L13.882 4zM2.5 3V2h11v1z" /></svg>""";
-
     private List<ExportProfile>? _profiles;
     private Guid? _profileIdPendingDeletion;
     private string? _profileNamePendingDeletion;
@@ -197,38 +183,11 @@ else
 
     private async Task DuplicateProfileAsync(ExportProfile profile)
     {
-        var duplicate = new ExportProfile(BuildAvailableDuplicateName(profile.Name), profile.SheetRules);
+        var duplicateName = ProfileDuplicateNaming.BuildAvailableDuplicateName(
+            profile.Name, Loc["ExportProfiles_DuplicateSuffix"].Value, _profiles!.Select(p => p.Name).ToList());
+        var duplicate = new ExportProfile(duplicateName, profile.SheetRules);
 
         await ExportProfileStore.SaveAsync(duplicate);
         await LoadProfilesAsync();
-    }
-
-    // See ImportProfiles.razor's BuildAvailableDuplicateName for the full rationale -- symmetric
-    // auto-increment-suffix collision resolution (Lot 027, 27.4).
-    private string BuildAvailableDuplicateName(string profileName)
-    {
-        var suffixText = Loc["ExportProfiles_DuplicateSuffix"].Value;
-        var innerSuffix = suffixText.Trim().TrimStart('(').TrimEnd(')').Trim();
-
-        var suffixPattern = new Regex($@"^(?<base>.+) \({Regex.Escape(innerSuffix)}(?: \d+)?\)$");
-        var match = suffixPattern.Match(profileName);
-        var baseName = match.Success ? match.Groups["base"].Value : profileName;
-
-        var attempt = 1;
-        while (true)
-        {
-            var candidate = attempt == 1
-                ? $"{baseName} ({innerSuffix})"
-                : $"{baseName} ({innerSuffix} {attempt})";
-
-            var isTaken = _profiles!.Any(
-                p => string.Equals(p.Name.Trim(), candidate.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!isTaken)
-            {
-                return candidate;
-            }
-
-            attempt++;
-        }
     }
 }

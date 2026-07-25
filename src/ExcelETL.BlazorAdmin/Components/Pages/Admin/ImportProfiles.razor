@@ -2,8 +2,8 @@
 @page "/"
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
-@using System.Text.RegularExpressions
 @using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
@@ -80,19 +80,19 @@ else
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
                                     @onclick="() => EditProfile(profile)">
-                                @((MarkupString)PencilIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="duplicate-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
                                     @onclick="() => DuplicateProfileAsync(profile)">
-                                @((MarkupString)CopyIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
-                                @((MarkupString)TrashIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         }
                     </td>
@@ -134,19 +134,19 @@ else
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
                                     @onclick="() => EditProfile(profile)">
-                                @((MarkupString)PencilIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="duplicate-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Duplicate"]" title="@Loc["ImportProfiles_Duplicate"]"
                                     @onclick="() => DuplicateProfileAsync(profile)">
-                                @((MarkupString)CopyIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
-                                @((MarkupString)TrashIconMarkup)
+                                @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         </div>
                     }
@@ -157,27 +157,6 @@ else
 }
 
 @code {
-    // V3: icon-only row actions (grid row is too tight for text labels). Reuses SheetRuleForm.razor's
-    // "Modifier" icon shape (bi-pencil-square, not the ticket's literally-named bi-pencil, for visual
-    // consistency with the app's other Modify icons) and .block-field-icon-btn's 34px square sizing
-    // (a generic icon-button utility despite its "block-field" name, see ExportProfileEditor's own
-    // documented reuse of the same class for the same reason). No bootstrap-icons font/CSS is loaded
-    // anywhere in this project (see NavMenu.razor.css) -- icons are inline SVG shapes, not `bi bi-*`
-    // classes, which would render nothing.
-    private const string PencilIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" /><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" /></svg>""";
-
-    private const string CopyIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1z" /><path d="M2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z" /></svg>""";
-
-    // Lot 028 (28.2): same icon-only-row-action reuse as pencil/copy above -- the ticket's own
-    // literal test example ("<span class=\"bi bi-trash\">") assumes this project loads Bootstrap
-    // Icons as a font, which it never has (see NavMenu.razor.css) -- every row icon here is an
-    // inline SVG constant instead, so this follows that established pattern rather than the
-    // ticket's example markup verbatim.
-    private const string TrashIconMarkup =
-        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L13.882 4zM2.5 3V2h11v1z" /></svg>""";
-
     private List<ImportProfile>? _profiles;
     private Guid? _profileIdPendingDeletion;
     private string? _profileNamePendingDeletion;
@@ -214,8 +193,10 @@ else
 
     private async Task DuplicateProfileAsync(ImportProfile profile)
     {
+        var duplicateName = ProfileDuplicateNaming.BuildAvailableDuplicateName(
+            profile.Name, Loc["ImportProfiles_DuplicateSuffix"].Value, _profiles!.Select(p => p.Name).ToList());
         var duplicate = new ImportProfile(
-            BuildAvailableDuplicateName(profile.Name),
+            duplicateName,
             profile.ReperePrefix,
             profile.EquipementTypeElementNom,
             profile.DefaultTableaux,
@@ -224,39 +205,5 @@ else
 
         await ImportProfileStore.SaveAsync(duplicate);
         await LoadProfilesAsync();
-    }
-
-    // Lot 027 (27.4): resolves a name collision by auto-incrementing suffix rather than blocking or
-    // silently renaming -- "{Name} (Copy)" -> "{Name} (Copy 2)" -> "{Name} (Copy 3)"... Checked against
-    // the already-loaded _profiles list (no extra round trip to the Store). Stripping an already-present
-    // "(Copy[ N])" suffix off the clicked profile's own name first means duplicating either the original
-    // or one of its existing copies always increments from the same shared base name, per the ticket's
-    // own worked examples -- both land on the same next-available "(Copy N)", never a nested
-    // "(Copy) (Copy)".
-    private string BuildAvailableDuplicateName(string profileName)
-    {
-        var suffixText = Loc["ImportProfiles_DuplicateSuffix"].Value;
-        var innerSuffix = suffixText.Trim().TrimStart('(').TrimEnd(')').Trim();
-
-        var suffixPattern = new Regex($@"^(?<base>.+) \({Regex.Escape(innerSuffix)}(?: \d+)?\)$");
-        var match = suffixPattern.Match(profileName);
-        var baseName = match.Success ? match.Groups["base"].Value : profileName;
-
-        var attempt = 1;
-        while (true)
-        {
-            var candidate = attempt == 1
-                ? $"{baseName} ({innerSuffix})"
-                : $"{baseName} ({innerSuffix} {attempt})";
-
-            var isTaken = _profiles!.Any(
-                p => string.Equals(p.Name.Trim(), candidate.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (!isTaken)
-            {
-                return candidate;
-            }
-
-            attempt++;
-        }
     }
 }
