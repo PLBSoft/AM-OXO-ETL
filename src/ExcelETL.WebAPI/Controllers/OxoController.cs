@@ -70,7 +70,28 @@ public class OxoController(
         await fileStream.CopyToAsync(bufferedContent, cancellationToken);
         var sourceFileContent = bufferedContent.ToArray();
 
-        using var workbookReader = new ClosedXmlWorkbookReader(new MemoryStream(sourceFileContent));
+        // Lot 036.2: a non-Excel/corrupted byte stream makes XLWorkbook's own constructor throw
+        // System.IO.FileFormatException -- a bare BCL type, not an IHasDomainErrorCode/
+        // IHasApplicationErrorCode exception, so GlobalExceptionHandler's BusinessExceptionLocalizer
+        // would never pick it up (TryLocalize returns null for it, same as any unrecognized
+        // exception, falling through to the framework's default 500). Caught explicitly here
+        // instead, at the same controller level as the pre-existing empty-file check, and
+        // translated into a 400 rather than an unqualified 500.
+        ClosedXmlWorkbookReader workbookReader;
+        try
+        {
+            workbookReader = new ClosedXmlWorkbookReader(new MemoryStream(sourceFileContent));
+        }
+        catch (FileFormatException)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Detail = localizer["InvalidExcelFileFormat"]
+            });
+        }
+
+        using var _ = workbookReader;
         var command = new ProcessOxoFileCommand(
             request.ImportProfileId.Value, request.ExportProfileId.Value, workbookReader, request.File.FileName,
             sourceFileContent);

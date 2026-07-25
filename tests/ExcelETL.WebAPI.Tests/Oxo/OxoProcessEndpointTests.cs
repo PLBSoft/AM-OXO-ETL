@@ -181,6 +181,26 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
 
+    // Lot 036.2: a non-Excel byte stream (plain text renamed .xlsx) makes XLWorkbook's own
+    // constructor throw System.IO.FileFormatException -- confirmed by direct investigation (36.0),
+    // not assumed -- which is caught explicitly in OxoController and translated to 400, never an
+    // unqualified 500.
+    [Fact]
+    public async Task Process_WithNonExcelFileContent_ReturnsBadRequestWithExplicitMessage()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var invalidContent = new MemoryStream(
+            System.Text.Encoding.UTF8.GetBytes("this is not an excel file, just plain text content"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, invalidContent);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The uploaded file is not a valid Excel workbook or is corrupted.");
+    }
+
     [Fact]
     public async Task Process_WithValidRequestAgainstC7401Fixture_ReturnsGeneratedWorkbookWithParentsAndEnfants()
     {

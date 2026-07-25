@@ -55,4 +55,7 @@
   <data name="ExportProfileIdRequired" xml:space="preserve">
     <value>The ExportProfileId parameter is required.</value>
   </data>
+  <data name="InvalidExcelFileFormat" xml:space="preserve">
+    <value>The uploaded file is not a valid Excel workbook or is corrupted.</value>
+  </data>
 </root>
