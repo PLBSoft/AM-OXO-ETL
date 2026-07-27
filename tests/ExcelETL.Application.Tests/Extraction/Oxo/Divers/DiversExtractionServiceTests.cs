@@ -22,11 +22,15 @@ public class DiversExtractionServiceTests
     private const string PfSignatureColonne = "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES";
     private const string PfValidationColonne = "PF : VALIDATION CONSTAT ENCRASSEMENT";
     private const string PfAccordColonne = "PF : ACCORD TRAVAUX FEU";
+    private const string ReperePrefix = "MAD-OXO-";
 
     private readonly DiversExtractionService _sut =
         new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<DiversExtractionService>.Instance);
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<DiversExtractionService>.Instance);
 
+    // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
+    // hardcoded in DiversExtractionService -- so this test's Mock<IWorkbookReader> "N6" cell key
+    // stays exactly as before the lot.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 3, IsolementFieldNames.Identification,
@@ -44,6 +48,8 @@ public class DiversExtractionServiceTests
             new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", PfValidationColonne),
             new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", PfAccordColonne)
         ],
+        [],
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
         []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
@@ -70,7 +76,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("INSTRUMENTATION");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Loc1.Should().Be("ZONE 4");
     }
@@ -81,7 +87,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("INSTRUMENTATION");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Isolements.Should().ContainSingle().Which.Repere.Should().Be("G6306B-LT6306");
         result.Points.Should().ContainSingle().Which.ColonneNom.Should().Be(InstrumentationColonne);
@@ -94,7 +100,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("SOUPAPE");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Select(p => p.ColonneNom).Should().BeEquivalentTo([SoupapeConstatColonne, SoupapeReceptionColonne]);
         result.Errors.Should().BeEmpty();
@@ -107,7 +113,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("SOUPAPE ");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Should().HaveCount(2);
         result.Errors.Should().BeEmpty();
@@ -119,7 +125,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("POINT FEU");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Select(p => p.ColonneNom).Should().BeEquivalentTo([PfSignatureColonne, PfValidationColonne, PfAccordColonne]);
         result.Errors.Should().BeEmpty();
@@ -135,11 +141,40 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("POINT DE FEU");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Isolements.Should().ContainSingle();
         result.Points.Should().BeEmpty();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+    }
+
+    [Fact]
+    public void Extract_ReadsRepereEchoFromWhicheverCoordinateTheProfileDeclares_NotAHardcodedConstant()
+    {
+        // Lot 047, 47.5 anti-hardcoding guard-rail: a profile whose "repereEcho" HeaderFieldRule
+        // points at a different cell than DefaultProfileSeeder's N6 must be honored.
+        var sheetRule = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 9, 3, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:G", 0, 2),
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "H:K", 0, 2),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "L:V", 0, 2)
+            ]),
+            [
+                new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", InstrumentationColonne)
+            ],
+            [],
+            [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "Z9"))],
+            []);
+        var cells = BaseCells("INSTRUMENTATION");
+        cells.Remove("N6");
+        cells["Z9"] = "OTHERREPERE";
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.Repere.Should().Be("OTHERREPERE-LT6306");
     }
 
     [Fact]
@@ -148,7 +183,7 @@ public class DiversExtractionServiceTests
         var cells = BaseCells("INSTRUMENTATION");
         var workbookReader = CreateWorkbookReader(cells);
 
-        _sut.Extract(workbookReader.Object, CreateSheetRule());
+        _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         workbookReader.Verify(r => r.ReadCellValue(Sheet, "L12:V14"), Times.Never);
     }

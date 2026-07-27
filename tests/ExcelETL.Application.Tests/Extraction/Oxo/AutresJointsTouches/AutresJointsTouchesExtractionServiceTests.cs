@@ -15,6 +15,7 @@ public class AutresJointsTouchesExtractionServiceTests
 {
     private const string Sheet = "AUTRES JOINTS TOUCHES";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
+    private const string ReperePrefix = "MAD-OXO-";
 
     private static readonly string[] UnconditionalColonneNames =
     [
@@ -24,8 +25,11 @@ public class AutresJointsTouchesExtractionServiceTests
 
     private readonly AutresJointsTouchesExtractionService _sut =
         new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<AutresJointsTouchesExtractionService>.Instance);
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance);
 
+    // Lot 047: the "repereEcho" header rule (N6) -- transcribed from the coordinate previously
+    // hardcoded in AutresJointsTouchesExtractionService -- so this test's Mock<IWorkbookReader> "N6"
+    // cell key stays exactly as before the lot.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
@@ -35,7 +39,9 @@ public class AutresJointsTouchesExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
-        UnconditionalColonneNames);
+        UnconditionalColonneNames,
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
+        []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -60,7 +66,7 @@ public class AutresJointsTouchesExtractionServiceTests
         var cells = BaseBlockCells("TUYAUTERIE");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Isolements.Should().ContainSingle().Which.Should().BeEquivalentTo(new
         {
@@ -77,7 +83,7 @@ public class AutresJointsTouchesExtractionServiceTests
         var cells = BaseBlockCells("TUYAUTERIE");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Should().Contain(
         [
@@ -92,7 +98,7 @@ public class AutresJointsTouchesExtractionServiceTests
         var cells = BaseBlockCells("TUYAUTERIE");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Should().Contain(new PointPivot(PoseEtiquettesColonneName, "D8570-JT1"));
         result.Errors.Should().BeEmpty();
@@ -104,10 +110,37 @@ public class AutresJointsTouchesExtractionServiceTests
         var cells = BaseBlockCells("TUBING");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Should().NotContain(p => p.ColonneNom == PoseEtiquettesColonneName);
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+    }
+
+    [Fact]
+    public void Extract_ReadsRepereEchoFromWhicheverCoordinateTheProfileDeclares_NotAHardcodedConstant()
+    {
+        // Lot 047, 47.5 anti-hardcoding guard-rail: a profile whose "repereEcho" HeaderFieldRule
+        // points at a different cell than DefaultProfileSeeder's N6 must be honored.
+        var sheetRule = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "F:Y", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+            ]),
+            [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
+            UnconditionalColonneNames,
+            [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "Z9"))],
+            []);
+        var cells = BaseBlockCells("TUYAUTERIE");
+        cells.Remove("N6");
+        cells["Z9"] = "OTHERREPERE";
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.Repere.Should().Be("OTHERREPERE-JT1");
     }
 
     [Fact]
@@ -116,7 +149,7 @@ public class AutresJointsTouchesExtractionServiceTests
         var cells = BaseBlockCells("TUYAUTERIE");
         var workbookReader = CreateWorkbookReader(cells);
 
-        _sut.Extract(workbookReader.Object, CreateSheetRule());
+        _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         workbookReader.Verify(r => r.ReadCellValue(Sheet, "F23:Y24"), Times.Never);
     }
@@ -128,7 +161,7 @@ public class AutresJointsTouchesExtractionServiceTests
         cells["B20:E21"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Isolements.Should().BeEmpty();
         result.Points.Should().BeEmpty();

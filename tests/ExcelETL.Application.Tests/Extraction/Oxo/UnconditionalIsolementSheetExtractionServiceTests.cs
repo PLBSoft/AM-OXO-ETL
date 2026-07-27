@@ -41,7 +41,7 @@ public class UnconditionalIsolementSheetExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
-        UnconditionalColonneNames);
+        UnconditionalColonneNames, [], []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {

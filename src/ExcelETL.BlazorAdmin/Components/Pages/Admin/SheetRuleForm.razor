@@ -555,7 +555,7 @@
 
             // SheetExtractionRule stores this list by reference (unlike PointRules, which it copies) --
             // pass a snapshot so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
-            var rule = new SheetExtractionRule(_sheetName, locator, _pointRules, [.. _unconditionalColonneNames]);
+            var rule = new SheetExtractionRule(_sheetName, locator, _pointRules, [.. _unconditionalColonneNames], [], []);
 
             await OnSubmit.InvokeAsync(rule);
 

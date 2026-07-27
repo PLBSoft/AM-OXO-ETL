@@ -50,7 +50,7 @@ public class ProfileEditorParityTests : BunitContext
             stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
-            "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+            "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
             "PLATINES",
@@ -59,7 +59,7 @@ public class ProfileEditorParityTests : BunitContext
             stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
-            "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
+            "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
 
         return new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [isolementRule, platinesRule]);
     }

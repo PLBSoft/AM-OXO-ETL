@@ -18,8 +18,11 @@ public class ProcedureExtractionServiceTests
     private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
 
     private readonly ProcedureExtractionService _sut =
-        new(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance);
+        new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
 
+    // Lot 047: PROCEDURE's header rules -- transcribed from the coordinates/template previously
+    // hardcoded in ProcedureExtractionService (M2:O2/P2:Q2/R2:T2, "Rév {revision} du {dateRev}") so
+    // this test's Mock<IWorkbookReader> cell keys (BaseHeaderCells) stay exactly as before the lot.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
@@ -32,7 +35,17 @@ public class ProcedureExtractionServiceTests
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
         [],
-        []);
+        [],
+        [
+            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+        ],
+        [
+            new HeaderCompositeRule(
+                ProcedureHeaderFieldNames.Designation,
+                $"Rév {{{ProcedureHeaderFieldNames.Revision}}} du {{{ProcedureHeaderFieldNames.DateRev}}}")
+        ]);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -119,6 +132,87 @@ public class ProcedureExtractionServiceTests
         var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, profileValue, DefaultTableaux);
 
         result.Equipement!.TypeElementNom.Should().Be(profileValue);
+    }
+
+    [Fact]
+    public void Extract_ReadsHeaderCellsFromWhicheverCoordinatesTheProfileDeclares_NotHardcodedConstants()
+    {
+        // Lot 047, 47.5 anti-hardcoding guard-rail (same pattern as
+        // Extract_UsesEquipementTypeElementNomFromProfile_NotAHardcodedConstant above): a profile
+        // with different header-cell coordinates than DefaultProfileSeeder's must be honored, never a
+        // literal baked into the service.
+        var sheetRule = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+            [
+                new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Acteur, "M:N", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Risques, "O:Q", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
+            ]),
+            [],
+            [],
+            [
+                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "X1:Y1"), stripReperePrefix: true),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "X2")),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "X3"), dateFormat: "dd/MM/yyyy")
+            ],
+            [
+                new HeaderCompositeRule(
+                    ProcedureHeaderFieldNames.Designation,
+                    $"Rév {{{ProcedureHeaderFieldNames.Revision}}} du {{{ProcedureHeaderFieldNames.DateRev}}}")
+            ]);
+        var cells = new Dictionary<string, string?>
+        {
+            ["X1:Y1"] = "MAD-OXO-99-OTHER",
+            ["X2"] = "7",
+            ["X3"] = "01/01/2020",
+            ["C9:L9"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Equipement!.Repere.Should().Be("99-OTHER");
+        result.Equipement.Designation.Should().Be("Rév 7 du 01/01/2020");
+    }
+
+    [Fact]
+    public void Extract_WithDifferentDesignationTemplate_UsesTheProfilesTemplate_NotAHardcodedOne()
+    {
+        // Lot 047, 47.5: two profiles, two gabarits -> two different results.
+        var sheetRule = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+            [
+                new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Acteur, "M:N", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.Risques, "O:Q", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
+                new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
+            ]),
+            [],
+            [],
+            [
+                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+            ],
+            [
+                new HeaderCompositeRule(
+                    ProcedureHeaderFieldNames.Designation,
+                    $"Version {{{ProcedureHeaderFieldNames.Revision}}} ({{{ProcedureHeaderFieldNames.DateRev}}})")
+            ]);
+        var cells = BaseHeaderCells();
+        cells["C9:L9"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+
+        result.Equipement!.Designation.Should().Be("Version 2 (16/07/2026)");
     }
 
     [Fact]

@@ -21,19 +21,26 @@ public sealed class SheetExtractionRule
     // auto-property: EF Core cannot constructor-bind an entity-collection navigation.
     // UnconditionalColonneNames doesn't need this treatment -- it's a primitive (string) collection,
     // not a navigation to an owned entity type, so EF Core binds it via the constructor like any
-    // other scalar-ish property.
+    // other scalar-ish property. HeaderFields/HeaderComposites (Lot 047) need the same backing-field
+    // treatment as PointRules -- both are navigations to owned entity types.
     private readonly List<ConditionalPointRule> _pointRules = [];
+    private readonly List<HeaderFieldRule> _headerFields = [];
+    private readonly List<HeaderCompositeRule> _headerComposites = [];
 
     public string SheetName { get; }
     public RepeatingBlockLocator Locator { get; }
     public IReadOnlyList<ConditionalPointRule> PointRules => _pointRules;
     public IReadOnlyList<string> UnconditionalColonneNames { get; }
+    public IReadOnlyList<HeaderFieldRule> HeaderFields => _headerFields;
+    public IReadOnlyList<HeaderCompositeRule> HeaderComposites => _headerComposites;
 
     public SheetExtractionRule(
         string sheetName,
         RepeatingBlockLocator locator,
         IReadOnlyList<ConditionalPointRule> pointRules,
-        IReadOnlyList<string> unconditionalColonneNames)
+        IReadOnlyList<string> unconditionalColonneNames,
+        IReadOnlyList<HeaderFieldRule> headerFields,
+        IReadOnlyList<HeaderCompositeRule> headerComposites)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -44,6 +51,8 @@ public sealed class SheetExtractionRule
         ArgumentNullException.ThrowIfNull(locator);
         ArgumentNullException.ThrowIfNull(pointRules);
         ArgumentNullException.ThrowIfNull(unconditionalColonneNames);
+        ArgumentNullException.ThrowIfNull(headerFields);
+        ArgumentNullException.ThrowIfNull(headerComposites);
 
         if (sheetName != locator.Sheet)
         {
@@ -53,10 +62,28 @@ public sealed class SheetExtractionRule
                 sheetName, locator.Sheet);
         }
 
+        var headerFieldNames = headerFields.Select(f => f.Name).ToHashSet();
+        foreach (var composite in headerComposites)
+        {
+            foreach (var placeholder in composite.PlaceholderNames())
+            {
+                if (!headerFieldNames.Contains(placeholder))
+                {
+                    throw new DomainRuleViolationException(
+                        $"Header composite rule '{composite.Name}' references unknown placeholder '{{{placeholder}}}' " +
+                        $"-- no header field rule named '{placeholder}' exists on this sheet.",
+                        DomainErrorCode.SheetExtractionRule_HeaderCompositeReferencesUnknownField,
+                        composite.Name, placeholder);
+                }
+            }
+        }
+
         SheetName = sheetName;
         Locator = locator;
         _pointRules = [.. pointRules];
         UnconditionalColonneNames = unconditionalColonneNames;
+        _headerFields = [.. headerFields];
+        _headerComposites = [.. headerComposites];
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

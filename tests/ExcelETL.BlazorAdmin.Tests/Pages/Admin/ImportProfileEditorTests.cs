@@ -58,7 +58,7 @@ public class ImportProfileEditorTests : BunitContext
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
-            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
@@ -80,7 +80,7 @@ public class ImportProfileEditorTests : BunitContext
             ]);
 
         var sheetRule = new SheetExtractionRule(
-            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
@@ -95,7 +95,7 @@ public class ImportProfileEditorTests : BunitContext
             stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
-            "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+            "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
             "PLATINES",
@@ -104,7 +104,7 @@ public class ImportProfileEditorTests : BunitContext
             stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
-            "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
+            "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [isolementRule, platinesRule]);
     }
@@ -668,7 +668,7 @@ public class ImportProfileEditorTests : BunitContext
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
-                "ISOLEMENT", locator, pointRules: [pointRule], unconditionalColonneNames: ["PROLOCK VANNES"]);
+                "ISOLEMENT", locator, pointRules: [pointRule], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
@@ -695,7 +695,7 @@ public class ImportProfileEditorTests : BunitContext
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [pointRule],
-                unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+                unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
@@ -733,7 +733,7 @@ public class ImportProfileEditorTests : BunitContext
                 stopFieldName: "Identification",
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
-                "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"]);
+                "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
@@ -757,7 +757,7 @@ public class ImportProfileEditorTests : BunitContext
                 stopFieldName: "Action",
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
-                "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
+                "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
@@ -948,7 +948,7 @@ public class ImportProfileEditorTests : BunitContext
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
-            "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: []);
+            "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
@@ -2081,7 +2081,7 @@ public class ImportProfileEditorTests : BunitContext
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
-                unconditionalColonneNames: []);
+                unconditionalColonneNames: [], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 
@@ -2108,7 +2108,7 @@ public class ImportProfileEditorTests : BunitContext
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
-                unconditionalColonneNames: []);
+                unconditionalColonneNames: [], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
             await Store.SaveAsync(profile);
 

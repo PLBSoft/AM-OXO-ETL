@@ -70,8 +70,9 @@ public sealed class ImportPipelineOrchestrator(
             var orificesCapacitesResult = unconditionalIsolementSheetExtractionService.Extract(
                 workbookReader, FindRule(profile, OrificesCapacitesSheetName));
             var autresJointsTouchesResult = autresJointsTouchesExtractionService.Extract(
-                workbookReader, FindRule(profile, AutresJointsTouchesSheetName));
-            var diversResult = diversExtractionService.Extract(workbookReader, FindRule(profile, DiversSheetName));
+                workbookReader, FindRule(profile, AutresJointsTouchesSheetName), profile.ReperePrefix);
+            var diversResult = diversExtractionService.Extract(
+                workbookReader, FindRule(profile, DiversSheetName), profile.ReperePrefix);
 
             var loc1 = diversResult.Loc1;
             var repereParent = procedureResult.Equipement.Repere;

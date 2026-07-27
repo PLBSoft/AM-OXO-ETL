@@ -23,8 +23,10 @@ public class ProcedureExtractionServiceIntegrationTests
     private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
 
     private readonly ProcedureExtractionService _sut =
-        new(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance);
+        new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
 
+    // Lot 047: PROCEDURE's header rules, transcribed from the coordinates/template previously
+    // hardcoded in ProcedureExtractionService -- same values as DefaultProfileSeeder's own seeded rule.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
@@ -37,7 +39,17 @@ public class ProcedureExtractionServiceIntegrationTests
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
         [],
-        []);
+        [],
+        [
+            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+        ],
+        [
+            new HeaderCompositeRule(
+                ProcedureHeaderFieldNames.Designation,
+                $"Rév {{{ProcedureHeaderFieldNames.Revision}}} du {{{ProcedureHeaderFieldNames.DateRev}}}")
+        ]);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsExpectedEquipementAndFirstTaskRows()

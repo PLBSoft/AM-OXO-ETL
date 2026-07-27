@@ -39,7 +39,7 @@ public class EfImportProfileStoreTests
             [
                 new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...")
             ],
-            unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+            unconditionalColonneNames: ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
         return new ImportProfile(
             name, "MAD-OXO-", equipementTypeElementNom,
@@ -116,7 +116,7 @@ public class EfImportProfileStoreTests
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator,
             [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...")],
-            ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+            ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
         var diversLocator = new RepeatingBlockLocator(
             "DIVERS", 6, 3, "Identification",
@@ -127,7 +127,7 @@ public class EfImportProfileStoreTests
                 new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "SOUPAPE 1"),
                 new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "SOUPAPE 2")
             ],
-            []);
+            [], [], []);
 
         var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [isolementRule, diversRule]);
         var store = CreateStore();
@@ -145,6 +145,66 @@ public class EfImportProfileStoreTests
         reloadedDivers.UnconditionalColonneNames.Should().BeEmpty();
         reloadedDivers.PointRules.Should().HaveCount(2);
         reloadedDivers.PointRules.Select(r => r.ColonneName).Should().Equal("SOUPAPE 1", "SOUPAPE 2");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithHeaderFieldsAndComposites_RoundTripsIdentically()
+    {
+        // Lot 047 (docs/tickets/tickets-tdd-lot-047-extraction-entetes-profile-driven-directcell.md),
+        // 47.3: HeaderFieldRule (direct, incl. StripReperePrefix/DateFormat) + HeaderCompositeRule
+        // (template referencing a HeaderFieldRule.Name) must round-trip through EF Core intact.
+        var locator = new RepeatingBlockLocator(
+            "PROCEDURE", 9, 1, "Action", [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+        var sheetRule = new SheetExtractionRule(
+            "PROCEDURE", locator, [], [],
+            headerFields:
+            [
+                new HeaderFieldRule("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
+                new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
+                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+            ],
+            headerComposites: [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")]);
+        var profile = new ImportProfile("Profil avec en-têtes", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        var reloadedRule = reloaded!.SheetRules.Single();
+        reloadedRule.HeaderFields.Should().HaveCount(3);
+
+        var nomMad = reloadedRule.HeaderFields.Single(f => f.Name == "nomMAD");
+        nomMad.Cell.Sheet.Should().Be("PROCEDURE");
+        nomMad.Cell.Range.Should().Be("M2:O2");
+        nomMad.StripReperePrefix.Should().BeTrue();
+        nomMad.DateFormat.Should().BeNull();
+
+        var dateRev = reloadedRule.HeaderFields.Single(f => f.Name == "dateRev");
+        dateRev.Cell.Range.Should().Be("R2:T2");
+        dateRev.StripReperePrefix.Should().BeFalse();
+        dateRev.DateFormat.Should().Be("dd/MM/yyyy");
+
+        reloadedRule.HeaderComposites.Should().ContainSingle();
+        var designation = reloadedRule.HeaderComposites.Single();
+        designation.Name.Should().Be("Designation");
+        designation.Template.Should().Be("Rév {revision} du {dateRev}");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNoHeaderRules_PersistsAndReloadsAsEmptyLists()
+    {
+        // Non-régression: an isolement-style sheet with no header rules at all (the pre-Lot-047
+        // shape) stays valid -- CreateSampleProfile's ISOLEMENT rule never sets HeaderFields/
+        // HeaderComposites.
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        var rule = reloaded!.SheetRules.Single();
+        rule.HeaderFields.Should().BeEmpty();
+        rule.HeaderComposites.Should().BeEmpty();
     }
 
     [Fact]
@@ -179,7 +239,7 @@ public class EfImportProfileStoreTests
         var editedLocator = new RepeatingBlockLocator(
             "DIVERS", 6, 3, "Identification",
             [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
-        var editedRule = new SheetExtractionRule("DIVERS", editedLocator, [], []);
+        var editedRule = new SheetExtractionRule("DIVERS", editedLocator, [], [], [], []);
         var edited = new ImportProfile(
             original.Id, "Profil OXO (édité)", original.ReperePrefix, "MAD TRAVAUX EDITE", [], [], [editedRule]);
 

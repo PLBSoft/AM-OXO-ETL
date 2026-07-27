@@ -24,11 +24,14 @@ public class DiversExtractionServiceIntegrationTests
     private const string PfSignatureColonne = "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES";
     private const string PfValidationColonne = "PF : VALIDATION CONSTAT ENCRASSEMENT";
     private const string PfAccordColonne = "PF : ACCORD TRAVAUX FEU";
+    private const string ReperePrefix = "MAD-OXO-";
 
     private readonly DiversExtractionService _sut =
         new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<DiversExtractionService>.Instance);
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<DiversExtractionService>.Instance);
 
+    // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
+    // hardcoded in DiversExtractionService.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 3, IsolementFieldNames.Identification,
@@ -46,6 +49,8 @@ public class DiversExtractionServiceIntegrationTests
             new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", PfValidationColonne),
             new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", PfAccordColonne)
         ],
+        [],
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
         []);
 
     [Fact]
@@ -102,7 +107,7 @@ public class DiversExtractionServiceIntegrationTests
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule());
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
     }
 
     private static string FixturePath(string fileName)

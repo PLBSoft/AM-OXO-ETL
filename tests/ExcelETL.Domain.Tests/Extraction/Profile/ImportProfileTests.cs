@@ -14,6 +14,8 @@ public class ImportProfileTests
         sheet,
         new RepeatingBlockLocator(sheet, 19, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]),
         [],
+        [],
+        [],
         []);
 
     [Fact]

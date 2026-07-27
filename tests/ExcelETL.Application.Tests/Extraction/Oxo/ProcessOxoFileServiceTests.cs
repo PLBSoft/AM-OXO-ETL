@@ -54,7 +54,7 @@ public class ProcessOxoFileServiceTests
             "PROCEDURE",
             new RepeatingBlockLocator("PROCEDURE", 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]),
             [],
-            [])]);
+            [], [], [])]);
 
     private static ExportProfile CreateExportProfile() => new(
         "Profil export test",

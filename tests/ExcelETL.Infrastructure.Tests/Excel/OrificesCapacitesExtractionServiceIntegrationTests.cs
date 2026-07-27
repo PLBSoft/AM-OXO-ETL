@@ -41,7 +41,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
-        UnconditionalColonneNames);
+        UnconditionalColonneNames, [], []);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()

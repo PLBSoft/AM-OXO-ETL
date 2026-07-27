@@ -4,5 +4,5 @@ namespace ExcelETL.Application.Extraction.Oxo.Divers;
 
 public interface IDiversExtractionService
 {
-    DiversSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule);
+    DiversSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix);
 }

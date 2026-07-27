@@ -90,6 +90,7 @@ builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveSto
 builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
 builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
 builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
+builder.Services.AddSingleton<IHeaderRuleResolver, HeaderRuleResolver>();
 builder.Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
 builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
 builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();

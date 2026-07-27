@@ -19,9 +19,13 @@ namespace ExcelETL.Application.Extraction.Oxo.Procedure;
 // ImportProfile.EquipementTypeElementNom (model doc v2 §2.1), since the client confirmed this value
 // varies by profile, not by any cell in PROCEDURE.
 public sealed class ProcedureExtractionService(
-    ITextTransformEvaluator textTransformEvaluator, ILogger<ProcedureExtractionService> logger)
+    IHeaderRuleResolver headerRuleResolver, ILogger<ProcedureExtractionService> logger)
     : IProcedureExtractionService
 {
+    // Input date parsing for TacheMultiple's own DateValidation field stays a fixed, hardcoded format
+    // list -- out of Lot 047's scope (spec §5/§6: only header-rule *output* DateFormat became
+    // profile-driven, and only for HeaderFieldRule-declared cells, not the repeating block's own
+    // fields). Matches HeaderRuleResolver's own DateInputFormats.
     private static readonly string[] DateFormats = ["dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy"];
 
     public ImportResult Extract(
@@ -33,31 +37,33 @@ public sealed class ProcedureExtractionService(
         ArgumentNullException.ThrowIfNull(defaultTableaux);
 
         var sheet = sheetRule.SheetName;
+        var header = headerRuleResolver.Resolve(workbookReader, sheetRule, reperePrefix);
 
-        var repereRaw = workbookReader.ReadCellValue(sheet, "M2:O2");
-        if (string.IsNullOrWhiteSpace(repereRaw))
+        var nomMadCell = FindHeaderFieldCellRange(sheetRule, ProcedureHeaderFieldNames.NomMad);
+        var nomMad = header.Fields[ProcedureHeaderFieldNames.NomMad];
+        if (string.IsNullOrWhiteSpace(nomMad.RawValue))
         {
-            return Rejected(sheet, "M2:O2", ExtractionErrorCode.RequiredFieldMissing,
-                "Cellule M2:O2 (repère de l'équipement) introuvable ou vide.");
+            return Rejected(sheet, nomMadCell, ExtractionErrorCode.RequiredFieldMissing,
+                $"Cellule {nomMadCell} (repère de l'équipement) introuvable ou vide.");
         }
 
-        var (repere, prefixError) = textTransformEvaluator.Evaluate(
-            new SubstringAfter(reperePrefix), repereRaw, new Dictionary<string, string>());
-        if (prefixError is not null || string.IsNullOrWhiteSpace(repere))
+        if (nomMad.ErrorMessage is not null || string.IsNullOrWhiteSpace(nomMad.Value))
         {
-            return Rejected(sheet, "M2:O2", ExtractionErrorCode.UnparsableValue,
-                prefixError ?? "Cellule M2:O2 (repère de l'équipement) vide après retrait du préfixe.");
+            return Rejected(sheet, nomMadCell, ExtractionErrorCode.UnparsableValue,
+                nomMad.ErrorMessage ?? $"Cellule {nomMadCell} (repère de l'équipement) vide après retrait du préfixe.");
         }
 
-        var dateRevisionRaw = workbookReader.ReadCellValue(sheet, "R2:T2");
-        if (!TryParseDate(dateRevisionRaw, out var dateRevision))
+        var repere = nomMad.Value;
+
+        var dateRevCell = FindHeaderFieldCellRange(sheetRule, ProcedureHeaderFieldNames.DateRev);
+        var dateRev = header.Fields[ProcedureHeaderFieldNames.DateRev];
+        if (dateRev.ErrorMessage is not null)
         {
-            return Rejected(sheet, "R2:T2", ExtractionErrorCode.UnparsableValue,
-                $"Cellule R2:T2 (date de révision) introuvable ou illisible : '{dateRevisionRaw}'.");
+            return Rejected(sheet, dateRevCell, ExtractionErrorCode.UnparsableValue,
+                $"Cellule {dateRevCell} (date de révision) introuvable ou illisible : '{dateRev.RawValue}'.");
         }
 
-        var numeroRevision = workbookReader.ReadCellValue(sheet, "P2:Q2") ?? "";
-        var designation = BuildDesignation(numeroRevision, dateRevision);
+        var designation = header.Composites[ProcedureHeaderFieldNames.Designation]!;
 
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom);
         var points = defaultTableaux.Select(tableauName => new PointPivot(tableauName, repere)).ToList();
@@ -133,23 +139,8 @@ public sealed class ProcedureExtractionService(
     private static string JoinWithEt(IReadOnlyList<string> items) =>
         items.Count == 1 ? items[0] : string.Join(", ", items.Take(items.Count - 1)) + " et " + items[^1];
 
-    private string BuildDesignation(string numeroRevision, DateOnly dateRevision)
-    {
-        var extractedFields = new Dictionary<string, string>
-        {
-            ["NumeroRevision"] = numeroRevision,
-            ["DateRevision"] = dateRevision.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)
-        };
-        var transform = new Concat(
-        [
-            new Literal("Rév "),
-            new FieldRef("NumeroRevision"),
-            new Literal(" du "),
-            new FieldRef("DateRevision")
-        ]);
-        var (designation, _) = textTransformEvaluator.Evaluate(transform, rawValue: null, extractedFields);
-        return designation!;
-    }
+    private static string FindHeaderFieldCellRange(SheetExtractionRule sheetRule, string headerFieldName) =>
+        sheetRule.HeaderFields.First(f => f.Name == headerFieldName).Cell.Range;
 
     private List<TacheMultiplePivot> ReadTachesMultiples(IWorkbookReader workbookReader, RepeatingBlockLocator locator)
     {

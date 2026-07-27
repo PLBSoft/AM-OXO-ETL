@@ -74,7 +74,7 @@ public class ImportProfilesTests : BunitContext
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
-            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"]);
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
@@ -121,9 +121,9 @@ public class ImportProfilesTests : BunitContext
             var profile = new ImportProfile(
                 "MAD OXO multi", "MAD TRAVAUX", [], [],
                 [
-                    new SheetExtractionRule("ISOLEMENT", BuildLocator("ISOLEMENT"), pointRules: [], unconditionalColonneNames: ["A"]),
-                    new SheetExtractionRule("PLATINES", BuildLocator("PLATINES"), pointRules: [], unconditionalColonneNames: ["B"]),
-                    new SheetExtractionRule("DIVERS", BuildLocator("DIVERS"), pointRules: [], unconditionalColonneNames: ["C"])
+                    new SheetExtractionRule("ISOLEMENT", BuildLocator("ISOLEMENT"), pointRules: [], unconditionalColonneNames: ["A"], [], []),
+                    new SheetExtractionRule("PLATINES", BuildLocator("PLATINES"), pointRules: [], unconditionalColonneNames: ["B"], [], []),
+                    new SheetExtractionRule("DIVERS", BuildLocator("DIVERS"), pointRules: [], unconditionalColonneNames: ["C"], [], [])
                 ]);
             await SeedProfileAsync(profile);
 

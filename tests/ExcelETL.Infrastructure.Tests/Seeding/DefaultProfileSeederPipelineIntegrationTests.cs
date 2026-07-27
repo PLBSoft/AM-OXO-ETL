@@ -28,7 +28,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
         new TestExcelEtlDbContextFactory("DefaultProfileSeederPipelineIntegrationTests_" + Guid.NewGuid());
 
     private readonly ImportPipelineOrchestrator _orchestrator = new(
-        new ProcedureExtractionService(new TextTransformEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
+        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance),
         new IsolementExtractionService(
             new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance),
         new UnconditionalIsolementSheetExtractionService(
@@ -36,10 +36,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
             NullLogger<UnconditionalIsolementSheetExtractionService>.Instance),
         new AutresJointsTouchesExtractionService(
             new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<AutresJointsTouchesExtractionService>.Instance),
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance),
         new DiversExtractionService(
             new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<DiversExtractionService>.Instance),
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<DiversExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private readonly SheetGenerationEngine _generationEngine = new(NullLogger<SheetGenerationEngine>.Instance);

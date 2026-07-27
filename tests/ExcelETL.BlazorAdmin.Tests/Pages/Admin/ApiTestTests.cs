@@ -73,7 +73,7 @@ public class ApiTestTests : BunitContext
                         "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
                         fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]),
                     pointRules: [],
-                    unconditionalColonneNames: ["PROLOCK VANNES"])
+                    unconditionalColonneNames: ["PROLOCK VANNES"], [], [])
             ]);
 
     private static ExportProfile BuildExportProfile(string name = "Export profile") =>
