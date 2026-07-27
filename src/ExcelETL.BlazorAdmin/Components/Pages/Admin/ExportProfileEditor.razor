@@ -157,7 +157,7 @@ else
 
     <div class="right-aligned-actions">
         <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4" @onclick="SaveProfileAsync">
-            @Loc["ExportProfileEditor_SaveButton"]
+            @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
         </button>
     </div>
 }

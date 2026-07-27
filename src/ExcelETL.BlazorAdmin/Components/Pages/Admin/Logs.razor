@@ -99,6 +99,7 @@ else
                                     }
                                 </div>
                                 <button type="button" class="btn btn-sm btn-link log-copy-btn"
+                                        aria-label="@Loc["Logs_CopyMessage"]"
                                         title="@Loc["Logs_CopyMessage"]"
                                         @onclick="() => CopyToClipboardAsync(entry)">
                                     @if (_copiedEntryId == entry.Id)

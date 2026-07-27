@@ -303,6 +303,26 @@ public class ExportProfileTestTests : BunitContext
                 [])
         ]);
 
+    // Lot 041 (41.2): generate-workbook-button was one of the audit's flagged icon-less CTAs.
+    [Fact]
+    public async Task GenerateWorkbookButton_HasIcon() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+            SelectExportProfile(cut, exportProfile.Id);
+
+            cut.Find("#generate-workbook-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
     [Fact]
     public async Task Run_C7401Fixture_GeneratesWorkbookWithKnownValuesInPreview() =>
         await WithCultureAsync("en-US", async () =>

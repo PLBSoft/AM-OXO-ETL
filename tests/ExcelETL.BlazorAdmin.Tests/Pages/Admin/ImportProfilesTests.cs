@@ -161,6 +161,15 @@ public class ImportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles/test");
     });
 
+    // Lot 041 (41.2): the "Créer un profil" CTA was one of the audit's flagged icon-less CTAs.
+    [Fact]
+    public void CreateProfileButton_HasIcon() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfiles>();
+
+        cut.Find("#create-profile-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
     // Lot 030 (30.7): reopens V4/X2's mobile stacking decision on explicit client request -- the
     // two buttons now share the row's width equally (flex-fill) instead of each going full-width
     // on its own line.

@@ -2131,4 +2131,76 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#edit-conditional-point-rule-button-0").GetAttribute("aria-label").Should().Be("Modify");
         cut.Find("#delete-conditional-point-rule-button-0").GetAttribute("aria-label").Should().Be("Delete");
     });
+
+    // Lot 041 (41.2): save-profile-button is one of the CTA/Enregistrer buttons the audit found
+    // without an icon (convention-ui-blazor-icones-boutons.md's matrix already required one --
+    // the implementation was lagging, not the rule).
+    [Fact]
+    public void SaveProfileButton_HasIcon() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#save-profile-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
+    // Lot 041 (41.3): SheetRuleForm's own Submit button doubles as "Add" (top-level, always-present
+    // card) and "Save changes" (edit mode, ShowCancel=true) -- only listed in scope as one of the "6
+    // nested sub-forms' Enregistrer buttons" (41.0), never as an "Ajouter" button, so the icon is
+    // conditional on ShowCancel, not unconditional.
+    [Fact]
+    public async Task SheetRuleForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#add-sheet-rule-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#save-sheet-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
+    // Lot 041 (41.3): BlockFieldForm is one of the "6 nested sub-forms" -- same Add-vs-Save-changes
+    // icon rule as SheetRuleForm above.
+    [Fact]
+    public async Task BlockFieldForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-add-block-field-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+            cut.Find("#edit-0-modify-block-field-button-0").Click();
+
+            cut.Find("#edit-0-save-block-field-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
+    // Lot 041 (41.3): confirms the previously-missing `title` on the block-field Modify/Delete
+    // buttons, matching the pre-existing `aria-label` in content, per the convention's requirement
+    // that an icon-only button carry both.
+    [Fact]
+    public async Task BlockField_ModifyDeleteButtons_HaveTitleMatchingAriaLabel() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            var modifyButton = cut.Find("#edit-0-modify-block-field-button-0");
+            modifyButton.GetAttribute("title").Should().Be(modifyButton.GetAttribute("aria-label"));
+            modifyButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+
+            var deleteButton = cut.Find("#edit-0-delete-block-field-button-0");
+            deleteButton.GetAttribute("title").Should().Be(deleteButton.GetAttribute("aria-label"));
+            deleteButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+        });
 }

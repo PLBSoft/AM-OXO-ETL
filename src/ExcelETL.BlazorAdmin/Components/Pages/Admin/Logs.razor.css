@@ -12,7 +12,16 @@
     border-left: 4px solid transparent;
 }
 
+/* Lot 041 (41.4): touch-target size aligned with the project's other icon buttons
+   (.block-field-icon-btn, 34px) -- min-width/min-height rather than a fixed width/height, since this
+   button also renders visible text ("Copied") momentarily after a click, unlike the icon-only buttons
+   that pattern was designed for. */
 .log-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
     padding: 0.1rem 0.35rem;
     line-height: 1;
     color: var(--bs-secondary-color);

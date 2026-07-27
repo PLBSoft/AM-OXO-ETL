@@ -102,6 +102,15 @@ public class ApiTestTests : BunitContext
             .UploadFiles(InputFileContent.CreateFromText("dummy content", "source.xlsx"));
     }
 
+    // Lot 041 (41.2): process-button was one of the audit's flagged icon-less CTAs.
+    [Fact]
+    public void ProcessButton_HasIcon() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ApiTest>();
+
+        cut.Find("#process-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
     [Fact]
     public void ProcessButton_DisabledUntilProfilesAndFileSelected_ThenEnabled() => WithCulture("en-US", () => RunAsync(async () =>
     {

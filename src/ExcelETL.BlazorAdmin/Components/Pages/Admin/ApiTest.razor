@@ -4,6 +4,7 @@
 @using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.Application.Generation
 @using ExcelETL.BlazorAdmin.Services
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Domain.Generation.Profile
 @using ExcelETL.Infrastructure.Identity
@@ -70,7 +71,7 @@ else
 
     <div class="right-aligned-actions">
         <button id="process-button" type="button" class="btn btn-primary btn-lg" disabled="@(!CanProcess || _processing)" @onclick="ProcessAsync">
-            @Loc["ApiTest_ProcessButton"]
+            @((MarkupString)AdminIconMarkup.Send) @Loc["ApiTest_ProcessButton"]
         </button>
     </div>
 

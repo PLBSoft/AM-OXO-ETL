@@ -15,4 +15,27 @@ public static class AdminIconMarkup
 
     public const string Trash =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" /><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L13.882 4zM2.5 3V2h11v1z" /></svg>""";
+
+    // Lot 041 (41.2): reused verbatim from NavMenu.razor.css's bi-plus-square-fill-nav-menu shape --
+    // the CTA "Créer" icon (convention-ui-blazor-icones-boutons.md's own "+ Créer un profil" example).
+    public const string Plus =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6.5 4.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 1 0z" /></svg>""";
+
+    // Lot 041 (41.2): the "Enregistrer" checkmark, already duplicated inline across SheetRuleForm's
+    // own Save-changes buttons (unconditional colonne/point rule edit rows) before this lot -- moved
+    // here as the single source of truth, same rationale as Pencil/Copy/Trash (Lot 035.5).
+    public const string Check =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" /></svg>""";
+
+    // Lot 041 (41.2): reused verbatim from NavMenu.razor.css's bi-send-nav-menu shape -- ApiTest.razor's
+    // own process-button submits the uploaded file to the real Web API over HTTP, the same semantic
+    // action the ApiTest nav link's own icon already represents.
+    public const string Send =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.79L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.594-7.594.83-.169-.169.83Z" /></svg>""";
+
+    // Lot 041 (41.2): reused verbatim from NavMenu.razor.css's bi-file-earmark-spreadsheet-nav-menu
+    // shape -- ExportProfileTest.razor's own generate-workbook-button literally generates an Excel
+    // workbook, the same semantic action the Export profiles nav link's own icon already represents.
+    public const string FileEarmarkSpreadsheet =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1" /><path d="M4 8h5v3H4zM4 11h5v1a1 1 0 0 0 1 1h1v-2zM10 12h1a1 1 0 0 0 1-1v-1h-2zM12 10V8h-2v2zM4 7h8V6H4z" /></svg>""";
 }

@@ -79,6 +79,21 @@ public class LogsTests : BunitContext
         indexOfNewer.Should().BeLessThan(indexOfOlder);
     });
 
+    // Lot 041 (41.4): log-copy-btn was the audit's one strict icon-only-button non-conformance --
+    // aria-label was missing while title was already present (the inverse of SheetRuleForm/
+    // SheetGenerationRuleForm's own gap, where aria-label was present and title was missing).
+    [Fact]
+    public async Task LogCopyButton_HasAriaLabelMatchingTitle() => await WithCultureAsync("en-US", async () =>
+    {
+        await SeedLogAsync(new SystemLogEntry(1, DateTime.UtcNow, "Information", "Some entry", null));
+
+        var cut = Render<Logs>();
+
+        var copyButton = cut.Find(".log-copy-btn");
+        copyButton.GetAttribute("aria-label").Should().Be(copyButton.GetAttribute("title"));
+        copyButton.GetAttribute("aria-label").Should().NotBeNullOrEmpty();
+    });
+
     // V2: explicit decision (see Lot V doc intro) -- Logs.razor keeps its native <table>, never
     // gets the d-none/d-md-table + card-fallback treatment applied to the other list pages. Guards
     // against an accidental generalization of that responsive pattern to this page.

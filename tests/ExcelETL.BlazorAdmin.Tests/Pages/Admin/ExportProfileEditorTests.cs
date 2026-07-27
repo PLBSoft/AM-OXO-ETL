@@ -1559,4 +1559,104 @@ public class ExportProfileEditorTests : BunitContext
 
         cut.Markup.Should().Contain(longName);
     });
+
+    // Lot 041 (41.2): save-export-profile-button was one of the audit's flagged icon-less CTAs.
+    [Fact]
+    public void SaveExportProfileButton_HasIcon() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#save-export-profile-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
+    // Lot 041 (41.3): SheetGenerationRuleForm's Submit button doubles as "Add" (top-level card) and
+    // "Save changes" (edit mode) -- same ShowCancel-conditional icon rule as the import side's
+    // SheetRuleForm.
+    [Fact]
+    public async Task SheetGenerationRuleForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#add-sheet-generation-rule-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#save-sheet-generation-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
+    // Lot 041 (41.3): ColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    [Fact]
+    public async Task ColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            cut.Find("#edit-0-add-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+            cut.Find("#edit-0-modify-column-definition-button-0").Click();
+
+            cut.Find("#edit-0-save-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
+    // Lot 041 (41.3): PointColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    [Fact]
+    public void PointColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#point-column-nom-input").Change("TRAVAUX COMPLET");
+        cut.Find("#point-column-header-input").Change("Travaux complet");
+        cut.Find("#add-point-column-definition-button").Click();
+
+        cut.Find("#add-point-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+        cut.Find("#modify-point-column-definition-button-0").Click();
+
+        cut.Find("#save-point-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
+    // Lot 041 (41.3): ApplicationColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    [Fact]
+    public void ApplicationColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        cut.Find("#add-application-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+
+        cut.Find("#modify-application-column-definition-button-0").Click();
+
+        cut.Find("#save-application-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
+    // Lot 041 (41.3): confirms the previously-missing `title` on the Application-column
+    // Modify/Delete buttons, matching the pre-existing `aria-label` in content.
+    [Fact]
+    public void ApplicationColumn_ModifyDeleteButtons_HaveTitleMatchingAriaLabel() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#application-column-nom-input").Change("PROGRESS");
+        cut.Find("#application-column-header-input").Change("PROGRESS");
+        cut.Find("#add-application-column-definition-button").Click();
+
+        var modifyButton = cut.Find("#modify-application-column-definition-button-0");
+        modifyButton.GetAttribute("title").Should().Be(modifyButton.GetAttribute("aria-label"));
+        modifyButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+
+        var deleteButton = cut.Find("#delete-application-column-definition-button-0");
+        deleteButton.GetAttribute("title").Should().Be(deleteButton.GetAttribute("aria-label"));
+        deleteButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+    });
 }

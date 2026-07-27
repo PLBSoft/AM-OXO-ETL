@@ -139,6 +139,16 @@ public class ExportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles/new");
     });
 
+    // Lot 041 (41.2): the "Créer un profil d'export" CTA was one of the audit's flagged icon-less
+    // CTAs.
+    [Fact]
+    public void CreateProfileButton_HasIcon() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfiles>();
+
+        cut.Find("#create-export-profile-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
     [Fact]
     public void TestProfileButton_NavigatesToTestRoute() => WithCulture("en-US", () =>
     {

@@ -5,11 +5,42 @@
 la présence et l'intégration d'une icône à l'intérieur. Référencer ce document plutôt que
 réexpliquer la règle dans chaque futur ticket UI.
 
-Bibliothèque d'icônes du projet : **Bootstrap Icons** (classes `bi bi-*`), déjà en place dans
-`NavMenu.razor` / `NavMenu.razor.css` (ex. `bi-person-badge-nav-menu`,
-`bi-file-earmark-spreadsheet-nav-menu`, `bi-download-nav-menu`). Ce document étend l'usage de
-cette même bibliothèque aux boutons d'action des pages d'administration, sans en introduire une
-nouvelle.*
+Bibliothèque d'icônes du projet : les formes **Bootstrap Icons**, mais **jamais** via la police
+`bi bi-*` — aucune police d'icônes externe n'est chargée dans ce projet (voir
+`NavMenu.razor.css`, dont les icônes de navigation sont déjà du SVG inline encodé en data-URI, pas
+des classes de police). Pour les boutons d'action des pages d'administration, le mécanisme réel
+est le **SVG inline**, exposé via le dictionnaire de constantes statiques
+`ExcelETL.BlazorAdmin.Shared.AdminIconMarkup` (`AdminIconMarkup.Pencil`, `.Trash`, `.Check`, etc.)
+— un seul point de vérité par forme d'icône, réutilisé tel quel partout où cette action apparaît,
+au lieu de dupliquer le SVG dans chaque composant (cf. `ImportProfiles.razor`/`ExportProfiles.razor`,
+Lot 035.5). Rationale : pas de dépendance à une police externe (pas de flash de contenu non
+stylé), contrôle exact de la couleur via `currentColor`/`fill` pour s'adapter aux thèmes
+clair/sombre. **Ce mécanisme est déjà appliqué à 100 % dans le code réel — aucune migration vers
+`bi bi-*` n'est prévue ni souhaitable** (décision actée, `tickets-tdd-lot-041-convention-icones-coherence.md`).
+
+Exemple réel, tiré de `ImportProfiles.razor` (bouton `create-profile-button`, action CRUD
+« Créer ») :
+
+```razor
+<button id="create-profile-button" class="btn btn-primary flex-fill" @onclick="CreateProfile">
+    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfiles_Create"]
+</button>
+```
+
+Et pour un bouton icône seule (ligne de grille, ex. `ImportProfiles.razor`'s
+`edit-profile-button-@profile.Id`) :
+
+```razor
+<button id="edit-profile-button-@profile.Id" type="button"
+        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+        aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
+        @onclick="() => EditProfile(profile)">
+    @((MarkupString)AdminIconMarkup.Pencil)
+</button>
+```
+
+Ce document étend l'usage de ces formes aux boutons d'action des pages d'administration, sans en
+introduire de nouvelles bibliothèques.*
 
 ## Règle générale
 
@@ -42,13 +73,14 @@ reconnaître l'action *avant* la lecture du texte. Si non, ne pas en ajouter.
 
 ## Accessibilité (A11Y)
 
-- **Bouton icône + texte** : l'icône est décorative, elle doit être masquée aux lecteurs d'écran :
-  `<span class="bi bi-xxx" aria-hidden="true"></span>` (pattern déjà utilisé dans
-  `NavMenu.razor`, à reprendre tel quel).
+- **Bouton icône + texte** : l'icône est décorative, elle doit être masquée aux lecteurs d'écran —
+  chaque constante `AdminIconMarkup` porte déjà `aria-hidden="true"` sur son `<svg>` racine, donc
+  utiliser la constante telle quelle (`@((MarkupString)AdminIconMarkup.Plus)`) suffit, sans rien
+  ajouter.
 - **Bouton icône seule** (ex. ligne de grille sans libellé visible) : le bouton n'ayant pas de
   texte, il **doit** porter un `aria-label` explicite décrivant l'action, et un tooltip visuel
-  (`title` ou équivalent) pour les utilisateurs à la souris :
-  `<button aria-label="Supprimer l'élément" title="Supprimer l'élément"><span class="bi bi-trash" aria-hidden="true"></span></button>`
+  (`title` ou équivalent, contenu identique) pour les utilisateurs à la souris :
+  `<button aria-label="Supprimer l'élément" title="Supprimer l'élément">@((MarkupString)AdminIconMarkup.Trash)</button>`
 - Cette exigence s'ajoute à la convention `id` stable déjà en vigueur sur tout élément interactif
   (voir conventions de tests bUnit) — l'`aria-label` ne remplace pas l'`id`, il s'y ajoute.
 

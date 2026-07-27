@@ -1,5 +1,6 @@
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Generation.Fields
 @using ExcelETL.Domain.Generation.Profile
@@ -34,6 +35,10 @@
 
 <div class="right-aligned-actions">
     <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+        @if (ShowCancel)
+        {
+            @((MarkupString)AdminIconMarkup.Check)
+        }
         @SubmitLabel
     </button>
     @if (ShowCancel)
