@@ -18,6 +18,11 @@
 
 <PageTitle>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</PageTitle>
 
+<!-- Lot 042 (42.3): matches ExportProfileEditor.razor's own container-fluid/px-3 wrapper (X6) --
+     no functional reason found for the divergence, see 42.0's investigation; X6 was scoped only
+     to the export screenshot at the time, never revisited for the import twin. -->
+<div class="container-fluid px-3">
+
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
 <!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
@@ -366,6 +371,8 @@ else
     </button>
 </div>
 }
+
+</div>
 
 @code {
     [Parameter]

@@ -2203,4 +2203,16 @@ public class ImportProfileEditorTests : BunitContext
             deleteButton.GetAttribute("title").Should().Be(deleteButton.GetAttribute("aria-label"));
             deleteButton.GetAttribute("title").Should().NotBeNullOrEmpty();
         });
+
+    // Lot 042 (42.3): closes the container-fluid/px-3 divergence with ExportProfileEditor.razor
+    // (X6) -- 42.0's investigation found no functional reason for it, just a scope-timing gap
+    // (X6 only ever targeted the export screenshot).
+    [Fact]
+    public void RootContainer_HasContainerFluidWithPadding() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        var container = cut.Find(".container-fluid.px-3");
+        container.Should().NotBeNull();
+    });
 }
