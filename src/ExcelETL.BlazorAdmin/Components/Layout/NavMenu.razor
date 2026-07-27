@@ -46,11 +46,8 @@
                         <span class="bi bi-archive-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_GeneratedFiles"]
                     </NavLink>
                 </div>
-            </Authorized>
-        </AuthorizeView>
-
-        <AuthorizeView>
-            <Authorized>
+                <!-- Lot 044 (44.4): moved inside the Admin-only block -- non-admin users created by
+                     this lot must not see the Logs page (decision revisited from Lot S). -->
                 <div class="nav-item px-3">
                     <NavLink id="nav-logs-link" class="nav-link" href="logs">
                         <span class="bi bi-card-list-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Logs"]
