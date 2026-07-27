@@ -105,4 +105,24 @@ public class RegisterTests : BunitContext
 
         _userManagerMock.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
     });
+
+    // Lot 042 (42.1): each field's aria-describedby points to its own validation message's id,
+    // present in the DOM from initial render.
+    [Fact]
+    public void EmailPasswordAndConfirmPasswordFields_HaveAriaDescribedByMatchingTheirValidationMessageId() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Register>();
+
+        var email = cut.Find("#Input\\.Email");
+        email.GetAttribute("aria-describedby").Should().Be("Input.Email-validation");
+        cut.Find("#Input\\.Email-validation").Should().NotBeNull();
+
+        var password = cut.Find("#Input\\.Password");
+        password.GetAttribute("aria-describedby").Should().Be("Input.Password-validation");
+        cut.Find("#Input\\.Password-validation").Should().NotBeNull();
+
+        var confirmPassword = cut.Find("#Input\\.ConfirmPassword");
+        confirmPassword.GetAttribute("aria-describedby").Should().Be("Input.ConfirmPassword-validation");
+        cut.Find("#Input\\.ConfirmPassword-validation").Should().NotBeNull();
+    });
 }

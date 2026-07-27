@@ -107,4 +107,21 @@ public class LoginTests : BunitContext
             s => s.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()),
             Times.Never);
     });
+
+    // Lot 042 (42.1): each field's aria-describedby points to its own validation message's id,
+    // present in the DOM from initial render (an empty container is fine, per the ticket's own
+    // "no dynamic add/remove" instruction).
+    [Fact]
+    public void UsernameAndPasswordFields_HaveAriaDescribedByMatchingTheirValidationMessageId() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Login>();
+
+        var userName = cut.Find("#Input\\.UserName");
+        userName.GetAttribute("aria-describedby").Should().Be("Input.UserName-validation");
+        cut.Find("#Input\\.UserName-validation").Should().NotBeNull();
+
+        var password = cut.Find("#Input\\.Password");
+        password.GetAttribute("aria-describedby").Should().Be("Input.Password-validation");
+        cut.Find("#Input\\.Password-validation").Should().NotBeNull();
+    });
 }

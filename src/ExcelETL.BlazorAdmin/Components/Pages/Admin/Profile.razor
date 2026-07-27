@@ -29,19 +29,22 @@ else
                 <DataAnnotationsValidator />
                 <ValidationSummary class="text-danger" role="alert" />
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.FirstName" id="Info.FirstName" class="form-control" placeholder="@Loc["Profile_FirstNamePlaceholder"]" />
+                    <InputText @bind-Value="InfoInput.FirstName" id="Info.FirstName" class="form-control" aria-describedby="Info.FirstName-validation" placeholder="@Loc["Profile_FirstNamePlaceholder"]" />
                     <label for="Info.FirstName">@Loc["Profile_FirstNameLabel"]</label>
-                    <ValidationMessage For="() => InfoInput.FirstName" class="text-danger" />
+                    <!-- Lot 042 (42.1): ValidationMessage renders nothing at all when the field
+                         has no error, so the aria-describedby target needs its own always-present
+                         wrapper rather than an id on ValidationMessage itself. -->
+                    <div id="Info.FirstName-validation"><ValidationMessage For="() => InfoInput.FirstName" class="text-danger" /></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.LastName" id="Info.LastName" class="form-control" placeholder="@Loc["Profile_LastNamePlaceholder"]" />
+                    <InputText @bind-Value="InfoInput.LastName" id="Info.LastName" class="form-control" aria-describedby="Info.LastName-validation" placeholder="@Loc["Profile_LastNamePlaceholder"]" />
                     <label for="Info.LastName">@Loc["Profile_LastNameLabel"]</label>
-                    <ValidationMessage For="() => InfoInput.LastName" class="text-danger" />
+                    <div id="Info.LastName-validation"><ValidationMessage For="() => InfoInput.LastName" class="text-danger" /></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="InfoInput.Email" id="Info.Email" class="form-control" autocomplete="email" placeholder="@Loc["Account_EmailPlaceholder"]" />
+                    <InputText @bind-Value="InfoInput.Email" id="Info.Email" class="form-control" autocomplete="email" aria-describedby="Info.Email-validation" placeholder="@Loc["Account_EmailPlaceholder"]" />
                     <label for="Info.Email">@Loc["Account_EmailLabel"]</label>
-                    <ValidationMessage For="() => InfoInput.Email" class="text-danger" />
+                    <div id="Info.Email-validation"><ValidationMessage For="() => InfoInput.Email" class="text-danger" /></div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100 btn-lg" disabled="@_isUpdatingInfo">
                     @Loc["Profile_UpdateInfoButton"]
@@ -63,19 +66,22 @@ else
                     <DataAnnotationsValidator />
                     <ValidationSummary class="text-danger" role="alert" />
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.CurrentPassword" id="Password.Current" class="form-control" autocomplete="current-password" placeholder="@Loc["Profile_CurrentPasswordPlaceholder"]" />
+                        <InputText type="password" @bind-Value="PasswordInput.CurrentPassword" id="Password.Current" class="form-control" autocomplete="current-password" aria-describedby="Password.Current-validation" placeholder="@Loc["Profile_CurrentPasswordPlaceholder"]" />
                         <label for="Password.Current">@Loc["Profile_CurrentPasswordLabel"]</label>
-                        <ValidationMessage For="() => PasswordInput.CurrentPassword" class="text-danger" />
+                        <!-- Lot 042 (42.1): ValidationMessage renders nothing at all when the
+                             field has no error, so the aria-describedby target needs its own
+                             always-present wrapper rather than an id on ValidationMessage itself. -->
+                        <div id="Password.Current-validation"><ValidationMessage For="() => PasswordInput.CurrentPassword" class="text-danger" /></div>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.NewPassword" id="Password.New" class="form-control" autocomplete="new-password" placeholder="@Loc["Profile_NewPasswordPlaceholder"]" />
+                        <InputText type="password" @bind-Value="PasswordInput.NewPassword" id="Password.New" class="form-control" autocomplete="new-password" aria-describedby="Password.New-validation" placeholder="@Loc["Profile_NewPasswordPlaceholder"]" />
                         <label for="Password.New">@Loc["Profile_NewPasswordLabel"]</label>
-                        <ValidationMessage For="() => PasswordInput.NewPassword" class="text-danger" />
+                        <div id="Password.New-validation"><ValidationMessage For="() => PasswordInput.NewPassword" class="text-danger" /></div>
                     </div>
                     <div class="form-floating mb-3">
-                        <InputText type="password" @bind-Value="PasswordInput.ConfirmNewPassword" id="Password.Confirm" class="form-control" autocomplete="new-password" placeholder="@Loc["Profile_ConfirmNewPasswordPlaceholder"]" />
+                        <InputText type="password" @bind-Value="PasswordInput.ConfirmNewPassword" id="Password.Confirm" class="form-control" autocomplete="new-password" aria-describedby="Password.Confirm-validation" placeholder="@Loc["Profile_ConfirmNewPasswordPlaceholder"]" />
                         <label for="Password.Confirm">@Loc["Profile_ConfirmNewPasswordLabel"]</label>
-                        <ValidationMessage For="() => PasswordInput.ConfirmNewPassword" class="text-danger" />
+                        <div id="Password.Confirm-validation"><ValidationMessage For="() => PasswordInput.ConfirmNewPassword" class="text-danger" /></div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 btn-lg" disabled="@_isChangingPassword">
                         @Loc["Profile_ChangePasswordButton"]

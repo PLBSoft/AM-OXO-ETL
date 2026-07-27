@@ -25,14 +25,17 @@
                 <hr />
                 <ValidationSummary class="text-danger" role="alert" />
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" autocomplete="username" aria-required="true" placeholder="@Loc["Login_UsernamePlaceholder"]" />
+                    <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control" autocomplete="username" aria-required="true" aria-describedby="Input.UserName-validation" placeholder="@Loc["Login_UsernamePlaceholder"]" />
                     <label for="Input.UserName" class="form-label">@Loc["Login_UsernameLabel"]</label>
-                    <ValidationMessage For="() => Input.UserName" class="text-danger" />
+                    <!-- Lot 042 (42.1): ValidationMessage renders nothing at all when the field has
+                         no error, so the aria-describedby target needs its own always-present
+                         wrapper rather than an id on ValidationMessage itself. -->
+                    <div id="Input.UserName-validation"><ValidationMessage For="() => Input.UserName" class="text-danger" /></div>
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="@Loc["Account_PasswordPlaceholder"]" />
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" aria-describedby="Input.Password-validation" placeholder="@Loc["Account_PasswordPlaceholder"]" />
                     <label for="Input.Password" class="form-label">@Loc["Account_PasswordLabel"]</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+                    <div id="Input.Password-validation"><ValidationMessage For="() => Input.Password" class="text-danger" /></div>
                 </div>
                 <div class="checkbox mb-3">
                     <label class="form-label">

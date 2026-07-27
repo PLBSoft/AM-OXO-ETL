@@ -183,4 +183,42 @@ public class ProfileTests : BunitContext
         rowContainer.ClassList.Should().Contain("row");
         rowContainer.ClassList.Should().Contain("mt-5");
     });
+
+    // Lot 042 (42.1): each field's aria-describedby points to its own validation message's id,
+    // present in the DOM from initial render, across both forms on this page.
+    [Fact]
+    public void InfoFormFields_HaveAriaDescribedByMatchingTheirValidationMessageId() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Profile>();
+
+        var firstName = cut.Find("#Info\\.FirstName");
+        firstName.GetAttribute("aria-describedby").Should().Be("Info.FirstName-validation");
+        cut.Find("#Info\\.FirstName-validation").Should().NotBeNull();
+
+        var lastName = cut.Find("#Info\\.LastName");
+        lastName.GetAttribute("aria-describedby").Should().Be("Info.LastName-validation");
+        cut.Find("#Info\\.LastName-validation").Should().NotBeNull();
+
+        var email = cut.Find("#Info\\.Email");
+        email.GetAttribute("aria-describedby").Should().Be("Info.Email-validation");
+        cut.Find("#Info\\.Email-validation").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void PasswordFormFields_HaveAriaDescribedByMatchingTheirValidationMessageId() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Profile>();
+
+        var current = cut.Find("#Password\\.Current");
+        current.GetAttribute("aria-describedby").Should().Be("Password.Current-validation");
+        cut.Find("#Password\\.Current-validation").Should().NotBeNull();
+
+        var newPassword = cut.Find("#Password\\.New");
+        newPassword.GetAttribute("aria-describedby").Should().Be("Password.New-validation");
+        cut.Find("#Password\\.New-validation").Should().NotBeNull();
+
+        var confirm = cut.Find("#Password\\.Confirm");
+        confirm.GetAttribute("aria-describedby").Should().Be("Password.Confirm-validation");
+        cut.Find("#Password\\.Confirm-validation").Should().NotBeNull();
+    });
 }

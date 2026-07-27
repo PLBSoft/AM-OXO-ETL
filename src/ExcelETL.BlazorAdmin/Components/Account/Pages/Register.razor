@@ -26,19 +26,22 @@
             <hr />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="@Loc["Account_EmailPlaceholder"]" />
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" aria-describedby="Input.Email-validation" placeholder="@Loc["Account_EmailPlaceholder"]" />
                 <label for="Input.Email">@Loc["Account_EmailLabel"]</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+                <!-- Lot 042 (42.1): ValidationMessage renders nothing at all when the field has no
+                     error, so the aria-describedby target needs its own always-present wrapper
+                     rather than an id on ValidationMessage itself. -->
+                <div id="Input.Email-validation"><ValidationMessage For="() => Input.Email" class="text-danger" /></div>
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="@Loc["Account_PasswordPlaceholder"]" />
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" aria-describedby="Input.Password-validation" placeholder="@Loc["Account_PasswordPlaceholder"]" />
                 <label for="Input.Password">@Loc["Account_PasswordLabel"]</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
+                <div id="Input.Password-validation"><ValidationMessage For="() => Input.Password" class="text-danger" /></div>
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="@Loc["Account_PasswordPlaceholder"]" />
+                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" aria-describedby="Input.ConfirmPassword-validation" placeholder="@Loc["Account_PasswordPlaceholder"]" />
                 <label for="Input.ConfirmPassword">@Loc["Register_ConfirmPasswordLabel"]</label>
-                <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
+                <div id="Input.ConfirmPassword-validation"><ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" /></div>
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">@Loc["Register_Submit"]</button>
         </EditForm>
