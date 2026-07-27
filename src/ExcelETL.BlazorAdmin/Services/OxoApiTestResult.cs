@@ -6,7 +6,8 @@ public enum OxoApiTestResultStatus
     BusinessRejection,
     ProfileNotFound,
     Unauthorized,
-    TechnicalError
+    TechnicalError,
+    ConnectionError
 }
 
 public sealed record OxoApiTestRejectionError(string? Sheet, string? BlockIdentifier, string? Code, string? Message);
@@ -17,6 +18,11 @@ public sealed record OxoApiTestRejectionError(string? Sheet, string? BlockIdenti
 // status code, for logging/debugging, never rendered) -- the page shows a generic localized message
 // for that variant, consistent with the project's "no raw stack trace/technical detail in the UI"
 // principle applied elsewhere.
+// ConnectionError (added post-delivery, 2026-07-26) is the one variant that never originates from an
+// HTTP response at all -- it's the client-side "no TCP connection could be established" failure
+// (server not running, wrong OxoApiTestClientOptions.BaseUrl, firewall) that OxoApiTestClient.
+// ProcessAsync used to let propagate as a raw HttpRequestException, crashing the whole Blazor Server
+// circuit instead of surfacing an inline message.
 public sealed class OxoApiTestResult
 {
     private OxoApiTestResult()
@@ -61,4 +67,6 @@ public sealed class OxoApiTestResult
         Status = OxoApiTestResultStatus.TechnicalError,
         HttpStatusCode = httpStatusCode
     };
+
+    public static OxoApiTestResult ConnectionError() => new() { Status = OxoApiTestResultStatus.ConnectionError };
 }

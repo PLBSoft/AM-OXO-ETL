@@ -219,5 +219,25 @@ public class ApiTestTests : BunitContext
         result.TextContent.Should().NotContain("500");
     }));
 
+    [Fact]
+    public void ProcessButton_Click_WithConnectionError_RendersServerUnreachableMessage() => WithCulture("en-US", () => RunAsync(async () =>
+    {
+        var (importProfile, exportProfile) = await SeedProfilesAsync();
+        _oxoApiTestClientMock
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiTestResult.ConnectionError());
+
+        var cut = Render<ApiTest>();
+        cut.Find("#import-profile-select").Change(importProfile.Id.ToString());
+        cut.Find("#export-profile-select").Change(exportProfile.Id.ToString());
+        SelectFile(cut);
+
+        cut.Find("#process-button").Click();
+
+        var result = cut.Find("#api-test-result");
+        result.ClassList.Should().Contain("alert-danger");
+        result.TextContent.Should().Contain("OxoApiTestClient:BaseUrl");
+    }));
+
     private static void RunAsync(Func<Task> action) => action().GetAwaiter().GetResult();
 }

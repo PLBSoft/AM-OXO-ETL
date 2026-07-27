@@ -126,6 +126,39 @@ public class OxoApiTestClientTests
     }
 
     [Fact]
+    public async Task ProcessAsync_WhenNoConnectionCanBeEstablished_ReturnsConnectionErrorInsteadOfThrowing()
+    {
+        var (client, _) = CreateClient(_ => throw new HttpRequestException(
+            "No connection could be made because the target machine actively refused it."));
+
+        var result = await client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", CancellationToken.None);
+
+        result.Status.Should().Be(OxoApiTestResultStatus.ConnectionError);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenRequestTimesOut_ReturnsConnectionErrorInsteadOfThrowing()
+    {
+        var (client, _) = CreateClient(_ => throw new TaskCanceledException("The request timed out."));
+
+        var result = await client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", CancellationToken.None);
+
+        result.Status.Should().Be(OxoApiTestResultStatus.ConnectionError);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenCallerCancels_StillThrowsTaskCanceledException()
+    {
+        var (client, _) = CreateClient(_ => throw new TaskCanceledException("Cancelled."));
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var act = () => client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", cts.Token);
+
+        await act.Should().ThrowAsync<TaskCanceledException>();
+    }
+
+    [Fact]
     public async Task ProcessAsync_SendsApiKeyHeaderWithConfiguredValue()
     {
         var (client, handler) = CreateClient(_ =>

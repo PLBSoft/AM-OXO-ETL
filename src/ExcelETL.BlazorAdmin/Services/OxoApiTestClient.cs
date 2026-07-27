@@ -44,9 +44,28 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
         using var request = new HttpRequestMessage(HttpMethod.Post, ProcessRelativeUrl) { Content = content };
         request.Headers.Add(ApiKeyHeaderName, options.Value.ApiKey);
 
-        using var response = await httpClient.SendAsync(
-            request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            // No HTTP response was ever received (server not running, wrong BaseUrl, firewall) --
+            // never let this propagate: it would crash the whole Blazor Server circuit instead of
+            // surfacing an inline message on the page. See OxoApiTestResult's own comment.
+            return OxoApiTestResult.ConnectionError();
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // HttpClient throws TaskCanceledException (not TimeoutException) when its own Timeout
+            // elapses without the caller having cancelled -- same "no response, don't crash the
+            // circuit" treatment as a refused connection.
+            return OxoApiTestResult.ConnectionError();
+        }
 
+        using var _ = response;
         switch (response.StatusCode)
         {
             case HttpStatusCode.OK:

@@ -1060,4 +1060,7 @@
   <data name="ApiTest_TechnicalErrorMessage" xml:space="preserve">
     <value>Une erreur inattendue s'est produite lors de l'appel au Web API. Consulter les journaux serveur pour plus de détails.</value>
   </data>
+  <data name="ApiTest_ConnectionErrorMessage" xml:space="preserve">
+    <value>Impossible de se connecter au Web API. Vérifier que le serveur est démarré et que OxoApiTestClient:BaseUrl dans la configuration de cette application pointe bien vers lui.</value>
+  </data>
 </root>

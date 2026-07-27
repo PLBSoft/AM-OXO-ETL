@@ -120,6 +120,10 @@ else
             case OxoApiTestResultStatus.TechnicalError:
                 <div id="api-test-result" class="alert alert-secondary mt-3">@Loc["ApiTest_TechnicalErrorMessage"]</div>
                 break;
+
+            case OxoApiTestResultStatus.ConnectionError:
+                <div id="api-test-result" class="alert alert-danger mt-3">@Loc["ApiTest_ConnectionErrorMessage"]</div>
+                break;
         }
     }
 }
