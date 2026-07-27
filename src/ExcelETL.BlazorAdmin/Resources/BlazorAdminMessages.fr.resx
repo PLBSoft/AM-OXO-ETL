@@ -226,6 +226,90 @@
   <data name="Users_UserName" xml:space="preserve">
     <value>Nom d'utilisateur</value>
   </data>
+  <data name="Users_CreateButton" xml:space="preserve">
+    <value>Créer un utilisateur</value>
+  </data>
+  <data name="Users_CreateFormHeading" xml:space="preserve">
+    <value>Créer un utilisateur</value>
+  </data>
+  <data name="Users_FirstNameLabel" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="Users_FirstNamePlaceholder" xml:space="preserve">
+    <value>Prénom</value>
+  </data>
+  <data name="Users_LastNameLabel" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="Users_LastNamePlaceholder" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="Users_EmailLabel" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Users_EmailPlaceholder" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Users_CreateSubmitButton" xml:space="preserve">
+    <value>Créer</value>
+  </data>
+  <data name="Users_CreateCancelButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="Users_AllFieldsRequiredError" xml:space="preserve">
+    <value>Tous les champs sont obligatoires.</value>
+  </data>
+  <data name="Users_TemporaryPasswordLabel" xml:space="preserve">
+    <value>Mot de passe temporaire</value>
+  </data>
+  <data name="Users_TemporaryPasswordWarning" xml:space="preserve">
+    <value>Ce mot de passe ne sera plus jamais affiché. Communiquez-le à l'utilisateur dès maintenant, en dehors de cette application.</value>
+  </data>
+  <data name="Users_DismissButton" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="Users_Edit" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="Users_EditFormHeading" xml:space="preserve">
+    <value>Modifier l'utilisateur</value>
+  </data>
+  <data name="Users_EditSubmitButton" xml:space="preserve">
+    <value>Enregistrer les modifications</value>
+  </data>
+  <data name="Users_EditCancelButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="Users_ResetPassword" xml:space="preserve">
+    <value>Réinitialiser le mot de passe</value>
+  </data>
+  <data name="Users_ResetPasswordConfirmMessage" xml:space="preserve">
+    <value>Réinitialiser le mot de passe de « {0} » ? Un nouveau mot de passe temporaire sera généré.</value>
+  </data>
+  <data name="Users_ConfirmResetPasswordButton" xml:space="preserve">
+    <value>Confirmer la réinitialisation</value>
+  </data>
+  <data name="Users_CancelResetPasswordButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="Users_Delete" xml:space="preserve">
+    <value>Supprimer l'utilisateur {0}</value>
+  </data>
+  <data name="Users_ConfirmDeleteMessage" xml:space="preserve">
+    <value>Supprimer l'utilisateur « {0} » ? Cette action est irréversible.</value>
+  </data>
+  <data name="Users_ConfirmDeleteButton" xml:space="preserve">
+    <value>Confirmer la suppression</value>
+  </data>
+  <data name="Users_CancelDeleteButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="Users_CannotDeleteSelfReason" xml:space="preserve">
+    <value>Vous ne pouvez pas supprimer votre propre compte.</value>
+  </data>
+  <data name="Users_CannotDeleteLastAdminReason" xml:space="preserve">
+    <value>Le dernier compte administrateur restant ne peut pas être supprimé.</value>
+  </data>
   <data name="NavMenu_Profile" xml:space="preserve">
     <value>Mon Profil</value>
   </data>

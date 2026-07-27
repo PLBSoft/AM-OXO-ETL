@@ -1,16 +1,76 @@
 @page "/users"
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
+@using System.Security.Claims
 @using ExcelETL.Application.Identity
+@using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 
 @inject IUserRepository UserRepository
+@inject IUserManagementService UserManagementService
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
 <PageTitle>@Loc["Users_PageTitle"]</PageTitle>
 
 <h1>@Loc["Users_PageTitle"]</h1>
+
+<div class="right-aligned-actions mb-3">
+    <button id="create-user-button" type="button" class="btn btn-primary" @onclick="ShowCreateForm">
+        @((MarkupString)AdminIconMarkup.Plus) @Loc["Users_CreateButton"]
+    </button>
+</div>
+
+@if (_temporaryPasswordDisplay is not null)
+{
+    <div id="temporary-password-display" class="card shadow-sm bg-success-subtle mb-3" role="alert">
+        <div class="card-body">
+            <p class="mb-1">@Loc["Users_TemporaryPasswordLabel"]: <strong>@_temporaryPasswordDisplay</strong></p>
+            <p class="text-warning mb-2">@Loc["Users_TemporaryPasswordWarning"]</p>
+            <button id="dismiss-temporary-password-button" type="button" class="btn btn-secondary btn-sm"
+                    @onclick="DismissTemporaryPassword">
+                @Loc["Users_DismissButton"]
+            </button>
+        </div>
+    </div>
+}
+
+@if (_showCreateForm)
+{
+    <div class="card bg-light mb-3">
+        <div class="card-body">
+            <h2 class="h4">@Loc["Users_CreateFormHeading"]</h2>
+            @if (_createErrorMessage is not null)
+            {
+                <div class="alert alert-danger" role="alert">@_createErrorMessage</div>
+            }
+            <div class="form-floating mb-3">
+                <input id="create-user-first-name-input" class="form-control" placeholder="@Loc["Users_FirstNamePlaceholder"]"
+                       @bind="_createFirstName" @bind:event="oninput" />
+                <label for="create-user-first-name-input">@Loc["Users_FirstNameLabel"]</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input id="create-user-last-name-input" class="form-control" placeholder="@Loc["Users_LastNamePlaceholder"]"
+                       @bind="_createLastName" @bind:event="oninput" />
+                <label for="create-user-last-name-input">@Loc["Users_LastNameLabel"]</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input id="create-user-email-input" class="form-control" placeholder="@Loc["Users_EmailPlaceholder"]"
+                       @bind="_createEmail" @bind:event="oninput" />
+                <label for="create-user-email-input">@Loc["Users_EmailLabel"]</label>
+            </div>
+            <div class="right-aligned-actions">
+                <button id="create-user-cancel-button" type="button" class="btn btn-secondary" @onclick="CancelCreate">
+                    @Loc["Users_CreateCancelButton"]
+                </button>
+                <button id="create-user-submit-button" type="button" class="btn btn-primary" @onclick="SubmitCreateAsync">
+                    @((MarkupString)AdminIconMarkup.Check) @Loc["Users_CreateSubmitButton"]
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @if (_users is null)
 {
@@ -28,6 +88,7 @@ else
                 <th>@Loc["Users_Id"]</th>
                 <th>@Loc["Users_Email"]</th>
                 <th>@Loc["Users_UserName"]</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -37,6 +98,104 @@ else
                     <td>@user.Id</td>
                     <td>@user.Email</td>
                     <td>@user.UserName</td>
+                    <td>
+                        @if (_deletePendingId == user.Id)
+                        {
+                            <div id="@($"delete-user-confirm-{user.Id}")" class="right-aligned-actions" role="alert">
+                                <span class="text-danger me-auto">@Loc["Users_ConfirmDeleteMessage", user.Email ?? user.Id]</span>
+                                <button id="@($"confirm-delete-user-button-{user.Id}")" type="button" class="btn btn-sm btn-danger"
+                                        @onclick="() => ConfirmDeleteAsync(user.Id)">
+                                    @Loc["Users_ConfirmDeleteButton"]
+                                </button>
+                                <button id="@($"cancel-delete-user-button-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                        @onclick="CancelDelete">
+                                    @Loc["Users_CancelDeleteButton"]
+                                </button>
+                            </div>
+                        }
+                        else if (_resetPasswordPendingId == user.Id)
+                        {
+                            <div id="@($"reset-password-confirm-{user.Id}")" class="right-aligned-actions" role="alert">
+                                <span class="me-auto">@Loc["Users_ResetPasswordConfirmMessage", user.Email ?? user.Id]</span>
+                                <button id="@($"confirm-reset-password-button-{user.Id}")" type="button" class="btn btn-sm btn-danger"
+                                        @onclick="() => ConfirmResetPasswordAsync(user.Id)">
+                                    @Loc["Users_ConfirmResetPasswordButton"]
+                                </button>
+                                <button id="@($"cancel-reset-password-button-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                        @onclick="CancelResetPassword">
+                                    @Loc["Users_CancelResetPasswordButton"]
+                                </button>
+                            </div>
+                        }
+                        else if (_editingUserId == user.Id)
+                        {
+                            <div id="@($"edit-user-form-{user.Id}")" class="card bg-light">
+                                <div class="card-body">
+                                    @if (_editErrorMessage is not null)
+                                    {
+                                        <div class="alert alert-danger" role="alert">@_editErrorMessage</div>
+                                    }
+                                    <div class="form-floating mb-3">
+                                        <input id="@($"edit-user-first-name-input-{user.Id}")" class="form-control"
+                                               placeholder="@Loc["Users_FirstNamePlaceholder"]" @bind="_editFirstName" @bind:event="oninput" />
+                                        <label for="@($"edit-user-first-name-input-{user.Id}")">@Loc["Users_FirstNameLabel"]</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input id="@($"edit-user-last-name-input-{user.Id}")" class="form-control"
+                                               placeholder="@Loc["Users_LastNamePlaceholder"]" @bind="_editLastName" @bind:event="oninput" />
+                                        <label for="@($"edit-user-last-name-input-{user.Id}")">@Loc["Users_LastNameLabel"]</label>
+                                    </div>
+                                    <div class="form-floating mb-3">
+                                        <input id="@($"edit-user-email-input-{user.Id}")" class="form-control"
+                                               placeholder="@Loc["Users_EmailPlaceholder"]" @bind="_editEmail" @bind:event="oninput" />
+                                        <label for="@($"edit-user-email-input-{user.Id}")">@Loc["Users_EmailLabel"]</label>
+                                    </div>
+                                    <div class="right-aligned-actions">
+                                        <button id="@($"cancel-edit-user-button-{user.Id}")" type="button" class="btn btn-secondary"
+                                                @onclick="CancelEdit">
+                                            @Loc["Users_EditCancelButton"]
+                                        </button>
+                                        <button id="@($"save-edit-user-button-{user.Id}")" type="button" class="btn btn-primary"
+                                                @onclick="SubmitEditAsync">
+                                            @((MarkupString)AdminIconMarkup.Check) @Loc["Users_EditSubmitButton"]
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <button id="@($"edit-user-button-{user.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["Users_Edit"]" title="@Loc["Users_Edit"]"
+                                    @onclick="() => StartEditAsync(user.Id)">
+                                @((MarkupString)AdminIconMarkup.Pencil)
+                            </button>
+                            <button id="@($"reset-password-button-{user.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["Users_ResetPassword"]" title="@Loc["Users_ResetPassword"]"
+                                    @onclick="() => RequestResetPassword(user.Id)">
+                                @((MarkupString)AdminIconMarkup.Key)
+                            </button>
+                            @if (CanDelete(user))
+                            {
+                                <button id="@($"delete-user-button-{user.Id}")" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
+                                        @onclick="() => RequestDelete(user.Id)">
+                                    @((MarkupString)AdminIconMarkup.Trash)
+                                </button>
+                            }
+                            else
+                            {
+                                <button id="@($"delete-user-button-{user.Id}")" type="button" disabled
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
+                                    @((MarkupString)AdminIconMarkup.Trash)
+                                </button>
+                            }
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -49,7 +208,105 @@ else
                 <div class="card-body">
                     <h2 class="card-title h5">@user.Email</h2>
                     <p class="card-text mb-1"><strong>@Loc["Users_UserName"]:</strong> @user.UserName</p>
-                    <p class="card-text text-muted small mb-0"><strong>@Loc["Users_Id"]:</strong> @user.Id</p>
+                    <p class="card-text text-muted small mb-2"><strong>@Loc["Users_Id"]:</strong> @user.Id</p>
+                    @if (_deletePendingId == user.Id)
+                    {
+                        <div id="@($"delete-user-confirm-card-{user.Id}")" class="right-aligned-actions" role="alert">
+                            <span class="text-danger me-auto">@Loc["Users_ConfirmDeleteMessage", user.Email ?? user.Id]</span>
+                            <button id="@($"confirm-delete-user-button-card-{user.Id}")" type="button" class="btn btn-sm btn-danger"
+                                    @onclick="() => ConfirmDeleteAsync(user.Id)">
+                                @Loc["Users_ConfirmDeleteButton"]
+                            </button>
+                            <button id="@($"cancel-delete-user-button-card-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                    @onclick="CancelDelete">
+                                @Loc["Users_CancelDeleteButton"]
+                            </button>
+                        </div>
+                    }
+                    else if (_resetPasswordPendingId == user.Id)
+                    {
+                        <div id="@($"reset-password-confirm-card-{user.Id}")" class="right-aligned-actions" role="alert">
+                            <span class="me-auto">@Loc["Users_ResetPasswordConfirmMessage", user.Email ?? user.Id]</span>
+                            <button id="@($"confirm-reset-password-button-card-{user.Id}")" type="button" class="btn btn-sm btn-danger"
+                                    @onclick="() => ConfirmResetPasswordAsync(user.Id)">
+                                @Loc["Users_ConfirmResetPasswordButton"]
+                            </button>
+                            <button id="@($"cancel-reset-password-button-card-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                    @onclick="CancelResetPassword">
+                                @Loc["Users_CancelResetPasswordButton"]
+                            </button>
+                        </div>
+                    }
+                    else if (_editingUserId == user.Id)
+                    {
+                        <div id="@($"edit-user-form-card-{user.Id}")" class="card bg-light">
+                            <div class="card-body">
+                                @if (_editErrorMessage is not null)
+                                {
+                                    <div class="alert alert-danger" role="alert">@_editErrorMessage</div>
+                                }
+                                <div class="form-floating mb-3">
+                                    <input id="@($"edit-user-first-name-input-card-{user.Id}")" class="form-control"
+                                           placeholder="@Loc["Users_FirstNamePlaceholder"]" @bind="_editFirstName" @bind:event="oninput" />
+                                    <label for="@($"edit-user-first-name-input-card-{user.Id}")">@Loc["Users_FirstNameLabel"]</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input id="@($"edit-user-last-name-input-card-{user.Id}")" class="form-control"
+                                           placeholder="@Loc["Users_LastNamePlaceholder"]" @bind="_editLastName" @bind:event="oninput" />
+                                    <label for="@($"edit-user-last-name-input-card-{user.Id}")">@Loc["Users_LastNameLabel"]</label>
+                                </div>
+                                <div class="form-floating mb-3">
+                                    <input id="@($"edit-user-email-input-card-{user.Id}")" class="form-control"
+                                           placeholder="@Loc["Users_EmailPlaceholder"]" @bind="_editEmail" @bind:event="oninput" />
+                                    <label for="@($"edit-user-email-input-card-{user.Id}")">@Loc["Users_EmailLabel"]</label>
+                                </div>
+                                <div class="right-aligned-actions">
+                                    <button id="@($"cancel-edit-user-button-card-{user.Id}")" type="button" class="btn btn-secondary"
+                                            @onclick="CancelEdit">
+                                        @Loc["Users_EditCancelButton"]
+                                    </button>
+                                    <button id="@($"save-edit-user-button-card-{user.Id}")" type="button" class="btn btn-primary"
+                                            @onclick="SubmitEditAsync">
+                                        @((MarkupString)AdminIconMarkup.Check) @Loc["Users_EditSubmitButton"]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="right-aligned-actions">
+                            <button id="@($"edit-user-button-card-{user.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["Users_Edit"]" title="@Loc["Users_Edit"]"
+                                    @onclick="() => StartEditAsync(user.Id)">
+                                @((MarkupString)AdminIconMarkup.Pencil)
+                            </button>
+                            <button id="@($"reset-password-button-card-{user.Id}")" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["Users_ResetPassword"]" title="@Loc["Users_ResetPassword"]"
+                                    @onclick="() => RequestResetPassword(user.Id)">
+                                @((MarkupString)AdminIconMarkup.Key)
+                            </button>
+                            @if (CanDelete(user))
+                            {
+                                <button id="@($"delete-user-button-card-{user.Id}")" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
+                                        @onclick="() => RequestDelete(user.Id)">
+                                    @((MarkupString)AdminIconMarkup.Trash)
+                                </button>
+                            }
+                            else
+                            {
+                                <button id="@($"delete-user-button-card-{user.Id}")" type="button" disabled
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
+                                    @((MarkupString)AdminIconMarkup.Trash)
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
             </div>
         }
@@ -58,9 +315,172 @@ else
 
 @code {
     private IReadOnlyList<UserSummary>? _users;
+    private IReadOnlyList<string> _adminUserIds = [];
+    private string? _currentUserId;
+
+    private bool _showCreateForm;
+    private string _createFirstName = "";
+    private string _createLastName = "";
+    private string _createEmail = "";
+    private string? _createErrorMessage;
+
+    private string? _editingUserId;
+    private string _editFirstName = "";
+    private string _editLastName = "";
+    private string _editEmail = "";
+    private string? _editErrorMessage;
+
+    private string? _resetPasswordPendingId;
+    private string? _deletePendingId;
+
+    private string? _temporaryPasswordDisplay;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthState;
+        _currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
         _users = await UserRepository.GetAllAsync();
+        _adminUserIds = await UserManagementService.GetAdminUserIdsAsync();
+    }
+
+    // Only one interactive sub-state (create form / row edit / row reset-password confirm / row
+    // delete confirm) is ever active at a time across the whole page -- generalizes the "un seul
+    // bloc de confirmation actif a la fois" rule already established for ImportProfiles/
+    // ExportProfiles (Lot 028) to every action this page adds.
+    private void ClearAllTransientState()
+    {
+        _showCreateForm = false;
+        _createErrorMessage = null;
+        _editingUserId = null;
+        _editErrorMessage = null;
+        _resetPasswordPendingId = null;
+        _deletePendingId = null;
+    }
+
+    private void ShowCreateForm()
+    {
+        ClearAllTransientState();
+        _showCreateForm = true;
+        _createFirstName = "";
+        _createLastName = "";
+        _createEmail = "";
+    }
+
+    private void CancelCreate() => ClearAllTransientState();
+
+    private async Task SubmitCreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_createFirstName) || string.IsNullOrWhiteSpace(_createLastName) || string.IsNullOrWhiteSpace(_createEmail))
+        {
+            _createErrorMessage = Loc["Users_AllFieldsRequiredError"];
+            return;
+        }
+
+        var result = await UserManagementService.CreateUserAsync(_createEmail, _createFirstName, _createLastName);
+        if (!result.Succeeded)
+        {
+            _createErrorMessage = string.Join(", ", result.Errors);
+            return;
+        }
+
+        ClearAllTransientState();
+        _temporaryPasswordDisplay = result.TemporaryPassword;
+        await LoadUsersAsync();
+    }
+
+    private void DismissTemporaryPassword() => _temporaryPasswordDisplay = null;
+
+    private bool CanDelete(UserSummary user) => user.Id != _currentUserId && !IsSoleRemainingAdmin(user);
+
+    private bool IsSoleRemainingAdmin(UserSummary user) => _adminUserIds.Count == 1 && _adminUserIds[0] == user.Id;
+
+    private LocalizedString DeleteDisabledReason(UserSummary user) =>
+        user.Id == _currentUserId ? Loc["Users_CannotDeleteSelfReason"] : Loc["Users_CannotDeleteLastAdminReason"];
+
+    private async Task StartEditAsync(string userId)
+    {
+        var profile = await UserRepository.GetByIdAsync(userId);
+        if (profile is null)
+        {
+            return;
+        }
+
+        ClearAllTransientState();
+        _editingUserId = userId;
+        _editFirstName = profile.FirstName;
+        _editLastName = profile.LastName;
+        _editEmail = profile.Email ?? "";
+    }
+
+    private void CancelEdit() => ClearAllTransientState();
+
+    private async Task SubmitEditAsync()
+    {
+        if (_editingUserId is null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editFirstName) || string.IsNullOrWhiteSpace(_editLastName) || string.IsNullOrWhiteSpace(_editEmail))
+        {
+            _editErrorMessage = Loc["Users_AllFieldsRequiredError"];
+            return;
+        }
+
+        var result = await UserRepository.UpdateProfileAsync(_editingUserId, _editFirstName, _editLastName, _editEmail);
+        if (!result.Succeeded)
+        {
+            _editErrorMessage = string.Join(", ", result.Errors);
+            return;
+        }
+
+        ClearAllTransientState();
+        await LoadUsersAsync();
+    }
+
+    private void RequestResetPassword(string userId)
+    {
+        ClearAllTransientState();
+        _resetPasswordPendingId = userId;
+    }
+
+    private void CancelResetPassword() => ClearAllTransientState();
+
+    private async Task ConfirmResetPasswordAsync(string userId)
+    {
+        var result = await UserManagementService.ResetPasswordAsync(userId);
+        ClearAllTransientState();
+        if (result.Succeeded)
+        {
+            _temporaryPasswordDisplay = result.TemporaryPassword;
+        }
+    }
+
+    private void RequestDelete(string userId)
+    {
+        ClearAllTransientState();
+        _deletePendingId = userId;
+    }
+
+    private void CancelDelete() => ClearAllTransientState();
+
+    private async Task ConfirmDeleteAsync(string userId)
+    {
+        if (_currentUserId is null)
+        {
+            return;
+        }
+
+        await UserManagementService.DeleteUserAsync(userId, _currentUserId);
+        ClearAllTransientState();
+        await LoadUsersAsync();
     }
 }

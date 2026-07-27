@@ -38,4 +38,12 @@ public static class AdminIconMarkup
     // workbook, the same semantic action the Export profiles nav link's own icon already represents.
     public const string FileEarmarkSpreadsheet =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1" /><path d="M4 8h5v3H4zM4 11h5v1a1 1 0 0 0 1 1h1v-2zM10 12h1a1 1 0 0 0 1-1v-1h-2zM12 10V8h-2v2zM4 7h8V6H4z" /></svg>""";
+
+    // Lot 044 (44.3): row action for resetting a user's password (Users.razor) -- no existing key
+    // shape in this project's icon set (all reused verbatim from NavMenu.razor.css so far) to
+    // borrow from, so this is a small, deliberately simple ring-plus-teeth silhouette rather than a
+    // hand-transcribed complex Bootstrap Icons path (risk of a subtly malformed `d` attribute for a
+    // purely decorative glyph).
+    public const string Key =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="4.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5" /><rect x="7" y="7.25" width="8" height="1.5" /><rect x="11" y="8.75" width="1.5" height="2.5" /><rect x="13" y="8.75" width="1.5" height="2" /></svg>""";
 }
