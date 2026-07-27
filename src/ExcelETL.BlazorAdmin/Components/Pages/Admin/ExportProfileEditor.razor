@@ -27,13 +27,13 @@
 
 @if (_notFound)
 {
-    <div id="export-profile-not-found" class="alert alert-danger">@Loc["ExportProfileEditor_ProfileNotFound"]</div>
+    <div id="export-profile-not-found" class="alert alert-danger" role="alert">@Loc["ExportProfileEditor_ProfileNotFound"]</div>
 }
 else
 {
     @if (!string.IsNullOrEmpty(_profileErrorMessage))
     {
-        <div class="alert alert-danger">@_profileErrorMessage</div>
+        <div class="alert alert-danger" role="alert">@_profileErrorMessage</div>
     }
 
     <div class="mb-3">

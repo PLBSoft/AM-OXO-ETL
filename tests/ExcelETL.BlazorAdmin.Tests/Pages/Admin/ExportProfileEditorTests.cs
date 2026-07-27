@@ -116,6 +116,9 @@ public class ExportProfileEditorTests : BunitContext
             cut.Find("#save-export-profile-button").Click();
 
             cut.Markup.Should().Contain("Name must not be empty.");
+            // Lot 040 (40.1): assistive technology must be told programmatically that an error
+            // appeared -- role="alert" implies aria-live="assertive" natively.
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
 
             var all = await Store.GetAllAsync();
             all.Should().BeEmpty();
@@ -197,7 +200,58 @@ public class ExportProfileEditorTests : BunitContext
 
         cut.Markup.Should().Contain("is used more than once");
         cut.Markup.Should().Contain("No sheet rules added yet.");
+        // Lot 040 (40.1): SheetGenerationRuleForm's own alert-danger block.
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
     });
+
+    [Fact]
+    public void AddColumnDefinition_WithEmptyHeader_DisplaysLocalizedError_WithRoleAlert() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+        cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
+
+        cut.Find("#column-header-input").Change(string.Empty);
+        cut.Find("#add-column-definition-button").Click();
+
+        // Lot 040 (40.1): ColumnDefinitionForm's own alert-danger block.
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+    });
+
+    [Fact]
+    public void AddPointColumnDefinition_WithEmptyColonneNom_DisplaysLocalizedError_WithRoleAlert() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
+
+            cut.Find("#point-column-nom-input").Change(string.Empty);
+            cut.Find("#point-column-header-input").Change("PROLOCK VANNES");
+            cut.Find("#add-point-column-definition-button").Click();
+
+            // Lot 040 (40.1): PointColumnDefinitionForm's own alert-danger block.
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        });
+
+    [Fact]
+    public void AddApplicationColumnDefinition_WithEmptyApplicationNom_DisplaysLocalizedError_WithRoleAlert() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#sheet-generation-rule-name-input").Change("Parents");
+            cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
+
+            cut.Find("#application-column-nom-input").Change(string.Empty);
+            cut.Find("#application-column-header-input").Change("PROGRESS");
+            cut.Find("#add-application-column-definition-button").Click();
+
+            // Lot 040 (40.1): ApplicationColumnDefinitionForm's own alert-danger block.
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        });
 
     [Fact]
     public async Task AddColumnDefinition_WithSourceNotMapped_BuildsColumnWithNullSource_SavedWithoutError() =>
@@ -477,6 +531,8 @@ public class ExportProfileEditorTests : BunitContext
         cut.Markup.Should().Contain("Export profile not found.");
         cut.FindAll("#export-profile-name-input").Should().BeEmpty();
         cut.FindAll("#save-export-profile-button").Should().BeEmpty();
+        // Lot 040 (40.1): same role="alert" treatment as every other alert-danger block.
+        cut.Find("#export-profile-not-found").GetAttribute("role").Should().Be("alert");
     });
 
     // Parity ticket Q1: every input in ExportProfileEditor.razor gets a visible <label>, matching

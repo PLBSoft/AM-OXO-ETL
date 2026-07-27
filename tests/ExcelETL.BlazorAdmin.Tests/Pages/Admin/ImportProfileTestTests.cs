@@ -373,6 +373,8 @@ public class ImportProfileTestTests : BunitContext
 
             cut.Markup.Should().Contain("Select an import profile.");
             cut.Markup.Should().NotContain("Equipement");
+            // Lot 040 (40.1): ImportProfileTest.razor's own alert-danger block.
+            cut.Find("#test-status").GetAttribute("role").Should().Be("alert");
         });
 
     [Fact]
@@ -394,6 +396,8 @@ public class ImportProfileTestTests : BunitContext
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
             cut.Markup.Should().NotContain("Non-blocking warnings");
+            // Lot 040 (40.1): the per-file "rejected" block is also an alert-danger.
+            cut.Find("#rejected").GetAttribute("role").Should().Be("alert");
         });
 
     [Fact]
@@ -668,6 +672,35 @@ public class ImportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
             cut.Markup.Should().NotContain("files selected, the maximum is");
             cut.Find("#batch-summary").TextContent.Should().Contain("20 file(s) processed:");
+        });
+
+    [Fact]
+    public void StatusRegion_HasAriaLivePolite_PresentFromInitialRender_BeforeAnyProcessing() =>
+        WithCulture("en-US", () =>
+        {
+            // Lot 040 (40.2): the wrapper must already carry aria-live="polite" before any file is
+            // ever selected -- inserting the whole subtree (including the attribute) at the same
+            // moment content changes is not reliably announced by assistive technology.
+            var cut = Render<ImportProfileTest>();
+
+            cut.Find("#test-status-region").GetAttribute("aria-live").Should().Be("polite");
+        });
+
+    [Fact]
+    public async Task StatusRegion_AfterBatchProcessing_StillHasAriaLivePolite_AndSummaryTextUnchanged() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            cut.Find("#test-status-region").GetAttribute("aria-live").Should().Be("polite");
+            cut.Find("#batch-summary").TextContent.Should().Contain("1 file(s) processed:");
         });
 
     [Fact]

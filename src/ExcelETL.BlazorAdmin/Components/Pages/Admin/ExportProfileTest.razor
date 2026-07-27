@@ -66,6 +66,8 @@ else
         </div>
     </div>
 
+    <!-- Lot 040 (40.2): same stable aria-live wrapper as ImportProfileTest.razor -- see its comment. -->
+    <div id="export-test-status-region" aria-live="polite">
     @if (_state == State.Processing)
     {
         <div id="export-test-status" class="alert alert-info d-flex align-items-center gap-2">
@@ -75,7 +77,7 @@ else
     }
     else if (_state == State.Error)
     {
-        <div id="export-test-status" class="alert alert-danger">@_importErrorMessage</div>
+        <div id="export-test-status" class="alert alert-danger" role="alert">@_importErrorMessage</div>
     }
     else if (_batchResults is not null)
     {
@@ -106,7 +108,7 @@ else
 
                 @if (!string.IsNullOrEmpty(_generationErrorMessage))
                 {
-                    <div class="alert alert-danger">@_generationErrorMessage</div>
+                    <div class="alert alert-danger" role="alert">@_generationErrorMessage</div>
                 }
             }
 
@@ -134,7 +136,7 @@ else
                             }
                             else if (fileResult.ImportResult!.Equipement is null)
                             {
-                                <div id="@($"rejected{suffix}")" class="alert alert-danger">
+                                <div id="@($"rejected{suffix}")" class="alert alert-danger" role="alert">
                                     <h4>@Loc["ExportProfileTest_RejectedFileHeading"]</h4>
                                     <ul>
                                         @foreach (var error in fileResult.ImportResult.Errors)
@@ -185,7 +187,7 @@ else
 
                                 @if (!string.IsNullOrEmpty(fileResult.GenerationErrorMessage))
                                 {
-                                    <div class="alert alert-danger">@fileResult.GenerationErrorMessage</div>
+                                    <div class="alert alert-danger" role="alert">@fileResult.GenerationErrorMessage</div>
                                 }
 
                                 @if (fileResult.GeneratedWorkbook is not null)
@@ -244,6 +246,7 @@ else
             }
         </div>
     }
+    </div>
 }
 
 @code {

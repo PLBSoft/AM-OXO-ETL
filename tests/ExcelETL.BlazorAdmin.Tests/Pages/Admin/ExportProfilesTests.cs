@@ -361,6 +361,9 @@ public class ExportProfilesTests : BunitContext
         cut.Find($"#delete-export-profile-button-{profile.Id}").Click();
 
         cut.Find($"#delete-export-profile-confirm-{profile.Id}").TextContent.Should().Contain("MAD OXO export to delete");
+        // Lot 040 (40.3): a destructive action pending confirmation is announced assertively,
+        // consistent with the role="alert" treatment used for error messages (40.1).
+        cut.Find($"#delete-export-profile-confirm-{profile.Id}").GetAttribute("role").Should().Be("alert");
     });
 
     [Fact]

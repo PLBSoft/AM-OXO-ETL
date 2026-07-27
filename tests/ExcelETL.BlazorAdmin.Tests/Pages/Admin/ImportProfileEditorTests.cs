@@ -151,6 +151,9 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#save-profile-button").Click();
 
             cut.Markup.Should().Contain("Name must not be empty.");
+            // Lot 040 (40.1): assistive technology must be told programmatically that an error
+            // appeared -- role="alert" implies aria-live="assertive" natively.
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
 
             var all = await Store.GetAllAsync();
             all.Should().BeEmpty();
@@ -230,6 +233,8 @@ public class ImportProfileEditorTests : BunitContext
 
         cut.Markup.Should().Contain("Step must be positive.");
         cut.Markup.Should().Contain("No sheet rules added yet.");
+        // Lot 040 (40.1): SheetRuleForm's own alert-danger block.
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
     });
 
     [Fact]
@@ -398,6 +403,8 @@ public class ImportProfileEditorTests : BunitContext
         cut.Markup.Should().Contain("Import profile not found.");
         cut.FindAll("#profile-name-input").Should().BeEmpty();
         cut.FindAll("#save-profile-button").Should().BeEmpty();
+        // Lot 040 (40.1): same role="alert" treatment as every other alert-danger block.
+        cut.Find("#import-profile-not-found").GetAttribute("role").Should().Be("alert");
     });
 
     [Fact]
@@ -1426,6 +1433,8 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.Markup.Should().Contain("Enter a valid Excel range");
             cut.FindAll("#modify-block-field-button-0").Should().BeEmpty();
+            // Lot 040 (40.1): BlockFieldForm's own alert-danger block.
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
         });
 
     [Fact]

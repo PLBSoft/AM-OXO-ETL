@@ -66,6 +66,11 @@ else
         </div>
     </div>
 
+    <!-- Lot 040 (40.2): a stable wrapper, present from initial render regardless of _state, so
+         aria-live="polite" is already attached to the DOM before the batch-summary content it
+         announces ever appears -- inserting the whole subtree (including aria-live) at the same
+         time content changes is not reliably announced by assistive technology. -->
+    <div id="test-status-region" aria-live="polite">
     @if (_state == State.Processing)
     {
         <div id="test-status" class="alert alert-info d-flex align-items-center gap-2">
@@ -75,7 +80,7 @@ else
     }
     else if (_state == State.Error)
     {
-        <div id="test-status" class="alert alert-danger">@_errorMessage</div>
+        <div id="test-status" class="alert alert-danger" role="alert">@_errorMessage</div>
     }
     else if (_batchResults is not null)
     {
@@ -113,7 +118,7 @@ else
                             }
                             else if (fileResult.ImportResult!.Equipement is null)
                             {
-                                <div id="@($"rejected{suffix}")" class="alert alert-danger">
+                                <div id="@($"rejected{suffix}")" class="alert alert-danger" role="alert">
                                     <h4>@Loc["ImportProfileTest_RejectedFileHeading"]</h4>
                                     <ul>
                                         @foreach (var error in fileResult.ImportResult.Errors)
@@ -298,6 +303,7 @@ else
           </div>
         </div>
     }
+    </div>
 }
 
 @code {

@@ -60,7 +60,7 @@ else
                     <td>
                         @if (_profileIdPendingDeletion == profile.Id)
                         {
-                            <div id="@($"delete-profile-confirm-{profile.Id}")" class="right-aligned-actions">
+                            <div id="@($"delete-profile-confirm-{profile.Id}")" class="right-aligned-actions" role="alert">
                                 <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmDeleteMessage", _profileNamePendingDeletion]</span>
                                 <button id="@($"confirm-delete-profile-button-{profile.Id}")" type="button"
                                         class="btn btn-sm btn-danger"
@@ -113,7 +113,7 @@ else
                     <p class="card-text">@Loc["ImportProfiles_SheetCount", profile.SheetRules.Count]</p>
                     @if (_profileIdPendingDeletion == profile.Id)
                     {
-                        <div id="@($"delete-profile-confirm-card-{profile.Id}")" class="right-aligned-actions">
+                        <div id="@($"delete-profile-confirm-card-{profile.Id}")" class="right-aligned-actions" role="alert">
                             <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmDeleteMessage", _profileNamePendingDeletion]</span>
                             <button id="@($"confirm-delete-profile-button-card-{profile.Id}")" type="button"
                                     class="btn btn-sm btn-danger"

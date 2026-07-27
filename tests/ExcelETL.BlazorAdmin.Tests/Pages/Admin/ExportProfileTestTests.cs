@@ -330,6 +330,27 @@ public class ExportProfileTestTests : BunitContext
         });
 
     [Fact]
+    public async Task ClickingGenerate_WithoutExportProfileSelected_ShowsError_WithRoleAlert() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#generate-workbook-button").Should().NotBeEmpty());
+            cut.Find("#generate-workbook-button").Click();
+
+            // Lot 040 (40.1): the top-level generation-error alert-danger block.
+            cut.Markup.Should().Contain("Select an export profile.");
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        });
+
+    [Fact]
     public async Task SelectingFile_ThatFailsProcedureValidation_BlocksGeneration_AndNeverCallsGenerationEngine() =>
         await WithCultureAsync("en-US", async () =>
         {
@@ -353,6 +374,8 @@ public class ExportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
             cut.FindAll("#generate-workbook-button").Should().BeEmpty();
             cut.FindAll("#export-test-export-profile-select").Should().BeEmpty();
+            // Lot 040 (40.1): the per-file "rejected" block is also an alert-danger.
+            cut.Find("#rejected").GetAttribute("role").Should().Be("alert");
 
             mockEngine.Verify(engine => engine.Generate(It.IsAny<ImportResult>(), It.IsAny<ExportProfile>()), Times.Never);
         });
@@ -880,6 +903,8 @@ public class ExportProfileTestTests : BunitContext
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("21 files selected, the maximum is 20"));
             cut.FindAll("#batch-summary").Should().BeEmpty();
+            // Lot 040 (40.1): ExportProfileTest.razor's own alert-danger block.
+            cut.Find("#export-test-status").GetAttribute("role").Should().Be("alert");
         });
 
     [Fact]
@@ -897,6 +922,34 @@ public class ExportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("big.xlsx"));
             cut.Markup.Should().Contain("exceed the maximum size of 10 MB");
             cut.FindAll("#batch-summary").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void StatusRegion_HasAriaLivePolite_PresentFromInitialRender_BeforeAnyProcessing() =>
+        WithCulture("en-US", () =>
+        {
+            // Lot 040 (40.2): same stable aria-live wrapper as ImportProfileTest.razor -- see its
+            // comment there.
+            var cut = Render<ExportProfileTest>();
+
+            cut.Find("#export-test-status-region").GetAttribute("aria-live").Should().Be("polite");
+        });
+
+    [Fact]
+    public async Task StatusRegion_AfterBatchProcessing_StillHasAriaLivePolite_AndSummaryTextUnchanged() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+
+            cut.Find("#export-test-status-region").GetAttribute("aria-live").Should().Be("polite");
+            cut.Find("#batch-summary").TextContent.Should().Contain("1 file(s) processed:");
         });
 
     // Lot 033 (33.3): sequential batch processing + per-file generation/download, mirroring 33.2.
