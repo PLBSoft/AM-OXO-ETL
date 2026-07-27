@@ -195,4 +195,72 @@ public class UserRepositoryTests
         result.Succeeded.Should().BeFalse();
         result.Errors.Should().ContainSingle().Which.Should().Be("Incorrect password.");
     }
+
+    // Lot 045 (45.1): a successful password change lifts RequirePasswordChangeOnFirstLogin so a
+    // temporary password created/reset by an admin (Lot 044) doesn't stay forced open forever.
+    [Fact]
+    public async Task ChangePasswordAsync_SucceedsWithFlagTrue_ClearsFlag_AndUpdatesUserOnce()
+    {
+        var user = new ApplicationUser
+        {
+            Id = "1",
+            Email = "alice@example.com",
+            UserName = "alice@example.com",
+            RequirePasswordChangeOnFirstLogin = true,
+        };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "Temp0rary!", "NewP@ss1")).ReturnsAsync(IdentityResult.Success);
+        _userManagerMock.Setup(m => m.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
+
+        var repository = CreateRepository();
+        var result = await repository.ChangePasswordAsync("1", "Temp0rary!", "NewP@ss1");
+
+        result.Succeeded.Should().BeTrue();
+        user.RequirePasswordChangeOnFirstLogin.Should().BeFalse();
+        _userManagerMock.Verify(m => m.UpdateAsync(user), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_FailsWithFlagTrue_LeavesFlagTrue_AndNeverCallsUpdate()
+    {
+        var user = new ApplicationUser
+        {
+            Id = "1",
+            Email = "alice@example.com",
+            UserName = "alice@example.com",
+            RequirePasswordChangeOnFirstLogin = true,
+        };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.ChangePasswordAsync(user, "WrongPassword", "NewP@ss1"))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Incorrect password." }));
+
+        var repository = CreateRepository();
+        var result = await repository.ChangePasswordAsync("1", "WrongPassword", "NewP@ss1");
+
+        result.Succeeded.Should().BeFalse();
+        user.RequirePasswordChangeOnFirstLogin.Should().BeTrue();
+        _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ChangePasswordAsync_SucceedsWithFlagAlreadyFalse_LeavesFlagFalse_AndNeverCallsUpdate()
+    {
+        var user = new ApplicationUser
+        {
+            Id = "1",
+            Email = "alice@example.com",
+            UserName = "alice@example.com",
+            RequirePasswordChangeOnFirstLogin = false,
+        };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.ChangePasswordAsync(user, "OldP@ss1", "NewP@ss1")).ReturnsAsync(IdentityResult.Success);
+
+        var repository = CreateRepository();
+        var result = await repository.ChangePasswordAsync("1", "OldP@ss1", "NewP@ss1");
+
+        result.Succeeded.Should().BeTrue();
+        user.RequirePasswordChangeOnFirstLogin.Should().BeFalse();
+        _userManagerMock.Verify(m => m.UpdateAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
 }
