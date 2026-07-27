@@ -62,6 +62,10 @@ builder.Services.AddDbContextFactory<ApplicationIdentityDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_Identity")),
     lifetime: ServiceLifetime.Scoped);
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+// Lot 044: only needs UserManager<ApplicationUser> (already registered by AddIdentity below),
+// no DbContext of its own -- stateless like the other Scoped repositories above, registered here
+// for proximity to IUserRepository, its sibling in Users.razor.
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 
 // Interactive Server components share a circuit across multiple renders, so a directly
 // injected scoped DbContext would be used concurrently/beyond its intended lifetime. This
