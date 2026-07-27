@@ -94,6 +94,36 @@ public class PasswordChangeGuardTests : BunitContext
         navigationManager.Uri.Should().EndWith(ForcePasswordChange.Route);
     }
 
+    // Lot 049 (49.4): an error page must never be a redirection target. Redirecting away from
+    // /not-found or /Error while the flag is set is a latent redirect loop -- today it is only masked
+    // by BlazorDisableThrowNavigationException, and it is exactly how a rendering failure on the
+    // forced-change page would turn into the inescapable loop reported for this lot.
+    [Theory]
+    [InlineData("not-found")]
+    [InlineData("Error")]
+    public void NavigatingToErrorPage_WithFlagClaim_DoesNotRedirect(string errorPagePath)
+    {
+        RenderGuardAsAuthorized(requiresPasswordChange: true);
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        navigationManager.NavigateTo(errorPagePath);
+
+        navigationManager.Uri.Should().EndWith(errorPagePath);
+    }
+
+    [Theory]
+    [InlineData("not-found")]
+    [InlineData("Error")]
+    public void OnFreshRender_WithFlagClaim_AndCurrentUriIsErrorPage_DoesNotRedirect(string errorPagePath)
+    {
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        navigationManager.NavigateTo(errorPagePath);
+
+        RenderGuardAsAuthorized(requiresPasswordChange: true);
+
+        navigationManager.Uri.Should().EndWith(errorPagePath);
+    }
+
     [Fact]
     public void OnFreshRender_WithFlagClaim_AndCurrentUriIsForcePasswordChange_DoesNotRedirect()
     {
