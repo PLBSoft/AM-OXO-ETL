@@ -12,6 +12,8 @@ using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -243,6 +245,63 @@ public class ProfileEditorParityTests : BunitContext
             exportDelete.TextContent.Trim().Should().BeEmpty();
             importDelete.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             exportDelete.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        });
+
+    // Lot 043 (43.2): unsaved-changes navigation guard -- same mechanism/structure on both editors
+    // (NavigationLock presence + confirmation banner ids), string-compared per the parity file's
+    // own established pattern rather than each editor's test file separately asserting "it exists".
+    // The two editors are exercised one at a time, not simultaneously mounted with unresolved dirty
+    // state -- the real .NET NavigationManager invokes registered location-changing handlers
+    // sequentially and stops at the first one that calls PreventNavigation(), so a second component
+    // registered on the same shared NavigationManager would never see a navigation intercepted by
+    // an earlier one still reporting unsaved changes. Clicking "discard and leave" on the import
+    // side before rendering the export side clears its own dirty flag (its handler stays
+    // registered, but harmlessly no-ops from then on) so the export side's own handler is the one
+    // that actually intercepts the second navigation -- this never occurs in the real app anyway,
+    // since only one of the two editors is ever mounted at a time.
+    [Fact]
+    public void NavigationLockAndUnsavedChangesConfirmation_AreStructurallyIdenticalBetweenImportAndExportEditors() =>
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfileEditor>();
+
+            importCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+            importCut.FindAll("#unsaved-changes-navigation-confirmation").Should().BeEmpty();
+
+            importCut.Find("#profile-name-input").Change("MAD OXO");
+            importCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+            var importIndicatorClass = importCut.Find("#unsaved-changes-indicator").GetAttribute("class");
+
+            var navigationManager = Services.GetRequiredService<NavigationManager>();
+            navigationManager.NavigateTo("export-profiles");
+
+            var importConfirmationClass = importCut.Find("#unsaved-changes-navigation-confirmation").GetAttribute("class");
+            var importDiscardClass = importCut.Find("#discard-changes-and-leave-button").GetAttribute("class");
+            var importStayClass = importCut.Find("#stay-on-page-button").GetAttribute("class");
+
+            // Clears import's own dirty flag (its handler stays registered but becomes a permanent
+            // no-op) so it doesn't keep intercepting navigations meant for the export side below.
+            importCut.Find("#discard-changes-and-leave-button").Click();
+
+            var exportCut = Render<ExportProfileEditor>();
+
+            exportCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+            exportCut.FindAll("#unsaved-changes-navigation-confirmation").Should().BeEmpty();
+
+            exportCut.Find("#export-profile-name-input").Change("Profil export OXO");
+            exportCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+            var exportIndicatorClass = exportCut.Find("#unsaved-changes-indicator").GetAttribute("class");
+
+            navigationManager.NavigateTo("import-profiles");
+
+            var exportConfirmationClass = exportCut.Find("#unsaved-changes-navigation-confirmation").GetAttribute("class");
+            var exportDiscardClass = exportCut.Find("#discard-changes-and-leave-button").GetAttribute("class");
+            var exportStayClass = exportCut.Find("#stay-on-page-button").GetAttribute("class");
+
+            importIndicatorClass.Should().Be(exportIndicatorClass);
+            importConfirmationClass.Should().Be(exportConfirmationClass);
+            importDiscardClass.Should().Be(exportDiscardClass);
+            importStayClass.Should().Be(exportStayClass);
         });
 
     private static void WithCulture(string cultureName, Action action)

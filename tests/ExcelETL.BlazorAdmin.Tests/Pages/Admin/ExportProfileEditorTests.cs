@@ -13,6 +13,7 @@ using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -1674,5 +1675,153 @@ public class ExportProfileEditorTests : BunitContext
         var deleteButton = cut.Find("#delete-application-column-definition-button-0");
         deleteButton.GetAttribute("title").Should().Be(deleteButton.GetAttribute("aria-label"));
         deleteButton.GetAttribute("title").Should().NotBeNullOrEmpty();
+    });
+
+    // Lot 043 (43.2): mirror of ImportProfileEditorTests' own 43.1 suite -- same scenarios,
+    // transposed to IExportProfileStore/SheetGenerationRule et al.
+    [Fact]
+    public async Task NavigationLock_ConfirmExternalNavigation_IsFalse_OnInitialLoad_ForNewAndExistingProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var newProfileCut = Render<ExportProfileEditor>();
+            newProfileCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+            // Lot 043 (43.3): the badge is absent, not merely hidden, when nothing is dirty yet.
+            newProfileCut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+            var editCut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            editCut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+            editCut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void NavigationLock_ConfirmExternalNavigation_BecomesTrue_AfterRootFieldChange() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find("#export-profile-name-input").Change("Profil export OXO");
+
+        cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+        cut.Find("#unsaved-changes-indicator").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavigationLock_ConfirmExternalNavigation_BecomesTrue_AfterAddingASheetRule() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        AddValidSheetRule(cut);
+
+        cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+    });
+
+    [Fact]
+    public async Task NavigationLock_ConfirmExternalNavigation_BecomesTrue_AfterModifyingAnExistingSheetRule() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#save-sheet-generation-rule-button-0").Click();
+
+            cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task NavigationLock_ConfirmExternalNavigation_BecomesTrue_AfterDeletingAnExistingSheetRule() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+
+            cut.Find("#delete-sheet-generation-rule-button-0").Click();
+            cut.Find("#confirm-delete-sheet-generation-rule-button-0").Click();
+
+            cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+        });
+
+    [Fact]
+    public async Task HasUnsavedChanges_ResetsToFalse_AfterSuccessfulSave() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            cut.Find("#export-profile-name-input").Change("Profil export OXO");
+            AddValidSheetRule(cut);
+            cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeTrue();
+
+            cut.Find("#save-export-profile-button").Click();
+
+            var all = await Store.GetAllAsync();
+            var saved = all.Single();
+            var reopened = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, saved.Id));
+            reopened.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+        });
+
+    [Fact]
+    public void HasUnsavedChanges_StaysTrue_WhenSaveFails() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        // Empty name -> SaveAsync throws DomainValidationException, caught inside SaveProfileAsync --
+        // reuses the existing failure path already tested above (Save_WithEmptyName_...).
+        cut.Find("#save-export-profile-button").Click();
+
+        cut.Markup.Should().Contain("Name must not be empty.");
+        cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+    });
+
+    [Fact]
+    public void DiscardChangesAndLeaveButton_NavigatesToTheTargetLocation() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        cut.Find("#export-profile-name-input").Change("Profil export OXO");
+        navigationManager.NavigateTo("import-profiles");
+        cut.Find("#unsaved-changes-navigation-confirmation").Should().NotBeNull();
+
+        cut.Find("#discard-changes-and-leave-button").Click();
+
+        navigationManager.Uri.Should().EndWith("/import-profiles");
+        cut.FindComponent<NavigationLock>().Instance.ConfirmExternalNavigation.Should().BeFalse();
+    });
+
+    [Fact]
+    public void StayOnPageButton_DoesNotNavigate_AndClosesTheConfirmation() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var originalUri = navigationManager.Uri;
+
+        cut.Find("#export-profile-name-input").Change("Profil export OXO");
+        navigationManager.NavigateTo("import-profiles");
+        cut.Find("#unsaved-changes-navigation-confirmation").Should().NotBeNull();
+
+        cut.Find("#stay-on-page-button").Click();
+
+        navigationManager.Uri.Should().Be(originalUri);
+        cut.FindAll("#unsaved-changes-navigation-confirmation").Should().BeEmpty();
+        cut.Find("#export-profile-name-input").GetAttribute("value").Should().Be("Profil export OXO");
+    });
+
+    [Fact]
+    public void NavigationLock_DoesNotInterceptNavigation_WhenNoUnsavedChanges() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+
+        navigationManager.NavigateTo("import-profiles");
+
+        navigationManager.Uri.Should().EndWith("/import-profiles");
+        cut.FindAll("#unsaved-changes-navigation-confirmation").Should().BeEmpty();
     });
 }

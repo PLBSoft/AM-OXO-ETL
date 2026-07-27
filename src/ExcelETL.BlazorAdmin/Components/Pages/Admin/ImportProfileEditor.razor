@@ -10,6 +10,7 @@
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 
 @inject IImportProfileStore ImportProfileStore
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
@@ -17,6 +18,12 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</PageTitle>
+
+<!-- Lot 043 (43.1): warns before losing in-progress edits -- ConfirmExternalNavigation delegates
+     to the browser's native dialog for tab-close/refresh/external navigation;
+     OnBeforeInternalNavigation intercepts SPA navigation (sidebar links, etc.) and shows our own
+     inline confirmation instead. Always rendered (harmless no-op when _hasUnsavedChanges is false). -->
+<NavigationLock ConfirmExternalNavigation="_hasUnsavedChanges" OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" />
 
 <!-- Lot 042 (42.3): matches ExportProfileEditor.razor's own container-fluid/px-3 wrapper (X6) --
      no functional reason found for the divergence, see 42.0's investigation; X6 was scoped only
@@ -28,6 +35,19 @@
 <!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
      PageBackNavLink.razor. Replaces the previous in-content btn-secondary button. -->
 <PageBackNavLink Id="back-to-import-profiles-button" Label="@Loc["ImportProfileEditor_BackToListButton"]" OnClick="BackToList" />
+
+@if (_showNavigationConfirmation)
+{
+    <div id="unsaved-changes-navigation-confirmation" class="alert alert-warning right-aligned-actions" role="alert">
+        <span class="text-danger me-auto">@Loc["ImportProfileEditor_UnsavedChangesConfirmMessage"]</span>
+        <button id="discard-changes-and-leave-button" class="btn btn-sm btn-danger" @onclick="DiscardChangesAndLeave">
+            @Loc["ImportProfileEditor_DiscardChangesAndLeaveButton"]
+        </button>
+        <button id="stay-on-page-button" class="btn btn-sm btn-secondary" @onclick="StayOnPage">
+            @Loc["ImportProfileEditor_StayOnPageButton"]
+        </button>
+    </div>
+}
 
 @if (_notFound)
 {
@@ -42,21 +62,21 @@ else
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="profile-name-input" class="form-control" @bind="_name" maxlength="@ImportProfile.MaxNameLength"
+        <input id="profile-name-input" class="form-control" @bind="_name" @bind:after="MarkAsChanged" maxlength="@ImportProfile.MaxNameLength"
                placeholder="@Loc["ImportProfileEditor_NamePlaceholder"]" />
         <label for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix"
+        <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix" @bind:after="MarkAsChanged"
                placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
         <label for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom"
+        <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom" @bind:after="MarkAsChanged"
                placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
         <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
     </div>
@@ -365,6 +385,10 @@ else
     </div>
 </div>
 
+@if (_hasUnsavedChanges)
+{
+    <span id="unsaved-changes-indicator" class="text-warning">@Loc["ImportProfileEditor_UnsavedChangesIndicator"]</span>
+}
 <div class="right-aligned-actions">
     <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4" @onclick="SaveProfileAsync">
         @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
@@ -403,6 +427,14 @@ else
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
+    // Lot 043: a single global flag, not a per-field diff -- see the ticket's own KISS/YAGNI
+    // rationale. Set by every mutation entry point below, cleared only on a successful save.
+    private bool _hasUnsavedChanges;
+    private bool _showNavigationConfirmation;
+    private string? _pendingNavigationTarget;
+
+    private void MarkAsChanged() => _hasUnsavedChanges = true;
+
     protected override async Task OnInitializedAsync()
     {
         if (!Id.HasValue)
@@ -437,6 +469,7 @@ else
 
         _defaultTableaux.Add(_newDefaultTableauName);
         _newDefaultTableauName = string.Empty;
+        MarkAsChanged();
     }
 
     private void AddDefaultApplicationName()
@@ -448,6 +481,7 @@ else
 
         _defaultApplicationNames.Add(_newDefaultApplicationName);
         _newDefaultApplicationName = string.Empty;
+        MarkAsChanged();
     }
 
     private void StartDefaultTableauEdit(int itemIndex)
@@ -468,6 +502,7 @@ else
         _defaultTableaux[itemIndex] = _editingDefaultTableauValue;
         _editingDefaultTableauIndex = null;
         _defaultTableauEditError = null;
+        MarkAsChanged();
     }
 
     private void CancelDefaultTableauEdit()
@@ -483,6 +518,7 @@ else
         {
             _editingDefaultTableauIndex = null;
         }
+        MarkAsChanged();
     }
 
     private void StartDefaultApplicationNameEdit(int itemIndex)
@@ -503,6 +539,7 @@ else
         _defaultApplicationNames[itemIndex] = _editingDefaultApplicationNameValue;
         _editingDefaultApplicationNameIndex = null;
         _defaultApplicationNameEditError = null;
+        MarkAsChanged();
     }
 
     private void CancelDefaultApplicationNameEdit()
@@ -518,14 +555,20 @@ else
         {
             _editingDefaultApplicationNameIndex = null;
         }
+        MarkAsChanged();
     }
 
-    private void HandleAddSheetRule(SheetExtractionRule rule) => _sheetRules.Add(rule);
+    private void HandleAddSheetRule(SheetExtractionRule rule)
+    {
+        _sheetRules.Add(rule);
+        MarkAsChanged();
+    }
 
     private void HandleSaveSheetRule(int index, SheetExtractionRule updated)
     {
         _sheetRules[index] = updated;
         _editingIndex = null;
+        MarkAsChanged();
     }
 
     private void ConfirmDeleteSheetRule(int index)
@@ -541,6 +584,7 @@ else
         {
             _editingIndex = null;
         }
+        MarkAsChanged();
     }
 
     private void ToggleSheetRuleDetails(int index)
@@ -565,6 +609,7 @@ else
                     _name, _reperePrefix, _equipementTypeElementNom, _defaultTableaux, _defaultApplicationNames, _sheetRules);
 
             await ImportProfileStore.SaveAsync(profile);
+            _hasUnsavedChanges = false;
             NavigationManager.NavigateTo("import-profiles");
         }
         catch (DomainValidationException ex)
@@ -575,6 +620,36 @@ else
         {
             _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
         }
+    }
+
+    private Task OnBeforeInternalNavigationAsync(LocationChangingContext context)
+    {
+        if (_hasUnsavedChanges)
+        {
+            context.PreventNavigation();
+            _pendingNavigationTarget = context.TargetLocation;
+            _showNavigationConfirmation = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void DiscardChangesAndLeave()
+    {
+        _hasUnsavedChanges = false;
+        _showNavigationConfirmation = false;
+        var target = _pendingNavigationTarget;
+        _pendingNavigationTarget = null;
+        if (target is not null)
+        {
+            NavigationManager.NavigateTo(target);
+        }
+    }
+
+    private void StayOnPage()
+    {
+        _showNavigationConfirmation = false;
+        _pendingNavigationTarget = null;
     }
 
 }

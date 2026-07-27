@@ -9,6 +9,7 @@
 @using ExcelETL.Domain.Generation.Profile
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 
 @inject IExportProfileStore ExportProfileStore
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
@@ -17,6 +18,10 @@
 
 <PageTitle>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</PageTitle>
 
+<!-- Lot 043 (43.2): mirror of ImportProfileEditor.razor's own NavigationLock (43.1) -- same
+     mechanism, same IDs, per the ticket's explicit parity requirement. -->
+<NavigationLock ConfirmExternalNavigation="_hasUnsavedChanges" OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" />
+
 <div class="container-fluid px-3">
 
 <h1>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</h1>
@@ -24,6 +29,19 @@
 <!-- X11 (Lot X): back link now lives in the shared top-row banner via SectionContent -- see
      PageBackNavLink.razor. Replaces the previous in-content btn-secondary button. -->
 <PageBackNavLink Id="back-to-export-profiles-button" Label="@Loc["ExportProfileEditor_BackToListButton"]" OnClick="BackToList" />
+
+@if (_showNavigationConfirmation)
+{
+    <div id="unsaved-changes-navigation-confirmation" class="alert alert-warning right-aligned-actions" role="alert">
+        <span class="text-danger me-auto">@Loc["ExportProfileEditor_UnsavedChangesConfirmMessage"]</span>
+        <button id="discard-changes-and-leave-button" class="btn btn-sm btn-danger" @onclick="DiscardChangesAndLeave">
+            @Loc["ExportProfileEditor_DiscardChangesAndLeaveButton"]
+        </button>
+        <button id="stay-on-page-button" class="btn btn-sm btn-secondary" @onclick="StayOnPage">
+            @Loc["ExportProfileEditor_StayOnPageButton"]
+        </button>
+    </div>
+}
 
 @if (_notFound)
 {
@@ -38,7 +56,7 @@ else
 
     <div class="mb-3">
         <div class="form-floating">
-            <input id="export-profile-name-input" class="form-control" @bind="_name" maxlength="@ExportProfile.MaxNameLength"
+            <input id="export-profile-name-input" class="form-control" @bind="_name" @bind:after="MarkAsChanged" maxlength="@ExportProfile.MaxNameLength"
                    placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
             <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
         </div>
@@ -155,6 +173,10 @@ else
         </div>
     </div>
 
+    @if (_hasUnsavedChanges)
+    {
+        <span id="unsaved-changes-indicator" class="text-warning">@Loc["ExportProfileEditor_UnsavedChangesIndicator"]</span>
+    }
     <div class="right-aligned-actions">
         <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4" @onclick="SaveProfileAsync">
             @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
@@ -178,6 +200,13 @@ else
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
+    // Lot 043 (43.2): mirror of ImportProfileEditor.razor's own state/logic (43.1).
+    private bool _hasUnsavedChanges;
+    private bool _showNavigationConfirmation;
+    private string? _pendingNavigationTarget;
+
+    private void MarkAsChanged() => _hasUnsavedChanges = true;
+
     protected override async Task OnInitializedAsync()
     {
         if (!Id.HasValue)
@@ -199,12 +228,17 @@ else
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
-    private void HandleAddSheetRule(SheetGenerationRule rule) => _sheetRules.Add(rule);
+    private void HandleAddSheetRule(SheetGenerationRule rule)
+    {
+        _sheetRules.Add(rule);
+        MarkAsChanged();
+    }
 
     private void HandleSaveSheetRule(int index, SheetGenerationRule updated)
     {
         _sheetRules[index] = updated;
         _editingIndex = null;
+        MarkAsChanged();
     }
 
     private void ConfirmDeleteSheetRule(int index)
@@ -220,6 +254,7 @@ else
         {
             _editingIndex = null;
         }
+        MarkAsChanged();
     }
 
     private void ToggleSheetRuleDetails(int index)
@@ -241,6 +276,7 @@ else
                 : new ExportProfile(_name, _sheetRules);
 
             await ExportProfileStore.SaveAsync(profile);
+            _hasUnsavedChanges = false;
             NavigationManager.NavigateTo("export-profiles");
         }
         catch (DomainValidationException ex)
@@ -251,5 +287,35 @@ else
         {
             _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
         }
+    }
+
+    private Task OnBeforeInternalNavigationAsync(LocationChangingContext context)
+    {
+        if (_hasUnsavedChanges)
+        {
+            context.PreventNavigation();
+            _pendingNavigationTarget = context.TargetLocation;
+            _showNavigationConfirmation = true;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void DiscardChangesAndLeave()
+    {
+        _hasUnsavedChanges = false;
+        _showNavigationConfirmation = false;
+        var target = _pendingNavigationTarget;
+        _pendingNavigationTarget = null;
+        if (target is not null)
+        {
+            NavigationManager.NavigateTo(target);
+        }
+    }
+
+    private void StayOnPage()
+    {
+        _showNavigationConfirmation = false;
+        _pendingNavigationTarget = null;
     }
 }

@@ -526,6 +526,18 @@
   <data name="ImportProfileEditor_CancelButton" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="ImportProfileEditor_UnsavedChangesIndicator" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="ImportProfileEditor_UnsavedChangesConfirmMessage" xml:space="preserve">
+    <value>You have unsaved changes. Are you sure you want to leave this page?</value>
+  </data>
+  <data name="ImportProfileEditor_DiscardChangesAndLeaveButton" xml:space="preserve">
+    <value>Leave without saving</value>
+  </data>
+  <data name="ImportProfileEditor_StayOnPageButton" xml:space="preserve">
+    <value>Stay on this page</value>
+  </data>
   <data name="NavMenu_ImportProfileTest" xml:space="preserve">
     <value>Test Import Profile</value>
   </data>
@@ -843,6 +855,18 @@
   </data>
   <data name="ExportProfileEditor_ConfirmDeleteSheetRuleMessage" xml:space="preserve">
     <value>Delete this sheet rule? This cannot be undone.</value>
+  </data>
+  <data name="ExportProfileEditor_UnsavedChangesIndicator" xml:space="preserve">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="ExportProfileEditor_UnsavedChangesConfirmMessage" xml:space="preserve">
+    <value>You have unsaved changes. Are you sure you want to leave this page?</value>
+  </data>
+  <data name="ExportProfileEditor_DiscardChangesAndLeaveButton" xml:space="preserve">
+    <value>Leave without saving</value>
+  </data>
+  <data name="ExportProfileEditor_StayOnPageButton" xml:space="preserve">
+    <value>Stay on this page</value>
   </data>
   <data name="ExportProfileTest_PageTitle" xml:space="preserve">
     <value>Test Export Profile</value>
