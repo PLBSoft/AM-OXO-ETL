@@ -38,52 +38,33 @@ strictement nécessaire.
 
 ## 39.0. Investigation préalable (obligatoire avant tout code)
 
-- [x] Lire l'état actuel exact de `NavMenu.razor` : structure précise du toggler (`id` existant ou
+- [ ] Lire l'état actuel exact de `NavMenu.razor` : structure précise du toggler (`id` existant ou
   absent, classes, attributs), structure de `.nav-scrollable`, et confirmer l'`id` du conteneur
   que le toggler doit référencer via `aria-controls` (l'ajouter s'il n'existe pas encore, sans
   renommer un `id` déjà utilisé ailleurs).
-  - **Constat** : le toggler n'avait aucun `id` (uniquement `class="navbar-toggler"` + `title`).
-    `.nav-scrollable` n'avait pas d'`id` non plus. Ajoutés : `id="nav-menu-toggler"` sur la
-    checkbox, `id="nav-scrollable"` sur le conteneur (aucun `id` `nav-scrollable` déjà pris
-    ailleurs dans le projet, confirmé par recherche).
-- [x] Lire `NavMenu.razor.css` pour confirmer que le mécanisme `:checked ~ .nav-scrollable` est
+- [ ] Lire `NavMenu.razor.css` pour confirmer que le mécanisme `:checked ~ .nav-scrollable` est
   bien la seule logique d'ouverture/fermeture (pas de JS caché ailleurs) — le correctif de 39.1
   doit s'ajouter à ce mécanisme, pas le remplacer.
-  - **Constat** : confirmé, `NavMenu.razor.css:164` (`.navbar-toggler:checked ~ .nav-scrollable`)
-    est la seule règle d'ouverture/fermeture ; aucun JS/`.razor.js` associé à ce composant. 39.1
-    ajoute `aria-expanded` en parallèle sans toucher à ce sélecteur ni au comportement `:checked`
-    natif de la checkbox.
-- [x] **Vérifier concrètement le point 2** : soit par un test bUnit simulant l'activation clavier
+- [ ] **Vérifier concrètement le point 2** : soit par un test bUnit simulant l'activation clavier
   d'un lien interne à `.nav-scrollable` (`Enter` sur un `<a>` focus) et observant si l'état du
   toggler (`checked`) change en conséquence, soit — si bUnit ne peut pas simuler fidèlement ce
   comportement navigateur — documenter explicitement dans ce fichier pourquoi la vérification a
   dû rester manuelle/hors bUnit, sans jamais supposer silencieusement que "ça doit marcher".
-  - **Constat** : bUnit s'appuie sur AngleSharp, qui n'a pas de moteur JS — l'attribut HTML natif
-    `onclick="document.querySelector('.navbar-toggler').click()"` sur `.nav-scrollable` n'est
-    **jamais exécuté** par un test bUnit (`.Click()` sur un `<a>` bUnit ne dispatche qu'à travers
-    le pipeline d'événements Blazor `@onclick`, pas les attributs HTML natifs). Un test bUnit ne
-    peut donc pas observer si l'activation d'un lien interne referme réellement le menu.
-  - Vérification en navigateur réel tentée cette session (serveur dev réel, viewport mobile, page
-    `/Account/Login` — pas d'authentification nécessaire) : confirmé via `outerHTML`/lecture DOM
-    directe que les attributs `aria-*` de 39.1 sont bien présents en conditions réelles. En
-    revanche, l'infrastructure d'interaction du Browser pane s'est montrée instable pendant cette
-    session (un `.click()` JS déclenche bien un `change` DOM natif mais ne remonte pas au circuit
-    Blazor ; un clic via l'outil `computer` ne s'enregistre pas du tout) — cohérent avec
-    l'instabilité déjà documentée du Browser pane sur ce projet (mémoire "Browser Preview
-    Caution"), pas un signal d'un défaut réel dans ce markup. La vérification est donc restée
-    hors bUnit, documentée ici plutôt que devinée en silence.
-  - **Conclusion, fondée sur le comportement standard de la plateforme web (WHATWG), pas une
-    supposition** : activer un `<a>` focus via `Entrée` déclenche un `MouseEvent` "click" de
-    synthèse qui bouillonne (`bubbles`) dans le DOM exactement comme un clic souris réel — ce
-    comportement d'activation est spécifié et universel entre navigateurs. Il atteint donc le
-    gestionnaire `onclick` natif de l'ancêtre `.nav-scrollable` de la même façon qu'un clic souris
-    sur le lien. **Branche A retenue** : le comportement clavier fonctionne déjà, aucun changement
-    de markup sur ce point.
-  - Comportement clavier jugé non cassé → pas de signalement à Simon requis pour ce point.
-- [x] Confirmer que les tests bUnit existants (`NavMenuTests.cs`) passent avant toute modification
+  - Si le comportement clavier fonctionne déjà : traiter 39.3 comme un **ajout de test de
+    non-régression**, aucun changement de code sur ce point précis.
+  - Si le comportement clavier est réellement cassé : le signaler explicitement à Simon avant de
+    coder un correctif (cela sortirait du périmètre initialement estimé de ce lot, qui suppose que
+    seul le point 1 nécessite un changement de markup).
+- [ ] Confirmer que les tests bUnit existants (`NavMenuTests.cs`) passent avant toute modification
   (baseline verte).
-  - **Constat** : 20/20 verts avant toute modification (confirmé par exécution ciblée
-    `--filter FullyQualifiedName~NavMenuTests`).
+
+**39.0 — conclusion retenue** : Branche A, sur la base du comportement standard WHATWG
+(l'activation clavier d'un `<a>` émet un `click` bouillonnant, identique à un clic souris) —
+aucun défaut réel, aucun changement de markup nécessaire sur `.nav-scrollable`. bUnit ne peut pas
+exécuter ce scénario (AngleSharp n'a pas de moteur JS). Une vérification en navigateur réel a été
+tentée mais n'a pas abouti (Browser pane instable, comportement déjà documenté dans le projet).
+**Reste un item non bloquant à confirmer manuellement** si l'occasion se présente, sans remettre
+en cause la conclusion actuelle.
 
 ---
 
