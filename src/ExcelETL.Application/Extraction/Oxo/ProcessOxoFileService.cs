@@ -6,27 +6,24 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
-// Resolves both profiles, runs the import + generation pipeline, archives the generated workbook
-// (IFileStorageService), and turns the whole-file-rejection case (ImportResult.Equipement is null,
-// model doc §3.1) into a distinguishable result rather than an exception, so the WebAPI controller
-// can return 422 instead of a 200 with an empty body.
+// Resolves both profiles, runs the import + generation pipeline, archives the generated workbook,
+// and turns the whole-file-rejection case (ImportResult.Equipement is null, model doc §3.1) into a
+// distinguishable result rather than an exception, so the WebAPI controller can return 422 instead
+// of a 200 with an empty body.
 //
-// Lot 034: additionally archives BOTH the source and target files (IGeneratedFileWriter) plus their
-// searchable metadata (IGeneratedFileArchiveStore, GeneratedFileRecord), systematically -- including
-// when the file is rejected, per the client's own "proof the source data was corrupt" use case (see
-// docs/tickets-tdd-lot-034-archivage-fichiers-generes-api.md). This is deliberately a SECOND,
-// independent archiving mechanism from the pre-existing IFileStorageService.SaveAsync call below
-// (Lot K) -- IFileStorageService only ever archived the target on success, flat, with no metadata and
-// no source file, and an existing WebAPI integration test (OxoProcessEndpointTests) already asserts
-// on its exact single-flat-file behavior, so it is left untouched rather than folded into the new
-// mechanism.
+// Archives BOTH the source and target files (IGeneratedFileWriter) plus their searchable metadata
+// (IGeneratedFileArchiveStore, GeneratedFileRecord), systematically -- including when the file is
+// rejected, per the client's own "proof the source data was corrupt" use case (Lot 034, see
+// docs/tickets-tdd-lot-034-archivage-fichiers-generes-api.md). This is the sole archiving mechanism
+// since Lot 046 removed the older, redundant IFileStorageService (Lot K) -- that mechanism only ever
+// archived the target on success, flat, with no metadata and no source file; Lot 034 covers strictly
+// more, so Simon confirmed the Lot K mechanism could be retired outright rather than kept alongside it.
 public sealed class ProcessOxoFileService(
     IImportProfileStore importProfileStore,
     IExportProfileStore exportProfileStore,
     IImportPipelineOrchestrator importPipelineOrchestrator,
     ISheetGenerationEngine sheetGenerationEngine,
     IWorkbookWriter workbookWriter,
-    IFileStorageService fileStorageService,
     IGeneratedFileWriter generatedFileWriter,
     IGeneratedFileArchiveStore generatedFileArchiveStore,
     ILogger<ProcessOxoFileService> logger) : IProcessOxoFileService
@@ -68,13 +65,10 @@ public sealed class ProcessOxoFileService(
             var generatedFileName = TargetWorkbookFileNameBuilder.Build(importResult.Equipement.Repere, DateTime.UtcNow);
 
             generatedStream.Position = 0;
-            var storedPath = await fileStorageService.SaveAsync(generatedStream, generatedFileName, cancellationToken);
-            generatedStream.Position = 0;
 
             logger.LogInformation(
-                "Completed OXO processing for source file {SourceFileName}: generated {GeneratedFileName} archived at " +
-                "{StoredPath}",
-                command.SourceFileName, generatedFileName, storedPath);
+                "Completed OXO processing for source file {SourceFileName}: generated {GeneratedFileName}",
+                command.SourceFileName, generatedFileName);
 
             await TryArchiveAsync(
                 command, importProfile.Id, exportProfile.Id, importResult, generatedStream, generatedFileName,

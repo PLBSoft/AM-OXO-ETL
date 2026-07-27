@@ -36,7 +36,6 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
-    private readonly string _archiveDirectory = Path.Combine(Path.GetTempPath(), "OxoProcessEndpointTests_" + Guid.NewGuid());
     private readonly string _generatedFilesArchiveRoot =
         Path.Combine(Path.GetTempPath(), "OxoProcessEndpointTests_GeneratedFilesArchive_" + Guid.NewGuid());
     private readonly WebApplicationFactory<Program> _factory;
@@ -48,7 +47,6 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
-            builder.UseSetting("FileStorage:ArchiveDirectory", _archiveDirectory);
             builder.UseSetting("GeneratedFilesArchive:RootPath", _generatedFilesArchiveRoot);
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
             builder.UseSetting("Database:AutoMigrate", "false");
@@ -219,9 +217,6 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         using var generated = new XLWorkbook(new MemoryStream(bytes));
         generated.Worksheets.Select(ws => ws.Name).Should().Equal("Parents", "Enfants");
         generated.Worksheet("Parents").Cell(2, 1).GetString().Should().Be("38-C7401");
-
-        Directory.Exists(_archiveDirectory).Should().BeTrue();
-        Directory.GetFiles(_archiveDirectory, "*.xlsx").Should().ContainSingle();
     }
 
     [Fact]
@@ -624,11 +619,6 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
 
     public void Dispose()
     {
-        if (Directory.Exists(_archiveDirectory))
-        {
-            Directory.Delete(_archiveDirectory, recursive: true);
-        }
-
         if (Directory.Exists(_generatedFilesArchiveRoot))
         {
             Directory.Delete(_generatedFilesArchiveRoot, recursive: true);

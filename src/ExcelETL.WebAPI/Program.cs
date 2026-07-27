@@ -1,6 +1,5 @@
 using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Exceptions;
-using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
@@ -12,7 +11,6 @@ using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
-using ExcelETL.Infrastructure.Storage;
 using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
 using ExcelETL.WebAPI.ExceptionHandling;
@@ -54,7 +52,6 @@ builder.Host.AddOxoHostLogging("ExcelETL.WebAPI", connectionString);
 builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
     options.UseSqlServer(connectionString, sql => sql.MigrationsHistoryTable("__EFMigrationsHistory_ExcelEtl")));
 
-builder.Services.Configure<FileStorageOptions>(builder.Configuration.GetSection("FileStorage"));
 builder.Services.Configure<GeneratedFilesArchiveOptions>(builder.Configuration.GetSection("GeneratedFilesArchive"));
 
 var apiKeySection = builder.Configuration.GetSection("ApiKeyAuthentication");
@@ -75,7 +72,6 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 builder.Services.AddSingleton<IGeneratedFileWriter, FileSystemGeneratedFileWriter>();
 builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveStore>();
 

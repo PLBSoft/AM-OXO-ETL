@@ -24,7 +24,6 @@ public class ProcessOxoFileServiceTests
     private readonly Mock<IImportPipelineOrchestrator> _orchestrator = new();
     private readonly Mock<ISheetGenerationEngine> _generationEngine = new();
     private readonly Mock<IWorkbookWriter> _workbookWriter = new();
-    private readonly Mock<IFileStorageService> _fileStorageService = new();
     private readonly Mock<IGeneratedFileWriter> _generatedFileWriter = new();
     private readonly Mock<IGeneratedFileArchiveStore> _generatedFileArchiveStore = new();
     private readonly ProcessOxoFileService _sut;
@@ -44,7 +43,6 @@ public class ProcessOxoFileServiceTests
             _orchestrator.Object,
             _generationEngine.Object,
             _workbookWriter.Object,
-            _fileStorageService.Object,
             _generatedFileWriter.Object,
             _generatedFileArchiveStore.Object,
             NullLogger<ProcessOxoFileService>.Instance);
@@ -95,11 +93,6 @@ public class ProcessOxoFileServiceTests
         var generatedWorkbook = new GeneratedWorkbook([]);
         _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(generatedWorkbook);
 
-        const string storedPath = @"C:\archive\MAD_38-C7401.xlsx";
-        _fileStorageService
-            .Setup(s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(storedPath);
-
         var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
 
         var result = await _sut.ProcessAsync(command);
@@ -110,8 +103,6 @@ public class ProcessOxoFileServiceTests
         result.GeneratedFileName.Should().StartWith("MAD_38-C7401_").And.EndWith(".xlsx");
 
         _workbookWriter.Verify(w => w.Write(generatedWorkbook, It.IsAny<Stream>()), Times.Once);
-        _fileStorageService.Verify(
-            s => s.SaveAsync(It.IsAny<Stream>(), result.GeneratedFileName!, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -155,7 +146,7 @@ public class ProcessOxoFileServiceTests
     }
 
     [Fact]
-    public async Task ProcessAsync_WhenFileIsRejected_ReturnsResultWithoutGeneratingOrUsingFileStorageService()
+    public async Task ProcessAsync_WhenFileIsRejected_ReturnsResultWithoutGenerating()
     {
         var importProfileId = Guid.NewGuid();
         var exportProfileId = Guid.NewGuid();
@@ -176,8 +167,6 @@ public class ProcessOxoFileServiceTests
         result.GeneratedFileName.Should().BeNull();
 
         _generationEngine.Verify(e => e.Generate(It.IsAny<ImportResult>(), It.IsAny<ExportProfile>()), Times.Never);
-        _fileStorageService.Verify(
-            s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -255,9 +244,6 @@ public class ProcessOxoFileServiceTests
         var workbookReader = Mock.Of<IWorkbookReader>();
         _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
         _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
-        _fileStorageService
-            .Setup(s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(@"C:\archive\file.xlsx");
 
         var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
 
@@ -299,9 +285,6 @@ public class ProcessOxoFileServiceTests
         var workbookReader = Mock.Of<IWorkbookReader>();
         _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
         _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
-        _fileStorageService
-            .Setup(s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(@"C:\archive\file.xlsx");
 
         var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
 
@@ -328,9 +311,6 @@ public class ProcessOxoFileServiceTests
         var workbookReader = Mock.Of<IWorkbookReader>();
         _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
         _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
-        _fileStorageService
-            .Setup(s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(@"C:\archive\file.xlsx");
         _generatedFileArchiveStore
             .Setup(s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("database unavailable"));
@@ -358,9 +338,6 @@ public class ProcessOxoFileServiceTests
         var workbookReader = Mock.Of<IWorkbookReader>();
         _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
         _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
-        _fileStorageService
-            .Setup(s => s.SaveAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(@"C:\archive\file.xlsx");
         _generatedFileWriter
             .Setup(w => w.WriteSourceAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new IOException("disk full"));
