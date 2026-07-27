@@ -4,6 +4,7 @@ using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
 using ExcelETL.BlazorAdmin.Tests.Layout;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
@@ -89,6 +90,19 @@ public class ImportProfilesTests : BunitContext
             cut.Markup.Should().Contain("MAD OXO");
             cut.Markup.Should().Contain("MAD TRAVAUX");
             cut.Markup.Should().Contain("1 sheet rule(s)");
+        });
+
+    // Lot 042 (42.2): the mobile card's per-row title previously skipped straight from h1 to h5 --
+    // fixed to h2, keeping its pre-existing visual size via the Bootstrap `.h5` utility class.
+    [Fact]
+    public async Task ImportProfiles_WithExistingProfile_HasNoHeadingLevelSkip() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await SeedProfileAsync(BuildProfileWithOneSheetRule());
+
+            var cut = Render<ImportProfiles>();
+
+            HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
         });
 
     // V1: client-reported bug -- the sheet-rules-count column literally showed "{0} sheet rule(s)".

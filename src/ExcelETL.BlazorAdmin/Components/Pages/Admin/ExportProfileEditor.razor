@@ -44,7 +44,7 @@ else
         </div>
     </div>
 
-    <h3>@Loc["ExportProfileEditor_SheetRulesHeading"]</h3>
+    <h2 class="h3">@Loc["ExportProfileEditor_SheetRulesHeading"]</h2>
 
     @if (_sheetRules.Count == 0)
     {
@@ -72,7 +72,7 @@ else
                     else
                     {
                         <div class="sheet-rule-card-header">
-                            <h4 class="sheet-rule-card-title">@rule.SheetName</h4>
+                            <h3 class="sheet-rule-card-title h4">@rule.SheetName</h3>
                             <span class="sheet-rule-card-meta text-muted">@Loc["ExportProfileEditor_SheetMetadata", rule.PivotSource]</span>
                         </div>
                         <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">

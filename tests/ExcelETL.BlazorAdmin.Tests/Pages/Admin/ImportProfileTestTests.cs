@@ -9,6 +9,7 @@ using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -398,6 +399,30 @@ public class ImportProfileTestTests : BunitContext
             cut.Markup.Should().NotContain("Non-blocking warnings");
             // Lot 040 (40.1): the per-file "rejected" block is also an alert-danger.
             cut.Find("#rejected").GetAttribute("role").Should().Be("alert");
+        });
+
+    // Lot 042 (42.2): the rejected-file heading previously skipped straight from h1 to h4 -- fixed
+    // to h2, keeping its pre-existing visual size via the Bootstrap `.h4` utility class.
+    [Fact]
+    public async Task SelectingFile_ThatFailsProcedureValidation_HasNoHeadingLevelSkip() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            workbook.Worksheets.Add("PROCEDURE"); // M2:O2 left blank -> whole-file rejection
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            var file = InputFileContent.CreateFromBinary(stream.ToArray(), "invalid.xlsx");
+            inputFileComponent.UploadFiles(file);
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
+
+            HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
         });
 
     [Fact]

@@ -100,7 +100,7 @@ else
 
             case OxoApiTestResultStatus.BusinessRejection:
                 <div id="api-test-result" class="alert alert-danger mt-3">
-                    <h4>@Loc["ApiTest_RejectedHeading"]</h4>
+                    <h2 class="h4">@Loc["ApiTest_RejectedHeading"]</h2>
                     <ul>
                         @foreach (var error in _result.RejectionErrors)
                         {

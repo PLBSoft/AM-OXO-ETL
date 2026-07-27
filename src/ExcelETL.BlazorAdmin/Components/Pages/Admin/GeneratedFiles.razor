@@ -109,7 +109,7 @@ else
         {
             <div class="card mb-3">
                 <div class="card-body">
-                    <h5 class="card-title">@(record.EquipementRepere ?? "—")</h5>
+                    <h2 class="card-title h5">@(record.EquipementRepere ?? "—")</h2>
                     <p class="card-text mb-1">@record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss")</p>
                     <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
                     <div class="d-flex gap-2">

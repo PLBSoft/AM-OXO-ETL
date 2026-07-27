@@ -131,14 +131,14 @@ else
                             @if (fileResult.Status == BatchFileStatus.TechnicalError)
                             {
                                 <div id="@($"technical-error{suffix}")" class="alert alert-secondary">
-                                    <h4>@Loc["ExportProfileTest_StatusTechnicalError"]</h4>
+                                    <h2 class="h4">@Loc["ExportProfileTest_StatusTechnicalError"]</h2>
                                     <p>@fileResult.TechnicalErrorMessage</p>
                                 </div>
                             }
                             else if (fileResult.ImportResult!.Equipement is null)
                             {
                                 <div id="@($"rejected{suffix}")" class="alert alert-danger" role="alert">
-                                    <h4>@Loc["ExportProfileTest_RejectedFileHeading"]</h4>
+                                    <h2 class="h4">@Loc["ExportProfileTest_RejectedFileHeading"]</h2>
                                     <ul>
                                         @foreach (var error in fileResult.ImportResult.Errors)
                                         {

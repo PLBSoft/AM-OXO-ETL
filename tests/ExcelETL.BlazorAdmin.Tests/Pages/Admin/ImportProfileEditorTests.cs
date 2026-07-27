@@ -5,6 +5,7 @@ using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
@@ -703,17 +704,17 @@ public class ImportProfileEditorTests : BunitContext
             // Scoped to the read-only summary <li>, not the always-visible "Add a sheet rule" card
             // below it -- that card's own SheetRuleForm renders these same two headings unconditionally.
             var summaryItem = cut.Find("li.sheet-rule-card");
-            var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
+            var headings = summaryItem.QuerySelectorAll("h4").Select(h => h.TextContent).ToList();
             headings.Should().Contain("Unconditional colonnes (always create the Point)");
             headings.Should().Contain("Conditional point rules");
 
-            var unconditionalHeading = summaryItem.QuerySelectorAll("h5")
+            var unconditionalHeading = summaryItem.QuerySelectorAll("h4")
                 .Single(h => h.TextContent == "Unconditional colonnes (always create the Point)");
             var unconditionalList = unconditionalHeading.NextElementSibling!;
             unconditionalList.TagName.Should().Be("UL");
             unconditionalList.Children.Select(li => li.TextContent).Should().BeEquivalentTo("PROLOCK VANNES", "DEPROLOCK VANNES");
 
-            var pointRulesHeading = summaryItem.QuerySelectorAll("h5")
+            var pointRulesHeading = summaryItem.QuerySelectorAll("h4")
                 .Single(h => h.TextContent == "Conditional point rules");
             var pointRulesList = pointRulesHeading.NextElementSibling!;
             pointRulesList.TagName.Should().Be("UL");
@@ -739,7 +740,7 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-details-toggle-0").Click();
 
             var summaryItem = cut.Find("li.sheet-rule-card");
-            var headings = summaryItem.QuerySelectorAll("h5").Select(h => h.TextContent).ToList();
+            var headings = summaryItem.QuerySelectorAll("h4").Select(h => h.TextContent).ToList();
             headings.Should().Contain("Unconditional colonnes (always create the Point)");
             headings.Should().NotContain("Conditional point rules");
         });
@@ -762,7 +763,7 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
             var summaryItem = cut.Find("li.sheet-rule-card");
-            summaryItem.QuerySelectorAll("h5").Should().BeEmpty();
+            summaryItem.QuerySelectorAll("h4").Should().BeEmpty();
         });
 
     // Ticket P1: each non-editing sheet rule in the summary is wrapped in its own visually
@@ -830,7 +831,7 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
             cut.FindAll("#sheet-rule-details-content-0").Should().BeEmpty();
-            cut.Find("li.sheet-rule-card").QuerySelectorAll("h5").Should().BeEmpty();
+            cut.Find("li.sheet-rule-card").QuerySelectorAll("h4").Should().BeEmpty();
 
             var summary = cut.Find("#sheet-rule-details-toggle-0");
             summary.TextContent.Should().Contain("1");
@@ -912,7 +913,7 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.Find("#sheet-rule-details-content-0").TextContent
                 .Should().Contain("No unconditional colonnes or conditional point rules for this sheet.");
-            cut.Find("li.sheet-rule-card").QuerySelectorAll("h5").Should().BeEmpty();
+            cut.Find("li.sheet-rule-card").QuerySelectorAll("h4").Should().BeEmpty();
         });
 
     // Ticket R3 (correctif), Refactor step: the native <details> element's `open` attribute must
@@ -2215,4 +2216,21 @@ public class ImportProfileEditorTests : BunitContext
         var container = cut.Find(".container-fluid.px-3");
         container.Should().NotBeNull();
     });
+
+    // Lot 042 (42.2): the page previously skipped from h1 straight to h3 (section headings) and
+    // from a card's h4 title down to h5 sub-headings with no h4 in between once flattened -- fixed
+    // by shifting every level down one notch (h3->h2, h4->h3, h5->h4), keeping each heading's
+    // pre-existing visual size via a Bootstrap `.hN` utility class.
+    [Fact]
+    public async Task ExistingProfileWithSheetRule_ExpandedDetails_HasNoHeadingLevelSkip() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
+        });
 }

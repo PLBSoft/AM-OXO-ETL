@@ -6,6 +6,7 @@ using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
@@ -1374,6 +1375,21 @@ public class ExportProfileEditorTests : BunitContext
 
         var container = cut.Find(".container-fluid.px-3");
         container.Should().NotBeNull();
+    });
+
+    // Lot 042 (42.2): the page previously skipped from h1 straight to h3 (SheetRulesHeading) and
+    // from a card's h4 title down to a sibling h5 once flattened -- fixed by shifting every level
+    // down one notch (h3->h2, h4->h3, h5->h4), keeping each heading's pre-existing visual size via
+    // a Bootstrap `.hN` utility class.
+    [Fact]
+    public async Task ExistingProfileWithSheetRule_HasNoHeadingLevelSkip() => await WithCultureAsync("en-US", async () =>
+    {
+        var profile = BuildProfileWithOneSheetRule();
+        await Store.SaveAsync(profile);
+
+        var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+        HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
     });
 
     // X7/X8/X9: an already-configured sheet rule renders as a card, its Modify/Delete actions are

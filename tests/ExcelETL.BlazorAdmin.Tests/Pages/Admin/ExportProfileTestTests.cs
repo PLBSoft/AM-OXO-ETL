@@ -10,6 +10,7 @@ using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -398,6 +399,31 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#rejected").GetAttribute("role").Should().Be("alert");
 
             mockEngine.Verify(engine => engine.Generate(It.IsAny<ImportResult>(), It.IsAny<ExportProfile>()), Times.Never);
+        });
+
+    // Lot 042 (42.2): the rejected-file heading previously skipped straight from h1 to h4 -- fixed
+    // to h2, keeping its pre-existing visual size via the Bootstrap `.h4` utility class.
+    [Fact]
+    public async Task SelectingFile_ThatFailsProcedureValidation_HasNoHeadingLevelSkip() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            await SeedRealExportProfileAsync();
+
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            workbook.Worksheets.Add("PROCEDURE"); // M2:O2 left blank -> whole-file rejection
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(InputFileContent.CreateFromBinary(stream.ToArray(), "invalid.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
+
+            HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
         });
 
     [Fact]

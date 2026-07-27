@@ -43,4 +43,15 @@ public class NotFoundTests : BunitContext
         cut.Markup.Should().Contain("Introuvable");
         cut.Markup.Should().Contain("Désolé, le contenu que vous recherchez n'existe pas.");
     });
+
+    // Lot 042 (42.2): the page previously started at h3 with no h1 at all -- fixed to a proper,
+    // unique page-title h1.
+    [Fact]
+    public void NotFound_HasExactlyOneH1Heading() => WithCulture("en-US", () =>
+    {
+        var cut = Render<NotFound>();
+
+        cut.FindAll("h1").Should().ContainSingle();
+        cut.FindAll("h1").Single().TextContent.Should().Contain("Not Found");
+    });
 }

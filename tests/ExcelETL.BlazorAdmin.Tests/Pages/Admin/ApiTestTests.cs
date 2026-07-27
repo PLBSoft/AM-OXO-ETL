@@ -6,6 +6,7 @@ using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Services;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Fields;
@@ -170,6 +171,27 @@ public class ApiTestTests : BunitContext
         var result = cut.Find("#api-test-result");
         result.ClassList.Should().Contain("alert-danger");
         result.TextContent.Should().Contain("Repere is required.");
+    }));
+
+    // Lot 042 (42.2): the rejected-file heading previously skipped straight from h1 to h4 -- fixed
+    // to h2, keeping its pre-existing visual size via the Bootstrap `.h4` utility class.
+    [Fact]
+    public void ProcessButton_Click_WithBusinessRejection_HasNoHeadingLevelSkip() => WithCulture("en-US", () => RunAsync(async () =>
+    {
+        var (importProfile, exportProfile) = await SeedProfilesAsync();
+        _oxoApiTestClientMock
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiTestResult.BusinessRejection(
+                [new OxoApiTestRejectionError("PROCEDURE", "M2:O2", "RequiredFieldMissing", "Repere is required.")]));
+
+        var cut = Render<ApiTest>();
+        cut.Find("#import-profile-select").Change(importProfile.Id.ToString());
+        cut.Find("#export-profile-select").Change(exportProfile.Id.ToString());
+        SelectFile(cut);
+
+        cut.Find("#process-button").Click();
+
+        HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
     }));
 
     [Fact]

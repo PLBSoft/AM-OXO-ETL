@@ -2,6 +2,7 @@ using System.Globalization;
 using Bunit;
 using ExcelETL.Application.Archiving;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Archiving;
 using ExcelETL.Infrastructure.Archiving;
 using FluentAssertions;
@@ -84,6 +85,20 @@ public class GeneratedFilesTests : BunitContext
         var cut = Render<GeneratedFiles>();
 
         cut.Markup.Should().Contain("No generated files found.");
+    });
+
+    // Lot 042 (42.2): the mobile card's per-row title previously skipped straight from h1 to h5 --
+    // fixed to h2, keeping its pre-existing visual size via the Bootstrap `.h5` utility class.
+    [Fact]
+    public void GeneratedFiles_WithExistingRecord_HasNoHeadingLevelSkip() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles("C7401", GeneratedFileArchiveStatus.Success, withTarget: true);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
     });
 
     [Fact]

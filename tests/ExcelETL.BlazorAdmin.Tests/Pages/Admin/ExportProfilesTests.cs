@@ -3,6 +3,7 @@ using Bunit;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
@@ -82,6 +83,19 @@ public class ExportProfilesTests : BunitContext
 
             cut.Markup.Should().Contain("MAD OXO export");
             cut.Markup.Should().Contain("1 sheet rule(s)");
+        });
+
+    // Lot 042 (42.2): the mobile card's per-row title previously skipped straight from h1 to h5 --
+    // fixed to h2, keeping its pre-existing visual size via the Bootstrap `.h5` utility class.
+    [Fact]
+    public async Task ExportProfiles_WithExistingProfile_HasNoHeadingLevelSkip() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            await SeedProfileAsync(BuildProfileWithOneSheetRule());
+
+            var cut = Render<ExportProfiles>();
+
+            HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
         });
 
     // V1: same client-reported bug as ImportProfilesTests -- the <th> column header reused the
