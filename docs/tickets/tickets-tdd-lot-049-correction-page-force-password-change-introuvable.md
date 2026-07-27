@@ -275,6 +275,44 @@ d'implémentation du lot 045.
 
 C'est le test qui aurait dû exister au lot 045 ; il est la condition de clôture de ce lot.
 
+### Constat 49.5 (28/07) — un parcours HTTP seul ne suffit pas non plus
+
+Le test a été écrit tel que spécifié, puis **vérifié en remettant volontairement `App.razor` dans son
+état fautif** : il passe **quand même**. Toutes les étapes du parcours (302 vers la page, `200` avec
+formulaire, `POST` du nouveau mot de passe, flag levé en base, `/import-profiles` accessible,
+reconnexion avec le nouveau mot de passe) sont correctes côté serveur même avec le défaut en place —
+un `HttpClient` n'ouvre jamais le circuit SignalR qui, dans un vrai navigateur, remplace le corps de
+la page par `NotFoundPage`.
+
+Deux conséquences, actées :
+
+1. Le test 49.5 conserve toute sa valeur mais **pas celle que le ticket lui prêtait** : il verrouille
+   la moitié serveur du parcours de bout en bout (rien ne la couvrait), pas le défaut lui-même.
+2. Une assertion supplémentaire lui a été ajoutée à l'étape 2 — **absence du marqueur de composant
+   interactif** — pour qu'il échoue si le correctif 49.2 est défait, au lieu de rester vert sur une
+   application cassée. C'est la seule assertion, à ce niveau, qui relie le parcours à la cause
+   racine.
+
+**Nuance à propager à la leçon du lot** (note d'efficacité ci-dessous) : un test
+`WebApplicationFactory` est nécessaire dès qu'un ticket porte sur du routage ou une redirection, mais
+il n'est **pas suffisant** pour un défaut qui n'apparaît qu'après le démarrage du circuit interactif.
+Il faut alors assortir la requête HTTP d'une assertion sur le **mode de rendu** effectivement servi.
+
+---
+
+## Clôture du lot (28/07)
+
+Les cinq tickets sont livrés (49.3 sans objet : branche B écartée en 49.0). Suite complète verte :
+Domain 300, Application 180, Infrastructure 174, WebAPI 25, BlazorAdmin 609 (590 avant le lot),
+Hosting 6, legacy 9 + 15.
+
+**Le déblocage SQL manuel de l'en-tête n'est plus nécessaire** ; un compte créé par un admin peut
+désormais changer son mot de passe temporaire et utiliser l'application.
+
+Dette connue laissée en place, conformément au hors-périmètre : `BlazorDisableThrowNavigationException`
+(non causal, vérifié) et `<HeadOutlet />` sans mode de rendu (un `<PageTitle>` modifié pendant une
+navigation SPA n'est donc pas répercuté sur l'onglet — comportement antérieur, inchangé).
+
 ---
 
 ## Ordre recommandé

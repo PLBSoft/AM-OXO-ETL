@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using ExcelETL.Application.Identity;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
 using FluentAssertions;
@@ -128,8 +129,108 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
         response.Headers.Location!.ToString().Should().Contain("Account/Login");
     }
 
+    // Lot 049 (49.5): the whole reported client journey, in one test, with no manual SQL in the
+    // middle. This is the test that should have existed at Lot 045 and is this lot's closing
+    // condition -- every step below is a real HTTP request against a real host.
+    [Fact]
+    public async Task AdminCreatedUser_ChangesTemporaryPassword_AndThenUsesTheApplicationNormally()
+    {
+        const string email = "journey-user@example.com";
+        const string newPassword = "BrandNewP@ssw0rd!";
+        var temporaryPassword = await CreateUserThroughAdminFlowAsync(email);
+        var client = CreateClient();
+
+        // 1. Signing in with the temporary password lands on the forced-change page, not on ReturnUrl.
+        var signIn = await SignInAsync(client, email, temporaryPassword);
+        signIn.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        signIn.Headers.Location!.AbsolutePath.Should().Be(ForcePasswordChangeUrl);
+
+        // 2. That page is actually reachable and shows its form (the defect this lot fixes).
+        var formPage = await client.GetAsync(ForcePasswordChangeUrl);
+        formPage.StatusCode.Should().Be(HttpStatusCode.OK);
+        var formHtml = await formPage.Content.ReadAsStringAsync();
+        formHtml.Should().Contain("id=\"force-password-change-form\"");
+        // Verified by experiment: every other step of this journey passes even with the defect in
+        // place, because HttpClient never boots the SignalR circuit that replaces the body with
+        // NotFoundPage in a real browser. This one assertion is what ties the journey to the root
+        // cause, so undoing the render-mode fix fails here rather than shipping a green suite.
+        formHtml.Should().NotContain(InteractiveServerComponentMarker);
+
+        // 3. Submitting a valid new password lifts the flag in the database and redirects home.
+        var fields = ReadHiddenFields(formHtml);
+        fields["Input.CurrentPassword"] = temporaryPassword;
+        fields["Input.NewPassword"] = newPassword;
+        fields["Input.ConfirmNewPassword"] = newPassword;
+        var change = await client.PostAsync(ForcePasswordChangeUrl, new FormUrlEncodedContent(fields));
+        change.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        change.Headers.Location!.AbsolutePath.Should().Be("/");
+        (await ReadRequirePasswordChangeFlagAsync(email)).Should().BeFalse();
+
+        // 4. The guard no longer fires: an ordinary page is served instead of a redirection back.
+        var afterChange = await client.GetAsync("/import-profiles");
+        afterChange.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await afterChange.Content.ReadAsStringAsync()).Should().NotContain("id=\"force-password-change-form\"");
+
+        // 5. Logging out and back in with the *new* password goes straight to the application.
+        await SignOutAsync(client, formHtml);
+        var secondSignIn = await SignInAsync(client, email, newPassword);
+        secondSignIn.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        secondSignIn.Headers.Location!.AbsolutePath.Should().Be("/");
+
+        var home = await client.GetAsync("/");
+        home.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
     private HttpClient CreateClient() =>
         _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+    // Goes through the real Lot 044 admin creation path (server-generated temporary password,
+    // RequirePasswordChangeOnFirstLogin set by the service itself) rather than hand-building the
+    // user, so the journey starts from the exact state a real admin action produces. The Admin role
+    // is added afterwards only so step 4 above has an authorized page to land on -- creating an
+    // Admin is deliberately impossible from the UI (Lot 044), and that rule is untouched here.
+    private async Task<string> CreateUserThroughAdminFlowAsync(string email)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var userManagement = scope.ServiceProvider.GetRequiredService<IUserManagementService>();
+        var creation = await userManagement.CreateUserAsync(email, "Journey", "User");
+        creation.Succeeded.Should().BeTrue(
+            "the admin-created account must exist: " + string.Join(", ", creation.Errors));
+
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        if (!await roleManager.RoleExistsAsync(IdentitySeeder.AdminRoleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(IdentitySeeder.AdminRoleName));
+        }
+
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByIdAsync(creation.UserId!);
+        (await userManager.AddToRoleAsync(user!, IdentitySeeder.AdminRoleName)).Succeeded.Should().BeTrue();
+
+        return creation.TemporaryPassword!;
+    }
+
+    private async Task<bool> ReadRequirePasswordChangeFlagAsync(string userName)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByNameAsync(userName);
+        return user!.RequirePasswordChangeOnFirstLogin;
+    }
+
+    // /Account/Logout is a plain minimal API POST (interactive components cannot write auth cookies),
+    // so it needs the antiforgery token and returnUrl the NavMenu logout form renders.
+    private static async Task SignOutAsync(HttpClient client, string pageHtmlCarryingTheLogoutForm)
+    {
+        var fields = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = ReadHiddenFields(pageHtmlCarryingTheLogoutForm)["__RequestVerificationToken"],
+            ["returnUrl"] = "Account/Login",
+        };
+
+        var response = await client.PostAsync("/Account/Logout", new FormUrlEncodedContent(fields));
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect, "sign-out must succeed for this test to mean anything");
+    }
 
     private async Task CreateUserAsync(string userName, bool requirePasswordChange)
     {
