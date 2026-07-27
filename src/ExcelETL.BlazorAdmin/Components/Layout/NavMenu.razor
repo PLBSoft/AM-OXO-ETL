@@ -12,9 +12,12 @@
     </div>
 </div>
 
-<input type="checkbox" title="@Loc["NavMenu_ToggleTitle"]" class="navbar-toggler flex-shrink-0" />
+<input id="nav-menu-toggler" type="checkbox" title="@Loc["NavMenu_ToggleTitle"]"
+       aria-label="@Loc["NavMenu_ToggleTitle"]" aria-controls="nav-scrollable"
+       aria-expanded="@(_isNavExpanded ? "true" : "false")" @onchange="OnTogglerChanged"
+       class="navbar-toggler flex-shrink-0" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div id="nav-scrollable" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
         <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
             <Authorized>
@@ -97,6 +100,14 @@
     public const string PageBackNavSectionName = "page-back-nav";
 
     private string? currentUrl;
+
+    // 39.1: purely additive to the pre-existing CSS-only `.navbar-toggler:checked ~ .nav-scrollable`
+    // mechanism (NavMenu.razor.css) -- the checkbox stays a real HTML checkbox, this state only
+    // drives the parallel aria-expanded attribute for assistive technology, never the visual open/
+    // close behavior itself.
+    private bool _isNavExpanded;
+
+    private void OnTogglerChanged(ChangeEventArgs e) => _isNavExpanded = e.Value is true;
 
     protected override void OnInitialized()
     {

@@ -326,4 +326,103 @@ public class NavMenuTests : BunitContext
             containerFluid.QuerySelector("#y1-back-test-button").Should().NotBeNull();
             containerFluid.QuerySelector(".navbar-brand").Should().NotBeNull();
         });
+
+    // --- Lot 039 (39.1: keyboard/screen-reader accessibility of the mobile toggler) -------------
+
+    // The checkbox stays a real HTML checkbox and the pre-existing CSS-only
+    // `.navbar-toggler:checked ~ .nav-scrollable` mechanism (NavMenu.razor.css) is untouched --
+    // aria-expanded is a parallel attribute driven by Blazor state (@onchange), not a replacement
+    // for the visual open/close behavior. See NavMenu.razor's `_isNavExpanded` field.
+    [Fact]
+    public void NavMenu_Toggler_HasNonEmptyAriaLabel() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        var toggler = cut.Find("#nav-menu-toggler");
+        toggler.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
+    });
+
+    [Fact]
+    public void NavMenu_Toggler_AriaControls_MatchesNavScrollableContainerId() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        var toggler = cut.Find("#nav-menu-toggler");
+        var navScrollable = cut.Find(".nav-scrollable");
+
+        toggler.GetAttribute("aria-controls").Should().Be(navScrollable.Id);
+    });
+
+    [Fact]
+    public void NavMenu_Toggler_AriaExpanded_IsFalseByDefault() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#nav-menu-toggler").GetAttribute("aria-expanded").Should().Be("false");
+    });
+
+    [Fact]
+    public void NavMenu_Toggler_AriaExpanded_BecomesTrue_AfterCheckboxChange() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#nav-menu-toggler").Change(true);
+
+        cut.Find("#nav-menu-toggler").GetAttribute("aria-expanded").Should().Be("true");
+    });
+
+    [Fact]
+    public void NavMenu_Toggler_NonRegression_KeepsNavbarTogglerClassAndCheckboxType() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        var toggler = cut.Find("#nav-menu-toggler");
+        toggler.ClassList.Should().Contain("navbar-toggler");
+        toggler.GetAttribute("type").Should().Be("checkbox");
+    });
+
+    // --- Lot 039 (39.2/39.0: div.nav-scrollable's delegated click-to-close, Branch A) ------------
+
+    // 39.0 investigation: bUnit/AngleSharp has no JS engine, so the native (non-Blazor) `onclick`
+    // HTML attribute on `.nav-scrollable` -- `document.querySelector('.navbar-toggler').click()` --
+    // is never executed by bUnit; a bUnit test cannot observe whether activating an internal link
+    // actually closes the mobile menu. This is not a bUnit limitation specific to this repo: it's
+    // the same limitation documented across this project for anything requiring a real browser
+    // (see "Browser Preview Caution" precedent). A live-browser check was attempted this session
+    // (mobile viewport, real dev server, no auth needed on the public Login page) but the Browser
+    // pane's own click/event-delivery infrastructure was unreliable at the time (a JS-dispatched
+    // `.click()` fired a real native `change` event but never round-tripped to the Blazor circuit;
+    // a `computer` tool click didn't register at all) -- consistent with this session's already
+    // flaky Browser-pane behavior noted elsewhere, not a reproducible defect in this markup.
+    // Conclusion, based on well-established WHATWG platform behavior rather than a guess: activating
+    // a focused `<a>` via Enter dispatches a synthetic "click" MouseEvent that bubbles through the
+    // DOM exactly like a real mouse click, so it already reaches `.nav-scrollable`'s ancestor
+    // `onclick` handler the same way a mouse click on the link would. Treated as **Branch A** (already
+    // works) per the ticket's own explicit branch structure -- no markup change, non-regression test
+    // only, asserting the delegated-close mechanism's structure is unmodified.
+    [Fact]
+    public void NavMenu_NavScrollable_NonRegression_KeepsDelegatedCloseOnClickHandler() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        var navScrollable = cut.Find(".nav-scrollable");
+        navScrollable.GetAttribute("onclick").Should().Be("document.querySelector('.navbar-toggler').click()");
+
+        // Not a `role`/`tabindex` on the div itself, by design (39.2): it delegates to the already
+        // keyboard-accessible internal <a> elements, it is not an interactive control of its own.
+        navScrollable.GetAttribute("role").Should().BeNull();
+        navScrollable.GetAttribute("tabindex").Should().BeNull();
+    });
 }
