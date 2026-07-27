@@ -131,6 +131,7 @@ else
                         {
                             <div id="@($"edit-user-form-{user.Id}")" class="card bg-light">
                                 <div class="card-body">
+                                    <h2 class="h4">@Loc["Users_EditFormHeading"]</h2>
                                     @if (_editErrorMessage is not null)
                                     {
                                         <div class="alert alert-danger" role="alert">@_editErrorMessage</div>
