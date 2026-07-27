@@ -132,7 +132,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     })
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddErrorDescriber<LocalizedIdentityErrorDescriber>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    // Lot 045 (45.0): exposes RequirePasswordChangeOnFirstLogin (Lot 044) as a claim on every
+    // principal SignInManager builds (login, RefreshSignInAsync), so PasswordChangeGuard can read it
+    // from the cascading AuthenticationState without a per-navigation database read.
+    .AddClaimsPrincipalFactory<RequirePasswordChangeClaimsPrincipalFactory>();
 
 builder.Services.AddScoped<IdentitySeeder>();
 

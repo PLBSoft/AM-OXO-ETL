@@ -193,6 +193,15 @@
   <data name="Login_InvalidAttempt" xml:space="preserve">
     <value>Tentative de connexion invalide.</value>
   </data>
+  <data name="ForcePasswordChange_Title" xml:space="preserve">
+    <value>Changer votre mot de passe temporaire</value>
+  </data>
+  <data name="ForcePasswordChange_Explanation" xml:space="preserve">
+    <value>Vous devez changer votre mot de passe temporaire avant de continuer.</value>
+  </data>
+  <data name="ForcePasswordChange_Submit" xml:space="preserve">
+    <value>Changer le mot de passe</value>
+  </data>
   <data name="Register_Title" xml:space="preserve">
     <value>Inscription</value>
   </data>

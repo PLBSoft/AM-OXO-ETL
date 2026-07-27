@@ -193,6 +193,15 @@
   <data name="Login_InvalidAttempt" xml:space="preserve">
     <value>Invalid login attempt.</value>
   </data>
+  <data name="ForcePasswordChange_Title" xml:space="preserve">
+    <value>Change your temporary password</value>
+  </data>
+  <data name="ForcePasswordChange_Explanation" xml:space="preserve">
+    <value>You must change your temporary password before continuing.</value>
+  </data>
+  <data name="ForcePasswordChange_Submit" xml:space="preserve">
+    <value>Change password</value>
+  </data>
   <data name="Register_Title" xml:space="preserve">
     <value>Register</value>
   </data>

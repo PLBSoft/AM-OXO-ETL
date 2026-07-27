@@ -240,6 +240,7 @@ public class LoginFormFloatingAuditTests : BunitContext
         var signInManagerMock = IdentityMocks.CreateSignInManagerMock(userManagerMock.Object);
 
         Services.AddSingleton(signInManagerMock.Object);
+        Services.AddSingleton(userManagerMock.Object);
         Services.AddSingleton<ILogger<Login>>(NullLogger<Login>.Instance);
         Services.AddScoped<IdentityRedirectManager>();
         Services.AddLocalization();

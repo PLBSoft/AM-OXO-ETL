@@ -3,6 +3,7 @@ using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Layout;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Layout;
@@ -13,6 +14,11 @@ public class MainLayoutTests : BunitContext
     {
         Services.AddLocalization();
         this.AddAuthorization().SetNotAuthorized();
+
+        // Lot 045 (45.4): MainLayout now renders PasswordChangeGuard, which reads RendererInfo to
+        // decide whether to render <NavigationLock> (only supported in an interactive render mode --
+        // matches this app's global InteractiveServer rendermode for every non-Account page).
+        SetRendererInfo(new RendererInfo("Server", isInteractive: true));
     }
 
     private static void WithCulture(string cultureName, Action action)
