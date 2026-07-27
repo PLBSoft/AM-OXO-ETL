@@ -569,10 +569,70 @@
     <value>Conditional point rules</value>
   </data>
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
-    <value>{0} unconditional colonnes, {1} conditional rules</value>
+    <value>{0} unconditional colonnes, {1} conditional rules, {2} header fields, {3} header composites</value>
   </data>
   <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
-    <value>No unconditional colonnes or conditional point rules for this sheet.</value>
+    <value>No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldsHeading" xml:space="preserve">
+    <value>Header fields</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldNameLabel" xml:space="preserve">
+    <value>Field name</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldNamePlaceholder" xml:space="preserve">
+    <value>e.g. nomMAD</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldRangeLabel" xml:space="preserve">
+    <value>Cell range</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldRangePlaceholder" xml:space="preserve">
+    <value>e.g. M2:O2</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatLabel" xml:space="preserve">
+    <value>Date format (optional)</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatPlaceholder" xml:space="preserve">
+    <value>e.g. dd/MM/yyyy</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatHint" xml:space="preserve">
+    <value>Only applies to a field containing a date. Leave blank otherwise.</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldStripPrefixLabel" xml:space="preserve">
+    <value>Strip the repère prefix from this field's value</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldStripPrefixIndicator" xml:space="preserve">
+    <value>prefix stripped</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatIndicator" xml:space="preserve">
+    <value>date: {0}</value>
+  </data>
+  <data name="ImportProfileEditor_AddHeaderFieldButton" xml:space="preserve">
+    <value>Add header field</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositesHeading" xml:space="preserve">
+    <value>Header composites</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeNameLabel" xml:space="preserve">
+    <value>Field name</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeNamePlaceholder" xml:space="preserve">
+    <value>e.g. Designation</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplateLabel" xml:space="preserve">
+    <value>Template</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplatePlaceholder" xml:space="preserve">
+    <value>Rév {revision} du {dateRev}</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplateHint" xml:space="preserve">
+    <value>Use {fieldName} to reference a header field defined above, e.g. "Rév {revision} du {dateRev}".</value>
+  </data>
+  <data name="ImportProfileEditor_AddHeaderCompositeButton" xml:space="preserve">
+    <value>Add header composite</value>
+  </data>
+  <data name="ImportProfileEditor_WellKnownHeaderNamesMissingWarning" xml:space="preserve">
+    <value>The extraction service for this sheet expects the following header name(s), missing here: {0}. Saving is still allowed, but extraction will fail for this sheet until they're added.</value>
   </data>
   <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
     <value>Source field name</value>

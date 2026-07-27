@@ -85,6 +85,35 @@ public class ImportProfileEditorTests : BunitContext
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
+    // Lot 048 (48.1): a PROCEDURE-shaped sheet rule carrying 3 HeaderFieldRules + 1 HeaderCompositeRule
+    // -- transcribed from the real DefaultProfileSeeder shape (see the "Lot 047" bullet in CLAUDE.md).
+    private static ImportProfile BuildProfileWithHeaderRules(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "PROCEDURE",
+            firstBlockStartRow: 9,
+            step: 1,
+            stopFieldName: "Action",
+            fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+
+        var headerFields = new List<HeaderFieldRule>
+        {
+            new("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
+            new("revision", new DirectCell("PROCEDURE", "P2:Q2")),
+            new("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy"),
+        };
+        var headerComposites = new List<HeaderCompositeRule>
+        {
+            new("Designation", "Rév {revision} du {dateRev}"),
+        };
+
+        var sheetRule = new SheetExtractionRule(
+            "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], headerFields, headerComposites);
+
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
+    }
+
     private static ImportProfile BuildProfileWithTwoSheetRules(
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
@@ -913,7 +942,7 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-details-toggle-0").Click();
 
             cut.Find("#sheet-rule-details-content-0").TextContent
-                .Should().Contain("No unconditional colonnes or conditional point rules for this sheet.");
+                .Should().Contain("No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.");
             cut.Find("li.sheet-rule-card").QuerySelectorAll("h4").Should().BeEmpty();
         });
 
@@ -2429,4 +2458,472 @@ public class ImportProfileEditorTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles");
         cut.FindAll("#unsaved-changes-navigation-confirmation").Should().BeEmpty();
     });
+
+    // ---------------------------------------------------------------------------------------------
+    // Lot 048: profile-driven header rules (HeaderFieldRule / HeaderCompositeRule), editable from
+    // SheetRuleForm. Helper to fill in a minimal valid sheet rule (name/locator/one block field),
+    // stopping just before "add sheet rule" -- mirrors AddValidSheetRule but for a PROCEDURE-shaped
+    // rule (needed by the header-field tests, since header rules are only meaningful there).
+    // ---------------------------------------------------------------------------------------------
+    private static void FillMinimalProcedureSheetRule(IRenderedComponent<ImportProfileEditor> cut, string idPrefix = "")
+    {
+        cut.Find($"#{idPrefix}sheet-rule-name-input").Change("PROCEDURE");
+        cut.Find($"#{idPrefix}sheet-rule-first-block-start-row-input").Change("9");
+        cut.Find($"#{idPrefix}sheet-rule-step-input").Change("1");
+        cut.Find($"#{idPrefix}sheet-rule-stop-field-name-input").Change("Action");
+        cut.Find($"#{idPrefix}block-field-name-input").Change("Action");
+        cut.Find($"#{idPrefix}block-field-absolute-range-input").Change("C9:L9");
+        cut.Find($"#{idPrefix}add-block-field-button").Click();
+    }
+
+    // 48.1 -- SheetRuleForm.Submit() used to pass [], [] for HeaderFields/HeaderComposites regardless
+    // of InitialRule, silently wiping a sheet rule's header rules on any edit-and-resubmit. Red first:
+    // reverting the [.. _headerFields]/[.. _headerComposites] snapshots in SheetRuleForm.Submit back
+    // to literal [], [] makes these two tests fail.
+    [Fact]
+    public async Task EditingSheetRule_WithoutChanges_PreservesHeaderFieldsAndComposites() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithHeaderRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            var rule = reloaded.SheetRules.Single();
+            rule.HeaderFields.Should().BeEquivalentTo(profile.SheetRules[0].HeaderFields);
+            rule.HeaderComposites.Should().BeEquivalentTo(profile.SheetRules[0].HeaderComposites);
+        });
+
+    [Fact]
+    public async Task EditingSheetRule_ChangingUnrelatedField_PreservesHeaderRules() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithHeaderRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-step-input").Change("2");
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            var rule = reloaded.SheetRules.Single();
+            rule.Locator.Step.Should().Be(2);
+            rule.HeaderFields.Should().HaveCount(3);
+            rule.HeaderComposites.Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task EditingSheetRuleWithoutHeaderRules_RemainsSubmittedWithEmptyHeaderLists() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#save-sheet-rule-button-0").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            var rule = reloaded.SheetRules.Single();
+            rule.HeaderFields.Should().BeEmpty();
+            rule.HeaderComposites.Should().BeEmpty();
+        });
+
+    // 48.2 -- HeaderFieldRuleForm, reached via the always-present "add a sheet rule" card's own
+    // HeaderFieldRuleForm (unprefixed ids, since the outer SheetRuleForm has no IdPrefix there).
+    [Fact]
+    public async Task AddHeaderField_WithValidInput_PersistsDefaultsAndNoDateFormat() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("MAD OXO");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            FillMinimalProcedureSheetRule(cut);
+
+            cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+            cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+            cut.Find("#add-header-field-button").Click();
+
+            cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "nomMAD");
+
+            cut.Find("#add-sheet-rule-button").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var field = (await Store.GetAllAsync()).Single().SheetRules.Single().HeaderFields.Single();
+            field.Name.Should().Be("nomMAD");
+            field.StripReperePrefix.Should().BeFalse();
+            field.DateFormat.Should().BeNull();
+        });
+
+    [Fact]
+    public async Task AddHeaderField_CheckedStripPrefixAndDateFormat_PersistsBothFlags() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("MAD OXO");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            FillMinimalProcedureSheetRule(cut);
+
+            cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+            cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+            cut.Find("#header-field-header-field-date-format-input").Change("dd/MM/yyyy");
+            cut.Find("#header-field-header-field-strip-prefix-checkbox").Change(true);
+            cut.Find("#add-header-field-button").Click();
+
+            cut.Find("#add-sheet-rule-button").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var field = (await Store.GetAllAsync()).Single().SheetRules.Single().HeaderFields.Single();
+            field.StripReperePrefix.Should().BeTrue();
+            field.DateFormat.Should().Be("dd/MM/yyyy");
+        });
+
+    [Fact]
+    public async Task AddHeaderField_WithDateFormatLeftBlank_PersistsNullNotEmptyString() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("MAD OXO");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            FillMinimalProcedureSheetRule(cut);
+
+            cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+            cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+            cut.Find("#add-header-field-button").Click();
+
+            cut.Find("#add-sheet-rule-button").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var field = (await Store.GetAllAsync()).Single().SheetRules.Single().HeaderFields.Single();
+            field.DateFormat.Should().BeNull();
+        });
+
+    [Fact]
+    public void AddHeaderField_WithEmptyName_ShowsLocalizedAlertAndDoesNotAdd() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#add-header-field-button").Click();
+
+        cut.Markup.Should().Contain("Name must not be empty.");
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+    });
+
+    [Theory]
+    [InlineData("m2:o2")]
+    [InlineData("ZZZZ1")]
+    [InlineData("foo")]
+    public void AddHeaderField_WithInvalidRange_ShowsLocalizedAlertAndDoesNotAdd(string invalidRange) =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+            cut.Find("#header-field-header-field-range-input").Change(invalidRange);
+            cut.Find("#add-header-field-button").Click();
+
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+            cut.FindAll(".block-field-name").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void ModifyHeaderField_PrefillsAllFields_IncludingCheckboxAndDateFormat() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#header-field-header-field-date-format-input").Change("dd/MM/yyyy");
+        cut.Find("#header-field-header-field-strip-prefix-checkbox").Change(true);
+        cut.Find("#add-header-field-button").Click();
+
+        cut.Find("#modify-header-field-button-0").Click();
+
+        cut.Find("#header-field-0-header-field-name-input").GetAttribute("value").Should().Be("nomMAD");
+        cut.Find("#header-field-0-header-field-range-input").GetAttribute("value").Should().Be("M2:O2");
+        cut.Find("#header-field-0-header-field-date-format-input").GetAttribute("value").Should().Be("dd/MM/yyyy");
+    });
+
+    [Fact]
+    public void ModifyHeaderField_SubmitReturnsUpdatedVersion() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#add-header-field-button").Click();
+
+        cut.Find("#modify-header-field-button-0").Click();
+        cut.Find("#header-field-0-header-field-range-input").Change("M2:O3");
+        cut.Find("#save-header-field-button-0").Click();
+
+        cut.FindAll(".block-field-range").Select(e => e.TextContent).Should().Contain("M2:O3");
+    });
+
+    // 48.3 -- HeaderCompositeRuleForm.
+    [Fact]
+    public void AddHeaderComposite_WithValidInput_RendersSummaryLine() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#header-composite-header-composite-template-input").Change("Rév {revision} du {dateRev}");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Designation");
+        cut.FindAll(".block-field-range").Should().Contain(e => e.TextContent == "Rév {revision} du {dateRev}");
+    });
+
+    [Fact]
+    public void AddHeaderComposite_WithEmptyName_ShowsLocalizedAlertAndDoesNotAdd() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-template-input").Change("Rév {revision}");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void AddHeaderComposite_WithEmptyTemplate_ShowsLocalizedAlertAndDoesNotAdd() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+    });
+
+    // Ticket 48.3's own explicit instruction: no "unknown placeholder" test at this component level --
+    // the domain allows a literal template with no placeholder at all, and PlaceholderNames() returns
+    // an empty list either way, so cross-validation never fires here regardless of content.
+    [Fact]
+    public void AddHeaderComposite_WithoutAnyPlaceholder_IsAccepted() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#header-composite-header-composite-template-input").Change("Literal text only");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.FindAll(".alert-danger").Should().BeEmpty();
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Designation");
+    });
+
+    [Fact]
+    public void ModifyHeaderComposite_PrefillsFields_AndSubmitReturnsUpdatedVersion() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#header-composite-header-composite-template-input").Change("Rév {revision} du {dateRev}");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.Find("#modify-header-composite-button-0").Click();
+
+        cut.Find("#header-composite-0-header-composite-name-input").GetAttribute("value").Should().Be("Designation");
+        cut.Find("#header-composite-0-header-composite-template-input").GetAttribute("value").Should().Be("Rév {revision} du {dateRev}");
+
+        cut.Find("#header-composite-0-header-composite-template-input").Change("Rév {revision} du {dateRev} edited");
+        cut.Find("#save-header-composite-button-0").Click();
+
+        cut.FindAll(".block-field-range").Select(e => e.TextContent).Should().Contain("Rév {revision} du {dateRev} edited");
+    });
+
+    // 48.4 -- integration in SheetRuleForm: delete without confirmation, sheet-rename propagation,
+    // unknown-placeholder cross-validation surfaced at submission, Lot 043's unsaved-changes flag.
+    [Fact]
+    public void DeleteHeaderField_RemovesImmediately_WithoutConfirmation() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#add-header-field-button").Click();
+
+        cut.Find("#delete-header-field-button-0").Click();
+
+        cut.FindAll(".block-field-name").Should().NotContain(e => e.TextContent == "nomMAD");
+        cut.Markup.Should().NotContain("cannot be undone");
+    });
+
+    [Fact]
+    public void DeleteHeaderComposite_RemovesImmediately_WithoutConfirmation() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#header-composite-header-composite-template-input").Change("Rév {revision}");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.Find("#delete-header-composite-button-0").Click();
+
+        cut.FindAll(".block-field-name").Should().NotContain(e => e.TextContent == "Designation");
+        cut.Markup.Should().NotContain("cannot be undone");
+    });
+
+    [Fact]
+    public async Task RenamingSheet_AfterAddingHeaderField_UpdatesCellSheetOnSubmit() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#profile-name-input").Change("MAD OXO");
+            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+            FillMinimalProcedureSheetRule(cut);
+
+            cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+            cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+            cut.Find("#add-header-field-button").Click();
+
+            cut.Find("#sheet-rule-name-input").Change("AUTRES JOINTS TOUCHES");
+            cut.Find("#add-sheet-rule-button").Click();
+            cut.Find("#save-profile-button").Click();
+
+            var rule = (await Store.GetAllAsync()).Single().SheetRules.Single();
+            rule.SheetName.Should().Be("AUTRES JOINTS TOUCHES");
+            rule.HeaderFields.Single().Cell.Sheet.Should().Be("AUTRES JOINTS TOUCHES");
+        });
+
+    [Fact]
+    public void SubmittingSheetRule_WithCompositeReferencingUnknownPlaceholder_ShowsLocalizedAlert_AndDoesNotSubmit() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            FillMinimalProcedureSheetRule(cut);
+
+            cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+            cut.Find("#header-composite-header-composite-template-input").Change("Rév {inconnu}");
+            cut.Find("#add-header-composite-button").Click();
+
+            cut.Find("#add-sheet-rule-button").Click();
+
+            cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+            cut.Markup.Should().NotContain("SheetExtractionRule_HeaderCompositeReferencesUnknownField");
+            cut.FindAll("li.sheet-rule-card").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void AddingSheetRuleWithHeaderField_ThenSubmitting_ShowsUnsavedChangesIndicator() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        FillMinimalProcedureSheetRule(cut);
+
+        cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#add-header-field-button").Click();
+
+        cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+
+        cut.Find("#add-sheet-rule-button").Click();
+
+        cut.FindAll("#unsaved-changes-indicator").Should().HaveCount(1);
+    });
+
+    // 48.5 -- non-blocking warning on well-known header names expected by the extraction services.
+    [Fact]
+    public void SheetRuleForm_ProcedureSheetWithoutHeaderRules_ShowsWarningListingAllFourNames() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#sheet-rule-name-input").Change("PROCEDURE");
+
+            var warning = cut.Find("#header-well-known-names-warning");
+            warning.GetAttribute("role").Should().Be("alert");
+            warning.TextContent.Should().Contain("nomMAD");
+            warning.TextContent.Should().Contain("revision");
+            warning.TextContent.Should().Contain("dateRev");
+            warning.TextContent.Should().Contain("Designation");
+        });
+
+    [Fact]
+    public void SheetRuleForm_ProcedureSheetWithAllExpectedNames_ShowsNoWarning() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#sheet-rule-name-input").Change("PROCEDURE");
+
+        cut.Find("#header-field-header-field-name-input").Change("nomMAD");
+        cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+        cut.Find("#add-header-field-button").Click();
+        cut.Find("#header-field-header-field-name-input").Change("revision");
+        cut.Find("#header-field-header-field-range-input").Change("P2:Q2");
+        cut.Find("#add-header-field-button").Click();
+        cut.Find("#header-field-header-field-name-input").Change("dateRev");
+        cut.Find("#header-field-header-field-range-input").Change("R2:T2");
+        cut.Find("#add-header-field-button").Click();
+
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        cut.Find("#header-composite-header-composite-template-input").Change("Rév {revision} du {dateRev}");
+        cut.Find("#add-header-composite-button").Click();
+
+        cut.FindAll("#header-well-known-names-warning").Should().BeEmpty();
+    });
+
+    // Ordinal/case-sensitive comparison, matching the real resolver's own Dictionary<string, ...>.
+    [Fact]
+    public void SheetRuleForm_ProcedureSheetWithWronglyCasedName_StillWarnsForTheCorrectCasing() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+            cut.Find("#sheet-rule-name-input").Change("PROCEDURE");
+
+            cut.Find("#header-field-header-field-name-input").Change("nomMad");
+            cut.Find("#header-field-header-field-range-input").Change("M2:O2");
+            cut.Find("#add-header-field-button").Click();
+
+            cut.Find("#header-well-known-names-warning").TextContent.Should().Contain("nomMAD");
+        });
+
+    [Fact]
+    public void SheetRuleForm_IsolementSheet_ShowsNoWarning() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
+
+        cut.FindAll("#header-well-known-names-warning").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void SheetRuleForm_SubmittingDespiteWarning_StillInvokesOnSubmit() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+        FillMinimalProcedureSheetRule(cut);
+
+        cut.Find("#add-sheet-rule-button").Click();
+
+        cut.FindAll("li.sheet-rule-card").Should().HaveCount(1);
+    });
+
+    // 48.6 -- read-only visibility of header rules in the sheet-rule card's <details>.
+    [Fact]
+    public async Task Details_WithHeaderRules_ShowsNamesRangesAndTemplateWhenExpanded() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithHeaderRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            var content = cut.Find("#sheet-rule-details-content-0");
+            content.TextContent.Should().Contain("nomMAD");
+            content.TextContent.Should().Contain("M2:O2");
+            content.TextContent.Should().Contain("Designation");
+            content.TextContent.Should().Contain("Rév {revision} du {dateRev}");
+        });
+
+    [Fact]
+    public async Task Details_SheetWithoutAnySublist_StillShowsNoItemsMessage() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithEmptySublistSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#sheet-rule-details-toggle-0").Click();
+
+            cut.Find("#sheet-rule-details-content-0").TextContent.Should()
+                .Contain("No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.");
+        });
 }

@@ -311,7 +311,7 @@ else
                     <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">
                         <summary id="@($"sheet-rule-details-toggle-{index}")"
                                  @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
-                            @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count]
+                            @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count, rule.HeaderFields.Count, rule.HeaderComposites.Count]
                         </summary>
                         @if (_expandedSheetRuleDetails.Contains(index))
                         {
@@ -336,7 +336,28 @@ else
                                         }
                                     </ul>
                                 }
-                                @if (rule.UnconditionalColonneNames.Count == 0 && rule.PointRules.Count == 0)
+                                @if (rule.HeaderFields.Count > 0)
+                                {
+                                    <h4 class="h5">@Loc["ImportProfileEditor_HeaderFieldsHeading"]</h4>
+                                    <ul>
+                                        @foreach (var headerField in rule.HeaderFields)
+                                        {
+                                            <li>@headerField.Name (@headerField.Cell.Range)</li>
+                                        }
+                                    </ul>
+                                }
+                                @if (rule.HeaderComposites.Count > 0)
+                                {
+                                    <h4 class="h5">@Loc["ImportProfileEditor_HeaderCompositesHeading"]</h4>
+                                    <ul>
+                                        @foreach (var headerComposite in rule.HeaderComposites)
+                                        {
+                                            <li>@headerComposite.Name (@headerComposite.Template)</li>
+                                        }
+                                    </ul>
+                                }
+                                @if (rule.UnconditionalColonneNames.Count == 0 && rule.PointRules.Count == 0
+                                       && rule.HeaderFields.Count == 0 && rule.HeaderComposites.Count == 0)
                                 {
                                     <p>@Loc["ImportProfileEditor_NoSheetRuleSublistItems"]</p>
                                 }
