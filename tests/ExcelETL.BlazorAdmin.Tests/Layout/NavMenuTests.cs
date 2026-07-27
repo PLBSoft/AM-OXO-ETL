@@ -109,6 +109,8 @@ public class NavMenuTests : BunitContext
         cut.FindAll("#nav-profile-link").Should().BeEmpty();
     });
 
+    // Lot 044 (44.4): nav-logs-link moved inside the Admin-only block -- non-admin users must no
+    // longer see it (revisits Lot S's decision that Logs was visible to any authenticated user).
     private static readonly string[] AdminLinkIds =
     [
         "nav-users-link",
@@ -116,6 +118,7 @@ public class NavMenuTests : BunitContext
         "nav-export-profiles-link",
         "nav-generated-files-link",
         "nav-api-test-link",
+        "nav-logs-link",
     ];
 
     [Fact]
@@ -180,14 +183,17 @@ public class NavMenuTests : BunitContext
         cut.FindAll("#nav-logs-link").Should().BeEmpty();
     });
 
+    // Lot 044 (44.4): revises this test's own intention -- Logs used to be visible to any
+    // authenticated user (Lot S), now restricted to Admin only. Fixed in place rather than
+    // duplicated, per the ticket's explicit instruction.
     [Fact]
-    public void NavMenu_WhenAuthorized_WithoutAdminRole_ShowsLogsLink() => WithCulture("en-US", () =>
+    public void NavMenu_WhenAuthorizedAsNonAdmin_HidesLogsLink() => WithCulture("en-US", () =>
     {
         this.AddAuthorization().SetAuthorized("someone@example.com");
 
         var cut = Render<NavMenu>();
 
-        cut.FindAll("#nav-logs-link").Should().HaveCount(1);
+        cut.FindAll("#nav-logs-link").Should().BeEmpty();
     });
 
     [Fact]
