@@ -45,6 +45,12 @@
             {
                 <div class="alert alert-danger" role="alert">@_createErrorMessage</div>
             }
+            <div class="form-floating mb-1">
+                <input id="create-user-username-input" class="form-control" placeholder="@Loc["Users_UserNamePlaceholder"]"
+                       @bind="_createUserName" @bind:event="oninput" />
+                <label for="create-user-username-input">@Loc["Users_UserNameLabel"]</label>
+            </div>
+            <p class="text-muted small mb-3">@Loc["Users_UserNameHelp"]</p>
             <div class="form-floating mb-3">
                 <input id="create-user-first-name-input" class="form-control" placeholder="@Loc["Users_FirstNamePlaceholder"]"
                        @bind="_createFirstName" @bind:event="oninput" />
@@ -82,12 +88,14 @@ else if (_users.Count == 0)
 }
 else
 {
-    <table class="table d-none d-md-table">
+    <table class="table table-sm d-none d-md-table">
         <thead>
             <tr>
-                <th>@Loc["Users_Id"]</th>
                 <th>@Loc["Users_Email"]</th>
                 <th>@Loc["Users_UserName"]</th>
+                <th>@Loc["Users_FirstNameLabel"]</th>
+                <th>@Loc["Users_LastNameLabel"]</th>
+                <th>@Loc["Users_RoleColumn"]</th>
                 <th></th>
             </tr>
         </thead>
@@ -95,9 +103,20 @@ else
             @foreach (var user in _users)
             {
                 <tr>
-                    <td>@user.Id</td>
                     <td>@user.Email</td>
                     <td>@user.UserName</td>
+                    <td>@user.FirstName</td>
+                    <td>@user.LastName</td>
+                    <td>
+                        @if (IsAdmin(user))
+                        {
+                            <span id="@($"user-role-badge-{user.Id}")" class="badge text-bg-primary">@Loc["Users_RoleAdmin"]</span>
+                        }
+                        else
+                        {
+                            <span id="@($"user-role-badge-{user.Id}")">@Loc["Users_RoleStandard"]</span>
+                        }
+                    </td>
                     <td>
                         @if (_deletePendingId == user.Id)
                         {
@@ -136,6 +155,12 @@ else
                                     {
                                         <div class="alert alert-danger" role="alert">@_editErrorMessage</div>
                                     }
+                                    <div class="form-floating mb-1">
+                                        <input id="@($"edit-user-username-input-{user.Id}")" class="form-control"
+                                               placeholder="@Loc["Users_UserNamePlaceholder"]" @bind="_editUserName" @bind:event="oninput" />
+                                        <label for="@($"edit-user-username-input-{user.Id}")">@Loc["Users_UserNameLabel"]</label>
+                                    </div>
+                                    <p class="text-muted small mb-3">@Loc["Users_UserNameHelp"]</p>
                                     <div class="form-floating mb-3">
                                         <input id="@($"edit-user-first-name-input-{user.Id}")" class="form-control"
                                                placeholder="@Loc["Users_FirstNamePlaceholder"]" @bind="_editFirstName" @bind:event="oninput" />
@@ -166,35 +191,37 @@ else
                         }
                         else
                         {
-                            <button id="@($"edit-user-button-{user.Id}")" type="button"
-                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                    aria-label="@Loc["Users_Edit"]" title="@Loc["Users_Edit"]"
-                                    @onclick="() => StartEditAsync(user.Id)">
-                                @((MarkupString)AdminIconMarkup.Pencil)
-                            </button>
-                            <button id="@($"reset-password-button-{user.Id}")" type="button"
-                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                    aria-label="@Loc["Users_ResetPassword"]" title="@Loc["Users_ResetPassword"]"
-                                    @onclick="() => RequestResetPassword(user.Id)">
-                                @((MarkupString)AdminIconMarkup.Key)
-                            </button>
-                            @if (CanDelete(user))
-                            {
-                                <button id="@($"delete-user-button-{user.Id}")" type="button"
+                            <div class="right-aligned-actions">
+                                <button id="@($"edit-user-button-{user.Id}")" type="button"
                                         class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                        aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
-                                        @onclick="() => RequestDelete(user.Id)">
-                                    @((MarkupString)AdminIconMarkup.Trash)
+                                        aria-label="@Loc["Users_Edit"]" title="@Loc["Users_Edit"]"
+                                        @onclick="() => StartEditAsync(user.Id)">
+                                    @((MarkupString)AdminIconMarkup.Pencil)
                                 </button>
-                            }
-                            else
-                            {
-                                <button id="@($"delete-user-button-{user.Id}")" type="button" disabled
+                                <button id="@($"reset-password-button-{user.Id}")" type="button"
                                         class="btn btn-outline-secondary btn-sm block-field-icon-btn"
-                                        aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
-                                    @((MarkupString)AdminIconMarkup.Trash)
+                                        aria-label="@Loc["Users_ResetPassword"]" title="@Loc["Users_ResetPassword"]"
+                                        @onclick="() => RequestResetPassword(user.Id)">
+                                    @((MarkupString)AdminIconMarkup.Key)
                                 </button>
-                            }
+                                @if (CanDelete(user))
+                                {
+                                    <button id="@($"delete-user-button-{user.Id}")" type="button"
+                                            class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                            aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
+                                            @onclick="() => RequestDelete(user.Id)">
+                                        @((MarkupString)AdminIconMarkup.Trash)
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button id="@($"delete-user-button-{user.Id}")" type="button" disabled
+                                            class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                            aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
+                                        @((MarkupString)AdminIconMarkup.Trash)
+                                    </button>
+                                }
+                            </div>
                         }
                     </td>
                 </tr>
@@ -209,7 +236,19 @@ else
                 <div class="card-body">
                     <h2 class="card-title h5">@user.Email</h2>
                     <p class="card-text mb-1"><strong>@Loc["Users_UserName"]:</strong> @user.UserName</p>
-                    <p class="card-text text-muted small mb-2"><strong>@Loc["Users_Id"]:</strong> @user.Id</p>
+                    <p class="card-text mb-1"><strong>@Loc["Users_FirstNameLabel"]:</strong> @user.FirstName</p>
+                    <p class="card-text mb-1"><strong>@Loc["Users_LastNameLabel"]:</strong> @user.LastName</p>
+                    <p class="card-text mb-2">
+                        <strong>@Loc["Users_RoleColumn"]:</strong>
+                        @if (IsAdmin(user))
+                        {
+                            <span id="@($"user-role-badge-card-{user.Id}")" class="badge text-bg-primary">@Loc["Users_RoleAdmin"]</span>
+                        }
+                        else
+                        {
+                            <span id="@($"user-role-badge-card-{user.Id}")">@Loc["Users_RoleStandard"]</span>
+                        }
+                    </p>
                     @if (_deletePendingId == user.Id)
                     {
                         <div id="@($"delete-user-confirm-card-{user.Id}")" class="right-aligned-actions" role="alert">
@@ -246,6 +285,12 @@ else
                                 {
                                     <div class="alert alert-danger" role="alert">@_editErrorMessage</div>
                                 }
+                                <div class="form-floating mb-1">
+                                    <input id="@($"edit-user-username-input-card-{user.Id}")" class="form-control"
+                                           placeholder="@Loc["Users_UserNamePlaceholder"]" @bind="_editUserName" @bind:event="oninput" />
+                                    <label for="@($"edit-user-username-input-card-{user.Id}")">@Loc["Users_UserNameLabel"]</label>
+                                </div>
+                                <p class="text-muted small mb-3">@Loc["Users_UserNameHelp"]</p>
                                 <div class="form-floating mb-3">
                                     <input id="@($"edit-user-first-name-input-card-{user.Id}")" class="form-control"
                                            placeholder="@Loc["Users_FirstNamePlaceholder"]" @bind="_editFirstName" @bind:event="oninput" />
@@ -320,12 +365,14 @@ else
     private string? _currentUserId;
 
     private bool _showCreateForm;
+    private string _createUserName = "";
     private string _createFirstName = "";
     private string _createLastName = "";
     private string _createEmail = "";
     private string? _createErrorMessage;
 
     private string? _editingUserId;
+    private string _editUserName = "";
     private string _editFirstName = "";
     private string _editLastName = "";
     private string _editEmail = "";
@@ -370,6 +417,7 @@ else
     {
         ClearAllTransientState();
         _showCreateForm = true;
+        _createUserName = "";
         _createFirstName = "";
         _createLastName = "";
         _createEmail = "";
@@ -379,13 +427,14 @@ else
 
     private async Task SubmitCreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(_createFirstName) || string.IsNullOrWhiteSpace(_createLastName) || string.IsNullOrWhiteSpace(_createEmail))
+        if (string.IsNullOrWhiteSpace(_createUserName) || string.IsNullOrWhiteSpace(_createFirstName) ||
+            string.IsNullOrWhiteSpace(_createLastName) || string.IsNullOrWhiteSpace(_createEmail))
         {
             _createErrorMessage = Loc["Users_AllFieldsRequiredError"];
             return;
         }
 
-        var result = await UserManagementService.CreateUserAsync(_createEmail, _createFirstName, _createLastName);
+        var result = await UserManagementService.CreateUserAsync(_createUserName, _createEmail, _createFirstName, _createLastName);
         if (!result.Succeeded)
         {
             _createErrorMessage = string.Join(", ", result.Errors);
@@ -403,6 +452,9 @@ else
 
     private bool IsSoleRemainingAdmin(UserSummary user) => _adminUserIds.Count == 1 && _adminUserIds[0] == user.Id;
 
+    private bool IsAdmin(UserSummary user) => _adminUserIds.Contains(user.Id);
+
+
     private LocalizedString DeleteDisabledReason(UserSummary user) =>
         user.Id == _currentUserId ? Loc["Users_CannotDeleteSelfReason"] : Loc["Users_CannotDeleteLastAdminReason"];
 
@@ -416,6 +468,7 @@ else
 
         ClearAllTransientState();
         _editingUserId = userId;
+        _editUserName = profile.UserName ?? "";
         _editFirstName = profile.FirstName;
         _editLastName = profile.LastName;
         _editEmail = profile.Email ?? "";
@@ -430,13 +483,14 @@ else
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_editFirstName) || string.IsNullOrWhiteSpace(_editLastName) || string.IsNullOrWhiteSpace(_editEmail))
+        if (string.IsNullOrWhiteSpace(_editUserName) || string.IsNullOrWhiteSpace(_editFirstName) ||
+            string.IsNullOrWhiteSpace(_editLastName) || string.IsNullOrWhiteSpace(_editEmail))
         {
             _editErrorMessage = Loc["Users_AllFieldsRequiredError"];
             return;
         }
 
-        var result = await UserRepository.UpdateProfileAsync(_editingUserId, _editFirstName, _editLastName, _editEmail);
+        var result = await UserManagementService.UpdateUserAsync(_editingUserId, _editUserName, _editEmail, _editFirstName, _editLastName);
         if (!result.Succeeded)
         {
             _editErrorMessage = string.Join(", ", result.Errors);

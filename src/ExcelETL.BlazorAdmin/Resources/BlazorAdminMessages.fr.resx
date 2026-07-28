@@ -40,9 +40,6 @@
   <data name="NavMenu_Logout" xml:space="preserve">
     <value>Déconnexion</value>
   </data>
-  <data name="NavMenu_Register" xml:space="preserve">
-    <value>S'inscrire</value>
-  </data>
   <data name="NavMenu_Login" xml:space="preserve">
     <value>Connexion</value>
   </data>
@@ -187,23 +184,20 @@
   <data name="Login_Submit" xml:space="preserve">
     <value>Se connecter</value>
   </data>
-  <data name="Login_RegisterLink" xml:space="preserve">
-    <value>S'inscrire en tant que nouvel utilisateur</value>
+  <data name="Login_PasswordRecoveryHint" xml:space="preserve">
+    <value>Mot de passe oublié ? Contactez votre administrateur pour le réinitialiser.</value>
   </data>
   <data name="Login_InvalidAttempt" xml:space="preserve">
     <value>Tentative de connexion invalide.</value>
   </data>
-  <data name="Register_Title" xml:space="preserve">
-    <value>Inscription</value>
+  <data name="ForcePasswordChange_Title" xml:space="preserve">
+    <value>Changer votre mot de passe temporaire</value>
   </data>
-  <data name="Register_Subtitle" xml:space="preserve">
-    <value>Créer un nouveau compte.</value>
+  <data name="ForcePasswordChange_Explanation" xml:space="preserve">
+    <value>Vous devez changer votre mot de passe temporaire avant de continuer.</value>
   </data>
-  <data name="Register_ConfirmPasswordLabel" xml:space="preserve">
-    <value>Confirmer le mot de passe</value>
-  </data>
-  <data name="Register_Submit" xml:space="preserve">
-    <value>S'inscrire</value>
+  <data name="ForcePasswordChange_Submit" xml:space="preserve">
+    <value>Changer le mot de passe</value>
   </data>
   <data name="NavMenu_Users" xml:space="preserve">
     <value>Utilisateurs</value>
@@ -217,20 +211,35 @@
   <data name="Users_NoEntries" xml:space="preserve">
     <value>Aucun utilisateur trouvé.</value>
   </data>
-  <data name="Users_Id" xml:space="preserve">
-    <value>Id</value>
-  </data>
   <data name="Users_Email" xml:space="preserve">
     <value>E-mail</value>
   </data>
   <data name="Users_UserName" xml:space="preserve">
     <value>Nom d'utilisateur</value>
   </data>
+  <data name="Users_RoleColumn" xml:space="preserve">
+    <value>Rôle</value>
+  </data>
+  <data name="Users_RoleAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Users_RoleStandard" xml:space="preserve">
+    <value>Utilisateur</value>
+  </data>
   <data name="Users_CreateButton" xml:space="preserve">
     <value>Créer un utilisateur</value>
   </data>
   <data name="Users_CreateFormHeading" xml:space="preserve">
     <value>Créer un utilisateur</value>
+  </data>
+  <data name="Users_UserNameLabel" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Users_UserNamePlaceholder" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Users_UserNameHelp" xml:space="preserve">
+    <value>3 à 30 caractères : lettres, chiffres, « _ » et « . ». C'est l'identifiant de connexion.</value>
   </data>
   <data name="Users_FirstNameLabel" xml:space="preserve">
     <value>Prénom</value>
@@ -560,10 +569,70 @@
     <value>Règles de point conditionnelles</value>
   </data>
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
-    <value>{0} colonnes inconditionnelles, {1} règles conditionnelles</value>
+    <value>{0} colonnes inconditionnelles, {1} règles conditionnelles, {2} champs d'en-tête, {3} champs composés</value>
   </data>
   <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
-    <value>Aucune colonne inconditionnelle ni règle de point conditionnelle pour cette feuille.</value>
+    <value>Aucune colonne inconditionnelle, règle de point conditionnelle, champ d'en-tête ou champ composé pour cette feuille.</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldsHeading" xml:space="preserve">
+    <value>Champs d'en-tête</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldNameLabel" xml:space="preserve">
+    <value>Nom du champ</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldNamePlaceholder" xml:space="preserve">
+    <value>ex. nomMAD</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldRangeLabel" xml:space="preserve">
+    <value>Plage de cellule</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldRangePlaceholder" xml:space="preserve">
+    <value>ex. M2:O2</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatLabel" xml:space="preserve">
+    <value>Format de date (optionnel)</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatPlaceholder" xml:space="preserve">
+    <value>ex. dd/MM/yyyy</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatHint" xml:space="preserve">
+    <value>Ne s'applique qu'à un champ contenant une date. Laisser vide sinon.</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldStripPrefixLabel" xml:space="preserve">
+    <value>Retirer le préfixe repère de la valeur de ce champ</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldStripPrefixIndicator" xml:space="preserve">
+    <value>préfixe retiré</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderFieldDateFormatIndicator" xml:space="preserve">
+    <value>date : {0}</value>
+  </data>
+  <data name="ImportProfileEditor_AddHeaderFieldButton" xml:space="preserve">
+    <value>Ajouter un champ d'en-tête</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositesHeading" xml:space="preserve">
+    <value>Champs composés</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeNameLabel" xml:space="preserve">
+    <value>Nom du champ</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeNamePlaceholder" xml:space="preserve">
+    <value>ex. Designation</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplateLabel" xml:space="preserve">
+    <value>Gabarit</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplatePlaceholder" xml:space="preserve">
+    <value>Rév {revision} du {dateRev}</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderCompositeTemplateHint" xml:space="preserve">
+    <value>Utiliser {nomDuChamp} pour référencer un champ d'en-tête défini ci-dessus, ex. "Rév {revision} du {dateRev}".</value>
+  </data>
+  <data name="ImportProfileEditor_AddHeaderCompositeButton" xml:space="preserve">
+    <value>Ajouter un champ composé</value>
+  </data>
+  <data name="ImportProfileEditor_WellKnownHeaderNamesMissingWarning" xml:space="preserve">
+    <value>Le service d'extraction de cette feuille attend le(s) nom(s) d'en-tête suivant(s), absent(s) ici : {0}. L'enregistrement reste possible, mais l'extraction échouera pour cette feuille tant qu'ils ne sont pas ajoutés.</value>
   </data>
   <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
     <value>Nom du champ source</value>

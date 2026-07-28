@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Components.Endpoints
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -16,9 +18,34 @@
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+    <Routes @rendermode="RenderModeForPage" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>
+
+@code {
+    // Lot 049 (49.2): this render mode MUST stay computed per request, never a constant.
+    // Components/Account/_Imports.razor applies [ExcludeFromInteractiveRouting] to every page under
+    // Components/Account/, and the framework's Router genuinely removes those pages from its
+    // *interactive* route table. So handing <Routes> a constant InteractiveServer rendered them
+    // correctly on the server, then let the circuit boot over the result, find no matching route and
+    // replace the body with NotFoundPage -- the "Introuvable" defect on /Account/ForcePasswordChange
+    // (see docs/tickets/tickets-tdd-lot-049-*.md, diagnostic 49.0). Those pages also need static SSR
+    // for their own sake: they write the auth cookie during a POST and read the cascading HttpContext,
+    // neither of which works from an interactive circuit.
+    //
+    // AcceptsInteractiveRouting() is the framework's own reader of that attribute on the endpoint
+    // metadata (Microsoft.AspNetCore.Components.Endpoints) -- verified present in the installed
+    // .NET 10 SDK rather than assumed.
+    //
+    // <HeadOutlet /> above is deliberately left with no render mode: making it interactive would
+    // change the <head> behaviour of every admin page, which is outside this correction's scope.
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private IComponentRenderMode? RenderModeForPage =>
+        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+}

@@ -28,7 +28,7 @@ public class IsolementExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
-        ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {

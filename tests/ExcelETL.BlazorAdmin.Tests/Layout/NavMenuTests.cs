@@ -36,7 +36,6 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Find("#nav-register-link").TextContent.Should().Contain("Register");
         cut.Find("#nav-login-link").TextContent.Should().Contain("Login");
     });
 
@@ -47,8 +46,31 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        cut.Find("#nav-register-link").TextContent.Should().Contain("S'inscrire");
         cut.Find("#nav-login-link").TextContent.Should().Contain("Connexion");
+    });
+
+    // Lot 051 (51.2): this test used to verify #nav-register-link's *presence* for an unauthenticated
+    // visitor. Public self-registration is removed as a security decision -- the intention inverts to
+    // verify real absence (not hidden/disabled), fixed in place rather than duplicated, per the
+    // ticket's explicit instruction and the same "true DOM absence" rule as Lot L2's #nav-logs-link.
+    [Fact]
+    public void NavMenu_WhenNotAuthorized_HidesRegisterLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-register-link").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void NavMenu_WhenAuthorized_HidesRegisterLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-register-link").Should().BeEmpty();
     });
 
     [Fact]

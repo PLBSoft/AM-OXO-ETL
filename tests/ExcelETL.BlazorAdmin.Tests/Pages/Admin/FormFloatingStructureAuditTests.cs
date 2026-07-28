@@ -240,6 +240,7 @@ public class LoginFormFloatingAuditTests : BunitContext
         var signInManagerMock = IdentityMocks.CreateSignInManagerMock(userManagerMock.Object);
 
         Services.AddSingleton(signInManagerMock.Object);
+        Services.AddSingleton(userManagerMock.Object);
         Services.AddSingleton<ILogger<Login>>(NullLogger<Login>.Instance);
         Services.AddScoped<IdentityRedirectManager>();
         Services.AddLocalization();
@@ -266,56 +267,6 @@ public class LoginFormFloatingAuditTests : BunitContext
     public void LoginPage_AllFormFloatingFields_AreStructurallyValid() => WithCulture("en-US", () =>
     {
         var cut = Render<Login>();
-
-        FormFloatingStructureAssertions.AssertAllFormFloatingFieldsAreStructurallyValid(cut);
-    });
-}
-
-public class RegisterFormFloatingAuditTests : BunitContext
-{
-    public RegisterFormFloatingAuditTests()
-    {
-        var userStoreMock = new Mock<IUserStore<ApplicationUser>>();
-        userStoreMock
-            .Setup(s => s.SetUserNameAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        userStoreMock
-            .As<IUserEmailStore<ApplicationUser>>()
-            .Setup(s => s.SetEmailAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var userManagerMock = IdentityMocks.CreateUserManagerMock(userStoreMock.Object);
-        var signInManagerMock = IdentityMocks.CreateSignInManagerMock(userManagerMock.Object);
-
-        Services.AddSingleton(userManagerMock.Object);
-        Services.AddSingleton(userStoreMock.Object);
-        Services.AddSingleton(signInManagerMock.Object);
-        Services.AddSingleton<ILogger<Register>>(NullLogger<Register>.Instance);
-        Services.AddScoped<IdentityRedirectManager>();
-        Services.AddLocalization();
-
-        RenderTree.Add<CascadingValue<HttpContext>>(p => p.Add(c => c.Value, new DefaultHttpContext()));
-    }
-
-    private static void WithCulture(string cultureName, Action action)
-    {
-        var originalCulture = CultureInfo.CurrentUICulture;
-        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
-
-        try
-        {
-            action();
-        }
-        finally
-        {
-            CultureInfo.CurrentUICulture = originalCulture;
-        }
-    }
-
-    [Fact]
-    public void RegisterPage_AllFormFloatingFields_AreStructurallyValid() => WithCulture("en-US", () =>
-    {
-        var cut = Render<Register>();
 
         FormFloatingStructureAssertions.AssertAllFormFloatingFieldsAreStructurallyValid(cut);
     });

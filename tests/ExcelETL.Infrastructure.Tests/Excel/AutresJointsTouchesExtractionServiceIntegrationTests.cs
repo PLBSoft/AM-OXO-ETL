@@ -17,6 +17,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 {
     private const string Sheet = "AUTRES JOINTS TOUCHES";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
+    private const string ReperePrefix = "MAD-OXO-";
 
     private static readonly string[] UnconditionalColonneNames =
     [
@@ -26,8 +27,10 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 
     private readonly AutresJointsTouchesExtractionService _sut =
         new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            NullLogger<AutresJointsTouchesExtractionService>.Instance);
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance);
 
+    // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
+    // hardcoded in AutresJointsTouchesExtractionService.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
@@ -37,7 +40,9 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
-        UnconditionalColonneNames);
+        UnconditionalColonneNames,
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
+        []);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()
@@ -86,7 +91,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule());
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
     }
 
     private static string FixturePath(string fileName)

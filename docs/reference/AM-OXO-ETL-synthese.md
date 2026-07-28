@@ -1,4 +1,4 @@
-# AM-OXO-ETL — Synthèse de relance (mise à jour 2026-07-20)
+# AM-OXO-ETL — Synthèse de relance
 
 *Document à partager en début de nouvelle session (chat ou Claude Code) pour reprendre le
 projet sans avoir à tout réexpliquer. Remplace la version précédente (rédigée avant le premier

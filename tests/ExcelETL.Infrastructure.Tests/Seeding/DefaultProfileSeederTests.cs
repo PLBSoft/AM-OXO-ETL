@@ -137,6 +137,67 @@ public class DefaultProfileSeederTests
     }
 
     [Fact]
+    public async Task SeedAsync_CreatesImportProfile_WithExpectedHeaderRules_TranscribedFromThePreviousHardcode()
+    {
+        // Lot 047 (docs/tickets/tickets-tdd-lot-047-extraction-entetes-profile-driven-directcell.md),
+        // 47.4: PROCEDURE's nomMAD/revision/dateRev + Designation composite, and AJT/DIVERS'
+        // repereEcho -- transcribed verbatim from what was previously hardcoded in
+        // ProcedureExtractionService/AutresJointsTouchesExtractionService/DiversExtractionService.
+        var seeder = CreateSeeder(out var importProfileStore, out _);
+        await seeder.SeedAsync();
+
+        var profile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
+
+        var procedure = profile!.SheetRules.Single(r => r.SheetName == "PROCEDURE");
+        procedure.HeaderFields.Should().HaveCount(3);
+
+        var nomMad = procedure.HeaderFields.Single(f => f.Name == "nomMAD");
+        nomMad.Cell.Sheet.Should().Be("PROCEDURE");
+        nomMad.Cell.Range.Should().Be("M2:O2");
+        nomMad.StripReperePrefix.Should().BeTrue();
+        nomMad.DateFormat.Should().BeNull();
+
+        var revision = procedure.HeaderFields.Single(f => f.Name == "revision");
+        revision.Cell.Range.Should().Be("P2:Q2");
+        revision.StripReperePrefix.Should().BeFalse();
+        revision.DateFormat.Should().BeNull();
+
+        var dateRev = procedure.HeaderFields.Single(f => f.Name == "dateRev");
+        dateRev.Cell.Range.Should().Be("R2:T2");
+        dateRev.StripReperePrefix.Should().BeFalse();
+        dateRev.DateFormat.Should().Be("dd/MM/yyyy");
+
+        procedure.HeaderComposites.Should().ContainSingle();
+        var designation = procedure.HeaderComposites.Single();
+        designation.Name.Should().Be("Designation");
+        designation.Template.Should().Be("Rév {revision} du {dateRev}");
+
+        var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
+        autresJointsTouches.HeaderFields.Should().ContainSingle();
+        var ajtRepereEcho = autresJointsTouches.HeaderFields.Single();
+        ajtRepereEcho.Name.Should().Be("repereEcho");
+        ajtRepereEcho.Cell.Sheet.Should().Be("AUTRES JOINTS TOUCHES");
+        ajtRepereEcho.Cell.Range.Should().Be("N6");
+        autresJointsTouches.HeaderComposites.Should().BeEmpty();
+
+        var divers = profile.SheetRules.Single(r => r.SheetName == "DIVERS");
+        divers.HeaderFields.Should().ContainSingle();
+        var diversRepereEcho = divers.HeaderFields.Single();
+        diversRepereEcho.Name.Should().Be("repereEcho");
+        diversRepereEcho.Cell.Sheet.Should().Be("DIVERS");
+        diversRepereEcho.Cell.Range.Should().Be("N6");
+        divers.HeaderComposites.Should().BeEmpty();
+
+        // ISOLEMENT/PLATINES/ORIFICES CAPACITES have no header rules -- out of this lot's scope.
+        foreach (var sheetName in new[] { "ISOLEMENT", "PLATINES", "ORIFICES CAPACITES" })
+        {
+            var rule = profile.SheetRules.Single(r => r.SheetName == sheetName);
+            rule.HeaderFields.Should().BeEmpty();
+            rule.HeaderComposites.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public async Task SeedAsync_CreatesExportProfile_WithExpectedSheetsAndMinimalColumnSet()
     {
         var seeder = CreateSeeder(out _, out var exportProfileStore);

@@ -1,0 +1,112 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Shared
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Extraction.Profile
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+}
+
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}header-composite-name-input")" class="form-control" @bind="_name"
+               placeholder="@Loc["ImportProfileEditor_HeaderCompositeNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}header-composite-name-input")">@Loc["ImportProfileEditor_HeaderCompositeNameLabel"]</label>
+    </div>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}header-composite-template-input")" class="form-control" @bind="_template"
+               placeholder="@Loc["ImportProfileEditor_HeaderCompositeTemplatePlaceholder"]" />
+        <label for="@($"{IdPrefix}header-composite-template-input")">@Loc["ImportProfileEditor_HeaderCompositeTemplateLabel"]</label>
+    </div>
+    <div class="form-text">@Loc["ImportProfileEditor_HeaderCompositeTemplateHint"]</div>
+</div>
+
+<div class="right-aligned-actions">
+    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+        @if (ShowCancel)
+        {
+            @((MarkupString)AdminIconMarkup.Check)
+        }
+        @SubmitLabel
+    </button>
+    @if (ShowCancel)
+    {
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+            @Loc["ImportProfileEditor_CancelButton"]
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public HeaderCompositeRule? InitialComposite { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-header-composite-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-header-composite-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<HeaderCompositeRule> OnSubmit { get; set; }
+
+    private string _name = string.Empty;
+    private string _template = string.Empty;
+    private string? _errorMessage;
+
+    // Only ever runs once per mounted instance -- same reasoning as HeaderFieldRuleForm.OnInitialized.
+    protected override void OnInitialized()
+    {
+        if (InitialComposite is null)
+        {
+            return;
+        }
+
+        _name = InitialComposite.Name;
+        _template = InitialComposite.Template;
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+
+        try
+        {
+            var composite = new HeaderCompositeRule(_name, _template);
+
+            await OnSubmit.InvokeAsync(composite);
+
+            ResetForm();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _name = string.Empty;
+        _template = string.Empty;
+    }
+}

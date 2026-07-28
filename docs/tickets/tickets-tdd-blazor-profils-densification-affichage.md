@@ -55,7 +55,9 @@ S'applique à `SheetExtractionRule`/`BlockFieldDefinition` côté import et à
   structure CSS du conteneur de champs change, à vérifier par assertion sur la classe attendue.
 - Parité de classe CSS entre les deux composants, même principe que R1.
 
-## R3. Repli (accordéon) des sous-listes à taille variable
+## R3. Repli (accordéon) des sous-listes à taille variable ✅ terminé
+
+**Statut** : implémenté (commit `3b0390c`). Documenté ici pour mémoire, non réouvert.
 
 **Comportement attendu** : les sous-blocs de taille non bornée (`UnconditionalColonneNames` +
 `ConditionalPointRule` côté `ISOLEMENT` en import ; listes de `ColumnDefinition`/
@@ -65,16 +67,28 @@ repliés par défaut** (décision actée, pas de seuil conditionnel) dans un él
 `"{N} colonnes inconditionnelles, {M} règles conditionnelles"` (clé resx dédiée, EN/FR). Cliquer
 développe la liste complète.
 
+**Correctif post-implémentation** : la première version ne réagissait pas au clic sur l'élément
+portant la classe `sheet-rule-sublist-details` (accordéon inerte). Corrigé en TDD — cause exacte
+tracée dans l'historique du commit `3b0390c`, non recopiée ici pour éviter la duplication
+d'information entre le document vivant et git.
+
 **Tests** :
 - État initial replié : la liste complète n'est pas présente dans le DOM (vérification `FindAll`
   vide, pas un test de style `display:none` — même règle que L2/NavMenu), seul le résumé est
   visible.
 - Clic sur le résumé → liste complète apparaît dans le DOM (nouvelle assertion `FindAll` non
   vide), avec les mêmes valeurs qu'avant restructuration.
+- Toggle bidirectionnel : un second clic referme la sous-liste.
+- Indépendance par carte : déplier une carte n'affecte pas l'état d'accordéon des autres cartes
+  de règle de feuille.
+- Sous-liste vide (0 colonnes inconditionnelles, 0 règles conditionnelles) : le clic ne casse pas
+  le rendu, un état vide cohérent est affiché.
 - Résumé affiche le bon compte quand la liste change (ajout/suppression d'un élément avant
   sauvegarde) — pas de valeur figée au premier rendu.
 - Parité de comportement (replié par défaut, même structure de résumé) entre import et export,
   même principe de test que R1/R2.
+- Accessibilité : élément cliquable focusable au clavier (`tabindex`/rôle ARIA `button`/
+  `aria-expanded` si le mécanisme retenu n'est pas un `<details>` natif).
 
 **Hors périmètre explicite de R3** : tabs par feuille (option évoquée en discussion mais non
 retenue) — reporté, ne pas anticiper.

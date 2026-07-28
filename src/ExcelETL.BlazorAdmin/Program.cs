@@ -90,6 +90,7 @@ builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveSto
 builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
 builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
 builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
+builder.Services.AddSingleton<IHeaderRuleResolver, HeaderRuleResolver>();
 builder.Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
 builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
 builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();
@@ -129,10 +130,24 @@ builder.Services.AddHttpClient<IOxoApiTestClient, OxoApiTestClient>((sp, client)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
+        // Lot 050 (D1): connection identifier's character set -- letters, digits, '_' and '.'.
+        // The '-', '@' and '+' characters present in Identity's own default set are deliberately
+        // removed. Length (3-30) is enforced separately by ApplicationUserValidator below, since
+        // this option has no length concept of its own.
+        options.User.AllowedUserNameCharacters =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.";
+        // Lot 050 (D5): complete email uniqueness, applicative half -- paired with the filtered
+        // unique index on NormalizedEmail (50.5) for the schema half.
+        options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddErrorDescriber<LocalizedIdentityErrorDescriber>()
-    .AddDefaultTokenProviders();
+    .AddUserValidator<ApplicationUserValidator>()
+    .AddDefaultTokenProviders()
+    // Lot 045 (45.0): exposes RequirePasswordChangeOnFirstLogin (Lot 044) as a claim on every
+    // principal SignInManager builds (login, RefreshSignInAsync), so PasswordChangeGuard can read it
+    // from the cascading AuthenticationState without a per-navigation database read.
+    .AddClaimsPrincipalFactory<RequirePasswordChangeClaimsPrincipalFactory>();
 
 builder.Services.AddScoped<IdentitySeeder>();
 

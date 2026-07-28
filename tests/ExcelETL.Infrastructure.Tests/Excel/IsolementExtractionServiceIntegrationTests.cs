@@ -33,7 +33,7 @@ public class IsolementExtractionServiceIntegrationTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
-        ["PROLOCK VANNES", "DEPROLOCK VANNES"]);
+        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsAllPlainProlockIsolements()

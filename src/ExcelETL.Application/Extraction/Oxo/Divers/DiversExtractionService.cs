@@ -17,21 +17,27 @@ namespace ExcelETL.Application.Extraction.Oxo.Divers;
 // orchestrator to broadcast onto the Equipement and every Isolement of the whole run.
 //
 // Equipement repere echo lives at N6, same discrepancy from the spec's stated "K6:U6" already found
-// for AUTRES JOINTS TOUCHES (confirmed blank there in all 3 real fixtures).
+// for AUTRES JOINTS TOUCHES (confirmed blank there in all 3 real fixtures). Since Lot 047, that
+// coordinate comes from the profile's own HeaderFieldRule (SharedHeaderFieldNames.RepereEcho) via
+// IHeaderRuleResolver, no longer a literal here. loc1 (B6:E6) stays a plain hardcoded
+// IWorkbookReader read -- explicitly out of Lot 047's scope (spec/ticket only covers PROCEDURE's
+// header + the N6 echo, not loc1).
 public sealed class DiversExtractionService(
     IRepeatingBlockReader repeatingBlockReader,
     ITextTransformEvaluator textTransformEvaluator,
     IConditionalPointRuleEvaluator conditionalPointRuleEvaluator,
+    IHeaderRuleResolver headerRuleResolver,
     ILogger<DiversExtractionService> logger)
     : IDiversExtractionService
 {
-    public DiversSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule)
+    public DiversSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(sheetRule);
 
         var sheet = sheetRule.SheetName;
-        var equipementRepere = workbookReader.ReadCellValue(sheet, "N6") ?? "";
+        var header = headerRuleResolver.Resolve(workbookReader, sheetRule, reperePrefix);
+        var equipementRepere = header.Fields[SharedHeaderFieldNames.RepereEcho].Value ?? "";
         var loc1 = workbookReader.ReadCellValue(sheet, "B6:E6") ?? "";
 
         var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);

@@ -332,6 +332,128 @@
 </div>
 </div>
 
+<div class="card bg-light mb-3">
+<div class="card-body">
+<h3 class="h5">@Loc["ImportProfileEditor_HeaderFieldsHeading"]</h3>
+@if (GetMissingWellKnownNames() is { Count: > 0 } missingNames)
+{
+    <div id="@($"{IdPrefix}header-well-known-names-warning")" class="alert alert-warning" role="alert">
+        @Loc["ImportProfileEditor_WellKnownHeaderNamesMissingWarning", string.Join(", ", missingNames)]
+    </div>
+}
+@if (_headerFields.Count > 0)
+{
+    <ul class="block-field-list">
+        @for (var j = 0; j < _headerFields.Count; j++)
+        {
+            var fieldIndex = j;
+            var field = _headerFields[fieldIndex];
+            @if (_editingHeaderFieldIndex == fieldIndex)
+            {
+                <li class="block-field-item-editing">
+                    <HeaderFieldRuleForm IdPrefix="@($"{IdPrefix}header-field-{fieldIndex}-")"
+                                         InitialField="field"
+                                         SubmitButtonId="@($"{IdPrefix}save-header-field-button-{fieldIndex}")"
+                                         SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                         ShowCancel="true"
+                                         CancelButtonId="@($"{IdPrefix}cancel-header-field-button-{fieldIndex}")"
+                                         OnCancel="() => _editingHeaderFieldIndex = null"
+                                         OnSubmit="(HeaderFieldRule updated) => HandleSaveHeaderField(fieldIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@field.Name</span>
+                        <span class="block-field-range text-muted font-monospace">@FormatHeaderFieldSummary(field)</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-header-field-button-{fieldIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingHeaderFieldIndex = fieldIndex">
+                            @((MarkupString)AdminIconMarkup.Pencil)
+                        </button>
+                        <button id="@($"{IdPrefix}delete-header-field-button-{fieldIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteHeaderField(fieldIndex)">
+                            @((MarkupString)AdminIconMarkup.Trash)
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<HeaderFieldRuleForm IdPrefix="@($"{IdPrefix}header-field-")"
+                     SubmitButtonId="@($"{IdPrefix}add-header-field-button")"
+                     SubmitLabel="@Loc["ImportProfileEditor_AddHeaderFieldButton"]"
+                     OnSubmit="AddHeaderField" />
+</div>
+</div>
+
+<div class="card bg-light mb-3">
+<div class="card-body">
+<h3 class="h5">@Loc["ImportProfileEditor_HeaderCompositesHeading"]</h3>
+@if (_headerComposites.Count > 0)
+{
+    <ul class="block-field-list">
+        @for (var j = 0; j < _headerComposites.Count; j++)
+        {
+            var itemIndex = j;
+            var composite = _headerComposites[itemIndex];
+            @if (_editingHeaderCompositeIndex == itemIndex)
+            {
+                <li class="block-field-item-editing">
+                    <HeaderCompositeRuleForm IdPrefix="@($"{IdPrefix}header-composite-{itemIndex}-")"
+                                             InitialComposite="composite"
+                                             SubmitButtonId="@($"{IdPrefix}save-header-composite-button-{itemIndex}")"
+                                             SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                             ShowCancel="true"
+                                             CancelButtonId="@($"{IdPrefix}cancel-header-composite-button-{itemIndex}")"
+                                             OnCancel="() => _editingHeaderCompositeIndex = null"
+                                             OnSubmit="(HeaderCompositeRule updated) => HandleSaveHeaderComposite(itemIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@composite.Name</span>
+                        <span class="block-field-range text-muted font-monospace">@composite.Template</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-header-composite-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingHeaderCompositeIndex = itemIndex">
+                            @((MarkupString)AdminIconMarkup.Pencil)
+                        </button>
+                        <button id="@($"{IdPrefix}delete-header-composite-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteHeaderComposite(itemIndex)">
+                            @((MarkupString)AdminIconMarkup.Trash)
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<HeaderCompositeRuleForm IdPrefix="@($"{IdPrefix}header-composite-")"
+                         SubmitButtonId="@($"{IdPrefix}add-header-composite-button")"
+                         SubmitLabel="@Loc["ImportProfileEditor_AddHeaderCompositeButton"]"
+                         OnSubmit="AddHeaderComposite" />
+</div>
+</div>
+
 <div class="right-aligned-actions">
     <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
         @if (ShowCancel)
@@ -380,6 +502,8 @@
     private readonly List<BlockFieldDefinition> _fields = [];
     private readonly List<string> _unconditionalColonneNames = [];
     private readonly List<ConditionalPointRule> _pointRules = [];
+    private readonly List<HeaderFieldRule> _headerFields = [];
+    private readonly List<HeaderCompositeRule> _headerComposites = [];
 
     private int? _editingFieldIndex;
 
@@ -400,6 +524,9 @@
     private string _editingPointRuleComparisonValue = string.Empty;
     private string? _pointRuleEditError;
 
+    private int? _editingHeaderFieldIndex;
+    private int? _editingHeaderCompositeIndex;
+
     private string? _errorMessage;
 
     // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
@@ -419,6 +546,8 @@
         _fields.AddRange(InitialRule.Locator.Fields);
         _unconditionalColonneNames.AddRange(InitialRule.UnconditionalColonneNames);
         _pointRules.AddRange(InitialRule.PointRules);
+        _headerFields.AddRange(InitialRule.HeaderFields);
+        _headerComposites.AddRange(InitialRule.HeaderComposites);
     }
 
     private void AddBlockField(BlockFieldDefinition field) => _fields.Add(field);
@@ -545,6 +674,79 @@
         }
     }
 
+    private void AddHeaderField(HeaderFieldRule field) => _headerFields.Add(field);
+
+    private void HandleSaveHeaderField(int fieldIndex, HeaderFieldRule updated)
+    {
+        _headerFields[fieldIndex] = updated;
+        _editingHeaderFieldIndex = null;
+    }
+
+    // Deletion is immediate, no confirmation -- same parity-with-sibling-sublists decision as every
+    // other list in this component (Lot 048 decision 1).
+    private void DeleteHeaderField(int fieldIndex)
+    {
+        _headerFields.RemoveAt(fieldIndex);
+        if (_editingHeaderFieldIndex == fieldIndex)
+        {
+            _editingHeaderFieldIndex = null;
+        }
+    }
+
+    private void AddHeaderComposite(HeaderCompositeRule composite) => _headerComposites.Add(composite);
+
+    private void HandleSaveHeaderComposite(int itemIndex, HeaderCompositeRule updated)
+    {
+        _headerComposites[itemIndex] = updated;
+        _editingHeaderCompositeIndex = null;
+    }
+
+    private void DeleteHeaderComposite(int itemIndex)
+    {
+        _headerComposites.RemoveAt(itemIndex);
+        if (_editingHeaderCompositeIndex == itemIndex)
+        {
+            _editingHeaderCompositeIndex = null;
+        }
+    }
+
+    private string FormatHeaderFieldSummary(HeaderFieldRule field)
+    {
+        var indicators = new List<string>();
+        if (field.StripReperePrefix)
+        {
+            indicators.Add(Loc["ImportProfileEditor_HeaderFieldStripPrefixIndicator"]);
+        }
+
+        if (field.DateFormat is not null)
+        {
+            indicators.Add(Loc["ImportProfileEditor_HeaderFieldDateFormatIndicator", field.DateFormat]);
+        }
+
+        return indicators.Count == 0 ? field.Cell.Range : $"{field.Cell.Range} ({string.Join(", ", indicators)})";
+    }
+
+    // UI-only advisory (Lot 048, 48.5) -- never consulted by extraction. Compares the current, still
+    // in-progress form state against KnownHeaderFieldNames.For(_sheetName), ordinally/case-sensitively
+    // (matching the real resolver's own Dictionary<string, ...> lookup).
+    private IReadOnlyList<string> GetMissingWellKnownNames()
+    {
+        var expected = KnownHeaderFieldNames.For(_sheetName);
+        if (expected.Fields.Count == 0 && expected.Composites.Count == 0)
+        {
+            return [];
+        }
+
+        var presentFields = _headerFields.Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
+        var presentComposites = _headerComposites.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+
+        return
+        [
+            .. expected.Fields.Where(name => !presentFields.Contains(name)),
+            .. expected.Composites.Where(name => !presentComposites.Contains(name)),
+        ];
+    }
+
     private async Task Submit()
     {
         _errorMessage = null;
@@ -553,9 +755,18 @@
         {
             var locator = new RepeatingBlockLocator(_sheetName, _firstBlockStartRow, _step, _stopFieldName, _fields);
 
-            // SheetExtractionRule stores this list by reference (unlike PointRules, which it copies) --
-            // pass a snapshot so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
-            var rule = new SheetExtractionRule(_sheetName, locator, _pointRules, [.. _unconditionalColonneNames]);
+            // Header fields always re-derive Cell.Sheet from the current sheet name (decision 2, Lot
+            // 048) -- so a sheet rename after a header field was added still lands consistently, and
+            // the UI never exposes "read from another sheet" (which the domain allows but no seeded
+            // profile ever uses).
+            var headerFields = _headerFields
+                .Select(f => new HeaderFieldRule(f.Name, new DirectCell(_sheetName, f.Cell.Range), f.StripReperePrefix, f.DateFormat))
+                .ToList();
+
+            // SheetExtractionRule stores these lists by reference (unlike PointRules, which it copies) --
+            // pass snapshots so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
+            var rule = new SheetExtractionRule(
+                _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites]);
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -578,7 +789,11 @@
         _fields.Clear();
         _unconditionalColonneNames.Clear();
         _pointRules.Clear();
+        _headerFields.Clear();
+        _headerComposites.Clear();
         _editingFieldIndex = null;
+        _editingHeaderFieldIndex = null;
+        _editingHeaderCompositeIndex = null;
         _newUnconditionalColonneName = string.Empty;
         _newPointRuleColonneName = string.Empty;
         _newPointRuleSourceFieldName = string.Empty;

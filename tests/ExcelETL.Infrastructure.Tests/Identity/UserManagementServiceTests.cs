@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using ExcelETL.Application.Identity;
 using ExcelETL.Infrastructure.Identity;
+using ExcelETL.Infrastructure.Resources;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Moq;
@@ -12,8 +13,11 @@ public class UserManagementServiceTests
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManagerMock = IdentityManagerMocks.CreateUserManagerMock();
 
-    private UserManagementService CreateService() => new(_userManagerMock.Object);
+    private UserManagementService CreateService() => new(_userManagerMock.Object, new RealResxStringLocalizer<InfrastructureMessages>());
 
+    // Lot 050 (50.2): userName is now an explicit, independent parameter -- this test deliberately
+    // uses a userName different from the email, so it would fail on the pre-lot-050 code (which
+    // derived UserName from Email) and is genuinely red before the fix.
     [Fact]
     public async Task CreateUserAsync_Succeeds_ReturnsGeneratedPasswordSatisfyingComplexityPolicy_AndSetsRequirePasswordChangeFlag()
     {
@@ -24,7 +28,7 @@ public class UserManagementServiceTests
             .ReturnsAsync(IdentityResult.Success);
 
         var service = CreateService();
-        var result = await service.CreateUserAsync("alice@example.com", "Alice", "Smith");
+        var result = await service.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith");
 
         result.Succeeded.Should().BeTrue();
         result.TemporaryPassword.Should().NotBeNullOrEmpty();
@@ -34,8 +38,9 @@ public class UserManagementServiceTests
         Regex.IsMatch(result.TemporaryPassword!, @"[^A-Za-z0-9]").Should().BeTrue();
         createdUser.Should().NotBeNull();
         createdUser!.RequirePasswordChangeOnFirstLogin.Should().BeTrue();
-        createdUser.UserName.Should().Be("alice@example.com");
+        createdUser.UserName.Should().Be("alice01");
         createdUser.Email.Should().Be("alice@example.com");
+        createdUser.UserName.Should().NotBe(createdUser.Email);
         createdUser.FirstName.Should().Be("Alice");
         createdUser.LastName.Should().Be("Smith");
     }
@@ -48,7 +53,7 @@ public class UserManagementServiceTests
             .ReturnsAsync(IdentityResult.Success);
 
         var service = CreateService();
-        await service.CreateUserAsync("alice@example.com", "Alice", "Smith");
+        await service.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith");
 
         _userManagerMock.Verify(
             m => m.AddToRoleAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
@@ -62,12 +67,117 @@ public class UserManagementServiceTests
             .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Email 'alice@example.com' is already taken." }));
 
         var service = CreateService();
-        var result = await service.CreateUserAsync("alice@example.com", "Alice", "Smith");
+        var result = await service.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith");
 
         result.Succeeded.Should().BeFalse();
         result.UserId.Should().BeNull();
         result.TemporaryPassword.Should().BeNull();
         result.Errors.Should().ContainSingle().Which.Should().Be("Email 'alice@example.com' is already taken.");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreateUserAsync_BlankUserName_FailsBeforeCallingCreateAsync(string blankUserName)
+    {
+        var service = CreateService();
+        var result = await service.CreateUserAsync(blankUserName, "alice@example.com", "Alice", "Smith");
+
+        result.Succeeded.Should().BeFalse();
+        result.Errors.Should().NotBeEmpty();
+        _userManagerMock.Verify(m => m.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()), Times.Never);
+    }
+
+    // Lot 050 (50.3): modification.
+    [Fact]
+    public async Task UpdateUserAsync_Rename_UpdatesAllFourFields_AndRotatesSecurityStampExactlyOnce()
+    {
+        var user = new ApplicationUser { Id = "1", UserName = "old_name", Email = "old@example.com", FirstName = "Old", LastName = "Name" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
+        _userManagerMock.Setup(m => m.UpdateSecurityStampAsync(user)).ReturnsAsync(IdentityResult.Success);
+
+        var service = CreateService();
+        var result = await service.UpdateUserAsync("1", "new_name", "new@example.com", "New", "Value");
+
+        result.Succeeded.Should().BeTrue();
+        user.UserName.Should().Be("new_name");
+        user.Email.Should().Be("new@example.com");
+        user.FirstName.Should().Be("New");
+        user.LastName.Should().Be("Value");
+        _userManagerMock.Verify(m => m.UpdateSecurityStampAsync(user), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_OnlyFirstNameChanged_NeverRotatesSecurityStamp()
+    {
+        var user = new ApplicationUser { Id = "1", UserName = "same_name", Email = "same@example.com", FirstName = "Old", LastName = "Name" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
+
+        var service = CreateService();
+        var result = await service.UpdateUserAsync("1", "same_name", "same@example.com", "New", "Name");
+
+        result.Succeeded.Should().BeTrue();
+        _userManagerMock.Verify(m => m.UpdateSecurityStampAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_CaseOnlyUserNameChange_TreatedAsUnchanged_NeverRotatesSecurityStamp()
+    {
+        var user = new ApplicationUser { Id = "1", UserName = "slb", Email = "slb@example.com", FirstName = "S", LastName = "L" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock.Setup(m => m.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
+
+        var service = CreateService();
+        var result = await service.UpdateUserAsync("1", "SLB", "slb@example.com", "S", "L");
+
+        result.Succeeded.Should().BeTrue();
+        _userManagerMock.Verify(m => m.UpdateSecurityStampAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_UserNameAlreadyTakenByAnotherAccount_Fails_AndNeverRotatesSecurityStamp()
+    {
+        var user = new ApplicationUser { Id = "1", UserName = "alice", Email = "alice@example.com", FirstName = "A", LastName = "B" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Code = "DuplicateUserName", Description = "User name 'bob' is already taken." }));
+
+        var service = CreateService();
+        var result = await service.UpdateUserAsync("1", "bob", "alice@example.com", "A", "B");
+
+        result.Succeeded.Should().BeFalse();
+        result.Errors.Should().ContainSingle().Which.Should().Be("User name 'bob' is already taken.");
+        _userManagerMock.Verify(m => m.UpdateSecurityStampAsync(It.IsAny<ApplicationUser>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_ValidationFailure_NeverCallsUpdateAsyncMoreThanOnce_AndPersistsNothingExtra()
+    {
+        var user = new ApplicationUser { Id = "1", UserName = "alice", Email = "alice@example.com", FirstName = "A", LastName = "B" };
+        _userManagerMock.Setup(m => m.FindByIdAsync("1")).ReturnsAsync(user);
+        _userManagerMock
+            .Setup(m => m.UpdateAsync(user))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "First name must be between 2 and 50 characters." }));
+
+        var service = CreateService();
+        var result = await service.UpdateUserAsync("1", "alice", "alice@example.com", "A", "B");
+
+        result.Succeeded.Should().BeFalse();
+        _userManagerMock.Verify(m => m.UpdateAsync(user), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateUserAsync_UnknownUser_ThrowsInvalidOperationException()
+    {
+        _userManagerMock.Setup(m => m.FindByIdAsync("missing")).ReturnsAsync((ApplicationUser?)null);
+        var service = CreateService();
+
+        var act = () => service.UpdateUserAsync("missing", "name", "email@example.com", "A", "B");
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
     }
 
     [Fact]

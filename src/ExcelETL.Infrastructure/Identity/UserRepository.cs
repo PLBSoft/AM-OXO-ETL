@@ -13,7 +13,7 @@ public class UserRepository(
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await context.Users
             .OrderBy(u => u.UserName)
-            .Select(u => new UserSummary(u.Id, u.Email, u.UserName))
+            .Select(u => new UserSummary(u.Id, u.Email, u.UserName, u.FirstName, u.LastName))
             .ToListAsync(cancellationToken);
     }
 
@@ -64,6 +64,17 @@ public class UserRepository(
             ?? throw new InvalidOperationException($"User '{id}' was not found.");
 
         var result = await userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+        // Lot 045 (45.1): a user changing their own password successfully is exactly the event that
+        // should lift a temporary-password lock (Lot 044's RequirePasswordChangeOnFirstLogin) -- only
+        // when it was actually set, to avoid an unnecessary extra UpdateAsync call/security-stamp
+        // churn on the common case (flag already false). Never lifted on failure.
+        if (result.Succeeded && user.RequirePasswordChangeOnFirstLogin)
+        {
+            user.RequirePasswordChangeOnFirstLogin = false;
+            await userManager.UpdateAsync(user);
+        }
+
         return ToResult(result);
     }
 

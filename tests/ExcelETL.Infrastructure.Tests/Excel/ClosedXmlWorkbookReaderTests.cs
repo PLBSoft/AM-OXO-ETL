@@ -51,24 +51,6 @@ public class ClosedXmlWorkbookReaderTests
             .Which.SheetName.Should().Be("MISSING");
     }
 
-    [Fact]
-    public void SheetExists_WithExistingSheet_ReturnsTrue()
-    {
-        using var stream = BuildWorkbook(_ => { });
-        using var sut = new ClosedXmlWorkbookReader(stream);
-
-        sut.SheetExists("Sheet").Should().BeTrue();
-    }
-
-    [Fact]
-    public void SheetExists_WithMissingSheet_ReturnsFalse()
-    {
-        using var stream = BuildWorkbook(_ => { });
-        using var sut = new ClosedXmlWorkbookReader(stream);
-
-        sut.SheetExists("MISSING").Should().BeFalse();
-    }
-
     private static MemoryStream BuildWorkbook(Action<IXLWorksheet> configureSheet)
     {
         using var workbook = new XLWorkbook();

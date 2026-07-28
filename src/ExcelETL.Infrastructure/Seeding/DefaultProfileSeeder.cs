@@ -121,7 +121,19 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
                 ]),
                 [],
-                []),
+                [],
+                [
+                    new HeaderFieldRule(
+                        ProcedureHeaderFieldNames.NomMad, new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
+                    new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell("PROCEDURE", "P2:Q2")),
+                    new HeaderFieldRule(
+                        ProcedureHeaderFieldNames.DateRev, new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+                ],
+                [
+                    new HeaderCompositeRule(
+                        ProcedureHeaderFieldNames.Designation,
+                        $"Rév {{{ProcedureHeaderFieldNames.Revision}}} du {{{ProcedureHeaderFieldNames.DateRev}}}")
+                ]),
             new SheetExtractionRule(
                 "ISOLEMENT",
                 new RepeatingBlockLocator("ISOLEMENT", 19, 7, IsolementFieldNames.Identification,
@@ -135,7 +147,7 @@ public class DefaultProfileSeeder(
                     new ConditionalPointRule(
                         IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName)
                 ],
-                ["PROLOCK VANNES", "DEPROLOCK VANNES"]),
+                ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []),
             new SheetExtractionRule(
                 "PLATINES",
                 new RepeatingBlockLocator("PLATINES", 17, 8, IsolementFieldNames.Identification,
@@ -153,7 +165,7 @@ public class DefaultProfileSeeder(
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RECEPTION DEBUT REL",
                     "PLATINES / TAMPONS PLEINS"
-                ]),
+                ], [], []),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
@@ -168,7 +180,7 @@ public class DefaultProfileSeeder(
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS"
-                ]),
+                ], [], []),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
                 new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
@@ -181,7 +193,9 @@ public class DefaultProfileSeeder(
                     new ConditionalPointRule(
                         IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)
                 ],
-                ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"]),
+                ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
+                []),
             new SheetExtractionRule(
                 "DIVERS",
                 new RepeatingBlockLocator("DIVERS", 9, 3, IsolementFieldNames.Identification,
@@ -209,6 +223,8 @@ public class DefaultProfileSeeder(
                     new ConditionalPointRule(
                         IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
+                [],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6"))],
                 [])
         ]);
 

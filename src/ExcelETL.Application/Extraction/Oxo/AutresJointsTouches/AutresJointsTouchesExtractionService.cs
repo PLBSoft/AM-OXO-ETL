@@ -14,22 +14,25 @@ namespace ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 //
 // The Equipement repere echo lives at cell N6, *not* the "K6:U6" the spec documents for this sheet
 // (confirmed empty in all 3 real fixtures) -- probing the real files found the actual value at N6
-// instead (a plain, unmerged cell). Hardcoded here as sheet-specific business knowledge, same as
-// PROCEDURE's header ranges.
+// instead (a plain, unmerged cell). Since Lot 047, that coordinate comes from the profile's own
+// HeaderFieldRule (SharedHeaderFieldNames.RepereEcho) via IHeaderRuleResolver, no longer a literal
+// here -- see DefaultProfileSeeder for the seeded N6 rule.
 public sealed class AutresJointsTouchesExtractionService(
     IRepeatingBlockReader repeatingBlockReader,
     ITextTransformEvaluator textTransformEvaluator,
     IConditionalPointRuleEvaluator conditionalPointRuleEvaluator,
+    IHeaderRuleResolver headerRuleResolver,
     ILogger<AutresJointsTouchesExtractionService> logger)
     : IAutresJointsTouchesExtractionService
 {
-    public IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule)
+    public IsolementSheetExtractionResult Extract(IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(sheetRule);
 
         var sheet = sheetRule.SheetName;
-        var equipementRepere = workbookReader.ReadCellValue(sheet, "N6") ?? "";
+        var header = headerRuleResolver.Resolve(workbookReader, sheetRule, reperePrefix);
+        var equipementRepere = header.Fields[SharedHeaderFieldNames.RepereEcho].Value ?? "";
 
         var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);
         foreach (var blockError in blockResult.Errors)

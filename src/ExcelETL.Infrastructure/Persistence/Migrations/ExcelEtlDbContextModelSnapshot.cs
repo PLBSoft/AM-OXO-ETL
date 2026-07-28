@@ -273,6 +273,102 @@ namespace ExcelETL.Infrastructure.Persistence.Migrations
                                     b2.Navigation("Fields");
                                 });
 
+                            b1.OwnsMany("ExcelETL.Domain.Extraction.Profile.HeaderCompositeRule", "HeaderComposites", b2 =>
+                                {
+                                    b2.Property<int>("Id")
+                                        .ValueGeneratedOnAdd()
+                                        .HasColumnType("int");
+
+                                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b2.Property<int>("Id"));
+
+                                    b2.Property<string>("Name")
+                                        .IsRequired()
+                                        .HasMaxLength(200)
+                                        .HasColumnType("nvarchar(200)");
+
+                                    b2.Property<int>("SheetExtractionRuleId")
+                                        .HasColumnType("int");
+
+                                    b2.Property<string>("Template")
+                                        .IsRequired()
+                                        .HasMaxLength(500)
+                                        .HasColumnType("nvarchar(500)");
+
+                                    b2.HasKey("Id");
+
+                                    b2.HasIndex("SheetExtractionRuleId");
+
+                                    b2.ToTable("ImportProfileSheetRuleHeaderComposites", (string)null);
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("SheetExtractionRuleId");
+                                });
+
+                            b1.OwnsMany("ExcelETL.Domain.Extraction.Profile.HeaderFieldRule", "HeaderFields", b2 =>
+                                {
+                                    b2.Property<int>("Id")
+                                        .ValueGeneratedOnAdd()
+                                        .HasColumnType("int");
+
+                                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b2.Property<int>("Id"));
+
+                                    b2.Property<string>("DateFormat")
+                                        .HasMaxLength(50)
+                                        .HasColumnType("nvarchar(50)");
+
+                                    b2.Property<string>("Name")
+                                        .IsRequired()
+                                        .HasMaxLength(200)
+                                        .HasColumnType("nvarchar(200)");
+
+                                    b2.Property<int>("SheetExtractionRuleId")
+                                        .HasColumnType("int");
+
+                                    b2.Property<bool>("StripReperePrefix")
+                                        .HasColumnType("bit");
+
+                                    b2.HasKey("Id");
+
+                                    b2.HasIndex("SheetExtractionRuleId");
+
+                                    b2.ToTable("ImportProfileSheetRuleHeaderFields", (string)null);
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("SheetExtractionRuleId");
+
+                                    b2.OwnsOne("ExcelETL.Domain.Extraction.Primitives.DirectCell", "Cell", b3 =>
+                                        {
+                                            b3.Property<int>("HeaderFieldRuleId")
+                                                .HasColumnType("int");
+
+                                            b3.Property<string>("Range")
+                                                .IsRequired()
+                                                .HasMaxLength(20)
+                                                .HasColumnType("nvarchar(20)")
+                                                .HasColumnName("CellRange");
+
+                                            b3.Property<string>("Sheet")
+                                                .IsRequired()
+                                                .HasMaxLength(200)
+                                                .HasColumnType("nvarchar(200)")
+                                                .HasColumnName("CellSheet");
+
+                                            b3.HasKey("HeaderFieldRuleId");
+
+                                            b3.ToTable("ImportProfileSheetRuleHeaderFields");
+
+                                            b3.WithOwner()
+                                                .HasForeignKey("HeaderFieldRuleId");
+                                        });
+
+                                    b2.Navigation("Cell")
+                                        .IsRequired();
+                                });
+
+                            b1.Navigation("HeaderComposites");
+
+                            b1.Navigation("HeaderFields");
+
                             b1.Navigation("Locator")
                                 .IsRequired();
 

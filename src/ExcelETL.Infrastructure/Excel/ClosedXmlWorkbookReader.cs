@@ -20,8 +20,6 @@ public sealed class ClosedXmlWorkbookReader : IWorkbookReader, IDisposable
         _workbook = new XLWorkbook(excelFileStream);
     }
 
-    public bool SheetExists(string sheet) => _workbook.Worksheets.TryGetWorksheet(sheet, out _);
-
     public string? ReadCellValue(string sheet, string range)
     {
         if (!_workbook.Worksheets.TryGetWorksheet(sheet, out var worksheet))
