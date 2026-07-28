@@ -183,6 +183,16 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
 
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // 6. Lot 052 (52.4): same real journey, same session -- the account still has no role, so an
+        // Admin-only page (/users) refuses it. This is the second half of the 2026-07-28 defect: step
+        // 4/5 above used to only pass because this helper artificially granted Admin so *some* page
+        // would be reachable (see CreateUserThroughAdminFlowAsync's own former comment) -- now that
+        // /import-profiles is Authenticated, no such workaround is needed, and this step proves the
+        // account is genuinely restricted to business pages, not accidentally promoted.
+        var usersPage = await client.GetAsync("/users");
+        usersPage.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        usersPage.Headers.Location!.AbsolutePath.Should().Be("/Account/AccessDenied");
     }
 
     private HttpClient CreateClient() =>
@@ -190,9 +200,11 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
 
     // Goes through the real Lot 044 admin creation path (server-generated temporary password,
     // RequirePasswordChangeOnFirstLogin set by the service itself) rather than hand-building the
-    // user, so the journey starts from the exact state a real admin action produces. The Admin role
-    // is added afterwards only so step 4 above has an authorized page to land on -- creating an
-    // Admin is deliberately impossible from the UI (Lot 044), and that rule is untouched here.
+    // user, so the journey starts from the exact state a real admin action produces. Lot 052: no
+    // role is granted here anymore -- creating an Admin is deliberately impossible from the UI (Lot
+    // 044), and this test now proves the account can use every business page *without* one (the
+    // "the admin-created account opens no doors" defect this lot fixes), rather than working around
+    // it by granting Admin just so step 4 had something to land on.
     private async Task<string> CreateUserThroughAdminFlowAsync(string userName, string email)
     {
         using var scope = _factory.Services.CreateScope();
@@ -200,16 +212,6 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
         var creation = await userManagement.CreateUserAsync(userName, email, "Journey", "User");
         creation.Succeeded.Should().BeTrue(
             "the admin-created account must exist: " + string.Join(", ", creation.Errors));
-
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        if (!await roleManager.RoleExistsAsync(IdentitySeeder.AdminRoleName))
-        {
-            await roleManager.CreateAsync(new IdentityRole(IdentitySeeder.AdminRoleName));
-        }
-
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var user = await userManager.FindByIdAsync(creation.UserId!);
-        (await userManager.AddToRoleAsync(user!, IdentitySeeder.AdminRoleName)).Succeeded.Should().BeTrue();
 
         return creation.TemporaryPassword!;
     }

@@ -1,6 +1,6 @@
 @page "/import-profiles/new"
 @page "/import-profiles/{Id:guid}/edit"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
@@ -8,7 +8,6 @@
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Profile
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Routing
 

@@ -1,11 +1,10 @@
 @page "/import-profiles"
 @page "/"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Extraction.Profile
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 
 @inject IImportProfileStore ImportProfileStore

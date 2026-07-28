@@ -19,35 +19,60 @@
 
 <div id="nav-scrollable" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
-        <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
+        <!-- Lot 052 (52.2): convention-autorisation-pages-blazoradmin.md -- Admin governs the
+             administration of the application (Users, Logs), not its use. The 4 links below moved
+             out of the Admin-only block into a plain (role-less) AuthorizeView -- every authenticated
+             account, with or without a role, now sees them. No link changes position in the display
+             order (Lot S2): only the AuthorizeView wrapping each one changes. -->
+        <AuthorizeView>
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-import-profiles-link" class="nav-link" href="import-profiles">
                         <span class="bi bi-collection-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ImportProfiles"]
                     </NavLink>
                 </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-export-profiles-link" class="nav-link" href="export-profiles">
                         <span class="bi bi-file-earmark-spreadsheet-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ExportProfiles"]
                     </NavLink>
                 </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-api-test-link" class="nav-link" href="api-test">
                         <span class="bi bi-send-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_ApiTest"]
                     </NavLink>
                 </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
+            <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-users-link" class="nav-link" href="users">
                         <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Users"]
                     </NavLink>
                 </div>
+            </Authorized>
+        </AuthorizeView>
+        <AuthorizeView>
+            <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-generated-files-link" class="nav-link" href="generated-files">
                         <span class="bi bi-archive-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_GeneratedFiles"]
                     </NavLink>
                 </div>
-                <!-- Lot 044 (44.4): moved inside the Admin-only block -- non-admin users created by
-                     this lot must not see the Logs page (decision revisited from Lot S). -->
+            </Authorized>
+        </AuthorizeView>
+        <!-- Logs stays Admin-only (administration of the application, Lot 44.4's decision confirmed
+             at this lot -- see 52.0's investigation note in the ticket document). -->
+        <AuthorizeView Roles="@IdentitySeeder.AdminRoleName">
+            <Authorized>
                 <div class="nav-item px-3">
                     <NavLink id="nav-logs-link" class="nav-link" href="logs">
                         <span class="bi bi-card-list-nav-menu" aria-hidden="true"></span> @Loc["NavMenu_Logs"]

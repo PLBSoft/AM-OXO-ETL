@@ -1,10 +1,9 @@
 @page "/export-profiles"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Generation
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Generation.Profile
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 
 @inject IExportProfileStore ExportProfileStore

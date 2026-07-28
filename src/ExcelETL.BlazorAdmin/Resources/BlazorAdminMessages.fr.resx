@@ -103,6 +103,15 @@
   <data name="NotFound_Message" xml:space="preserve">
     <value>Désolé, le contenu que vous recherchez n'existe pas.</value>
   </data>
+  <data name="AccessDenied_Title" xml:space="preserve">
+    <value>Accès refusé</value>
+  </data>
+  <data name="AccessDenied_Message" xml:space="preserve">
+    <value>Votre compte ne dispose pas des droits nécessaires pour consulter cette page. Contactez un administrateur si vous pensez qu'il s'agit d'une erreur.</value>
+  </data>
+  <data name="AccessDenied_BackToHomeLink" xml:space="preserve">
+    <value>Retour à l'accueil</value>
+  </data>
   <data name="Logs_PageTitle" xml:space="preserve">
     <value>Journaux récents</value>
   </data>

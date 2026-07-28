@@ -1,5 +1,5 @@
 @page "/import-profiles/test"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
@@ -7,7 +7,6 @@
 @using ExcelETL.Domain.Extraction.Pivot
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Infrastructure.Excel
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 

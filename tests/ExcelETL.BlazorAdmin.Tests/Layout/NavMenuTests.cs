@@ -131,17 +131,21 @@ public class NavMenuTests : BunitContext
         cut.FindAll("#nav-profile-link").Should().BeEmpty();
     });
 
-    // Lot 044 (44.4): nav-logs-link moved inside the Admin-only block -- non-admin users must no
-    // longer see it (revisits Lot S's decision that Logs was visible to any authenticated user).
-    private static readonly string[] AdminLinkIds =
+    // Lot 052 (52.2): convention-autorisation-pages-blazoradmin.md -- Admin governs administration of
+    // the application, not its use. Only Users/Logs remain Admin-only; the other 4 links (previously
+    // grouped with them since Lot 044) now show for any authenticated account. Split in two so a
+    // regression in either group's authorization is unambiguous about which one broke.
+    private static readonly string[] AdminOnlyLinkIds = ["nav-users-link", "nav-logs-link"];
+
+    private static readonly string[] AuthenticatedBusinessLinkIds =
     [
-        "nav-users-link",
         "nav-import-profiles-link",
         "nav-export-profiles-link",
-        "nav-generated-files-link",
         "nav-api-test-link",
-        "nav-logs-link",
+        "nav-generated-files-link",
     ];
+
+    private static readonly string[] AllProtectedLinkIds = [.. AdminOnlyLinkIds, .. AuthenticatedBusinessLinkIds];
 
     [Fact]
     public void NavMenu_WhenNotAuthorized_HidesAdminLinks_AndShowsLoginLink() => WithCulture("en-US", () =>
@@ -150,7 +154,7 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        foreach (var id in AdminLinkIds)
+        foreach (var id in AllProtectedLinkIds)
         {
             cut.FindAll($"#{id}").Should().BeEmpty();
         }
@@ -166,12 +170,40 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        foreach (var id in AdminLinkIds)
+        foreach (var id in AllProtectedLinkIds)
         {
             cut.FindAll($"#{id}").Should().HaveCount(1);
         }
 
         cut.FindAll("#nav-login-link").Should().BeEmpty();
+    });
+
+    // New this lot: the 4 business links moved out of the Admin-only block are now visible to any
+    // authenticated account, with or without a role.
+    [Fact]
+    public void NavMenu_WhenAuthorizedAsNonAdmin_ShowsBusinessLinks() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("someone@example.com");
+
+        var cut = Render<NavMenu>();
+
+        foreach (var id in AuthenticatedBusinessLinkIds)
+        {
+            cut.FindAll($"#{id}").Should().HaveCount(1);
+        }
+    });
+
+    // New this lot: Users stays Admin-only at the visibility layer too (real authorization is proven
+    // separately by BusinessPageAuthorizationHttpTests -- bUnit only proves visibility, never
+    // authorization, per the convention doc's §3).
+    [Fact]
+    public void NavMenu_WhenAuthorizedAsNonAdmin_HidesUsersLink() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("someone@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#nav-users-link").Should().BeEmpty();
     });
 
     [Fact]

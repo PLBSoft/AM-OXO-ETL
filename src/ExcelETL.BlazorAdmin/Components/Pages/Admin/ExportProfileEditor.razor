@@ -1,13 +1,12 @@
 @page "/export-profiles/new"
 @page "/export-profiles/{Id:guid}/edit"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Generation
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Generation.Profile
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Routing
 

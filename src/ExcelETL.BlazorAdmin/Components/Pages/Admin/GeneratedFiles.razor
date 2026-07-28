@@ -1,10 +1,9 @@
 @page "/generated-files"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Archiving
 @using ExcelETL.Domain.Archiving
 @using ExcelETL.Infrastructure.Archiving
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.Extensions.Options
 

@@ -1,0 +1,12 @@
+@page "/Account/AccessDenied"
+@attribute [AllowAnonymous]
+
+@using Microsoft.AspNetCore.Authorization
+
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["AccessDenied_Title"]</PageTitle>
+
+<h1>@Loc["AccessDenied_Title"]</h1>
+<p id="access-denied-message">@Loc["AccessDenied_Message"]</p>
+<a id="access-denied-back-link" href="/">@Loc["AccessDenied_BackToHomeLink"]</a>

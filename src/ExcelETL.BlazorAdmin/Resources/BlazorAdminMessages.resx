@@ -103,6 +103,15 @@
   <data name="NotFound_Message" xml:space="preserve">
     <value>Sorry, the content you are looking for does not exist.</value>
   </data>
+  <data name="AccessDenied_Title" xml:space="preserve">
+    <value>Access denied</value>
+  </data>
+  <data name="AccessDenied_Message" xml:space="preserve">
+    <value>Your account does not have the rights required to view this page. Contact your administrator if you believe this is a mistake.</value>
+  </data>
+  <data name="AccessDenied_BackToHomeLink" xml:space="preserve">
+    <value>Back to home</value>
+  </data>
   <data name="Logs_PageTitle" xml:space="preserve">
     <value>Recent logs</value>
   </data>

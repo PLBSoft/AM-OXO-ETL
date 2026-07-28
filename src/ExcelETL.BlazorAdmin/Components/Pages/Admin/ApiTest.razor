@@ -1,5 +1,5 @@
 @page "/api-test"
-@attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
+@attribute [Authorize]
 
 @using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.Application.Generation
@@ -7,7 +7,6 @@
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Domain.Generation.Profile
-@using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 
