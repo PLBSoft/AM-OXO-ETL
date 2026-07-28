@@ -1,0 +1,151 @@
+@page "/"
+@attribute [Authorize]
+
+@using ExcelETL.Application.Home
+@using ExcelETL.BlazorAdmin.Shared
+@using Microsoft.AspNetCore.Authorization
+
+@inject IHomeIndicatorsService HomeIndicatorsService
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<PageTitle>@Loc["Home_PageTitle"]</PageTitle>
+
+<h1>@Loc["Home_PageTitle"]</h1>
+<p class="text-muted small">@Loc["Home_Intro"]</p>
+
+<!-- Lot 054 (54.4/54.6): a stable wrapper, present from initial render regardless of state, so
+     aria-live="polite" is already attached to the DOM before the loading/tile/error content it
+     announces ever appears -- same pattern as ImportProfileTest.razor/ExportProfileTest.razor (Lot
+     040). -->
+<div id="home-kpi-region" aria-live="polite">
+@if (_loadError)
+{
+    <!-- 54.4: the service itself never throws (every indicator read is isolated internally), but the
+         page stays defensive regardless -- / is the post-login redirect target, so an unhandled
+         exception here would lock every account out of the application at the door. -->
+    <div id="home-global-error" class="alert alert-danger" role="alert">@Loc["Home_GlobalErrorMessage"]</div>
+}
+else if (_indicators is null)
+{
+    <div id="home-loading" class="d-flex align-items-center gap-2">
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span>@Loc["Home_Loading"]</span>
+    </div>
+}
+else
+{
+    <!-- Bootstrap's responsive grid handles mobile stacking on its own (1 column on narrow
+         viewports, up to 4 on desktop) -- no separate mobile/desktop template, per Lot V's own
+         "no unnecessary duplicate markup" instruction. -->
+    <div class="row g-3">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a id="home-kpi-import-profiles" class="card h-100 text-decoration-none text-body" href="import-profiles">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        @((MarkupString)AdminIconMarkup.Collection)
+                        <span id="home-kpi-import-profiles-label" class="text-muted">@Loc["NavMenu_ImportProfiles"]</span>
+                    </div>
+                    <p class="display-6 mb-0" aria-labelledby="home-kpi-import-profiles-label">
+                        @if (_indicators.ImportProfileCount.State == HomeIndicatorState.Unavailable)
+                        {
+                            <span class="text-danger fs-5">@Loc["Home_IndicatorUnavailable"]</span>
+                        }
+                        else
+                        {
+                            @_indicators.ImportProfileCount.Value
+                        }
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a id="home-kpi-export-profiles" class="card h-100 text-decoration-none text-body" href="export-profiles">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        @((MarkupString)AdminIconMarkup.FileEarmarkSpreadsheet)
+                        <span id="home-kpi-export-profiles-label" class="text-muted">@Loc["NavMenu_ExportProfiles"]</span>
+                    </div>
+                    <p class="display-6 mb-0" aria-labelledby="home-kpi-export-profiles-label">
+                        @if (_indicators.ExportProfileCount.State == HomeIndicatorState.Unavailable)
+                        {
+                            <span class="text-danger fs-5">@Loc["Home_IndicatorUnavailable"]</span>
+                        }
+                        else
+                        {
+                            @_indicators.ExportProfileCount.Value
+                        }
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <a id="home-kpi-generated-files" class="card h-100 text-decoration-none text-body" href="generated-files">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        @((MarkupString)AdminIconMarkup.Archive)
+                        <span id="home-kpi-generated-files-label" class="text-muted">@Loc["NavMenu_GeneratedFiles"]</span>
+                    </div>
+                    <p class="display-6 mb-0" aria-labelledby="home-kpi-generated-files-label">
+                        @if (_indicators.GeneratedFileCount.State == HomeIndicatorState.Unavailable)
+                        {
+                            <span class="text-danger fs-5">@Loc["Home_IndicatorUnavailable"]</span>
+                        }
+                        else
+                        {
+                            @_indicators.GeneratedFileCount.Value
+                        }
+                    </p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Not a link, per the ticket's own explicit spec (a date is not a navigable destination). -->
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div id="home-kpi-last-generation" class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        @((MarkupString)AdminIconMarkup.Clock)
+                        <span id="home-kpi-last-generation-label" class="text-muted">@Loc["Home_LastGenerationLabel"]</span>
+                    </div>
+                    <p class="fs-4 mb-0" aria-labelledby="home-kpi-last-generation-label">
+                        @if (_indicators.LastGenerationAtUtc.State == HomeIndicatorState.Unavailable)
+                        {
+                            <span class="text-danger">@Loc["Home_IndicatorUnavailable"]</span>
+                        }
+                        else if (_indicators.LastGenerationAtUtc.Value is { } lastGenerationAtUtc)
+                        {
+                            @lastGenerationAtUtc.ToString("dd/MM/yyyy HH:mm")
+                        }
+                        else
+                        {
+                            <span>@Loc["Home_NoGeneration"]</span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+</div>
+
+@code {
+    private HomeIndicators? _indicators;
+    private bool _loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _indicators = await HomeIndicatorsService.GetIndicatorsAsync();
+        }
+        catch
+        {
+            // 54.4: defense in depth -- IHomeIndicatorsService.GetIndicatorsAsync is designed to
+            // never throw (every store read is isolated internally), but / is the post-login
+            // redirect target, so this page must never propagate an exception regardless.
+            _loadError = true;
+        }
+    }
+}

@@ -44,4 +44,17 @@ public class EfGeneratedFileArchiveStore(IDbContextFactory<ExcelEtlDbContext> db
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await context.GeneratedFileRecords.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
+
+    // Lot 054 (54.2): a real aggregate query, not SearchAsync(null).Count -- this table has no purge
+    // policy and its volume is expected to grow, unlike ImportProfile/ExportProfile's few dozen rows.
+    public async Task<GeneratedFileArchiveSummary> GetSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var count = await context.GeneratedFileRecords.CountAsync(cancellationToken);
+        var mostRecent = count == 0
+            ? (DateTime?)null
+            : await context.GeneratedFileRecords.MaxAsync(r => r.GeneratedAtUtc, cancellationToken);
+
+        return new GeneratedFileArchiveSummary(count, mostRecent);
+    }
 }

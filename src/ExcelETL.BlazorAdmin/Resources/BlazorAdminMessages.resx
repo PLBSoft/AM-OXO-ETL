@@ -1249,4 +1249,25 @@
   <data name="ApiTest_ConnectionErrorMessage" xml:space="preserve">
     <value>Could not connect to the Web API. Make sure the server is running and that OxoApiTestClient:BaseUrl in this application's configuration points to it.</value>
   </data>
+  <data name="Home_PageTitle" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Home_Intro" xml:space="preserve">
+    <value>What's in this application right now.</value>
+  </data>
+  <data name="Home_Loading" xml:space="preserve">
+    <value>Loading indicators...</value>
+  </data>
+  <data name="Home_LastGenerationLabel" xml:space="preserve">
+    <value>Last generation</value>
+  </data>
+  <data name="Home_NoGeneration" xml:space="preserve">
+    <value>No file has been generated yet</value>
+  </data>
+  <data name="Home_IndicatorUnavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="Home_GlobalErrorMessage" xml:space="preserve">
+    <value>Indicators could not be loaded.</value>
+  </data>
 </root>

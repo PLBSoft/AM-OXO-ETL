@@ -183,6 +183,9 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
 
         var home = await client.GetAsync("/");
         home.StatusCode.Should().Be(HttpStatusCode.OK);
+        // Lot 054 (54.7): "/" now belongs to Home.razor, not ImportProfiles.razor -- this is the
+        // only assertion this test gains from that lot; every other step is unchanged.
+        (await home.Content.ReadAsStringAsync()).Should().Contain("id=\"home-kpi-region\"");
 
         // 6. Lot 052 (52.4): same real journey, same session -- the account still has no role, so an
         // Admin-only page (/users) refuses it. This is the second half of the 2026-07-28 defect: step

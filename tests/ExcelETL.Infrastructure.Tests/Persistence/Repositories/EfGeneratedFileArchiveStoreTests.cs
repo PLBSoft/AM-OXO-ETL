@@ -120,4 +120,36 @@ public class EfGeneratedFileArchiveStoreTests
 
         results.Should().BeEmpty();
     }
+
+    // Lot 054 (54.0/54.2): the home page's generated-files KPI tile backs onto this method directly,
+    // rather than SearchAsync(null).Count -- a real SQL aggregate, never an in-memory row scan.
+    [Fact]
+    public async Task GetSummaryAsync_WithNoRecords_ReturnsZeroCountAndNullMostRecent()
+    {
+        var store = CreateStore();
+
+        var summary = await store.GetSummaryAsync();
+
+        summary.Count.Should().Be(0);
+        summary.MostRecentGeneratedAtUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_WithRecords_ReturnsCountAndMostRecentGeneratedAtUtc_NotTheLastInsertedRecord()
+    {
+        var store = CreateStore();
+        var newest = CreateRecord(new DateTime(2026, 7, 25, 0, 0, 0, DateTimeKind.Utc));
+        var oldest = CreateRecord(new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc));
+        var middle = CreateRecord(new DateTime(2026, 7, 15, 0, 0, 0, DateTimeKind.Utc));
+        // Inserted out of chronological order: the newest record is saved first, so a naive
+        // "last inserted" read would return oldest/middle's timestamp instead of newest's.
+        await store.SaveAsync(newest);
+        await store.SaveAsync(oldest);
+        await store.SaveAsync(middle);
+
+        var summary = await store.GetSummaryAsync();
+
+        summary.Count.Should().Be(3);
+        summary.MostRecentGeneratedAtUtc.Should().Be(newest.GeneratedAtUtc);
+    }
 }

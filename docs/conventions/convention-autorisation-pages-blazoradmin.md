@@ -41,7 +41,8 @@ comptes ni consulter les journaux système.
 
 | Route | Niveau | Remarque |
 | :--- | :--- | :--- |
-| `/` et `/import-profiles` | Authentifié | `/` est la route d'accueil ; elle **doit** rester accessible à tout compte connecté (voir §5) |
+| `/` | Authentifié | Page d'accueil (lot 054) — quatre indicateurs, aucun contenu conditionné au rôle ; **doit** rester accessible à tout compte connecté (voir §5) |
+| `/import-profiles` | Authentifié | |
 | `/import-profiles/new`, `/import-profiles/{Id}/edit` | Authentifié | Éditeur complet |
 | `/export-profiles` | Authentifié | |
 | `/export-profiles/new`, `/export-profiles/{Id:guid}/edit` | Authentifié | Éditeur complet |
@@ -91,8 +92,16 @@ Après connexion, et après un changement de mot de passe forcé, l'utilisateur 
 **Si `/` n'est pas accessible à son niveau, il est immédiatement refoulé vers `AccessDenied`** —
 défaut réellement observé le 28/07 avec le premier compte non-Admin créé.
 
-Conséquence permanente : **`/` doit rester accessible à tout compte authentifié.** Si la page
-d'accueil devait un jour être réservée aux Admin, la cible de redirection post-connexion devrait
+Jusqu'au lot 054, `/` était mappée par `ImportProfiles.razor` (une page d'édition, qui n'avait
+structurellement aucune raison d'être la cible d'une redirection universelle) — c'est ce qui rendait
+ce piège réellement dangereux : un changement de niveau d'autorisation sur cette page aurait
+directement cassé la connexion pour tout le monde. Depuis le lot 054, `/` appartient à une page
+d'accueil dédiée (`Home.razor`), volontairement épurée, dont le seul rôle est d'afficher un état —
+elle n'a et n'aura aucune raison de changer de niveau d'autorisation. Le risque que ce paragraphe
+signalait est donc refermé, pas seulement documenté.
+
+Conséquence permanente, inchangée : **`/` doit rester accessible à tout compte authentifié.** Si la
+page d'accueil devait un jour être réservée aux Admin, la cible de redirection post-connexion devrait
 changer dans le même lot.
 
 ---

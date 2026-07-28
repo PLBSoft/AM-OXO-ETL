@@ -46,4 +46,19 @@ public static class AdminIconMarkup
     // purely decorative glyph).
     public const string Key =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="4.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5" /><rect x="7" y="7.25" width="8" height="1.5" /><rect x="11" y="8.75" width="1.5" height="2.5" /><rect x="13" y="8.75" width="1.5" height="2" /></svg>""";
+
+    // Lot 054 (54.3): reused verbatim from NavMenu.razor.css's bi-collection-nav-menu/
+    // bi-archive-nav-menu shapes -- the home page's Import profiles/Generated files KPI tiles
+    // represent the exact same thing those nav links already do.
+    public const string Collection =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm2-2a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM0 8a1.5 1.5 0 0 1 1.5-1.5h13A1.5 1.5 0 0 1 16 8v6a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14zm1.5-.5A.5.5 0 0 0 1 8v6a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5V8a.5.5 0 0 0-.5-.5z" /></svg>""";
+
+    public const string Archive =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M0 2a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1v7.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 12.5V5a1 1 0 0 1-1-1zm2 3v7.5A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5V5zm13-3H1v2h14zM5 7.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5" /></svg>""";
+
+    // Lot 054 (54.3): the home page's "last generation" tile isn't a link to an existing nav icon, so
+    // no shape to reuse verbatim -- a deliberately simple, hand-drawn clock face (circle + two hands)
+    // in the same style as Key, to avoid a transcription risk on a purely decorative glyph.
+    public const string Clock =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6.25" /><path d="M8 4.5V8l3 1.75" stroke-linecap="round" stroke-linejoin="round" /></svg>""";
 }
