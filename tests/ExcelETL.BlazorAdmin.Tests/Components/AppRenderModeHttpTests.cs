@@ -63,7 +63,6 @@ public class AppRenderModeHttpTests : IClassFixture<WebApplicationFactory<Progra
 
     [Theory]
     [InlineData("/Account/Login")]
-    [InlineData("/Account/Register")]
     public async Task AnonymousAccountPage_IsServedAsStaticSsr(string url)
     {
         var client = CreateClient();

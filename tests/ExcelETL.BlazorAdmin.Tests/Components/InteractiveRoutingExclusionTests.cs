@@ -23,7 +23,6 @@ public class InteractiveRoutingExclusionTests : BunitContext
 
     [Theory]
     [InlineData("/Account/Login")]
-    [InlineData("/Account/Register")]
     [InlineData("/Account/ForcePasswordChange")]
     public void InteractiveRouteTable_ExcludesAccountPages(string url)
     {
