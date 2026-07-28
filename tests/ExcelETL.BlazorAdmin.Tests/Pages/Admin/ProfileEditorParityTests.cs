@@ -184,17 +184,55 @@ public class ProfileEditorParityTests : BunitContext
         importCardClass.Should().Be("card bg-light mb-3");
     });
 
+    // Lot 053 (53.4/53.6): corrected in place -- the intermediate Add button is now solid
+    // secondary + Plus icon, not outline, on both editors.
     [Fact]
     public void IntermediateAddButton_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
     {
         var importCut = Render<ImportProfileEditor>();
         var exportCut = Render<ExportProfileEditor>();
 
-        var importAddButtonClass = importCut.Find("#add-block-field-button").GetAttribute("class");
-        var exportAddButtonClass = exportCut.Find("#add-column-definition-button").GetAttribute("class");
+        var importAddButton = importCut.Find("#add-block-field-button");
+        var exportAddButton = exportCut.Find("#add-column-definition-button");
 
-        importAddButtonClass.Should().Be(exportAddButtonClass);
-        importAddButtonClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+        importAddButton.GetAttribute("class").Should().Be(exportAddButton.GetAttribute("class"));
+        importAddButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        importAddButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        exportAddButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
+    // Lot 053 (53.1/53.6): the root container is comparable between the two editors for the first
+    // time -- before this lot, import had no equivalent wrapper at all (§2.3 of the design audit).
+    [Fact]
+    public void RootContainer_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importContainer = importCut.Find(".profile-editor-container");
+        var exportContainer = exportCut.Find(".profile-editor-container");
+
+        importContainer.GetAttribute("class").Should().Be(exportContainer.GetAttribute("class"));
+        importContainer.GetAttribute("class").Should().Be("container-fluid px-3 profile-editor-container");
+    });
+
+    // Lot 053 (53.2/53.6): the short-field 2-column grid has no export-side counterpart to compare
+    // against -- 53.0's investigation found ExportProfileEditor.razor has exactly one root field
+    // ("Name"), which plays the same "identitaire principal" role as import's "Nom du profil" and
+    // stays col-12 on both sides (see RootFieldContainer_CssClass_IsIdenticalBetweenImportAndExportEditors
+    // below, unchanged by this lot). There is nothing to grid on the export side, so nothing to pair
+    // here -- documented rather than an artificial comparison invented for symmetry's own sake.
+    [Fact]
+    public void ShortFieldGrid_HasNoExportCounterpart_ImportOnlyAssertion() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+
+        importCut.Find("#profile-repere-prefix-input").ParentElement!.ParentElement!.GetAttribute("class")
+            .Should().Be("col-12 col-md-6");
+
+        // Export's single root field has no col-md-* class at all -- confirmed by the pre-existing
+        // RootFieldContainer_CssClass_IsIdenticalBetweenImportAndExportEditors test below, which
+        // still passes unmodified ("mb-3" on both sides).
     });
 
     [Fact]
@@ -303,6 +341,79 @@ public class ProfileEditorParityTests : BunitContext
             importDiscardClass.Should().Be(exportDiscardClass);
             importStayClass.Should().Be(exportStayClass);
         });
+
+    // Lot 053 (53.5): explicit mobile non-regression guard-rail. The client review that triggered
+    // this lot was desktop-only, and three of its four decisions are breakpoint-conditioned -- this
+    // catches a future field silently added to the grid without its col-12 mobile pendant, without
+    // needing to enumerate ids by hand (any element carrying a "col-md*" class is checked).
+    [Fact]
+    public void ImportEditor_GridColumnContainers_AlwaysCarryCol12Alongside_AnyMdColumnClass() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var mdColumns = cut.FindAll("[class*='col-md']");
+            mdColumns.Should().NotBeEmpty();
+            foreach (var column in mdColumns)
+            {
+                column.ClassList.Should().Contain("col-12");
+            }
+        });
+
+    // Export currently has no grid-bearing field at all (53.0: its only root field, "Name", stays
+    // col-12 like import's "Nom du profil") -- this stays a guard-rail for if that ever changes,
+    // not a currently-exercised assertion.
+    [Fact]
+    public void ExportEditor_GridColumnContainers_AlwaysCarryCol12Alongside_AnyMdColumnClass() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var mdColumns = cut.FindAll("[class*='col-md']");
+            foreach (var column in mdColumns)
+            {
+                column.ClassList.Should().Contain("col-12");
+            }
+        });
+
+    [Fact]
+    public void AllAddButtons_CarryW100_OnBothEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        foreach (var id in new[]
+        {
+            "add-default-tableau-button", "add-default-application-name-button",
+            "add-block-field-button", "add-unconditional-colonne-button", "add-point-rule-button",
+            "add-sheet-rule-button", "add-header-field-button", "add-header-composite-button",
+        })
+        {
+            importCut.Find($"#{id}").ClassList.Should().Contain("w-100");
+        }
+
+        var exportCut = Render<ExportProfileEditor>();
+        foreach (var id in new[]
+        {
+            "add-sheet-generation-rule-button", "add-column-definition-button",
+            "add-point-column-definition-button", "add-application-column-definition-button",
+        })
+        {
+            exportCut.Find($"#{id}").ClassList.Should().Contain("w-100");
+        }
+    });
+
+    // Lot 053 (53.1/53.5): the container applies only max-width (a CSS class, see app.css) -- no
+    // inline style, and in particular no fixed width/min-width, which would break mobile.
+    [Fact]
+    public void ProfileEditorContainer_HasNoInlineStyle_OnlyTheMaxWidthCssClass() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        foreach (var container in new[] { importCut.Find(".profile-editor-container"), exportCut.Find(".profile-editor-container") })
+        {
+            container.GetAttribute("style").Should().BeNullOrEmpty();
+        }
+    });
 
     private static void WithCulture(string cultureName, Action action)
     {

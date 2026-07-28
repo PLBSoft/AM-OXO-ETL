@@ -215,6 +215,20 @@ h1:focus {
     display: none;
 }
 
+/* Lot 053 (53.1): caps the 4 profile-editor routes (import/export new+edit) at 1140px on wide
+   screens -- no Bootstrap .container-* variant fits, since all share the same
+   --bs-container-max-widths scale (sm/md/lg/xl/xxl) and only differ in the breakpoint at which
+   they start plateauing; .container-lg would render 1320px (xxl) on a >=1400px viewport, not
+   1140px. Below 1140px the container-fluid the class is combined with already goes full width, so
+   this rule alone changes nothing under that width -- mobile is untouched. Applied to both
+   ImportProfileEditor.razor and ExportProfileEditor.razor's root container, which also resolves
+   the divergence Lot 42.3 had left (import had no equivalent wrapper before this lot -- now both
+   share the exact same root container class list). */
+.profile-editor-container {
+    max-width: 1140px;
+    margin-inline: auto;
+}
+
 /* V12 (Lot V): Bootstrap ships no responsive width utility (w-100 has no md-scoped counterpart) --
    this is the one custom rule needed to reset ExportProfileTest.razor's primary action button back
    to its natural width from md up, at the same 768px breakpoint V2 already established. */

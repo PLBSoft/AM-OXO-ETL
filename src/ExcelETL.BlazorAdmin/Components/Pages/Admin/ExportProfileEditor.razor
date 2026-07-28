@@ -21,7 +21,9 @@
      mechanism, same IDs, per the ticket's explicit parity requirement. -->
 <NavigationLock ConfirmExternalNavigation="_hasUnsavedChanges" OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" />
 
-<div class="container-fluid px-3">
+<!-- Lot 053 (53.1): profile-editor-container caps this route at 1140px on wide screens (see
+     app.css) -- shared verbatim with ImportProfileEditor.razor's own root container. -->
+<div class="container-fluid px-3 profile-editor-container">
 
 <h1>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</h1>
 

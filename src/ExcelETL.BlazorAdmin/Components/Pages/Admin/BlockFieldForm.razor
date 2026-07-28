@@ -31,11 +31,17 @@
     </div>
 </div>
 
+<!-- Lot 053 (53.4): "Add" (ShowCancel=false) is btn-secondary + Plus icon; "Save changes"
+     (ShowCancel=true) keeps its pre-existing btn-outline-secondary + Check icon (Lot 041). -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+    <button id="@SubmitButtonId" class="@(ShowCancel ? "btn btn-outline-secondary w-100 mt-3" : "btn btn-secondary w-100 mt-3")" @onclick="Submit">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)
+        }
+        else
+        {
+            @((MarkupString)AdminIconMarkup.Plus)
         }
         @SubmitLabel
     </button>

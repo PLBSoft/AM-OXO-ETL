@@ -26,8 +26,10 @@
 
 <!-- Lot 042 (42.3): matches ExportProfileEditor.razor's own container-fluid/px-3 wrapper (X6) --
      no functional reason found for the divergence, see 42.0's investigation; X6 was scoped only
-     to the export screenshot at the time, never revisited for the import twin. -->
-<div class="container-fluid px-3">
+     to the export screenshot at the time, never revisited for the import twin.
+     Lot 053 (53.1): profile-editor-container caps this route at 1140px on wide screens (see
+     app.css) -- shared verbatim with ExportProfileEditor.razor's own root container. -->
+<div class="container-fluid px-3 profile-editor-container">
 
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
@@ -66,18 +68,23 @@ else
         <label for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
     </div>
 </div>
-<div class="mb-3">
-    <div class="form-floating">
-        <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix" @bind:after="MarkAsChanged"
-               placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
-        <label for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
+<!-- Lot 053 (53.2): reopens 30.1's full-width stacking above 768px only, for these two short
+     fields specifically -- "Nom du profil" above stays col-12 (identitaire principal, long by
+     nature). Below 768px both columns collapse to col-12, unchanged from 30.1. -->
+<div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+        <div class="form-floating">
+            <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix" @bind:after="MarkAsChanged"
+                   placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
+            <label for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
+        </div>
     </div>
-</div>
-<div class="mb-3">
-    <div class="form-floating">
-        <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom" @bind:after="MarkAsChanged"
-               placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
-        <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
+    <div class="col-12 col-md-6">
+        <div class="form-floating">
+            <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom" @bind:after="MarkAsChanged"
+                   placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
+            <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
+        </div>
     </div>
 </div>
 
@@ -158,17 +165,24 @@ else
                 }
             </ul>
         }
-        <div class="mb-3">
-            <div class="form-floating">
-                <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
-                       placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
-                <label for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
+        <!-- Lot 053 (53.3/53.4): mono-field add form -- field and button share one row, the
+             button at the row's natural right edge by construction (no .right-aligned-actions
+             wrapper needed, per convention-ui-blazor-alignement-boutons.md's own carve-out for
+             this exact case). Below 768px both stack full-width, unchanged from the lot V/30.3
+             pattern. -->
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md">
+                <div class="form-floating">
+                    <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
+                           placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
+                    <label for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
+                </div>
             </div>
-        </div>
-        <div class="right-aligned-actions">
-            <button id="add-default-tableau-button" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddDefaultTableau">
-                @Loc["ImportProfileEditor_AddTableauButton"]
-            </button>
+            <div class="col-12 col-md-auto">
+                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto" @onclick="AddDefaultTableau">
+                    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTableauButton"]
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -250,17 +264,20 @@ else
                 }
             </ul>
         }
-        <div class="mb-3">
-            <div class="form-floating">
-                <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
-                       placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
-                <label for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
+        <!-- Lot 053 (53.3/53.4): same mono-field add row treatment as Tableaux above. -->
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md">
+                <div class="form-floating">
+                    <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
+                           placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
+                    <label for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
+                </div>
             </div>
-        </div>
-        <div class="right-aligned-actions">
-            <button id="add-default-application-name-button" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddDefaultApplicationName">
-                @Loc["ImportProfileEditor_AddApplicationButton"]
-            </button>
+            <div class="col-12 col-md-auto">
+                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto" @onclick="AddDefaultApplicationName">
+                    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddApplicationButton"]
+                </button>
+            </div>
         </div>
     </div>
 </div>

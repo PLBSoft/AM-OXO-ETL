@@ -1342,10 +1342,12 @@ public class ExportProfileEditorTests : BunitContext
         headerLabel.GetAttribute("for").Should().Be(cut.Find("#column-header-input").GetAttribute("id"));
     });
 
-    // X5: intermediate "Add"/"Save changes" buttons are outline + full width, and never carry the
-    // solid color reserved for the final profile-save button.
+    // X5 / Lot 053 (53.4): intermediate "Add" buttons are solid secondary + full width + a Plus
+    // icon, and never carry the solid primary color reserved for the final profile-save button.
+    // Corrected in place from X5's outline-button assertion (53.4 reopens 30.3's color/icon,
+    // preserving its "don't compete with the final CTA" intent by tint + size instead of outline).
     [Fact]
-    public void IntermediateAddButtons_AreOutlineFullWidth_AndNeverShareSolidColorWithFinalSave() =>
+    public void IntermediateAddButtons_AreSecondaryFullWidthWithPlusIcon_AndNeverShareSolidPrimaryColorWithFinalSave() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ExportProfileEditor>();
@@ -1360,9 +1362,12 @@ public class ExportProfileEditorTests : BunitContext
             {
                 addButton.ClassList.Should().Contain("w-100");
                 addButton.ClassList.Should().Contain("mt-3");
-                addButton.ClassList.Should().Contain("btn-outline-secondary");
+                addButton.ClassList.Should().Contain("btn-secondary");
+                addButton.ClassList.Should().NotContain("btn-outline-secondary");
                 addButton.ClassList.Should().NotContain("btn-primary");
                 addButton.ClassList.Should().NotContain("btn-danger");
+                addButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+                addButton.TextContent.Trim().Should().NotBeNullOrEmpty();
             }
 
             saveProfile.ClassList.Should().Contain("btn-primary");
@@ -1586,11 +1591,13 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#save-export-profile-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
     });
 
-    // Lot 041 (41.3): SheetGenerationRuleForm's Submit button doubles as "Add" (top-level card) and
-    // "Save changes" (edit mode) -- same ShowCancel-conditional icon rule as the import side's
-    // SheetRuleForm.
+    // Lot 041 (41.3) / Lot 053 (53.4): SheetGenerationRuleForm's Submit button doubles as "Add"
+    // (top-level card) and "Save changes" (edit mode) -- both now carry an icon, Add gets Plus
+    // (btn-secondary), Save changes keeps its pre-existing Check (btn-outline-secondary).
+    // Corrected in place, not doubled: the "add button has no icon" half of the assertion is
+    // exactly what 53.4 changes.
     [Fact]
-    public async Task SheetGenerationRuleForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+    public async Task SheetGenerationRuleForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -1598,16 +1605,19 @@ public class ExportProfileEditorTests : BunitContext
 
             var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
-            cut.Find("#add-sheet-generation-rule-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+            cut.Find("#add-sheet-generation-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#add-sheet-generation-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
             cut.Find("#modify-sheet-generation-rule-button-0").Click();
 
             cut.Find("#save-sheet-generation-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
         });
 
-    // Lot 041 (41.3): ColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    // Lot 041 (41.3) / Lot 053 (53.4): ColumnDefinitionForm is one of the "6 nested sub-forms" --
+    // same Add-gets-Plus/Save-changes-keeps-Check icon rule as above.
     [Fact]
-    public async Task ColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+    public async Task ColumnDefinitionForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -1616,16 +1626,19 @@ public class ExportProfileEditorTests : BunitContext
             var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-generation-rule-button-0").Click();
 
-            cut.Find("#edit-0-add-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+            cut.Find("#edit-0-add-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#edit-0-add-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
             cut.Find("#edit-0-modify-column-definition-button-0").Click();
 
             cut.Find("#edit-0-save-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#edit-0-save-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
         });
 
-    // Lot 041 (41.3): PointColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    // Lot 041 (41.3) / Lot 053 (53.4): PointColumnDefinitionForm is one of the "6 nested sub-forms"
+    // -- same rule.
     [Fact]
-    public void PointColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() => WithCulture("en-US", () =>
+    public void PointColumnDefinitionForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() => WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfileEditor>();
 
@@ -1633,16 +1646,19 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#point-column-header-input").Change("Travaux complet");
         cut.Find("#add-point-column-definition-button").Click();
 
-        cut.Find("#add-point-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+        cut.Find("#add-point-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        cut.Find("#add-point-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
         cut.Find("#modify-point-column-definition-button-0").Click();
 
         cut.Find("#save-point-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        cut.Find("#save-point-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
     });
 
-    // Lot 041 (41.3): ApplicationColumnDefinitionForm is one of the "6 nested sub-forms" -- same rule.
+    // Lot 041 (41.3) / Lot 053 (53.4): ApplicationColumnDefinitionForm is one of the "6 nested
+    // sub-forms" -- same rule.
     [Fact]
-    public void ApplicationColumnDefinitionForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() => WithCulture("en-US", () =>
+    public void ApplicationColumnDefinitionForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() => WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfileEditor>();
 
@@ -1650,11 +1666,13 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#application-column-header-input").Change("PROGRESS");
         cut.Find("#add-application-column-definition-button").Click();
 
-        cut.Find("#add-application-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+        cut.Find("#add-application-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        cut.Find("#add-application-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
         cut.Find("#modify-application-column-definition-button-0").Click();
 
         cut.Find("#save-application-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        cut.Find("#save-application-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
     });
 
     // Lot 041 (41.3): confirms the previously-missing `title` on the Application-column

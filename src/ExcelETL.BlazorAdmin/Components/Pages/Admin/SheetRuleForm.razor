@@ -193,8 +193,8 @@
     </div>
 </div>
 <div class="right-aligned-actions">
-    <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddUnconditionalColonneName">
-        @Loc["ImportProfileEditor_AddColonneButton"]
+    <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-secondary w-100 mt-3" @onclick="AddUnconditionalColonneName">
+        @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddColonneButton"]
     </button>
 </div>
 </div>
@@ -325,8 +325,8 @@
     </div>
 </div>
 <div class="right-aligned-actions">
-    <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-outline-secondary w-100 mt-3" @onclick="AddPointRule">
-        @Loc["ImportProfileEditor_AddPointRuleButton"]
+    <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary w-100 mt-3" @onclick="AddPointRule">
+        @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddPointRuleButton"]
     </button>
 </div>
 </div>
@@ -454,11 +454,18 @@
 </div>
 </div>
 
+<!-- Lot 053 (53.4): "Add" (ShowCancel=false) is btn-secondary + Plus icon; "Save changes"
+     (ShowCancel=true, editing an already-added rule) keeps its pre-existing btn-outline-secondary
+     + Check icon (Lot 041) -- the ticket's hierarchy table only re-colors "add" buttons. -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Submit">
+    <button id="@SubmitButtonId" class="@(ShowCancel ? "btn btn-outline-secondary w-100 mt-3" : "btn btn-secondary w-100 mt-3")" @onclick="Submit">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)
+        }
+        else
+        {
+            @((MarkupString)AdminIconMarkup.Plus)
         }
         @SubmitLabel
     </button>

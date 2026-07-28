@@ -452,11 +452,30 @@ public class ImportProfileEditorTests : BunitContext
     // stacking, no col-md-* grid) and X4 (form-floating) patterns to the import side -- the reference
     // is Export's *actual* markup (a plain "mb-3" div, no "row"/"col-*" at all), not the ticket's own
     // "col-12" wording, confirmed by reading ExportProfileEditor.razor directly in 30.0.
+    // Lot 053 (53.2): "Nom du profil" is the one root field this test still covers -- it's the
+    // identitaire principal, deliberately excluded from the 2-column grid below. This test doubles
+    // as the 53.5 guard-rail for this specific field: it must never gain a col-md-* class.
+    [Fact]
+    public void NameField_ContainerIsFullWidthFormFloating_WithNoColumnGridClass() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var floatingDiv = cut.Find("#profile-name-input").ParentElement!;
+            floatingDiv.GetAttribute("class").Should().Be("form-floating");
+
+            var container = floatingDiv.ParentElement!;
+            container.GetAttribute("class").Should().Be("mb-3");
+            container.GetAttribute("class").Should().NotContain("col-");
+            container.GetAttribute("class").Should().NotContain("row");
+        });
+
+    // Lot 053 (53.2): reopens 30.1 above 768px for these two short fields -- corrected in place per
+    // the ticket's own instruction, not doubled next to a now-false test.
     [Theory]
-    [InlineData("profile-name-input")]
     [InlineData("profile-repere-prefix-input")]
     [InlineData("profile-equipement-type-element-nom-input")]
-    public void RootField_ContainerIsFullWidthFormFloating_WithNoColumnGridClass(string inputId) =>
+    public void ShortRootField_ContainerIsPairedTwoColumnGrid_AboveMobileBreakpoint(string inputId) =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
@@ -465,10 +484,25 @@ public class ImportProfileEditorTests : BunitContext
             floatingDiv.GetAttribute("class").Should().Be("form-floating");
 
             var container = floatingDiv.ParentElement!;
-            container.GetAttribute("class").Should().Be("mb-3");
-            container.GetAttribute("class").Should().NotContain("col-");
-            container.GetAttribute("class").Should().NotContain("row");
+            container.GetAttribute("class").Should().Be("col-12 col-md-6");
+
+            // 53.5: col-12 is always present alongside col-md-6, so mobile stays unaffected.
+            container.GetAttribute("class").Should().Contain("col-12");
+
+            container.ParentElement!.ClassList.Should().Contain("row");
         });
+
+    [Fact]
+    public void ShortRootFields_AreDirectChildrenOfTheSameRow() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        var reperePrefixColumn = cut.Find("#profile-repere-prefix-input").ParentElement!.ParentElement!;
+        var equipementTypeElementNomColumn = cut.Find("#profile-equipement-type-element-nom-input").ParentElement!.ParentElement!;
+
+        reperePrefixColumn.ParentElement.Should().Be(equipementTypeElementNomColumn.ParentElement);
+        reperePrefixColumn.ParentElement!.ClassList.Should().Contain("row");
+    });
 
     [Fact]
     public void DefaultTableauxAndApplications_AddFields_AreFullWidthFormFloating_InsideABgLightCard() =>
@@ -478,27 +512,79 @@ public class ImportProfileEditorTests : BunitContext
 
             var tableauFloatingDiv = cut.Find("#default-tableau-name-input").ParentElement!;
             tableauFloatingDiv.GetAttribute("class").Should().Be("form-floating");
-            tableauFloatingDiv.ParentElement!.GetAttribute("class").Should().Be("mb-3");
 
             var tableauCard = cut.Find("#default-tableau-name-input").Closest("div.card")!;
             tableauCard.GetAttribute("class").Should().Be("card bg-light mb-3");
 
             var applicationFloatingDiv = cut.Find("#default-application-name-input").ParentElement!;
             applicationFloatingDiv.GetAttribute("class").Should().Be("form-floating");
-            applicationFloatingDiv.ParentElement!.GetAttribute("class").Should().Be("mb-3");
 
             var applicationCard = cut.Find("#default-application-name-input").Closest("div.card")!;
             applicationCard.GetAttribute("class").Should().Be("card bg-light mb-3");
         });
 
+    // Lot 053 (53.3): the field and its button now share a single row, the field in "col-12
+    // col-md" (remaining width) and the button in "col-12 col-md-auto" (natural width) -- above
+    // 768px they sit on one line, below they stack full-width (unchanged from Lot V/30.3).
     [Fact]
-    public void AddDefaultTableauAndApplication_AddButtons_AreFullWidthOutlineButtons() =>
+    public void DefaultTableauxAndApplications_FieldAndButton_AreDirectChildrenOfSameRow() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
 
-            cut.Find("#add-default-tableau-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
-            cut.Find("#add-default-application-name-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+            var tableauFieldContainer = cut.Find("#default-tableau-name-input").ParentElement!.ParentElement!;
+            var tableauButtonContainer = cut.Find("#add-default-tableau-button").ParentElement!;
+            tableauFieldContainer.ParentElement.Should().Be(tableauButtonContainer.ParentElement);
+
+            var applicationFieldContainer = cut.Find("#default-application-name-input").ParentElement!.ParentElement!;
+            var applicationButtonContainer = cut.Find("#add-default-application-name-button").ParentElement!;
+            applicationFieldContainer.ParentElement.Should().Be(applicationButtonContainer.ParentElement);
+        });
+
+    [Fact]
+    public void DefaultTableauxAndApplications_FieldAndButtonContainers_HaveExpectedColumnClasses() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md");
+            cut.Find("#add-default-tableau-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-auto");
+
+            cut.Find("#default-application-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md");
+            cut.Find("#add-default-application-name-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-auto");
+        });
+
+    // Lot 053 (53.3): the button is now at its row's right edge by construction, so the
+    // .right-aligned-actions wrapper it used to need is gone -- convention-ui-blazor-alignement-
+    // boutons.md already carves this exact case out, no amendment needed.
+    [Fact]
+    public void DefaultTableauxAndApplications_AddButtons_AreNotWrappedInRightAlignedActions() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#add-default-tableau-button").ParentElement!.ClassList.Should().NotContain("right-aligned-actions");
+            cut.Find("#add-default-application-name-button").ParentElement!.ClassList.Should().NotContain("right-aligned-actions");
+        });
+
+    // Lot 053 (53.4): replaces the 30.3 test of the same button pair -- corrected in place, not
+    // doubled, per the ticket's own instruction. Solid secondary + Plus icon + visible label
+    // (never an icon-only button, so no aria-label/title is added here).
+    [Fact]
+    public void AddDefaultTableauAndApplication_AddButtons_AreSecondaryWithPlusIconAndVisibleLabel() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var tableauButton = cut.Find("#add-default-tableau-button");
+            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto");
+            tableauButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            tableauButton.TextContent.Trim().Should().NotBeNullOrEmpty();
+
+            var applicationButton = cut.Find("#add-default-application-name-button");
+            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto");
+            applicationButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            applicationButton.TextContent.Trim().Should().NotBeNullOrEmpty();
         });
 
     [Theory]
@@ -537,20 +623,36 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#point-rule-colonne-name-input").Closest("div.card")!.GetAttribute("class").Should().Be("card bg-light mb-3");
         });
 
-    // Lot 030 (30.3): "Ajouter le tableau"/"Ajouter l'application"/"Ajouter le champ"/"Ajouter une
-    // règle de feuille" (and, for full parity with every "Add" button on the export side, the
-    // unconditional-colonne/point-rule add buttons too) become full-width outline buttons so they
-    // don't visually compete with the final "Enregistrer le profil" CTA -- reusing X5's exact
-    // export-side color choice (btn-outline-secondary), not a new decision.
+    // Lot 030 (30.3) / Lot 053 (53.4): "Ajouter le champ"/"Ajouter une colonne"/"Ajouter la règle
+    // conditionnelle"/"Ajouter une règle de feuille" are multi-field forms -- 53.3's row/inline
+    // treatment doesn't apply to them (strictly scoped to Tableaux/Applications), but they still get
+    // 53.4's color+icon change: full-width secondary button with a Plus icon, staying at the bottom
+    // of their form. Corrected in place from the 30.3 outline-button assertion, not doubled.
     [Fact]
-    public void SheetRuleForm_IntermediateAddButtons_AreFullWidthOutlineButtons() => WithCulture("en-US", () =>
+    public void SheetRuleForm_IntermediateAddButtons_AreSecondaryFullWidthWithPlusIcon() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
 
-        cut.Find("#add-block-field-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
-        cut.Find("#add-unconditional-colonne-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
-        cut.Find("#add-point-rule-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
-        cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+        foreach (var id in new[] { "add-block-field-button", "add-unconditional-colonne-button", "add-point-rule-button", "add-sheet-rule-button" })
+        {
+            var button = cut.Find($"#{id}");
+            button.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            button.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            button.TextContent.Trim().Should().NotBeNullOrEmpty();
+        }
+    });
+
+    // Lot 053 (53.3, garde-fou de non-généralisation): multi-field add forms are explicitly out of
+    // 53.3's scope -- "Ajouter le champ" must keep its bottom-of-form, .right-aligned-actions-wrapped
+    // position, unlike Tableaux/Applications above.
+    [Fact]
+    public void AddBlockFieldButton_StaysAtBottomOfForm_NotConvertedToInlineRow() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        var button = cut.Find("#add-block-field-button");
+        button.ParentElement!.ClassList.Should().Contain("right-aligned-actions");
+        button.ParentElement!.GetAttribute("class").Should().NotContain("col-");
     });
 
     [Fact]
@@ -2178,8 +2280,11 @@ public class ImportProfileEditorTests : BunitContext
     // card) and "Save changes" (edit mode, ShowCancel=true) -- only listed in scope as one of the "6
     // nested sub-forms' Enregistrer buttons" (41.0), never as an "Ajouter" button, so the icon is
     // conditional on ShowCancel, not unconditional.
+    // Lot 053 (53.4): both now carry an icon -- Add gets Plus (btn-secondary), Save changes keeps
+    // its pre-existing Check (btn-outline-secondary). Corrected in place, not doubled: the "add
+    // button has no icon" half of the old assertion is exactly what 53.4 changes.
     [Fact]
-    public async Task SheetRuleForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+    public async Task SheetRuleForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -2187,17 +2292,19 @@ public class ImportProfileEditorTests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
 
-            cut.Find("#add-sheet-rule-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+            cut.Find("#add-sheet-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
             cut.Find("#modify-sheet-rule-button-0").Click();
 
             cut.Find("#save-sheet-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#save-sheet-rule-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
         });
 
-    // Lot 041 (41.3): BlockFieldForm is one of the "6 nested sub-forms" -- same Add-vs-Save-changes
-    // icon rule as SheetRuleForm above.
+    // Lot 041 (41.3) / Lot 053 (53.4): BlockFieldForm is one of the "6 nested sub-forms" -- same
+    // Add-gets-Plus/Save-changes-keeps-Check icon rule as SheetRuleForm above.
     [Fact]
-    public async Task BlockFieldForm_SaveChangesButton_HasIcon_ButAddButtonDoesNot() =>
+    public async Task BlockFieldForm_AddButtonHasPlusIcon_SaveChangesButtonHasCheckIcon() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -2206,11 +2313,13 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
 
-            cut.Find("#edit-0-add-block-field-button").QuerySelector("svg[aria-hidden='true']").Should().BeNull();
+            cut.Find("#edit-0-add-block-field-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#edit-0-add-block-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
 
             cut.Find("#edit-0-modify-block-field-button-0").Click();
 
             cut.Find("#edit-0-save-block-field-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            cut.Find("#edit-0-save-block-field-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
         });
 
     // Lot 041 (41.3): confirms the previously-missing `title` on the block-field Modify/Delete
