@@ -130,9 +130,19 @@ builder.Services.AddHttpClient<IOxoApiTestClient, OxoApiTestClient>((sp, client)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
+        // Lot 050 (D1): connection identifier's character set -- letters, digits, '_' and '.'.
+        // The '-', '@' and '+' characters present in Identity's own default set are deliberately
+        // removed. Length (3-30) is enforced separately by ApplicationUserValidator below, since
+        // this option has no length concept of its own.
+        options.User.AllowedUserNameCharacters =
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.";
+        // Lot 050 (D5): complete email uniqueness, applicative half -- paired with the filtered
+        // unique index on NormalizedEmail (50.5) for the schema half.
+        options.User.RequireUniqueEmail = true;
     })
     .AddEntityFrameworkStores<ApplicationIdentityDbContext>()
     .AddErrorDescriber<LocalizedIdentityErrorDescriber>()
+    .AddUserValidator<ApplicationUserValidator>()
     .AddDefaultTokenProviders()
     // Lot 045 (45.0): exposes RequirePasswordChangeOnFirstLogin (Lot 044) as a claim on every
     // principal SignInManager builds (login, RefreshSignInAsync), so PasswordChangeGuard can read it

@@ -93,8 +93,8 @@ public class AppRenderModeHttpTests : IClassFixture<WebApplicationFactory<Progra
     [Fact]
     public async Task AdminPage_KeepsItsInteractiveServerCircuit()
     {
-        await CreateAdminUserAsync("render-mode-admin");
-        var client = await CreateSignedInClientAsync("render-mode-admin");
+        await CreateAdminUserAsync("render_mode_admin");
+        var client = await CreateSignedInClientAsync("render_mode_admin");
 
         var response = await client.GetAsync("/import-profiles");
 

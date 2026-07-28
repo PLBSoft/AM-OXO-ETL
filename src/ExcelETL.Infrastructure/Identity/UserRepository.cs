@@ -13,7 +13,7 @@ public class UserRepository(
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         return await context.Users
             .OrderBy(u => u.UserName)
-            .Select(u => new UserSummary(u.Id, u.Email, u.UserName))
+            .Select(u => new UserSummary(u.Id, u.Email, u.UserName, u.FirstName, u.LastName))
             .ToListAsync(cancellationToken);
     }
 

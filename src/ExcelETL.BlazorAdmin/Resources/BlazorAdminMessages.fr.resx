@@ -226,20 +226,35 @@
   <data name="Users_NoEntries" xml:space="preserve">
     <value>Aucun utilisateur trouvé.</value>
   </data>
-  <data name="Users_Id" xml:space="preserve">
-    <value>Id</value>
-  </data>
   <data name="Users_Email" xml:space="preserve">
     <value>E-mail</value>
   </data>
   <data name="Users_UserName" xml:space="preserve">
     <value>Nom d'utilisateur</value>
   </data>
+  <data name="Users_RoleColumn" xml:space="preserve">
+    <value>Rôle</value>
+  </data>
+  <data name="Users_RoleAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Users_RoleStandard" xml:space="preserve">
+    <value>Utilisateur</value>
+  </data>
   <data name="Users_CreateButton" xml:space="preserve">
     <value>Créer un utilisateur</value>
   </data>
   <data name="Users_CreateFormHeading" xml:space="preserve">
     <value>Créer un utilisateur</value>
+  </data>
+  <data name="Users_UserNameLabel" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Users_UserNamePlaceholder" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Users_UserNameHelp" xml:space="preserve">
+    <value>3 à 30 caractères : lettres, chiffres, « _ » et « . ». C'est l'identifiant de connexion.</value>
   </data>
   <data name="Users_FirstNameLabel" xml:space="preserve">
     <value>Prénom</value>

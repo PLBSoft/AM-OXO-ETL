@@ -51,6 +51,9 @@ public class UsersTests : BunitContext
     private void SetUsers(params UserSummary[] users) =>
         _userRepositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync((IReadOnlyList<UserSummary>)users);
 
+    private static UserSummary MakeUser(string id, string email, string userName, string firstName = "First", string lastName = "Last") =>
+        new(id, email, userName, firstName, lastName);
+
     [Fact]
     public void Users_WithNoUsers_DisplaysNoEntriesMessage() => WithCulture("en-US", () =>
     {
@@ -66,7 +69,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void Users_WithExistingUser_HasNoHeadingLevelSkip() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
 
@@ -78,7 +81,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void Users_RendersBothTableAndCardTemplates_WithResponsiveClasses() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
 
@@ -90,17 +93,122 @@ public class UsersTests : BunitContext
         cardContainer.QuerySelectorAll(".card").Should().HaveCount(1);
     });
 
+    // Lot 050 (50.9, D7): the table now goes table-sm.
+    [Fact]
+    public void Users_Table_HasTableSmClass() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
+
+        var cut = Render<Users>();
+
+        cut.Find("table.table").ClassList.Should().Contain("table-sm");
+    });
+
+    // Lot 050 (50.7, D6): FirstName/LastName rendered in both templates; extends the existing V2
+    // content-identity coverage rather than duplicating it in a new test.
     [Fact]
     public void Users_CardTemplate_DisplaysSameContentAsTable() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice", "Alice", "Smith"));
 
         var cut = Render<Users>();
+
+        var tableRow = cut.Find("table tbody tr");
+        tableRow.TextContent.Should().Contain("alice@example.com");
+        tableRow.TextContent.Should().Contain("alice");
+        tableRow.TextContent.Should().Contain("Alice");
+        tableRow.TextContent.Should().Contain("Smith");
 
         var card = cut.Find("div.d-md-none .card");
         card.TextContent.Should().Contain("alice@example.com");
         card.TextContent.Should().Contain("alice");
-        card.TextContent.Should().Contain("user-1");
+        card.TextContent.Should().Contain("Alice");
+        card.TextContent.Should().Contain("Smith");
+    });
+
+    // Lot 050 (50.9, D7): the Id column/GUID is no longer displayed anywhere -- identifiers stay
+    // carried by the row action buttons' own HTML ids instead.
+    [Fact]
+    public void Users_DoesNotDisplayTheRawUserId() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("user-1-a-very-long-guid-like-id", "alice@example.com", "alice"));
+
+        var cut = Render<Users>();
+
+        cut.Find("table thead").TextContent.Should().NotContain("Id");
+        cut.Find("table tbody tr").TextContent.Should().NotContain("user-1-a-very-long-guid-like-id");
+        cut.Find("div.d-md-none .card").TextContent.Should().NotContain("user-1-a-very-long-guid-like-id");
+    });
+
+    // Lot 050 (50.9): the three row-action buttons sit in a horizontally-aligned container --
+    // asserted on the class, not a computed layout (bUnit doesn't render CSS).
+    [Fact]
+    public void Users_RowActionButtons_AreInAHorizontallyAlignedContainer() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
+
+        var cut = Render<Users>();
+
+        var actionsContainer = cut.Find("#edit-user-button-user-1").ParentElement!;
+        actionsContainer.ClassList.Should().Contain("right-aligned-actions");
+        actionsContainer.QuerySelectorAll("button").Should().HaveCount(3);
+    });
+
+    // Lot 050 (50.8, D6): role badge, no per-row role query (N+1 regression guard).
+    [Fact]
+    public void Users_AdminRow_ShowsAdminBadge() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("admin-1", "admin@example.com", "admin"));
+        _userManagementServiceMock
+            .Setup(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)["admin-1"]);
+
+        var cut = Render<Users>();
+
+        var badge = cut.Find("#user-role-badge-admin-1");
+        badge.TextContent.Should().Be("Admin");
+        badge.ClassList.Should().Contain("badge");
+    });
+
+    [Fact]
+    public void Users_StandardRow_ShowsUserLabel_NotABadge() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
+        _userManagementServiceMock
+            .Setup(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)["admin-1"]);
+
+        var cut = Render<Users>();
+
+        var status = cut.Find("#user-role-badge-user-1");
+        status.TextContent.Should().Be("User");
+        status.ClassList.Should().NotContain("badge");
+    });
+
+    [Fact]
+    public void Users_CardTemplate_ShowsSameRoleStatusAsTable() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("admin-1", "admin@example.com", "admin"));
+        _userManagementServiceMock
+            .Setup(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<string>)["admin-1"]);
+
+        var cut = Render<Users>();
+
+        cut.Find("#user-role-badge-card-admin-1").TextContent.Should().Be("Admin");
+    });
+
+    [Fact]
+    public void Users_RenderingThreeRows_CallsGetAdminUserIdsExactlyOnce() => WithCulture("en-US", () =>
+    {
+        SetUsers(
+            MakeUser("user-1", "a@example.com", "a"),
+            MakeUser("user-2", "b@example.com", "b"),
+            MakeUser("user-3", "c@example.com", "c"));
+
+        Render<Users>();
+
+        _userManagementServiceMock.Verify(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()), Times.Once);
     });
 
     // Lot 044 (44.3): creation.
@@ -109,12 +217,13 @@ public class UsersTests : BunitContext
     {
         SetUsers();
         _userManagementServiceMock
-            .Setup(s => s.CreateUserAsync("alice@example.com", "Alice", "Smith", It.IsAny<CancellationToken>()))
+            .Setup(s => s.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith", It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserCreationResult.Success("user-2", "Tmp!Passw0rd"))
-            .Callback(() => SetUsers(new UserSummary("user-2", "alice@example.com", "alice@example.com")));
+            .Callback(() => SetUsers(MakeUser("user-2", "alice@example.com", "alice01", "Alice", "Smith")));
 
         var cut = Render<Users>();
         cut.Find("#create-user-button").Click();
+        cut.Find("#create-user-username-input").Input("alice01");
         cut.Find("#create-user-first-name-input").Input("Alice");
         cut.Find("#create-user-last-name-input").Input("Smith");
         cut.Find("#create-user-email-input").Input("alice@example.com");
@@ -125,6 +234,46 @@ public class UsersTests : BunitContext
         cut.FindAll("#create-user-first-name-input").Should().BeEmpty();
     });
 
+    // Uses a userName that genuinely differs from the email -- the exact-argument assertion below
+    // would also pass on a pre-lot-050 implementation if the two values matched, proving nothing.
+    [Fact]
+    public void CreateUser_PassesTheTypedUserName_DistinctFromEmail_ToTheService() => WithCulture("en-US", () =>
+    {
+        SetUsers();
+        _userManagementServiceMock
+            .Setup(s => s.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(UserCreationResult.Success("user-2", "Tmp!Passw0rd"));
+
+        var cut = Render<Users>();
+        cut.Find("#create-user-button").Click();
+        cut.Find("#create-user-username-input").Input("alice01");
+        cut.Find("#create-user-first-name-input").Input("Alice");
+        cut.Find("#create-user-last-name-input").Input("Smith");
+        cut.Find("#create-user-email-input").Input("alice@example.com");
+        cut.Find("#create-user-submit-button").Click();
+
+        _userManagementServiceMock.Verify(
+            s => s.CreateUserAsync("alice01", "alice@example.com", "Alice", "Smith", It.IsAny<CancellationToken>()), Times.Once);
+    });
+
+    [Fact]
+    public void CreateUser_WithMissingUserName_ShowsErrorWithoutCallingService() => WithCulture("en-US", () =>
+    {
+        SetUsers();
+
+        var cut = Render<Users>();
+        cut.Find("#create-user-button").Click();
+        cut.Find("#create-user-first-name-input").Input("Alice");
+        cut.Find("#create-user-last-name-input").Input("Smith");
+        cut.Find("#create-user-email-input").Input("alice@example.com");
+        cut.Find("#create-user-submit-button").Click();
+
+        cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
+        _userManagementServiceMock.Verify(
+            s => s.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    });
+
     [Fact]
     public void CreateUser_WithMissingField_ShowsErrorWithoutCallingService() => WithCulture("en-US", () =>
     {
@@ -132,12 +281,13 @@ public class UsersTests : BunitContext
 
         var cut = Render<Users>();
         cut.Find("#create-user-button").Click();
+        cut.Find("#create-user-username-input").Input("alice01");
         cut.Find("#create-user-first-name-input").Input("Alice");
         cut.Find("#create-user-submit-button").Click();
 
         cut.Find(".alert-danger").GetAttribute("role").Should().Be("alert");
         _userManagementServiceMock.Verify(
-            s => s.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
     });
 
@@ -146,11 +296,13 @@ public class UsersTests : BunitContext
     {
         SetUsers();
         _userManagementServiceMock
-            .Setup(s => s.CreateUserAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(s => s.CreateUserAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserCreationResult.Success("user-2", "Tmp!Passw0rd"));
 
         var cut = Render<Users>();
         cut.Find("#create-user-button").Click();
+        cut.Find("#create-user-username-input").Input("alice01");
         cut.Find("#create-user-first-name-input").Input("Alice");
         cut.Find("#create-user-last-name-input").Input("Smith");
         cut.Find("#create-user-email-input").Input("alice@example.com");
@@ -161,39 +313,77 @@ public class UsersTests : BunitContext
         cut.FindAll("#temporary-password-display").Should().BeEmpty();
     });
 
-    // Lot 044 (44.3): modification.
+    // Lot 050 (50.6): the username field's help text is visible below it, informational only.
+    [Fact]
+    public void CreateForm_UserNameField_HasHelpText() => WithCulture("en-US", () =>
+    {
+        SetUsers();
+
+        var cut = Render<Users>();
+        cut.Find("#create-user-button").Click();
+
+        cut.Markup.Should().Contain("3 to 30 characters");
+    });
+
+    // Lot 044 (44.3), lot 050 (50.3/50.6): modification, now including the username field.
     [Fact]
     public void EditUser_WithValidInput_UpdatesFieldsVisibleInTheList() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "old@example.com", "old@example.com"));
+        SetUsers(MakeUser("user-1", "old@example.com", "old_name", "Old", "Name"));
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync("user-1", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfile("user-1", "old@example.com", "old@example.com", "Old", "Name"));
-        _userRepositoryMock
-            .Setup(r => r.UpdateProfileAsync("user-1", "Alicia", "Smith", "alicia@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfile("user-1", "old@example.com", "old_name", "Old", "Name"));
+        _userManagementServiceMock
+            .Setup(s => s.UpdateUserAsync("user-1", "new_name", "alicia@example.com", "Alicia", "Smith", It.IsAny<CancellationToken>()))
             .ReturnsAsync(IdentityOperationResult.Success)
-            .Callback(() => SetUsers(new UserSummary("user-1", "alicia@example.com", "alicia@example.com")));
+            .Callback(() => SetUsers(MakeUser("user-1", "alicia@example.com", "new_name", "Alicia", "Smith")));
 
         var cut = Render<Users>();
         cut.Find("#edit-user-button-user-1").Click();
 
+        cut.Find("#edit-user-username-input-user-1").GetAttribute("value").Should().Be("old_name");
         cut.Find("#edit-user-first-name-input-user-1").GetAttribute("value").Should().Be("Old");
 
+        cut.Find("#edit-user-username-input-user-1").Input("new_name");
         cut.Find("#edit-user-first-name-input-user-1").Input("Alicia");
         cut.Find("#edit-user-last-name-input-user-1").Input("Smith");
         cut.Find("#edit-user-email-input-user-1").Input("alicia@example.com");
         cut.Find("#save-edit-user-button-user-1").Click();
 
         cut.Markup.Should().Contain("alicia@example.com");
-        _userRepositoryMock.Verify(
-            r => r.UpdateProfileAsync("user-1", "Alicia", "Smith", "alicia@example.com", It.IsAny<CancellationToken>()), Times.Once);
+        cut.Markup.Should().Contain("new_name");
+        _userManagementServiceMock.Verify(
+            s => s.UpdateUserAsync("user-1", "new_name", "alicia@example.com", "Alicia", "Smith", It.IsAny<CancellationToken>()), Times.Once);
+    });
+
+    [Fact]
+    public void EditUser_ServiceReturnsFailure_ShowsErrorMessage_KeepsFormOpen_DoesNotReloadList() => WithCulture("en-US", () =>
+    {
+        SetUsers(MakeUser("user-1", "old@example.com", "old_name", "Old", "Name"));
+        _userRepositoryMock
+            .Setup(r => r.GetByIdAsync("user-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserProfile("user-1", "old@example.com", "old_name", "Old", "Name"));
+        _userManagementServiceMock
+            .Setup(s => s.UpdateUserAsync("user-1", "taken", "old@example.com", "Old", "Name", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(IdentityOperationResult.Failed(["User name 'taken' is already taken."]));
+
+        var cut = Render<Users>();
+        cut.Find("#edit-user-button-user-1").Click();
+        cut.Find("#edit-user-username-input-user-1").Input("taken");
+        cut.Find("#save-edit-user-button-user-1").Click();
+
+        var alert = cut.Find(".alert-danger");
+        alert.GetAttribute("role").Should().Be("alert");
+        alert.TextContent.Should().Contain("already taken");
+        cut.Find("#edit-user-username-input-user-1").GetAttribute("value").Should().Be("taken");
+        _userRepositoryMock.Verify(r => r.GetAllAsync(It.IsAny<CancellationToken>()), Times.Once);
     });
 
     // Lot 044 (44.3): reset password.
     [Fact]
     public void ResetPassword_ShowsInlineConfirmation_AndNeverCallsServiceBeforeConfirm() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
         cut.Find("#reset-password-button-user-1").Click();
@@ -206,7 +396,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void ConfirmResetPassword_CallsServiceAndDisplaysNewTemporaryPassword() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
         _userManagementServiceMock
             .Setup(s => s.ResetPasswordAsync("user-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync(PasswordResetResult.Success("NewTmp!23"));
@@ -222,7 +412,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void CancelResetPassword_ClosesConfirmation_WithoutCallingService() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
         cut.Find("#reset-password-button-user-1").Click();
@@ -237,7 +427,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void DeleteUser_DoesNotCallServiceImmediately_OnlyOpensConfirmation() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
         cut.Find("#delete-user-button-user-1").Click();
@@ -251,12 +441,12 @@ public class UsersTests : BunitContext
     public void ConfirmDeleteUser_CallsServiceWithExactId_AndRemovesUserFromReloadedList() => WithCulture("en-US", () =>
     {
         SetUsers(
-            new UserSummary("user-1", "alice-to-delete@example.com", "alice"),
-            new UserSummary("user-2", "bob-to-keep@example.com", "bob"));
+            MakeUser("user-1", "alice-to-delete@example.com", "alice"),
+            MakeUser("user-2", "bob-to-keep@example.com", "bob"));
         _userManagementServiceMock
             .Setup(s => s.DeleteUserAsync("user-1", CurrentUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserDeletionResult.Success)
-            .Callback(() => SetUsers(new UserSummary("user-2", "bob-to-keep@example.com", "bob")));
+            .Callback(() => SetUsers(MakeUser("user-2", "bob-to-keep@example.com", "bob")));
 
         var cut = Render<Users>();
         cut.Find("#delete-user-button-user-1").Click();
@@ -270,7 +460,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void CancelDeleteUser_ClosesConfirmation_WithoutCallingService() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
 
         var cut = Render<Users>();
         cut.Find("#delete-user-button-user-1").Click();
@@ -285,8 +475,8 @@ public class UsersTests : BunitContext
     public void OpeningConfirmationOnAnotherRow_ClosesThePreviousOne_WithoutDeletingIt() => WithCulture("en-US", () =>
     {
         SetUsers(
-            new UserSummary("user-1", "alice@example.com", "alice"),
-            new UserSummary("user-2", "bob@example.com", "bob"));
+            MakeUser("user-1", "alice@example.com", "alice"),
+            MakeUser("user-2", "bob@example.com", "bob"));
 
         var cut = Render<Users>();
         cut.Find("#delete-user-button-user-1").Click();
@@ -305,7 +495,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void CurrentUserRow_DeleteButtonIsDisabled() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary(CurrentUserId, "self@example.com", "self"));
+        SetUsers(MakeUser(CurrentUserId, "self@example.com", "self"));
 
         var cut = Render<Users>();
 
@@ -316,7 +506,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void SoleRemainingAdminRow_DeleteButtonIsDisabled() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("admin-1", "admin@example.com", "admin"));
+        SetUsers(MakeUser("admin-1", "admin@example.com", "admin"));
         _userManagementServiceMock
             .Setup(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyList<string>)["admin-1"]);
@@ -330,7 +520,7 @@ public class UsersTests : BunitContext
     [Fact]
     public void NonAdminNonCurrentUserRow_DeleteButtonIsEnabled() => WithCulture("en-US", () =>
     {
-        SetUsers(new UserSummary("user-1", "alice@example.com", "alice"));
+        SetUsers(MakeUser("user-1", "alice@example.com", "alice"));
         _userManagementServiceMock
             .Setup(s => s.GetAdminUserIdsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync((IReadOnlyList<string>)["admin-1"]);

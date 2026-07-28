@@ -226,20 +226,35 @@
   <data name="Users_NoEntries" xml:space="preserve">
     <value>No users found.</value>
   </data>
-  <data name="Users_Id" xml:space="preserve">
-    <value>Id</value>
-  </data>
   <data name="Users_Email" xml:space="preserve">
     <value>Email</value>
   </data>
   <data name="Users_UserName" xml:space="preserve">
     <value>Username</value>
   </data>
+  <data name="Users_RoleColumn" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Users_RoleAdmin" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Users_RoleStandard" xml:space="preserve">
+    <value>User</value>
+  </data>
   <data name="Users_CreateButton" xml:space="preserve">
     <value>Create user</value>
   </data>
   <data name="Users_CreateFormHeading" xml:space="preserve">
     <value>Create user</value>
+  </data>
+  <data name="Users_UserNameLabel" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Users_UserNamePlaceholder" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="Users_UserNameHelp" xml:space="preserve">
+    <value>3 to 30 characters: letters, digits, '_' and '.'. This is the sign-in identifier.</value>
   </data>
   <data name="Users_FirstNameLabel" xml:space="preserve">
     <value>First name</value>

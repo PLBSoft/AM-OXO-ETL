@@ -77,8 +77,8 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
     [Fact]
     public async Task Get_WithFlaggedUser_ReturnsOkAndTheForcedChangeForm()
     {
-        await CreateUserAsync("flagged-user", requirePasswordChange: true);
-        var client = await CreateSignedInClientAsync("flagged-user");
+        await CreateUserAsync("flagged_user", requirePasswordChange: true);
+        var client = await CreateSignedInClientAsync("flagged_user");
 
         var response = await client.GetAsync(ForcePasswordChangeUrl);
 
@@ -96,8 +96,8 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
     [Fact]
     public async Task Get_WithFlaggedUser_IsServedAsStaticSsr_WithoutAnInteractiveCircuit()
     {
-        await CreateUserAsync("flagged-user", requirePasswordChange: true);
-        var client = await CreateSignedInClientAsync("flagged-user");
+        await CreateUserAsync("flagged_user", requirePasswordChange: true);
+        var client = await CreateSignedInClientAsync("flagged_user");
 
         var response = await client.GetAsync(ForcePasswordChangeUrl);
 
@@ -109,8 +109,8 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
     [Fact]
     public async Task Get_WithUnflaggedUser_RedirectsAwayFromTheForcedChangeForm()
     {
-        await CreateUserAsync("ordinary-user", requirePasswordChange: false);
-        var client = await CreateSignedInClientAsync("ordinary-user");
+        await CreateUserAsync("ordinary_user", requirePasswordChange: false);
+        var client = await CreateSignedInClientAsync("ordinary_user");
 
         var response = await client.GetAsync(ForcePasswordChangeUrl);
 
@@ -135,13 +135,17 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
     [Fact]
     public async Task AdminCreatedUser_ChangesTemporaryPassword_AndThenUsesTheApplicationNormally()
     {
+        // Lot 050 (D1): the connection identifier is now an explicit, independent username -- the
+        // email itself is no longer a valid sign-in value (it contains '@', outside the allowed
+        // character set), so this journey signs in with the username throughout.
+        const string userName = "journey_user";
         const string email = "journey-user@example.com";
         const string newPassword = "BrandNewP@ssw0rd!";
-        var temporaryPassword = await CreateUserThroughAdminFlowAsync(email);
+        var temporaryPassword = await CreateUserThroughAdminFlowAsync(userName, email);
         var client = CreateClient();
 
         // 1. Signing in with the temporary password lands on the forced-change page, not on ReturnUrl.
-        var signIn = await SignInAsync(client, email, temporaryPassword);
+        var signIn = await SignInAsync(client, userName, temporaryPassword);
         signIn.StatusCode.Should().Be(HttpStatusCode.Redirect);
         signIn.Headers.Location!.AbsolutePath.Should().Be(ForcePasswordChangeUrl);
 
@@ -164,7 +168,7 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
         var change = await client.PostAsync(ForcePasswordChangeUrl, new FormUrlEncodedContent(fields));
         change.StatusCode.Should().Be(HttpStatusCode.Redirect);
         change.Headers.Location!.AbsolutePath.Should().Be("/");
-        (await ReadRequirePasswordChangeFlagAsync(email)).Should().BeFalse();
+        (await ReadRequirePasswordChangeFlagAsync(userName)).Should().BeFalse();
 
         // 4. The guard no longer fires: an ordinary page is served instead of a redirection back.
         var afterChange = await client.GetAsync("/import-profiles");
@@ -173,7 +177,7 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
 
         // 5. Logging out and back in with the *new* password goes straight to the application.
         await SignOutAsync(client, formHtml);
-        var secondSignIn = await SignInAsync(client, email, newPassword);
+        var secondSignIn = await SignInAsync(client, userName, newPassword);
         secondSignIn.StatusCode.Should().Be(HttpStatusCode.Redirect);
         secondSignIn.Headers.Location!.AbsolutePath.Should().Be("/");
 
@@ -189,11 +193,11 @@ public class ForcePasswordChangeHttpTests : IClassFixture<WebApplicationFactory<
     // user, so the journey starts from the exact state a real admin action produces. The Admin role
     // is added afterwards only so step 4 above has an authorized page to land on -- creating an
     // Admin is deliberately impossible from the UI (Lot 044), and that rule is untouched here.
-    private async Task<string> CreateUserThroughAdminFlowAsync(string email)
+    private async Task<string> CreateUserThroughAdminFlowAsync(string userName, string email)
     {
         using var scope = _factory.Services.CreateScope();
         var userManagement = scope.ServiceProvider.GetRequiredService<IUserManagementService>();
-        var creation = await userManagement.CreateUserAsync(email, "Journey", "User");
+        var creation = await userManagement.CreateUserAsync(userName, email, "Journey", "User");
         creation.Succeeded.Should().BeTrue(
             "the admin-created account must exist: " + string.Join(", ", creation.Errors));
 

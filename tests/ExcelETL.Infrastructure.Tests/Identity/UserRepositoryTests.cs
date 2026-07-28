@@ -38,16 +38,16 @@ public class UserRepositoryTests
     public async Task GetAllAsync_ReturnsUserSummariesForAllUsers()
     {
         await SeedAsync(
-            new ApplicationUser { Id = "1", Email = "alice@example.com", UserName = "alice" },
-            new ApplicationUser { Id = "2", Email = "bob@example.com", UserName = "bob" });
+            new ApplicationUser { Id = "1", Email = "alice@example.com", UserName = "alice", FirstName = "Alice", LastName = "Smith" },
+            new ApplicationUser { Id = "2", Email = "bob@example.com", UserName = "bob", FirstName = "Bob", LastName = "Jones" });
 
         var repository = CreateRepository();
         var result = await repository.GetAllAsync();
 
         result.Should().BeEquivalentTo(
         [
-            new { Id = "1", Email = "alice@example.com", UserName = "alice" },
-            new { Id = "2", Email = "bob@example.com", UserName = "bob" }
+            new { Id = "1", Email = "alice@example.com", UserName = "alice", FirstName = "Alice", LastName = "Smith" },
+            new { Id = "2", Email = "bob@example.com", UserName = "bob", FirstName = "Bob", LastName = "Jones" }
         ]);
     }
 

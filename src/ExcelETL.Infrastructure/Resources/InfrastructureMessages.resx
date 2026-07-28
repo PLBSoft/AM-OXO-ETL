@@ -97,4 +97,16 @@
   <data name="PasswordRequiresUpper" xml:space="preserve">
     <value>Passwords must have at least one uppercase ('A'-'Z').</value>
   </data>
+  <data name="UserNameLengthInvalid" xml:space="preserve">
+    <value>User name must be between {0} and {1} characters.</value>
+  </data>
+  <data name="FirstNameLengthInvalid" xml:space="preserve">
+    <value>First name must be between {0} and {1} characters.</value>
+  </data>
+  <data name="LastNameLengthInvalid" xml:space="preserve">
+    <value>Last name must be between {0} and {1} characters.</value>
+  </data>
+  <data name="UserNameRequired" xml:space="preserve">
+    <value>User name is required.</value>
+  </data>
 </root>

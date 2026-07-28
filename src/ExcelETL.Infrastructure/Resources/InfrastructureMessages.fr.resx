@@ -97,4 +97,16 @@
   <data name="PasswordRequiresUpper" xml:space="preserve">
     <value>Le mot de passe doit contenir au moins une majuscule ('A'-'Z').</value>
   </data>
+  <data name="UserNameLengthInvalid" xml:space="preserve">
+    <value>Le nom d'utilisateur doit contenir entre {0} et {1} caractères.</value>
+  </data>
+  <data name="FirstNameLengthInvalid" xml:space="preserve">
+    <value>Le prénom doit contenir entre {0} et {1} caractères.</value>
+  </data>
+  <data name="LastNameLengthInvalid" xml:space="preserve">
+    <value>Le nom doit contenir entre {0} et {1} caractères.</value>
+  </data>
+  <data name="UserNameRequired" xml:space="preserve">
+    <value>Le nom d'utilisateur est obligatoire.</value>
+  </data>
 </root>
