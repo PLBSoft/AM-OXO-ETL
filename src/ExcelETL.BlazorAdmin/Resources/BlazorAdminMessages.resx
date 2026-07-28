@@ -40,9 +40,6 @@
   <data name="NavMenu_Logout" xml:space="preserve">
     <value>Logout</value>
   </data>
-  <data name="NavMenu_Register" xml:space="preserve">
-    <value>Register</value>
-  </data>
   <data name="NavMenu_Login" xml:space="preserve">
     <value>Login</value>
   </data>
@@ -187,8 +184,8 @@
   <data name="Login_Submit" xml:space="preserve">
     <value>Log in</value>
   </data>
-  <data name="Login_RegisterLink" xml:space="preserve">
-    <value>Register as a new user</value>
+  <data name="Login_PasswordRecoveryHint" xml:space="preserve">
+    <value>Forgot your password? Contact your administrator to have it reset.</value>
   </data>
   <data name="Login_InvalidAttempt" xml:space="preserve">
     <value>Invalid login attempt.</value>
@@ -201,18 +198,6 @@
   </data>
   <data name="ForcePasswordChange_Submit" xml:space="preserve">
     <value>Change password</value>
-  </data>
-  <data name="Register_Title" xml:space="preserve">
-    <value>Register</value>
-  </data>
-  <data name="Register_Subtitle" xml:space="preserve">
-    <value>Create a new account.</value>
-  </data>
-  <data name="Register_ConfirmPasswordLabel" xml:space="preserve">
-    <value>Confirm Password</value>
-  </data>
-  <data name="Register_Submit" xml:space="preserve">
-    <value>Register</value>
   </data>
   <data name="NavMenu_Users" xml:space="preserve">
     <value>Users</value>

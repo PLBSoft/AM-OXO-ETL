@@ -9,7 +9,6 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 @inject ILogger<Login> Logger
-@inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
@@ -48,9 +47,11 @@
                     <button type="submit" class="w-100 btn btn-lg btn-primary">@Loc["Login_Submit"]</button>
                 </div>
                 <hr />
-                <p>
-                    <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">@Loc["Login_RegisterLink"]</a>
-                </p>
+                <!-- Lot 051 (51.3): public self-registration removed as a security decision --
+                     replaced, not merely deleted, with a static hint pointing at the real recourse
+                     (admin-driven password reset, Lot 044) rather than leaving a user who lost their
+                     password with no path forward. No link, no hardcoded address -- text only. -->
+                <p id="login-password-recovery-hint">@Loc["Login_PasswordRecoveryHint"]</p>
             </EditForm>
         </section>
     </div>

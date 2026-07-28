@@ -40,9 +40,6 @@
   <data name="NavMenu_Logout" xml:space="preserve">
     <value>Déconnexion</value>
   </data>
-  <data name="NavMenu_Register" xml:space="preserve">
-    <value>S'inscrire</value>
-  </data>
   <data name="NavMenu_Login" xml:space="preserve">
     <value>Connexion</value>
   </data>
@@ -187,8 +184,8 @@
   <data name="Login_Submit" xml:space="preserve">
     <value>Se connecter</value>
   </data>
-  <data name="Login_RegisterLink" xml:space="preserve">
-    <value>S'inscrire en tant que nouvel utilisateur</value>
+  <data name="Login_PasswordRecoveryHint" xml:space="preserve">
+    <value>Mot de passe oublié ? Contactez votre administrateur pour le réinitialiser.</value>
   </data>
   <data name="Login_InvalidAttempt" xml:space="preserve">
     <value>Tentative de connexion invalide.</value>
@@ -201,18 +198,6 @@
   </data>
   <data name="ForcePasswordChange_Submit" xml:space="preserve">
     <value>Changer le mot de passe</value>
-  </data>
-  <data name="Register_Title" xml:space="preserve">
-    <value>Inscription</value>
-  </data>
-  <data name="Register_Subtitle" xml:space="preserve">
-    <value>Créer un nouveau compte.</value>
-  </data>
-  <data name="Register_ConfirmPasswordLabel" xml:space="preserve">
-    <value>Confirmer le mot de passe</value>
-  </data>
-  <data name="Register_Submit" xml:space="preserve">
-    <value>S'inscrire</value>
   </data>
   <data name="NavMenu_Users" xml:space="preserve">
     <value>Utilisateurs</value>

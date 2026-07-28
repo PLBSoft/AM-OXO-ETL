@@ -200,4 +200,36 @@ public class LoginTests : BunitContext
         navigationManager.Uri.Should().Be(uriBeforeSubmit);
         _userManagerMock.Verify(m => m.FindByNameAsync(It.IsAny<string>()), Times.Never);
     });
+
+    // Lot 051 (51.3): public self-registration removed as a security decision -- Login.razor's only
+    // dead link (Account/ForgotPassword and Account/ResendEmailConfirmation never existed here, per
+    // the 51.0 investigation) is gone, replaced with a static recovery hint pointing at the real
+    // recourse (admin-driven password reset, Lot 044).
+    [Fact]
+    public void LoginPage_ContainsNoLinkToAnyRemovedAccountPage() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Login>();
+
+        cut.FindAll("a[href*='Account/Register']").Should().BeEmpty();
+        cut.FindAll("a[href*='Account/ForgotPassword']").Should().BeEmpty();
+        cut.FindAll("a[href*='Account/ResendEmailConfirmation']").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void LoginPage_ShowsPasswordRecoveryHint_FromLocalizedResources() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Login>();
+
+        var hint = cut.Find("#login-password-recovery-hint");
+        hint.TextContent.Should().Contain("administrator");
+    });
+
+    [Fact]
+    public void LoginPage_ShowsPasswordRecoveryHint_AndFrenchCulture_ShowsFrenchText() => WithCulture("fr-FR", () =>
+    {
+        var cut = Render<Login>();
+
+        var hint = cut.Find("#login-password-recovery-hint");
+        hint.TextContent.Should().Contain("administrateur");
+    });
 }
