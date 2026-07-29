@@ -292,4 +292,46 @@ public class ExportProfileEditorLot056Tests : BunitContext
         cut.Find(".profile-editor-save-bar").GetAttribute("style").Should().BeNullOrEmpty();
         cut.Find(".profile-editor-container").GetAttribute("style").Should().BeNullOrEmpty();
     });
+
+    // ------------------------------------------------------------------------------------------
+    // 56.7: explicit "submit and cancel classes differ" intent test, for the 4 export-side
+    // sub-forms already covered (indirectly) by ExportProfileEditorTests.cs's own fixed-in-place
+    // tests -- this is the dedicated test the ticket itself calls out as the real guard-rail
+    // against a copy-paste regression.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task SheetGenerationRuleForm_EditMode_SubmitAndCancelButtons_HaveDifferentClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            var submitClass = cut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class");
+            var cancelClass = cut.Find("#cancel-sheet-generation-rule-button-0").GetAttribute("class");
+
+            submitClass.Should().NotBe(cancelClass);
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+        });
+
+    [Fact]
+    public async Task ColumnDefinitionForm_EditMode_SubmitAndCancelButtons_HaveDifferentClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-generation-rule-button-0").Click();
+            cut.Find("#edit-0-modify-column-definition-button-0").Click();
+
+            var submitClass = cut.Find("#edit-0-save-column-definition-button-0").GetAttribute("class");
+            var cancelClass = cut.Find("#edit-0-cancel-column-definition-button-0").GetAttribute("class");
+
+            submitClass.Should().NotBe(cancelClass);
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+        });
 }

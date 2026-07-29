@@ -455,11 +455,13 @@
 </div>
 </div>
 
-<!-- Lot 053 (53.4): "Add" (ShowCancel=false) is btn-secondary + Plus icon; "Save changes"
-     (ShowCancel=true, editing an already-added rule) keeps its pre-existing btn-outline-secondary
-     + Check icon (Lot 041) -- the ticket's hierarchy table only re-colors "add" buttons. -->
+<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
+     submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
+     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously, in edit mode
+     (ShowCancel=true), both buttons were btn-outline-secondary and strictly indistinguishable
+     (audit S2.3 / lot 053 deferral -- the exact 29/07 usability remark this lot closes). -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="@(ShowCancel ? "btn btn-outline-secondary w-100 mt-3" : "btn btn-secondary w-100 mt-3")" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3" @onclick="Submit">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)

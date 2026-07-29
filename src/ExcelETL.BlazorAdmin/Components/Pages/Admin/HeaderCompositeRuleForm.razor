@@ -29,10 +29,12 @@
     <div class="form-text">@Loc["ImportProfileEditor_HeaderCompositeTemplateHint"]</div>
 </div>
 
-<!-- Lot 053 (53.4): "Add" (ShowCancel=false) is btn-secondary + Plus icon; "Save changes"
-     (ShowCancel=true) keeps its pre-existing btn-outline-secondary + Check icon (Lot 041). -->
+<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
+     submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
+     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
+     btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="@(ShowCancel ? "btn btn-outline-secondary w-100 mt-3" : "btn btn-secondary w-100 mt-3")" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3" @onclick="Submit">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)

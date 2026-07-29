@@ -2297,8 +2297,12 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.Find("#modify-sheet-rule-button-0").Click();
 
+            // Lot 056 (56.7): the icon-conditional assertion still holds (Check in edit mode, Lot
+            // 041, unchanged), but the class is now always solid btn-secondary, in both modes --
+            // previously btn-outline-secondary here, indistinguishable from "Cancel" right next to
+            // it. Fixed in place, not duplicated (same instruction as Lots 51.2/53.2).
             cut.Find("#save-sheet-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#save-sheet-rule-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cut.Find("#save-sheet-rule-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
         });
 
     // Lot 041 (41.3) / Lot 053 (53.4): BlockFieldForm is one of the "6 nested sub-forms" -- same
@@ -2318,8 +2322,9 @@ public class ImportProfileEditorTests : BunitContext
 
             cut.Find("#edit-0-modify-block-field-button-0").Click();
 
+            // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
             cut.Find("#edit-0-save-block-field-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#edit-0-save-block-field-button-0").GetAttribute("class").Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cut.Find("#edit-0-save-block-field-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
         });
 
     // Lot 041 (41.3): confirms the previously-missing `title` on the block-field Modify/Delete

@@ -517,4 +517,79 @@ public class ImportProfileEditorLot056Tests : BunitContext
 
         cut.FindAll(".block-field-name").Should().BeEmpty();
     }
+
+    // ------------------------------------------------------------------------------------------
+    // 56.7: submission vs. cancel visual distinction, for the 2 of the 8 sub-forms not already
+    // covered by a pre-existing (now fixed-in-place) ImportProfileEditorTests.cs test --
+    // HeaderFieldRuleForm and HeaderCompositeRuleForm. SheetRuleForm/BlockFieldForm are covered
+    // there; SheetGenerationRuleForm/ColumnDefinitionForm/PointColumnDefinitionForm/
+    // ApplicationColumnDefinitionForm are covered in ExportProfileEditorTests.cs.
+    // ------------------------------------------------------------------------------------------
+
+    private static ImportProfile BuildProfileWithHeaderRules(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+            fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+
+        var headerFields = new List<HeaderFieldRule>
+        {
+            new("nomMAD", new DirectCell("PROCEDURE", "M2:O2")),
+            new("revision", new DirectCell("PROCEDURE", "P2:Q2")),
+        };
+        var headerComposites = new List<HeaderCompositeRule> { new("Designation", "Rév {revision}") };
+
+        var sheetRule = new SheetExtractionRule(
+            "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], headerFields, headerComposites);
+
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
+    }
+
+    [Fact]
+    public async Task HeaderFieldRuleForm_EditMode_SubmitAndCancelButtons_HaveDifferentClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithHeaderRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-modify-header-field-button-0").Click();
+
+            var submitClass = cut.Find("#edit-0-save-header-field-button-0").GetAttribute("class");
+            var cancelClass = cut.Find("#edit-0-cancel-header-field-button-0").GetAttribute("class");
+
+            submitClass.Should().Be("btn btn-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            submitClass.Should().NotBe(cancelClass);
+        });
+
+    [Fact]
+    public async Task HeaderCompositeRuleForm_EditMode_SubmitAndCancelButtons_HaveDifferentClasses() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithHeaderRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-modify-header-composite-button-0").Click();
+
+            var submitClass = cut.Find("#edit-0-save-header-composite-button-0").GetAttribute("class");
+            var cancelClass = cut.Find("#edit-0-cancel-header-composite-button-0").GetAttribute("class");
+
+            submitClass.Should().Be("btn btn-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            submitClass.Should().NotBe(cancelClass);
+        });
+
+    [Fact]
+    public void HeaderFieldRuleForm_AddMode_SubmitButton_StillBtnSecondary_NonRegression()
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find("#add-header-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#add-header-composite-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+    }
 }
