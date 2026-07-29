@@ -73,7 +73,7 @@ feuille, sans condition (ex. `"PROLOCK VANNES"`/`"DEPROLOCK VANNES"` d'ISOLEMENT
 l'implémentation du Lot C (pas anticipé dans la conception initiale) et s'intègre proprement au
 modèle.
 
-⚠️ **Normalisation de la comparaison** : la comparaison `ComparisonValue` doit être insensible à la casse **et** tolérante aux espaces de début/fin (`.Trim()`) — des cas réels ont été observés dans les 3 fichiers fixtures (espace de fin sur `"SOUPAPE "`, variante `"POINT DE FEU"` au lieu de `"POINT FEU"`). Le `Trim`+casse suffit pour le premier cas, pas pour le second (différence de mot, pas d'espacement) — ce second cas reste un échec de correspondance légitime, couvert par la politique d'erreur non bloquante du §3.2 ci-dessous.
+⚠️ **Normalisation de la comparaison** : la comparaison `ComparisonValue` doit être insensible à la casse **et** tolérante aux espaces de début/fin (`.Trim()`) — des cas réels ont été observés dans les 3 fichiers fixtures (espace de fin sur `"SOUPAPE "`, variante `"POINT DE FEU"` au lieu de `"POINT FEU"`). Le `Trim`+casse suffit pour le premier cas, pas pour le second (différence de mot, pas d'espacement) — ce second cas reste un échec de correspondance légitime, couvert par la politique d'erreur non bloquante du §3.2 ci-dessous. `"POINT DE FEU"` (G6306B, feuille DIVERS) en est l'occurrence réelle : l'élément est extrait, aucun Point conditionnel n'est créé, un avertissement `NoConditionalPointCreated` est émis.
 
 ### 1.5 Portée globale (broadcast)
 `loc1` (feuille DIVERS, `B6:E6`) : valeur extraite une fois, appliquée à l'Equipement **et** à
@@ -179,8 +179,10 @@ public sealed record ExtractionError(
 `ExtractionError` alimente directement le point de log "Errors (exception type, merged cell
 coordinate that failed)" du cahier des charges fonctionnel initial.
 
-*Note* : `ExtractionErrorCode` n'a à ce jour que ces 3 membres — volontaire, d'autres seront
-ajoutés au fil des besoins réels plutôt qu'anticipés.
+*Note* : `ExtractionErrorCode` n'a à ce jour que ces 4 membres — volontaire, d'autres seront
+ajoutés au fil des besoins réels plutôt qu'anticipés. Tous les identifiants de membres sont en
+anglais, sans exception : le vocabulaire métier français ne vit que dans les chaînes de
+caractères (`Message`, noms de Colonnes), jamais dans les identifiants C#.
 
 ### 3.1 Granularité de la politique "extraire les valides, signaler le reste"
 Au niveau d'un bloc Isolement/Point/TacheMultiple : un bloc invalide est ignoré et journalisé,
@@ -189,12 +191,47 @@ lui-même est invalide** (ex. repère `M2:O2` vide ou date de révision illisibl
 entier est rejeté (une seule erreur bloquante, le reste du pipeline n'est pas exécuté) — tout le
 reste du fichier en dépend (repère composé, portée globale `loc1`, association aux Tableaux).
 
-### 3.2 Cas "TypeElement non reconnu par aucune règle"
-Si le type d'élément d'un Isolement ne correspond à aucune condition connue (ex. `"VANNE"` en
-feuille ISOLEMENT, confirmé absent de la base OXO — voir glossaire), l'Isolement reste
-**valide** : il est extrait normalement, simplement aucun Point n'est créé pour lui. Ce n'est
-pas un motif de rejet du bloc, mais ça produit un **avertissement non bloquant** dans `Errors`
-(même liste, sévérité différente) pour rester visible sans casser le traitement.
+### 3.2 Cas "aucun Point conditionnel créé pour un élément"
+
+Si aucune `ConditionalPointRule` de la feuille ne produit de Point pour un élément donné,
+l'élément reste **valide** : il est extrait normalement, simplement aucun Point conditionnel
+n'est créé pour lui. Ses Points inconditionnels (`UnconditionalColonneNames`) sont créés
+normalement, indépendamment de ce cas. Ce n'est pas un motif de rejet du bloc, mais ça produit un
+**avertissement non bloquant** dans `Errors` (même liste, sévérité `Warning`) pour rester visible
+sans casser le traitement.
+
+**Portée de l'affirmation — point sémantique essentiel.** Le moteur d'extraction ne connaît que le
+profil d'import. Il n'a aucun accès au référentiel `TypeElement` de la base OXO et n'affirme donc
+**jamais** qu'une valeur y est absente ou inconnue. `NoConditionalPointCreated` énonce un fait sur
+la configuration du profil, pas sur la donnée de référence. Le nom historique
+`UnrecognizedTypeElement` portait cette confusion et a été retiré au lot 055.
+
+Deux illustrations de pourquoi la distinction n'est pas théorique :
+- `PROLOCK` (feuille ISOLEMENT, les 3 fixtures) est une valeur **confirmée en base OXO** (voir
+  `spec-extraction-fichier-source-oxo.md` §6 et glossaire). Elle ne satisfait simplement aucune
+  condition de la feuille. La qualifier de « non reconnue » était factuellement faux.
+- `TUBING` (feuille AUTRES JOINTS TOUCHES) ne produit aucun Point parce que la règle de la feuille
+  est `NotEquals "TUBING"` — l'absence de Point est exactement le comportement demandé par
+  l'auteur du profil, sur une valeur parfaitement légitime.
+
+**Granularité d'émission.** L'évaluation est faite **par élément** (`ConditionalPointGroupEvaluator`),
+jamais par règle : un élément satisfaisant au moins une règle ne produit aucun avertissement, quel
+que soit le nombre de règles non satisfaites par ailleurs.
+
+**Déduplication.** Une seule entrée est émise par couple `(feuille, valeur extraite normalisée)`
+et par import, quel que soit le nombre d'éléments concernés. La normalisation est la même que
+celle du matching (`Trim` + insensible à la casse, cf. §1.4) ; la **première forme brute
+rencontrée** est celle conservée dans `ExtractedValue` pour l'affichage. Une valeur vide ou nulle
+est traitée comme n'importe quelle autre valeur sans correspondance, sans cas particulier. La
+déduplication a lieu **à l'émission** (`NoConditionalPointCreatedWarningTracker`) et non dans une
+couche de présentation : il n'existe aucun mécanisme d'agrégation côté UI.
+
+**Ce que ce mécanisme ne fait pas, et ne doit pas faire.** Il ne valide rien contre le référentiel
+OXO. Déterminer si une valeur y existe supposerait un endpoint dédié côté `AvancementRecette` et
+un appel sortant vers le legacy — couplage que ce microservice est conçu pour éviter. Décision
+actée au lot 055 : hors périmètre du projet en l'état. Si l'import legacy rejette un
+`TypeElement.Nom`, c'est un point de vigilance sur la donnée du client, pas un défaut d'AM-OXO-ETL
+(voir `spec-extraction-fichier-source-oxo.md`, cadrage §9).
 
 ---
 

@@ -91,7 +91,30 @@ OXO fournit un fichier Excel source. AM-OXO-ETL en extrait les données pour pro
 - Point créé uniquement si type d'élément = `"ZERO ENERGIE"` : `"ZÉRO ENERGIE EN PRESENCE EE (PS941)"`
 - Liste de colonnes paramétrable dans le profil d'import
 
-**Type `"VANNE"`** : le fichier réel D8570 contient des isolements de type `"VANNE"`, une valeur **confirmée absente** du référentiel `TypeElement` de la base OXO (voir liste complète, glossaire). Probable typo utilisateur ou confusion avec `VM`/`VANNE MANUELLE` — à la charge du client de corriger sa saisie si besoin. Traité par la politique d'erreur non bloquante (§3.2 du modèle de domaine) : l'Isolement est extrait normalement, aucun Point n'est créé (aucune règle ne matche), un avertissement non bloquant est ajouté à `ImportResult.Errors`. Aucune règle spécifique à coder pour ce cas.
+**Valeurs de `TypeElement` observées sur cette feuille** : les 3 fixtures contiennent 26 éléments,
+dont 25 de type `"PROLOCK"` et 1 de type `"VANNE"` (D8570). La condition `"ZERO ENERGIE"` de cette
+feuille **n'est déclenchée par aucun fichier connu** — elle reste néanmoins au profil, conformément
+à la règle métier ci-dessus, et est couverte en test unitaire.
+
+`"PROLOCK"` est une valeur confirmée en base OXO (voir §6 et glossaire). `"VANNE"` en est
+**confirmée absente** — probable typo utilisateur ou confusion avec `VM`/`VANNE MANUELLE`, à la
+charge du client de corriger sa saisie si besoin.
+
+Dans les deux cas, le traitement est identique et relève de la politique d'erreur non bloquante
+(§3.2 du modèle de domaine) : l'Isolement est extrait normalement, ses Points inconditionnels
+(`"PROLOCK VANNES"`, `"DEPROLOCK VANNES"`) sont créés, le Point conditionnel ne l'est pas, et un
+avertissement `NoConditionalPointCreated` est ajouté à `ImportResult.Errors` — **une seule entrée
+par valeur distincte**, pas une par élément. Aucune règle spécifique à coder pour ces cas.
+
+Le moteur ne distingue pas `"PROLOCK"` de `"VANNE"` et ne le peut pas : il ne connaît que le
+profil, jamais le référentiel OXO. La distinction « valeur confirmée / valeur absente » relève de
+la lecture humaine du glossaire, pas d'un comportement du code.
+
+**Avertissements `NoConditionalPointCreated` attendus sur les 3 fixtures** (profil seedé, vérifiés
+au lot 055) : C7401 → 1 (`ISOLEMENT` / `PROLOCK`) ; D8570 → 2 (`ISOLEMENT` / `PROLOCK`,
+`ISOLEMENT` / `VANNE`) ; G6306B → 3 (`ISOLEMENT` / `PROLOCK`, `AUTRES JOINTS TOUCHES` / `TUBING`,
+`DIVERS` / `POINT DE FEU`). Les feuilles `PLATINES` et `ORIFICES CAPACITES` n'en produisent jamais :
+elles ne portent aucune `ConditionalPointRule`.
 
 ---
 
@@ -195,6 +218,10 @@ OXO fournit un fichier Excel source. AM-OXO-ETL en extrait les données pour pro
 Plusieurs noms de `Colonne`/`TypeElement` sont écrits ici en MAJUSCULES, alors que les valeurs confirmées en base (glossaire) sont en casse mixte : `Prolock vannes`, `Contrôle Etanchéités`, `Pose étiquettes`... **Recommandation** : comparaison insensible à la casse **et aux espaces de début/fin (`.Trim()`)** lors de la résolution `Colonne.Nom`/`TypeElement.Nom` dans le moteur d'extraction — une espace de fin a été observée dans une cellule réelle (`"SOUPAPE "`, voir §6).
 
 **Cadrage important** : si malgré tout une correspondance échoue (nom de Colonne/TypeElement introuvable côté legacy), **ce n'est pas un problème pour AM-OXO-ETL**. Le moteur d'import de l'application legacy affiche une erreur explicite dans son résultat d'import lorsqu'il ne trouve pas la Colonne/le TypeElement attendu — le client est alors responsable de corriger ses fichiers Excel source ou ses données de référence en base. Cela s'applique en particulier au type `"VANNE"` (§2), aux variantes `DEB/FIN` de PLATINES (§3), et au risque `"POINT FEU"`/`"POINT DE FEU"` (§6) : ce sont des points de vigilance sur la donnée, pas des points bloquants à résoudre côté ETL.
+
+À ne pas confondre avec l'avertissement `NoConditionalPointCreated` du §3.2 du modèle de domaine :
+celui-ci ne présume rien de l'existence d'une valeur en base legacy, il constate seulement qu'aucune
+condition du profil n'a matché.
 
 ---
 

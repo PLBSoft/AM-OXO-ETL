@@ -74,7 +74,14 @@ Points créés, **sans condition sur `TypeElement`** :
 
 Champ `H20:O21` (Position MAD) → `IsolementPivot.PositionALaPose`, destiné à alimenter la colonne cible `"POSITION A LA POSE"`.
 
-**Cas `"VANNE"`** : un Isolement avec `TypeElement = "VANNE"` (valeur absente du référentiel OXO) est extrait normalement (pas de rejet de bloc), ne déclenche aucun des 3 Points ci-dessus, et produit un avertissement non bloquant dans `ImportResult.Errors`. Testé sur la fixture réelle `D8570` qui contient ce cas.
+**Cas d'un `TypeElement` ne satisfaisant aucune condition** : un Isolement dont le type ne
+satisfait pas la condition `"ZERO ENERGIE"` est extrait normalement (pas de rejet de bloc),
+reçoit ses 2 Points inconditionnels (`"PROLOCK VANNES"`, `"DEPROLOCK VANNES"`), ne reçoit pas le
+Point conditionnel, et produit un avertissement `NoConditionalPointCreated` dans
+`ImportResult.Errors` — **une entrée par valeur distincte, pas une par Isolement**. C'est le cas
+de `"PROLOCK"` (valeur confirmée en base OXO, majoritaire sur les 3 fixtures) comme de `"VANNE"`
+(valeur absente du référentiel, occurrence unique sur D8570) : le moteur ne les distingue pas et
+n'a pas à le faire.
 
 ### C3. PLATINES / C4. ORIFICES CAPACITES
 **Implémentation réelle : un seul service partagé**, `UnconditionalIsolementSheetExtractionService`
@@ -113,7 +120,9 @@ Orchestre C1→C6 :
 4. Retourne l'`ImportResult` final
 
 ### D2. Tests d'intégration contre les 3 fichiers réels
-Un test par fichier (C7401, D8570, G6306B), assertions sur le nombre d'Isolements extraits par feuille, quelques valeurs connues (repère, `loc1` appliqué partout), absence d'erreurs bloquantes sur ces 3 fichiers a priori valides. Le fichier `D8570` vérifie spécifiquement la présence d'un avertissement non bloquant pour son isolement `"VANNE"`.
+Un test par fichier (C7401, D8570, G6306B), assertions sur le nombre d'Isolements extraits par feuille, quelques valeurs connues (repère, `loc1` appliqué partout), absence d'erreurs bloquantes sur ces 3 fichiers a priori valides. Le fichier `D8570` vérifie spécifiquement la présence de **2** avertissements
+`NoConditionalPointCreated` sur la feuille ISOLEMENT — un pour `"PROLOCK"` (14 isolements
+dédupliqués en une entrée), un pour `"VANNE"` (isolement unique).
 
 ---
 
