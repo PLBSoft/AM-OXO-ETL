@@ -536,6 +536,56 @@ public class ImportProfileTestTests : BunitContext
                 .Contain($"Non-blocking warnings ({expected.Errors.Count})");
         });
 
+    // Lot 055 §55.7: the context column shows the raw extracted value for NoConditionalPointCreated
+    // entries, since there is no single block/repère to designate once no ConditionalPointRule
+    // matched. D8570 deduplicates to exactly 2 such entries (PROLOCK, VANNE) -- selection by the
+    // stable per-row id, never by text or position.
+    [Fact]
+    public async Task Run_D8570Fixture_WarningsTable_ShowsExtractedValueInContextColumn() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var expected = RunOrchestratorDirectly(profile, "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+            expected.Errors.Should().HaveCount(2)
+                .And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
+
+            var contextValues = expected.Errors.Select((error, index) =>
+                cut.Find($"#warning-context-{index}").TextContent).ToList();
+            contextValues.Should().BeEquivalentTo(["PROLOCK", "VANNE"]);
+        });
+
+    // The context column must stay unchanged for every other code -- TacheMultipleTypeMismatch keeps
+    // rendering its original section-title BlockIdentifier, not an extracted value.
+    [Fact]
+    public async Task Run_C7401Fixture_WarningsTable_KeepsBlockIdentifierContextForTacheMultipleTypeMismatch() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var expected = RunOrchestratorDirectly(profile, "Dossier.de.MaD.IDL.-.C7401.xlsx");
+            var mismatchIndex = expected.Errors.ToList()
+                .FindIndex(e => e.Code == ExtractionErrorCode.TacheMultipleTypeMismatch);
+            mismatchIndex.Should().BeGreaterThanOrEqualTo(0);
+            var expectedBlockIdentifier = expected.Errors[mismatchIndex].BlockIdentifier;
+
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("TacheMultipleTypeMismatch"));
+
+            cut.Find($"#warning-context-{mismatchIndex}").TextContent.Should().Be(expectedBlockIdentifier);
+        });
+
     [Fact]
     public async Task Run_G6306BFixture_RendersExpectedIsolementCount_NoBlockingErrors() =>
         await WithCultureAsync("en-US", async () =>

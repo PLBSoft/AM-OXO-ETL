@@ -150,11 +150,11 @@ else
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        @foreach (var warning in result.Errors)
+                                                        @foreach (var (warning, warningIndex) in result.Errors.Select((w, i) => (w, i)))
                                                         {
                                                             <tr>
                                                                 <td>@warning.Sheet</td>
-                                                                <td>@warning.BlockIdentifier</td>
+                                                                <td id="@($"warning-context{suffix}-{warningIndex}")">@GetWarningContext(warning)</td>
                                                                 <td>@warning.Code</td>
                                                                 <td>@warning.Message</td>
                                                             </tr>
@@ -356,6 +356,13 @@ else
         BatchFileStatus.TechnicalError => "bg-dark",
         _ => "bg-secondary"
     };
+
+    // Lot 055 §55.7: NoConditionalPointCreated no longer relates to one specific block/repère -- no
+    // single ConditionalPointRule matched, so there is nothing to designate that way. The context
+    // column shows the raw extracted value instead for that code only; every other code keeps
+    // rendering its BlockIdentifier context unchanged.
+    private static string? GetWarningContext(ExtractionError warning) =>
+        warning.Code == ExtractionErrorCode.NoConditionalPointCreated ? warning.ExtractedValue : warning.BlockIdentifier;
 
     private string GetStatusLabel(BatchFileStatus status) => status switch
     {
