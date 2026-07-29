@@ -106,6 +106,61 @@ public class DefaultProfileSeederPipelineIntegrationTests
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
     }
 
+    // Lot 055 §55.8: the deduplicated NoConditionalPointCreated warnings expected against the real
+    // seeded profile -- exactly one entry per (feuille, valeur normalisée) that produced no
+    // conditional Point, and nothing else. Confirms both the emission rule (55.4) and the
+    // deduplication (55.5) end-to-end against real fixture data, not just hand-built unit cases.
+    [Fact]
+    public async Task Run_C7401Fixture_WithSeededProfile_ProducesExactlyOneNoConditionalPointCreatedWarning()
+    {
+        var (importProfile, _) = await SeedAndFetchProfilesAsync();
+        var result = RunOnFixture("Dossier.de.MaD.IDL.-.C7401.xlsx", importProfile);
+
+        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
+        var warning = warnings.Should().ContainSingle().Subject;
+        warning.Sheet.Should().Be("ISOLEMENT");
+        warning.ExtractedValue.Should().Be("PROLOCK");
+
+        // Same isolement count as the pre-existing regression assertions above -- extraction itself
+        // is unaffected by this lot, only the warnings are.
+        result.Isolements.Should().HaveCount(23);
+    }
+
+    [Fact]
+    public async Task Run_D8570Fixture_WithSeededProfile_ProducesExactlyTwoNoConditionalPointCreatedWarnings()
+    {
+        var (importProfile, _) = await SeedAndFetchProfilesAsync();
+        var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx", importProfile);
+
+        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
+        warnings.Should().HaveCount(2).And.OnlyContain(e => e.Sheet == "ISOLEMENT");
+        warnings.Select(e => e.ExtractedValue).Should().BeEquivalentTo(["PROLOCK", "VANNE"]);
+
+        // AUTRES JOINTS TOUCHES' 13 TUYAUTERIE isolements and DIVERS' 13 ZERO ENERGIE ones all
+        // legitimately match their sheet's own conditional rule -- confirmed absent above via
+        // OnlyContain(Sheet == "ISOLEMENT").
+        result.Isolements.Should().HaveCount(67);
+    }
+
+    [Fact]
+    public async Task Run_G6306BFixture_WithSeededProfile_ProducesExactlyThreeNoConditionalPointCreatedWarnings_OnePerSheet()
+    {
+        var (importProfile, _) = await SeedAndFetchProfilesAsync();
+        var result = RunOnFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx", importProfile);
+
+        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
+        warnings.Should().HaveCount(3);
+        warnings.Should().Contain(e => e.Sheet == "ISOLEMENT" && e.ExtractedValue == "PROLOCK");
+        warnings.Should().Contain(e => e.Sheet == "AUTRES JOINTS TOUCHES" && e.ExtractedValue == "TUBING");
+        warnings.Should().Contain(e => e.Sheet == "DIVERS" && e.ExtractedValue == "POINT DE FEU");
+
+        // PLATINES / ORIFICES CAPACITES never carry a ConditionalPointRule in this profile -- neither
+        // can ever produce this code.
+        warnings.Should().NotContain(e => e.Sheet == "PLATINES" || e.Sheet == "ORIFICES CAPACITES");
+
+        result.Isolements.Should().HaveCount(18);
+    }
+
     [Fact]
     public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesExpectedHeadersAndValues()
     {

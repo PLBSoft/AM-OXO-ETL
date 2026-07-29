@@ -162,13 +162,18 @@ arrêter" — ce n'est pas un défaut de conception, juste un vrai besoin de rap
 par lot (batch import), distinct de la validation d'invariants métier sur une entité.
 
 ```csharp
-public enum ExtractionErrorCode { RequiredFieldMissing, UnparsableValue, UnrecognizedTypeElement }
+// Depuis le Lot 055 : le moteur ne juge que le profil, jamais le référentiel OXO --
+// NoConditionalPointCreated signifie "aucun Point conditionnel créé pour cet élément", pas
+// "valeur inconnue au référentiel". ExtractedValue porte la valeur brute comme donnée
+// structurée, déduplication par (feuille, valeur normalisée) à l'émission.
+public enum ExtractionErrorCode { RequiredFieldMissing, UnparsableValue, NoConditionalPointCreated, TacheMultipleTypeMismatch }
 
 public sealed record ExtractionError(
     string Sheet,
     string BlockIdentifier,      // ex. repère de l'Isolement concerné, ou n° de ligne
     ExtractionErrorCode Code,
-    string Message);             // technique et précis ("Cellule C6 introuvable ou vide")
+    string Message,              // technique et précis ("Cellule C6 introuvable ou vide")
+    string? ExtractedValue = null);
 ```
 
 `ExtractionError` alimente directement le point de log "Errors (exception type, merged cell
