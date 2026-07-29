@@ -45,6 +45,7 @@ public sealed class AutresJointsTouchesExtractionService(
         var isolements = new List<IsolementPivot>();
         var points = new List<PointPivot>();
         var errors = new List<ExtractionError>(blockResult.Errors);
+        var warningTracker = new NoConditionalPointCreatedWarningTracker(sheet);
 
         foreach (var block in blockResult.Blocks)
         {
@@ -69,9 +70,7 @@ public sealed class AutresJointsTouchesExtractionService(
 
             if (warning is not null)
             {
-                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.NoConditionalPointCreated, warning);
-                ExtractionErrorLogging.Log(logger, error);
-                errors.Add(error);
+                warningTracker.RecordIfNew(repere, typeElement, logger, errors);
             }
         }
 

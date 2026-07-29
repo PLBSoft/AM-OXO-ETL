@@ -47,6 +47,7 @@ public sealed class IsolementExtractionService(
         var isolements = new List<IsolementPivot>();
         var points = new List<PointPivot>();
         var errors = new List<ExtractionError>();
+        var warningTracker = new NoConditionalPointCreatedWarningTracker(sheet);
         var blockIndex = 0;
 
         while (true)
@@ -108,9 +109,7 @@ public sealed class IsolementExtractionService(
 
             if (warning is not null)
             {
-                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.NoConditionalPointCreated, warning);
-                ExtractionErrorLogging.Log(logger, error);
-                errors.Add(error);
+                warningTracker.RecordIfNew(repere, typeElement, logger, errors);
             }
 
             blockIndex++;

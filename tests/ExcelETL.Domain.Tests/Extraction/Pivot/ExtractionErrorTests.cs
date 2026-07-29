@@ -17,6 +17,16 @@ public class ExtractionErrorTests
         error.BlockIdentifier.Should().Be("C7401-ISO3");
         error.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
         error.Message.Should().Be("Cellule H18 introuvable ou vide.");
+        error.ExtractedValue.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithExtractedValue_ExposesItAsAStructuredField()
+    {
+        var error = new ExtractionError(
+            "ISOLEMENT", "C7401-V1", ExtractionErrorCode.NoConditionalPointCreated, "Message", extractedValue: "PROLOCK");
+
+        error.ExtractedValue.Should().Be("PROLOCK");
     }
 
     [Fact]

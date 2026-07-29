@@ -14,7 +14,9 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 // the 3 real client fixtures. None of the 3 files contain a "ZERO ENERGIE"-typed row in ISOLEMENT, so
 // every extracted isolement (all "PROLOCK" except D8570's one "VANNE") legitimately produces an
 // NoConditionalPointCreated warning for the unmatched conditional Colonne -- see
-// IsolementExtractionService's comment on why that's correct here, not a bug.
+// IsolementExtractionService's comment on why that's correct here, not a bug. Since Lot 055 (§55.5),
+// these warnings are deduplicated per (feuille, valeur normalisée) at emission time, so a sheet full
+// of identical "PROLOCK" isolements produces exactly one warning entry, not one per element.
 public class IsolementExtractionServiceIntegrationTests
 {
     private const string Sheet = "ISOLEMENT";
@@ -43,7 +45,8 @@ public class IsolementExtractionServiceIntegrationTests
         result.Isolements.Should().HaveCount(8);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         result.Points.Should().HaveCount(8 * 2);
-        result.Errors.Should().HaveCount(8).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
+            e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "PROLOCK");
     }
 
     [Fact]
@@ -60,7 +63,8 @@ public class IsolementExtractionServiceIntegrationTests
             new PointPivot("PROLOCK VANNES", "D8570-V4"),
             new PointPivot("DEPROLOCK VANNES", "D8570-V4")
         ]);
-        result.Errors.Should().HaveCount(15).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        result.Errors.Should().HaveCount(2).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        result.Errors.Select(e => e.ExtractedValue).Should().BeEquivalentTo(["PROLOCK", "VANNE"]);
     }
 
     [Fact]
@@ -71,7 +75,8 @@ public class IsolementExtractionServiceIntegrationTests
         result.Isolements.Should().HaveCount(3);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         result.Points.Should().HaveCount(3 * 2);
-        result.Errors.Should().HaveCount(3).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
+            e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "PROLOCK");
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

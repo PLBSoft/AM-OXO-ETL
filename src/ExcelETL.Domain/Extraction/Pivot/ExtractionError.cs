@@ -13,7 +13,13 @@ public sealed record ExtractionError
     public ExtractionErrorCode Code { get; }
     public string Message { get; }
 
-    public ExtractionError(string sheet, string blockIdentifier, ExtractionErrorCode code, string message)
+    // The raw extracted value the error relates to, as structured data rather than interpolated only
+    // into Message -- Lot 055 §55.3. Not renseigné by RequiredFieldMissing/UnparsableValue/
+    // TacheMultipleTypeMismatch, which have no single "extracted value" to report.
+    public string? ExtractedValue { get; }
+
+    public ExtractionError(
+        string sheet, string blockIdentifier, ExtractionErrorCode code, string message, string? extractedValue = null)
     {
         if (string.IsNullOrWhiteSpace(sheet))
         {
@@ -38,5 +44,6 @@ public sealed record ExtractionError
         BlockIdentifier = blockIdentifier;
         Code = code;
         Message = message;
+        ExtractedValue = extractedValue;
     }
 }

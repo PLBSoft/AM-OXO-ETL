@@ -82,9 +82,11 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         result.Points.Should().NotContain(p => p.ColonneNom == PoseEtiquettesColonneName && tubingReperes.Contains(p.ParentRepere));
         result.Points.Should().Contain(p => p.ColonneNom == PoseEtiquettesColonneName && !tubingReperes.Contains(p.ParentRepere));
 
-        // The 2 TUBING isolements each produce one non-blocking warning (POSE ÉTIQUETTES correctly
-        // not matching), the 2 TUYAUTERIE ones produce none.
-        result.Errors.Should().HaveCount(2).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        // The 2 TUBING isolements each fail to match POSE ÉTIQUETTES, but both share the same
+        // normalized extracted value ("TUBING") -- deduplicated (Lot 055 §55.5) to a single warning
+        // entry; the 2 TUYAUTERIE ones produce none.
+        result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
+            e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "TUBING");
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

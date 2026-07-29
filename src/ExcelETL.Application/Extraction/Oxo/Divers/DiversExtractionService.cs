@@ -51,6 +51,7 @@ public sealed class DiversExtractionService(
         var isolements = new List<IsolementPivot>();
         var points = new List<PointPivot>();
         var errors = new List<ExtractionError>(blockResult.Errors);
+        var warningTracker = new NoConditionalPointCreatedWarningTracker(sheet);
 
         foreach (var block in blockResult.Blocks)
         {
@@ -71,9 +72,7 @@ public sealed class DiversExtractionService(
 
             if (warning is not null)
             {
-                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.NoConditionalPointCreated, warning);
-                ExtractionErrorLogging.Log(logger, error);
-                errors.Add(error);
+                warningTracker.RecordIfNew(repere, typeElement, logger, errors);
             }
         }
 
