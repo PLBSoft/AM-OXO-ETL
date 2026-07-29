@@ -484,6 +484,9 @@
   <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Add a sheet rule</value>
   </data>
+  <data name="ImportProfileEditor_AddSheetToggleCloseButton" xml:space="preserve">
+    <value>Cancel the addition</value>
+  </data>
   <data name="ImportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
     <value>Sheet name</value>
   </data>
@@ -927,6 +930,9 @@
   </data>
   <data name="ExportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Add a sheet rule</value>
+  </data>
+  <data name="ExportProfileEditor_AddSheetToggleCloseButton" xml:space="preserve">
+    <value>Cancel the addition</value>
   </data>
   <data name="ExportProfileEditor_SheetNamePlaceholder" xml:space="preserve">
     <value>Sheet name</value>

@@ -63,10 +63,24 @@ public class ExportProfileEditorTests : BunitContext
 
     private IExportProfileStore Store => Services.GetRequiredService<IExportProfileStore>();
 
+    // Lot 057 (57.1): opens the add-sheet-rule form via the toggle button if it isn't already
+    // rendered -- closed by default in edit mode ("/{id}/edit"), and also closes itself again
+    // after a successful add (constat: "adding two sheets in a row costs one extra click"), so
+    // this is also needed between two AddValidSheetRule-style calls in the same test.
+    private static void OpenAddSheetRuleFormIfClosed(IRenderedComponent<ExportProfileEditor> cut)
+    {
+        if (cut.FindAll("#sheet-generation-rule-name-input").Count == 0)
+        {
+            cut.Find("#toggle-add-sheet-generation-rule-form-button").Click();
+        }
+    }
+
     // Fills SheetName + PivotSource, one mapped ColumnDefinition, one PointColumnDefinition,
     // then clicks "add sheet rule", leaving the render handle positioned after the add.
     private static void AddValidSheetRule(IRenderedComponent<ExportProfileEditor> cut)
     {
+        OpenAddSheetRuleFormIfClosed(cut);
+
         cut.Find("#sheet-generation-rule-name-input").Change("Parents");
         cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Equipement));
 
@@ -166,14 +180,15 @@ public class ExportProfileEditorTests : BunitContext
     });
 
     [Fact]
-    public void AddSheetRule_WithValidInput_DisplaysSheetSummaryAndResetsForm() => WithCulture("en-US", () =>
+    // Lot 057 (57.1): fixed in place -- mirror of the equivalent import-side test's own fix.
+    public void AddSheetRule_WithValidInput_DisplaysSheetSummaryAndClosesForm() => WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfileEditor>();
 
         AddValidSheetRule(cut);
 
         cut.Markup.Should().Contain("Parents");
-        cut.Find("#sheet-generation-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
+        cut.FindAll("#sheet-generation-rule-name-input").Should().BeEmpty();
 
         // Lot R3: columns/point columns are collapsed by default.
         cut.Markup.Should().NotContain("Repère");
@@ -563,6 +578,7 @@ public class ExportProfileEditorTests : BunitContext
         var cut = Render<ExportProfileEditor>();
 
         AddValidSheetRule(cut);
+        OpenAddSheetRuleFormIfClosed(cut);
 
         cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
         cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
@@ -581,6 +597,7 @@ public class ExportProfileEditorTests : BunitContext
         var cut = Render<ExportProfileEditor>();
 
         AddValidSheetRule(cut);
+        OpenAddSheetRuleFormIfClosed(cut);
         cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
         cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
         cut.Find("#column-header-input").Change("Numéro");
@@ -656,6 +673,7 @@ public class ExportProfileEditorTests : BunitContext
         var cut = Render<ExportProfileEditor>();
 
         AddValidSheetRule(cut);
+        OpenAddSheetRuleFormIfClosed(cut);
         cut.Find("#sheet-generation-rule-name-input").Change("Enfants");
         cut.Find("#sheet-generation-rule-pivot-source-select").Change(nameof(PivotSource.Isolement));
         cut.Find("#column-header-input").Change("Numéro");
@@ -1604,6 +1622,7 @@ public class ExportProfileEditorTests : BunitContext
             await Store.SaveAsync(profile);
 
             var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            OpenAddSheetRuleFormIfClosed(cut);
 
             cut.Find("#add-sheet-generation-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             cut.Find("#add-sheet-generation-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");

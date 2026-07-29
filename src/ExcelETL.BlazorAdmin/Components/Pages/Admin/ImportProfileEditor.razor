@@ -421,10 +421,31 @@ else
     </ul>
 }
 
+<!-- Lot 057 (57.1): the card itself is always rendered (the visual anchor "this is where you add
+     a sheet" never disappears); only its card-body -- the SheetRuleForm -- is conditional, behind
+     a standalone toggle button (not SheetRuleForm's own ShowCancel, which would also change its
+     submit button's icon/color, see the ticket's constat 3). A genuine conditional render (not CSS
+     display:none) so reopening always remounts a fresh, empty SheetRuleForm instance. -->
 <div class="card mb-3">
-    <div class="card-header">@Loc["ImportProfileEditor_AddSheetHeading"]</div>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
+        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
+                @onclick="ToggleAddSheetRuleFormAsync">
+            @if (_isAddFormOpen)
+            {
+                @Loc["ImportProfileEditor_AddSheetToggleCloseButton"]
+            }
+            else
+            {
+                @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddSheetButton"]
+            }
+        </button>
+    </div>
     <div class="card-body">
-        <SheetRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+        @if (_isAddFormOpen)
+        {
+            <SheetRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+        }
     </div>
 </div>
 
@@ -483,6 +504,12 @@ else
     private SheetRuleForm? _addSheetRuleFormRef;
     private SheetRuleForm? _editSheetRuleFormRef;
 
+    // Lot 057 (57.1): whether the add-sheet-rule form is currently rendered. Defaults to true
+    // (creation mode, "/new" -- an empty screen with no indication of what to do next would cost
+    // more than the accepted asymmetry with edit mode) and is set to false in OnInitializedAsync
+    // when editing an existing profile (repli par défaut, per Simon's 29/07 decision).
+    private bool _isAddFormOpen = true;
+
     // Lot 043: a single global flag, not a per-field diff -- see the ticket's own KISS/YAGNI
     // rationale. Set by every mutation entry point below, cleared only on a successful save.
     private bool _hasUnsavedChanges;
@@ -497,6 +524,8 @@ else
         {
             return;
         }
+
+        _isAddFormOpen = false;
 
         var profile = await ImportProfileStore.GetByIdAsync(Id.Value);
         if (profile is null)
@@ -614,9 +643,19 @@ else
         MarkAsChanged();
     }
 
+    // Lot 057 (57.1): a plain toggle for now -- 57.2 will fold this into the single open-form
+    // state and add the mutual-exclusion flush; this sub-ticket only introduces the repli/bascule
+    // itself, per the ticket's own recommended order.
+    private Task ToggleAddSheetRuleFormAsync()
+    {
+        _isAddFormOpen = !_isAddFormOpen;
+        return Task.CompletedTask;
+    }
+
     private void HandleAddSheetRule(SheetExtractionRule rule)
     {
         _sheetRules.Add(rule);
+        _isAddFormOpen = false;
         MarkAsChanged();
     }
 

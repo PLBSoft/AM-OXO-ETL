@@ -170,10 +170,27 @@ else
         </ul>
     }
 
+    <!-- Lot 057 (57.1): mirror of ImportProfileEditor.razor's own repliable add-sheet-rule card. -->
     <div class="card mb-3">
-        <div class="card-header">@Loc["ExportProfileEditor_AddSheetHeading"]</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>@Loc["ExportProfileEditor_AddSheetHeading"]</span>
+            <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
+                    @onclick="ToggleAddSheetRuleFormAsync">
+                @if (_isAddFormOpen)
+                {
+                    @Loc["ExportProfileEditor_AddSheetToggleCloseButton"]
+                }
+                else
+                {
+                    @((MarkupString)AdminIconMarkup.Plus) @Loc["ExportProfileEditor_AddSheetButton"]
+                }
+            </button>
+        </div>
         <div class="card-body">
-            <SheetGenerationRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ExportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+            @if (_isAddFormOpen)
+            {
+                <SheetGenerationRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ExportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+            }
         </div>
     </div>
 
@@ -212,6 +229,9 @@ else
     private SheetGenerationRuleForm? _addSheetRuleFormRef;
     private SheetGenerationRuleForm? _editSheetRuleFormRef;
 
+    // Lot 057 (57.1): mirror of ImportProfileEditor.razor's own repli/toggle state.
+    private bool _isAddFormOpen = true;
+
     // Lot 043 (43.2): mirror of ImportProfileEditor.razor's own state/logic (43.1).
     private bool _hasUnsavedChanges;
     private bool _showNavigationConfirmation;
@@ -225,6 +245,8 @@ else
         {
             return;
         }
+
+        _isAddFormOpen = false;
 
         var profile = await ExportProfileStore.GetByIdAsync(Id.Value);
         if (profile is null)
@@ -240,9 +262,17 @@ else
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
+    // Lot 057 (57.1): mirror of ImportProfileEditor.razor's own plain toggle (57.2 unifies).
+    private Task ToggleAddSheetRuleFormAsync()
+    {
+        _isAddFormOpen = !_isAddFormOpen;
+        return Task.CompletedTask;
+    }
+
     private void HandleAddSheetRule(SheetGenerationRule rule)
     {
         _sheetRules.Add(rule);
+        _isAddFormOpen = false;
         MarkAsChanged();
     }
 

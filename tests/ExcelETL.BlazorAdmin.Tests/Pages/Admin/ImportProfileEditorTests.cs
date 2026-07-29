@@ -141,8 +141,22 @@ public class ImportProfileEditorTests : BunitContext
     // Fills every field needed to pass the RepeatingBlockLocator/SheetExtractionRule build-up
     // (one block field, one unconditional colonne, one conditional point rule) and clicks
     // "add sheet rule", leaving the render handle positioned after the add.
+    // Lot 057 (57.1): the add-sheet-rule form is closed by default in edit mode ("/{id}/edit") --
+    // opens it via the toggle button only if it isn't already rendered (creation mode, "/new",
+    // renders it open by default, so this is then a no-op). One helper reused everywhere the
+    // add-form fields are touched, rather than inserting the same click at every call site.
+    private static void OpenAddSheetRuleFormIfClosed(IRenderedComponent<ImportProfileEditor> cut)
+    {
+        if (cut.FindAll("#sheet-rule-name-input").Count == 0)
+        {
+            cut.Find("#toggle-add-sheet-rule-form-button").Click();
+        }
+    }
+
     private static void AddValidSheetRule(IRenderedComponent<ImportProfileEditor> cut)
     {
+        OpenAddSheetRuleFormIfClosed(cut);
+
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("7");
@@ -229,14 +243,19 @@ public class ImportProfileEditorTests : BunitContext
     });
 
     [Fact]
-    public void AddSheetRule_WithValidInput_DisplaysSheetSummaryAndResetsForm() => WithCulture("en-US", () =>
+    // Lot 057 (57.1): this test's own premise -- the add-sheet-rule form stays open, merely reset
+    // to blank, after a successful add -- is exactly what this lot changes: the form now closes
+    // entirely (a genuine remount, not a reset), per Simon's own 29/07 decision that adding two
+    // sheets in a row costs one extra click. Fixed in place: absence of the field (not merely an
+    // empty value) is now the correct proof, and the toggle itself is asserted closed.
+    public void AddSheetRule_WithValidInput_DisplaysSheetSummaryAndClosesForm() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
 
         AddValidSheetRule(cut);
 
         cut.Markup.Should().Contain("ISOLEMENT");
-        cut.Find("#sheet-rule-name-input").GetAttribute("value").Should().BeNullOrEmpty();
+        cut.FindAll("#sheet-rule-name-input").Should().BeEmpty();
 
         // Lot R3: unconditional colonnes/conditional point rules are collapsed by default.
         cut.Markup.Should().NotContain("PROLOCK VANNES");
@@ -2291,6 +2310,7 @@ public class ImportProfileEditorTests : BunitContext
             await Store.SaveAsync(profile);
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            OpenAddSheetRuleFormIfClosed(cut);
 
             cut.Find("#add-sheet-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
