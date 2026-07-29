@@ -15,28 +15,28 @@
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName"
+        <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-name-input")">@Loc["ImportProfileEditor_SheetNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow"
+        <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-first-block-start-row-input")">@Loc["ImportProfileEditor_FirstBlockStartRowLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step"
+        <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-step-input")">@Loc["ImportProfileEditor_StepLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName"
+        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
     </div>
@@ -502,6 +502,14 @@
     [Parameter]
     public EventCallback<SheetExtractionRule> OnSubmit { get; set; }
 
+    // Lot 056 (56.3): raised on every mutation of this form's own state (root locator fields plus
+    // every add/modify/delete on its four nested sub-lists) so the root editor's "unsaved changes"
+    // indicator/NavigationLock guard also covers in-progress edits, not just committed ones.
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
+
+    private void MarkDirty() => OnDirty.InvokeAsync();
+
     private string _sheetName = string.Empty;
     private int _firstBlockStartRow;
     private int _step;
@@ -557,12 +565,17 @@
         _headerComposites.AddRange(InitialRule.HeaderComposites);
     }
 
-    private void AddBlockField(BlockFieldDefinition field) => _fields.Add(field);
+    private void AddBlockField(BlockFieldDefinition field)
+    {
+        _fields.Add(field);
+        MarkDirty();
+    }
 
     private void HandleSaveBlockField(int fieldIndex, BlockFieldDefinition updated)
     {
         _fields[fieldIndex] = updated;
         _editingFieldIndex = null;
+        MarkDirty();
     }
 
     private void DeleteBlockField(int fieldIndex)
@@ -572,6 +585,7 @@
         {
             _editingFieldIndex = null;
         }
+        MarkDirty();
     }
 
     private void AddUnconditionalColonneName()
@@ -583,6 +597,7 @@
 
         _unconditionalColonneNames.Add(_newUnconditionalColonneName);
         _newUnconditionalColonneName = string.Empty;
+        MarkDirty();
     }
 
     private void StartUnconditionalColonneEdit(int itemIndex)
@@ -603,6 +618,7 @@
         _unconditionalColonneNames[itemIndex] = _editingUnconditionalColonneValue;
         _editingUnconditionalColonneIndex = null;
         _unconditionalColonneEditError = null;
+        MarkDirty();
     }
 
     private void CancelUnconditionalColonneEdit()
@@ -618,6 +634,7 @@
         {
             _editingUnconditionalColonneIndex = null;
         }
+        MarkDirty();
     }
 
     private void AddPointRule()
@@ -632,6 +649,7 @@
             _newPointRuleSourceFieldName = string.Empty;
             _newPointRuleOperator = ConditionOperator.Equals;
             _newPointRuleComparisonValue = string.Empty;
+            MarkDirty();
         }
         catch (DomainValidationException ex)
         {
@@ -659,6 +677,7 @@
             _pointRules[itemIndex] = new ConditionalPointRule(
                 _editingPointRuleSourceFieldName, _editingPointRuleOperator, _editingPointRuleComparisonValue, _editingPointRuleColonneName);
             _editingPointRuleIndex = null;
+            MarkDirty();
         }
         catch (DomainValidationException ex)
         {
@@ -679,14 +698,20 @@
         {
             _editingPointRuleIndex = null;
         }
+        MarkDirty();
     }
 
-    private void AddHeaderField(HeaderFieldRule field) => _headerFields.Add(field);
+    private void AddHeaderField(HeaderFieldRule field)
+    {
+        _headerFields.Add(field);
+        MarkDirty();
+    }
 
     private void HandleSaveHeaderField(int fieldIndex, HeaderFieldRule updated)
     {
         _headerFields[fieldIndex] = updated;
         _editingHeaderFieldIndex = null;
+        MarkDirty();
     }
 
     // Deletion is immediate, no confirmation -- same parity-with-sibling-sublists decision as every
@@ -698,14 +723,20 @@
         {
             _editingHeaderFieldIndex = null;
         }
+        MarkDirty();
     }
 
-    private void AddHeaderComposite(HeaderCompositeRule composite) => _headerComposites.Add(composite);
+    private void AddHeaderComposite(HeaderCompositeRule composite)
+    {
+        _headerComposites.Add(composite);
+        MarkDirty();
+    }
 
     private void HandleSaveHeaderComposite(int itemIndex, HeaderCompositeRule updated)
     {
         _headerComposites[itemIndex] = updated;
         _editingHeaderCompositeIndex = null;
+        MarkDirty();
     }
 
     private void DeleteHeaderComposite(int itemIndex)
@@ -715,6 +746,7 @@
         {
             _editingHeaderCompositeIndex = null;
         }
+        MarkDirty();
     }
 
     private string FormatHeaderFieldSummary(HeaderFieldRule field)
@@ -754,8 +786,25 @@
         ];
     }
 
-    private async Task Submit()
+    // Lot 056 (56.2): the single validation path for this form -- reused by the CTA click (Submit,
+    // below) and by the root editor's implicit flush on "Save profile" (TryCommitAsync is the
+    // inter-lot contract Lot 057 also reuses as-is to close a form on an implicit switch). A form
+    // that was never touched (still exactly its just-reset/just-mounted state) is treated as "nothing
+    // to commit" -- true, no side effect -- so the root editor can safely flush an always-rendered,
+    // never-interacted-with add-sheet-rule form on every save without spuriously failing validation.
+    private bool IsBlank() =>
+        string.IsNullOrEmpty(_sheetName) && _firstBlockStartRow == 0 && _step == 0 &&
+        string.IsNullOrEmpty(_stopFieldName) && _fields.Count == 0 &&
+        _unconditionalColonneNames.Count == 0 && _pointRules.Count == 0 &&
+        _headerFields.Count == 0 && _headerComposites.Count == 0;
+
+    public async Task<bool> TryCommitAsync()
     {
+        if (IsBlank())
+        {
+            return true;
+        }
+
         _errorMessage = null;
 
         try
@@ -778,12 +827,16 @@
             await OnSubmit.InvokeAsync(rule);
 
             ResetForm();
+            return true;
         }
         catch (Exception ex) when (ex is DomainValidationException or DomainArgumentOutOfRangeException or DomainRuleViolationException)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return false;
         }
     }
+
+    private async Task Submit() => await TryCommitAsync();
 
     private async Task Cancel() => await OnCancel.InvokeAsync();
 

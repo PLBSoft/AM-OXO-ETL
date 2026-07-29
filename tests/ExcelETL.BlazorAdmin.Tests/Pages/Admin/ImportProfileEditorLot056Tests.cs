@@ -1,0 +1,350 @@
+using System.Globalization;
+using Bunit;
+using ExcelETL.Application.Exceptions;
+using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.BlazorAdmin.Components.Pages.Admin;
+using ExcelETL.BlazorAdmin.Resources;
+using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.Domain.Extraction.Primitives;
+using ExcelETL.Domain.Extraction.Profile;
+using ExcelETL.Infrastructure.Persistence;
+using ExcelETL.Infrastructure.Persistence.Repositories;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using Xunit;
+
+namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
+
+// Lot 056: recording model fixes -- 56.1 (level-2 button label), 56.2 (implicit flush on save),
+// 56.3 (unsaved-changes indicator extended to in-form state), 56.5 (Ctrl+Enter shortcut).
+// Kept in its own file (mirroring the project's established convention of a dedicated file per
+// concern -- e.g. ProfileEditorParityTests, FormFloatingStructureAuditTests) rather than inserted
+// into the already-huge ImportProfileEditorTests.cs.
+public class ImportProfileEditorLot056Tests : BunitContext
+{
+    public ImportProfileEditorLot056Tests()
+    {
+        var dbContextFactory = new TestDbContextFactory("ImportProfileEditorLot056Tests_" + Guid.NewGuid());
+        Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
+        Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
+        Services.AddLocalization();
+        Services.AddSingleton<BusinessExceptionLocalizer>();
+    }
+
+    private IImportProfileStore Store => Services.GetRequiredService<IImportProfileStore>();
+
+    private IStringLocalizer<BlazorAdminMessages> Loc => Services.GetRequiredService<IStringLocalizer<BlazorAdminMessages>>();
+
+    private static void WithCulture(string cultureName, Action action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+        try { action(); }
+        finally { CultureInfo.CurrentUICulture = originalCulture; }
+    }
+
+    private static async Task WithCultureAsync(string cultureName, Func<Task> action)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+        try { await action(); }
+        finally { CultureInfo.CurrentUICulture = originalCulture; }
+    }
+
+    private static ImportProfile BuildProfileWithOneSheetRule(
+        string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT",
+            firstBlockStartRow: 9,
+            step: 7,
+            stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
+
+        return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
+    }
+
+    // ------------------------------------------------------------------------------------------
+    // 56.1: new label for the level-2 submit button ("Apply changes" instead of "Save changes").
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task EditMode_SubmitButton_RendersApplyChangesLabel_NotSaveChanges() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            var expected = Loc["ImportProfileEditor_ApplySheetRuleButton"].Value;
+            cut.Find("#save-sheet-rule-button-0").TextContent.Should().Contain(expected);
+        });
+
+    [Fact]
+    public void AddMode_SubmitButton_StillRendersAddSheetLabel() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        var expected = Loc["ImportProfileEditor_AddSheetButton"].Value;
+        cut.Find("#add-sheet-rule-button").TextContent.Should().Contain(expected);
+    });
+
+    [Fact]
+    public async Task EditMode_NestedSubformAddButton_StillRendersSaveChangesLabel_NotApplyChanges() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            // The nested block-field add button lives one level down; it isn't the level-2
+            // sheet-rule button 56.1 targets, so it keeps "Add field", untouched.
+            var addFieldLabel = Loc["ImportProfileEditor_AddFieldButton"].Value;
+            cut.Find("#edit-0-add-block-field-button").TextContent.Should().Contain(addFieldLabel);
+        });
+
+    // ------------------------------------------------------------------------------------------
+    // 56.2: implicit flush -- "Save profile" commits an open sheet-rule form first, then persists
+    // once. This is the test that literally reproduces the 29/07 incident.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task SaveProfile_WithOpenEditFormHoldingUncommittedBlockField_PersistsTheNewField() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Find("#edit-0-block-field-name-input").Change("ETIQUETTE");
+            cut.Find("#edit-0-block-field-absolute-range-input").Change("H18:N18");
+            cut.Find("#edit-0-add-block-field-button").Click();
+
+            // Deliberately never click #save-sheet-rule-button-0.
+            cut.Find("#save-profile-button").Click();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Single().Locator.Fields.Should().Contain(f => f.Name == "ETIQUETTE");
+        });
+
+    [Fact]
+    public async Task SaveProfile_WithOpenAddFormFilledButNotSubmitted_PersistsTheNewSheet()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#profile-name-input").Change("MAD OXO");
+        cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
+
+        cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
+        cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
+        cut.Find("#sheet-rule-step-input").Change("7");
+        cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
+        cut.Find("#block-field-name-input").Change("Identification");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
+        cut.Find("#add-block-field-button").Click();
+
+        // Deliberately never click #add-sheet-rule-button.
+        cut.Find("#save-profile-button").Click();
+
+        (await Store.GetAllAsync()).Single().SheetRules.Should().ContainSingle(r => r.SheetName == "ISOLEMENT");
+    }
+
+    [Fact]
+    public async Task SaveProfile_WithOpenEditFormRenderedInvalid_DoesNotPersistAndKeepsFormOpen() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-step-input").Change("0");
+
+            cut.Find("#save-profile-button").Click();
+
+            // No navigation attempted, form still rendered with the alert on it.
+            cut.Find("#edit-0-sheet-rule-step-input").Should().NotBeNull();
+            cut.FindAll(".alert-danger").Should().NotBeEmpty();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Single().Locator.Step.Should().Be(7);
+        });
+
+    [Fact]
+    public async Task SaveProfile_WithNoFormOpen_BehavesLikeBeforeTheLot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#save-profile-button").Click();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Should().HaveCount(1);
+        });
+
+    // Note: the ticket's own "chained with 56.4" scenario (typing a sub-list row then clicking the
+    // CTA directly, with no blur/click on the row's own add button) depends on 56.4's blur/Enter
+    // validation, which doesn't exist yet at this point in the lot -- added alongside 56.4 instead
+    // of here, per the ticket's own "à écrire après" note for the equivalent 56.5 case.
+
+    // ------------------------------------------------------------------------------------------
+    // 56.3: unsaved-changes indicator/NavigationLock extended to in-form mutations.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task EditMode_ModifyingAFieldWithoutSubmitting_ShowsUnsavedChangesIndicator() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+
+            cut.FindAll("#unsaved-changes-indicator").Should().NotBeEmpty();
+        });
+
+    [Fact]
+    public async Task EditMode_CancelWithoutChanges_DoesNotShowIndicator() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#cancel-sheet-rule-button-0").Click();
+
+            cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task EditMode_AddingABlockFieldWithoutSubmittingTheSheet_ShowsIndicator() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-block-field-name-input").Change("ETIQUETTE");
+            cut.Find("#edit-0-block-field-absolute-range-input").Change("H18:N18");
+            cut.Find("#edit-0-add-block-field-button").Click();
+
+            cut.FindAll("#unsaved-changes-indicator").Should().NotBeEmpty();
+        });
+
+    [Fact]
+    public async Task EditMode_DeletingABlockFieldWithoutSubmittingTheSheet_ShowsIndicator() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-delete-block-field-button-0").Click();
+
+            cut.FindAll("#unsaved-changes-indicator").Should().NotBeEmpty();
+        });
+
+    [Fact]
+    public async Task AfterSuccessfulSave_IndicatorIsAbsent() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#save-profile-button").Click();
+
+            cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+        });
+
+    // ------------------------------------------------------------------------------------------
+    // 56.5: Ctrl+Enter saves the profile (through the same flush path as the CTA click).
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task CtrlEnter_OnRootContainer_SavesTheProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#profile-name-input").Change("MAD OXO renamed");
+
+            cut.Find(".profile-editor-container").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs
+            {
+                Key = "Enter",
+                CtrlKey = true,
+            });
+
+            (await Store.GetAllAsync()).Should().ContainSingle(p => p.Name == "MAD OXO renamed");
+        });
+
+    [Fact]
+    public async Task EnterAlone_OnRootContainer_DoesNotSaveTheProfile() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#profile-name-input").Change("MAD OXO renamed");
+
+            cut.Find(".profile-editor-container").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs
+            {
+                Key = "Enter",
+                CtrlKey = false,
+            });
+
+            (await Store.GetAllAsync()).Should().NotContain(p => p.Name == "MAD OXO renamed");
+        });
+
+    [Fact]
+    public async Task CtrlEnter_FlushesAnOpenFormBeforeSaving() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+
+            cut.Find(".profile-editor-container").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs
+            {
+                Key = "Enter",
+                CtrlKey = true,
+            });
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Single().Locator.StopFieldName.Should().Be("Autre");
+        });
+
+    [Fact]
+    public void SaveProfileButton_HasNonEmptyTitle_MentioningShortcut() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        var title = cut.Find("#save-profile-button").GetAttribute("title");
+        title.Should().NotBeNullOrEmpty();
+    });
+}

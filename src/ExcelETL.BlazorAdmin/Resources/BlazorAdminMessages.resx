@@ -469,6 +469,9 @@
   <data name="ImportProfileEditor_SaveButton" xml:space="preserve">
     <value>Save profile</value>
   </data>
+  <data name="ImportProfileEditor_SaveButtonShortcutHint" xml:space="preserve">
+    <value>Shortcut: Ctrl+Enter</value>
+  </data>
   <data name="ImportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Sheet rules</value>
   </data>
@@ -684,6 +687,9 @@
   </data>
   <data name="ImportProfileEditor_SaveChangesButton" xml:space="preserve">
     <value>Save changes</value>
+  </data>
+  <data name="ImportProfileEditor_ApplySheetRuleButton" xml:space="preserve">
+    <value>Apply changes</value>
   </data>
   <data name="ImportProfileEditor_CancelButton" xml:space="preserve">
     <value>Cancel</value>
@@ -907,6 +913,9 @@
   <data name="ExportProfileEditor_SaveButton" xml:space="preserve">
     <value>Save profile</value>
   </data>
+  <data name="ExportProfileEditor_SaveButtonShortcutHint" xml:space="preserve">
+    <value>Shortcut: Ctrl+Enter</value>
+  </data>
   <data name="ExportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Sheet rules</value>
   </data>
@@ -1008,6 +1017,9 @@
   </data>
   <data name="ExportProfileEditor_SaveChangesButton" xml:space="preserve">
     <value>Save changes</value>
+  </data>
+  <data name="ExportProfileEditor_ApplySheetRuleButton" xml:space="preserve">
+    <value>Apply changes</value>
   </data>
   <data name="ExportProfileEditor_CancelButton" xml:space="preserve">
     <value>Cancel</value>

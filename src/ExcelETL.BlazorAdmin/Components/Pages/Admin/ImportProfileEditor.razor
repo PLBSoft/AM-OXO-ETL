@@ -29,7 +29,11 @@
      to the export screenshot at the time, never revisited for the import twin.
      Lot 053 (53.1): profile-editor-container caps this route at 1140px on wide screens (see
      app.css) -- shared verbatim with ExportProfileEditor.razor's own root container. -->
-<div class="container-fluid px-3 profile-editor-container">
+<!-- Lot 056 (56.5): Ctrl+Enter saves the profile from anywhere in the editor, through the same
+     implicit-flush path as the CTA click (56.2). Plain Enter is deliberately left alone -- no
+     preventDefault -- since there is no <form> element here to accidentally submit and every text
+     input must keep behaving normally. -->
+<div class="container-fluid px-3 profile-editor-container" @onkeydown="OnRootKeyDownAsync">
 
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
 
@@ -298,13 +302,15 @@ else
             <li class="@(_editingIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
                 @if (_editingIndex == index)
                 {
-                    <SheetRuleForm IdPrefix="@($"edit-{index}-")"
+                    <SheetRuleForm @ref="_editSheetRuleFormRef"
+                                   IdPrefix="@($"edit-{index}-")"
                                    InitialRule="rule"
                                    SubmitButtonId="@($"save-sheet-rule-button-{index}")"
-                                   SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                   SubmitLabel="@Loc["ImportProfileEditor_ApplySheetRuleButton"]"
                                    ShowCancel="true"
                                    CancelButtonId="@($"cancel-sheet-rule-button-{index}")"
                                    OnCancel="() => _editingIndex = null"
+                                   OnDirty="MarkAsChanged"
                                    OnSubmit="(SheetExtractionRule updated) => HandleSaveSheetRule(index, updated)" />
                 }
                 else
@@ -418,7 +424,7 @@ else
 <div class="card mb-3">
     <div class="card-header">@Loc["ImportProfileEditor_AddSheetHeading"]</div>
     <div class="card-body">
-        <SheetRuleForm SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnSubmit="HandleAddSheetRule" />
+        <SheetRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
     </div>
 </div>
 
@@ -427,7 +433,8 @@ else
     <span id="unsaved-changes-indicator" class="text-warning">@Loc["ImportProfileEditor_UnsavedChangesIndicator"]</span>
 }
 <div class="right-aligned-actions">
-    <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4" @onclick="SaveProfileAsync">
+    <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
+            title="@Loc["ImportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
         @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
     </button>
 </div>
@@ -463,6 +470,14 @@ else
     private int? _editingIndex;
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
+
+    // Lot 056 (56.2): references to the (at most two) sheet-rule-form render locations that exist
+    // today -- the add-mode instance (always rendered) and, when one is open, the edit-mode
+    // instance. "Save profile" flushes both before persisting; TryCommitAsync() no-ops for a form
+    // that was never touched. Lot 057 will collapse this to a single open-form state, but this lot
+    // doesn't need to wait for that.
+    private SheetRuleForm? _addSheetRuleFormRef;
+    private SheetRuleForm? _editSheetRuleFormRef;
 
     // Lot 043: a single global flag, not a per-field diff -- see the ticket's own KISS/YAGNI
     // rationale. Set by every mutation entry point below, cleared only on a successful save.
@@ -632,9 +647,45 @@ else
         }
     }
 
+    // Lot 056 (56.2): commits whichever sheet-rule form(s) are currently rendered before
+    // constructing/persisting the profile -- "one flush in memory, then one write", never an
+    // intermediate SaveAsync call. A validation failure on either form aborts the whole save: no
+    // navigation, no persistence, the failing form keeps its own alert (single source of truth for
+    // the error, per the ticket's own requirement).
+    private async Task<bool> TryFlushOpenSheetRuleFormsAsync()
+    {
+        if (_editSheetRuleFormRef is not null && !await _editSheetRuleFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_addSheetRuleFormRef is not null && !await _addSheetRuleFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Lot 056 (56.5): Ctrl+Enter triggers the exact same save path as the CTA click, including the
+    // implicit flush above. Plain Enter never saves -- it's reserved for 56.4's own row-level
+    // validation inside a sub-list.
+    private async Task OnRootKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        if (args is { Key: "Enter", CtrlKey: true })
+        {
+            await SaveProfileAsync();
+        }
+    }
+
     private async Task SaveProfileAsync()
     {
         _profileErrorMessage = null;
+
+        if (!await TryFlushOpenSheetRuleFormsAsync())
+        {
+            return;
+        }
 
         try
         {

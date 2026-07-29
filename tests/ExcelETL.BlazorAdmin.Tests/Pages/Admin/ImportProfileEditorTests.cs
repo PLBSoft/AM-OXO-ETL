@@ -2913,6 +2913,12 @@ public class ImportProfileEditorTests : BunitContext
             cut.FindAll("li.sheet-rule-card").Should().BeEmpty();
         });
 
+    // Lot 056 (56.3): this test's own original premise -- that adding a header field to the
+    // always-rendered add-sheet-rule form shows no indicator until the whole sheet rule is
+    // submitted -- is exactly the blind spot 56.3 closes (SheetRuleForm.OnDirty now fires from
+    // every in-form mutation, including this one, not just the root editor's own 8 mutation
+    // points). Fixed in place, not duplicated: the indicator is now expected already present right
+    // after the header field is added, and stays present once the sheet rule itself is submitted.
     [Fact]
     public void AddingSheetRuleWithHeaderField_ThenSubmitting_ShowsUnsavedChangesIndicator() => WithCulture("en-US", () =>
     {
@@ -2923,7 +2929,7 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#header-field-header-field-range-input").Change("M2:O2");
         cut.Find("#add-header-field-button").Click();
 
-        cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+        cut.FindAll("#unsaved-changes-indicator").Should().HaveCount(1);
 
         cut.Find("#add-sheet-rule-button").Click();
 

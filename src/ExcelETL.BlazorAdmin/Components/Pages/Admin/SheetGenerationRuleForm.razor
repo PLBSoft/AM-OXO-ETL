@@ -13,7 +13,7 @@
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="_sheetName"
+        <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="_sheetName" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-generation-rule-name-input")">@Loc["ExportProfileEditor_SheetNameLabel"]</label>
     </div>
@@ -26,7 +26,7 @@
 <div class="mb-3">
     <div class="form-floating">
         <select id="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")" class="form-select"
-                @bind="_pivotSource" @bind:after="OnPivotSourceChanged">
+                @bind="_pivotSource" @bind:after="OnPivotSourceChangedAndMarkDirty">
             <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
             <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
             <option value="@PivotSource.TacheMultiple">@Loc["ExportProfileEditor_PivotSource_TacheMultiple"]</option>
@@ -275,6 +275,13 @@
     [Parameter]
     public EventCallback<SheetGenerationRule> OnSubmit { get; set; }
 
+    // Lot 056 (56.3): mirror of SheetRuleForm's own OnDirty -- raised on every mutation of this
+    // form's state so the root editor's "unsaved changes" guard covers in-progress edits too.
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
+
+    private void MarkDirty() => OnDirty.InvokeAsync();
+
     private string _sheetName = string.Empty;
     private PivotSource _pivotSource = PivotSource.Equipement;
     private readonly List<ColumnDefinition> _columns = [];
@@ -310,6 +317,12 @@
     // DomainRuleViolationException for state the user can no longer even see. Switching back to
     // Equipement/Isolement only restores the ability to add new Point/Application columns, it does not
     // resurrect ones cleared by an earlier switch to TacheMultiple.
+    private void OnPivotSourceChangedAndMarkDirty()
+    {
+        OnPivotSourceChanged();
+        MarkDirty();
+    }
+
     private void OnPivotSourceChanged()
     {
         if (_pivotSource != PivotSource.TacheMultiple)
@@ -330,12 +343,17 @@
         }
     }
 
-    private void AddColumn(ColumnDefinition column) => _columns.Add(column);
+    private void AddColumn(ColumnDefinition column)
+    {
+        _columns.Add(column);
+        MarkDirty();
+    }
 
     private void HandleSaveColumn(int index, ColumnDefinition updated)
     {
         _columns[index] = updated;
         _editingColumnIndex = null;
+        MarkDirty();
     }
 
     private void DeleteColumn(int index)
@@ -345,14 +363,20 @@
         {
             _editingColumnIndex = null;
         }
+        MarkDirty();
     }
 
-    private void AddPointColumn(PointColumnDefinition pointColumn) => _pointColumns.Add(pointColumn);
+    private void AddPointColumn(PointColumnDefinition pointColumn)
+    {
+        _pointColumns.Add(pointColumn);
+        MarkDirty();
+    }
 
     private void HandleSavePointColumn(int index, PointColumnDefinition updated)
     {
         _pointColumns[index] = updated;
         _editingPointColumnIndex = null;
+        MarkDirty();
     }
 
     private void DeletePointColumn(int index)
@@ -362,14 +386,20 @@
         {
             _editingPointColumnIndex = null;
         }
+        MarkDirty();
     }
 
-    private void AddApplicationColumn(ApplicationColumnDefinition applicationColumn) => _applicationColumns.Add(applicationColumn);
+    private void AddApplicationColumn(ApplicationColumnDefinition applicationColumn)
+    {
+        _applicationColumns.Add(applicationColumn);
+        MarkDirty();
+    }
 
     private void HandleSaveApplicationColumn(int index, ApplicationColumnDefinition updated)
     {
         _applicationColumns[index] = updated;
         _editingApplicationColumnIndex = null;
+        MarkDirty();
     }
 
     private void DeleteApplicationColumn(int index)
@@ -379,10 +409,22 @@
         {
             _editingApplicationColumnIndex = null;
         }
+        MarkDirty();
     }
 
-    private async Task Submit()
+    // Lot 056 (56.2): same "blank form is trivially committed" contract as SheetRuleForm.TryCommitAsync
+    // -- lets the root editor safely flush an always-rendered, untouched add-sheet form on every save.
+    private bool IsBlank() =>
+        string.IsNullOrEmpty(_sheetName) && _pivotSource == PivotSource.Equipement &&
+        _columns.Count == 0 && _pointColumns.Count == 0 && _applicationColumns.Count == 0;
+
+    public async Task<bool> TryCommitAsync()
     {
+        if (IsBlank())
+        {
+            return true;
+        }
+
         _errorMessage = null;
 
         try
@@ -395,12 +437,16 @@
             await OnSubmit.InvokeAsync(rule);
 
             ResetForm();
+            return true;
         }
         catch (Exception ex) when (ex is DomainValidationException or DomainRuleViolationException)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return false;
         }
     }
+
+    private async Task Submit() => await TryCommitAsync();
 
     private async Task Cancel() => await OnCancel.InvokeAsync();
 
