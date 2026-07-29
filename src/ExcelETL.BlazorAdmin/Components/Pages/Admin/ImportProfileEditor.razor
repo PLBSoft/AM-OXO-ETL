@@ -428,15 +428,19 @@ else
     </div>
 </div>
 
-@if (_hasUnsavedChanges)
-{
-    <span id="unsaved-changes-indicator" class="text-warning">@Loc["ImportProfileEditor_UnsavedChangesIndicator"]</span>
-}
-<div class="right-aligned-actions">
-    <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
-            title="@Loc["ImportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
-        @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
-    </button>
+<!-- Lot 056 (56.6): sticky save bar -- the CTA and the unsaved-changes indicator stay visible at
+     the bottom of the (long) editor at all times, so saving never costs a scroll-to-bottom. -->
+<div class="profile-editor-save-bar">
+    @if (_hasUnsavedChanges)
+    {
+        <span id="unsaved-changes-indicator" class="text-warning">@Loc["ImportProfileEditor_UnsavedChangesIndicator"]</span>
+    }
+    <div class="right-aligned-actions">
+        <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
+                title="@Loc["ImportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
+            @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
+        </button>
+    </div>
 </div>
 }
 

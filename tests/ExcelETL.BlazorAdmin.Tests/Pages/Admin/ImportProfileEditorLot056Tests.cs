@@ -349,6 +349,42 @@ public class ImportProfileEditorLot056Tests : BunitContext
     });
 
     // ------------------------------------------------------------------------------------------
+    // 56.6: sticky save bar.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void SaveButton_IsDescendantOfStickySaveBar() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find(".profile-editor-save-bar #save-profile-button").Should().NotBeNull();
+        cut.Find("#save-profile-button").ClassList.Should().Contain("btn-primary").And.Contain("btn-lg");
+        cut.Find("#save-profile-button").ParentElement!.ClassList.Should().Contain("right-aligned-actions");
+    });
+
+    [Fact]
+    public async Task UnsavedChangesIndicator_IsDescendantOfSameSaveBarAsButton_WhenRendered() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#profile-name-input").Change("changed");
+
+            cut.Find(".profile-editor-save-bar #unsaved-changes-indicator").Should().NotBeNull();
+        });
+
+    [Fact]
+    public void SaveBarAndContainer_HaveNoInlineStyleAttribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfileEditor>();
+
+        cut.Find(".profile-editor-save-bar").GetAttribute("style").Should().BeNullOrEmpty();
+        cut.Find(".profile-editor-container").GetAttribute("style").Should().BeNullOrEmpty();
+    });
+
+    // ------------------------------------------------------------------------------------------
     // 56.4: blur/Enter validation on the 3 eligible 1-2 field sub-lists (BlockFieldForm,
     // HeaderCompositeRuleForm, the inline unconditional-colonne row). Exercised through the
     // always-present "add a sheet rule" card, since that's where these sub-forms live unprefixed.

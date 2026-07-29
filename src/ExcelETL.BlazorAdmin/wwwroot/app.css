@@ -227,6 +227,29 @@ h1:focus {
 .profile-editor-container {
     max-width: 1140px;
     margin-inline: auto;
+    /* Lot 056 (56.6): leaves room at the bottom of the (long) editor so the sticky save bar below
+       never overlaps the last real field -- an approximate, generous fixed value (the bar's exact
+       rendered height isn't known in pure CSS without extra JS), not a hard cap on anything else. */
+    padding-bottom: 5rem;
+}
+
+/* Lot 056 (56.6): groups the "unsaved changes" indicator and the final CTA into one bar pinned to
+   the bottom of the viewport while scrolling through a long profile-editor route, so saving never
+   costs a scroll-to-bottom. Stays *inside* .profile-editor-container (no full-viewport-width bleed
+   on wide screens) via its own max-width mirroring the container's -- not by being a child that
+   inherits width from a `position: sticky` ancestor, which doesn't constrain a bar's own width on
+   its own. `.right-aligned-actions` inside it is unaffected by the `.sheet-rule-card > ...` rule
+   above (that selector only ever matches a direct child of a card). No fixed width/min-width, only
+   a max-width -- full-bleed on mobile, matching every prior mobile-first rule in this file. */
+.profile-editor-save-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 1140px;
+    margin-inline: auto;
+    background-color: var(--bs-body-bg);
+    padding-block: 0.75rem;
 }
 
 /* V12 (Lot V): Bootstrap ships no responsive width utility (w-100 has no md-scoped counterpart) --

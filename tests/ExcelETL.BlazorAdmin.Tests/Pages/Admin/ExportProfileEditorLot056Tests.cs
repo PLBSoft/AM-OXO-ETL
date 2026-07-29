@@ -256,4 +256,40 @@ public class ExportProfileEditorLot056Tests : BunitContext
         var title = cut.Find("#save-export-profile-button").GetAttribute("title");
         title.Should().NotBeNullOrEmpty();
     });
+
+    // ------------------------------------------------------------------------------------------
+    // 56.6: sticky save bar.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void SaveButton_IsDescendantOfStickySaveBar() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find(".profile-editor-save-bar #save-export-profile-button").Should().NotBeNull();
+        cut.Find("#save-export-profile-button").ClassList.Should().Contain("btn-primary").And.Contain("btn-lg");
+        cut.Find("#save-export-profile-button").ParentElement!.ClassList.Should().Contain("right-aligned-actions");
+    });
+
+    [Fact]
+    public async Task UnsavedChangesIndicator_IsDescendantOfSameSaveBarAsButton_WhenRendered() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#export-profile-name-input").Change("changed");
+
+            cut.Find(".profile-editor-save-bar #unsaved-changes-indicator").Should().NotBeNull();
+        });
+
+    [Fact]
+    public void SaveBarAndContainer_HaveNoInlineStyleAttribute() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfileEditor>();
+
+        cut.Find(".profile-editor-save-bar").GetAttribute("style").Should().BeNullOrEmpty();
+        cut.Find(".profile-editor-container").GetAttribute("style").Should().BeNullOrEmpty();
+    });
 }

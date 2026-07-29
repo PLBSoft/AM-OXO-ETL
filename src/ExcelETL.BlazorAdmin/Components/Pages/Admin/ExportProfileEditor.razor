@@ -177,15 +177,18 @@ else
         </div>
     </div>
 
-    @if (_hasUnsavedChanges)
-    {
-        <span id="unsaved-changes-indicator" class="text-warning">@Loc["ExportProfileEditor_UnsavedChangesIndicator"]</span>
-    }
-    <div class="right-aligned-actions">
-        <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
-                title="@Loc["ExportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
-            @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
-        </button>
+    <!-- Lot 056 (56.6): mirror of ImportProfileEditor.razor's own sticky save bar. -->
+    <div class="profile-editor-save-bar">
+        @if (_hasUnsavedChanges)
+        {
+            <span id="unsaved-changes-indicator" class="text-warning">@Loc["ExportProfileEditor_UnsavedChangesIndicator"]</span>
+        }
+        <div class="right-aligned-actions">
+            <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
+                    title="@Loc["ExportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
+                @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
+            </button>
+        </div>
     </div>
 }
 
