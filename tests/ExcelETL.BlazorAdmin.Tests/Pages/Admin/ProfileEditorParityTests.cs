@@ -461,6 +461,24 @@ public class ProfileEditorParityTests : BunitContext
             importSubmitClass.Should().NotBe(importCancelClass);
         });
 
+    // Lot 057 (57.3, closing test of the lot): the add-sheet-rule toggle button (57.1), the last
+    // element this lot introduces that didn't exist in either editor before it. Strict class-string
+    // comparison, per this file's own established convention -- and the mutual-exclusion behavior
+    // (57.2) is already exercised on both sides by ImportProfileEditorLot057Tests.cs/
+    // ExportProfileEditorLot057Tests.cs, so parity here isn't only cosmetic.
+    [Fact]
+    public void AddSheetRuleToggleButton_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importToggleClass = importCut.Find("#toggle-add-sheet-rule-form-button").GetAttribute("class");
+        var exportToggleClass = exportCut.Find("#toggle-add-sheet-generation-rule-form-button").GetAttribute("class");
+
+        importToggleClass.Should().Be(exportToggleClass);
+        importToggleClass.Should().Be("btn btn-sm btn-outline-secondary");
+    });
+
     private static void WithCulture(string cultureName, Action action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;
