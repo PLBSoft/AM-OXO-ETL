@@ -13,6 +13,14 @@
   --m3-secondary-rgb: 119, 86, 82;
   --m3-on-secondary: #FFFFFF;
 
+  /* Lot 058 (58.1): tonal "container" pair for .btn-secondary (fond plein), distinct from
+     --m3-secondary above which stays the .btn-outline-secondary/.text-bg-secondary role,
+     untouched. M3 baseline values for the red family, not a new palette choice -- 13.3:1 contrast
+     in this (light) theme. */
+  --m3-secondary-container: #FFDAD6;
+  --m3-secondary-container-rgb: 255, 218, 214;
+  --m3-on-secondary-container: #2C1512;
+
   --m3-success: #2E7D32;
   --m3-success-rgb: 46, 125, 50;
   --m3-on-success: #FFFFFF;
@@ -105,6 +113,15 @@
   --m3-secondary: #E7BDB8;
   --m3-secondary-rgb: 231, 189, 184;
   --m3-on-secondary: #442925;
+
+  /* Lot 058 (58.1): dark-theme tonal "container" pair, M3 baseline values -- 7.3:1 contrast.
+     Deliberate visible change from the pre-058 rendering (fond rosé clair -> fond brun foncé),
+     Variante A per the ticket, not a regression: the light theme is the one with the real defect
+     (a dull taupe indistinguishable from a disabled field), the dark theme never had that problem
+     but keeps the canonical M3 role value rather than a copy of --m3-secondary. -->
+  --m3-secondary-container: #5D3F3B;
+  --m3-secondary-container-rgb: 93, 63, 59;
+  --m3-on-secondary-container: #FFDAD6;
 
   --m3-success: #81C784;
   --m3-success-rgb: 129, 199, 132;
@@ -232,20 +249,23 @@
   --bs-btn-disabled-border-color: var(--m3-primary);
 }
 
+/* Lot 058 (58.1): remapped onto the tonal secondary-container pair -- .btn-outline-secondary and
+   .text-bg-secondary below are untouched, still on --m3-secondary/--m3-on-secondary. Structure
+   (the color-mix hover/active shape) is unchanged, only the base tokens it reads from. */
 .btn-secondary {
-  --bs-btn-color: var(--m3-on-secondary);
-  --bs-btn-bg: var(--m3-secondary);
-  --bs-btn-border-color: var(--m3-secondary);
-  --bs-btn-hover-color: var(--m3-on-secondary);
-  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-secondary) 88%, black);
-  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-secondary) 82%, black);
-  --bs-btn-focus-shadow-rgb: var(--m3-secondary-rgb);
-  --bs-btn-active-color: var(--m3-on-secondary);
-  --bs-btn-active-bg: color-mix(in srgb, var(--m3-secondary) 78%, black);
-  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-secondary) 72%, black);
-  --bs-btn-disabled-color: var(--m3-on-secondary);
-  --bs-btn-disabled-bg: var(--m3-secondary);
-  --bs-btn-disabled-border-color: var(--m3-secondary);
+  --bs-btn-color: var(--m3-on-secondary-container);
+  --bs-btn-bg: var(--m3-secondary-container);
+  --bs-btn-border-color: var(--m3-secondary-container);
+  --bs-btn-hover-color: var(--m3-on-secondary-container);
+  --bs-btn-hover-bg: color-mix(in srgb, var(--m3-secondary-container) 88%, black);
+  --bs-btn-hover-border-color: color-mix(in srgb, var(--m3-secondary-container) 82%, black);
+  --bs-btn-focus-shadow-rgb: var(--m3-secondary-container-rgb);
+  --bs-btn-active-color: var(--m3-on-secondary-container);
+  --bs-btn-active-bg: color-mix(in srgb, var(--m3-secondary-container) 78%, black);
+  --bs-btn-active-border-color: color-mix(in srgb, var(--m3-secondary-container) 72%, black);
+  --bs-btn-disabled-color: var(--m3-on-secondary-container);
+  --bs-btn-disabled-bg: var(--m3-secondary-container);
+  --bs-btn-disabled-border-color: var(--m3-secondary-container);
 }
 
 .btn-success {
