@@ -214,4 +214,161 @@ public class ImportProfileEditorLot057Tests : BunitContext
             var reloaded = (await Store.GetAllAsync()).Single();
             reloaded.SheetRules.Should().Contain(r => r.SheetName == "PLATINES");
         });
+
+    // ------------------------------------------------------------------------------------------
+    // 57.2: mutual exclusion.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task ModifyingAnotherSheet_ClosesTheCurrentlyEditedOne_AndCommitsItsChanges() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+
+            cut.Find("#modify-sheet-rule-button-1").Click();
+
+            cut.FindAll("#edit-0-sheet-rule-stop-field-name-input").Should().BeEmpty();
+            cut.FindAll("#edit-1-sheet-rule-name-input").Should().HaveCount(1);
+
+            // The feuille 0 modification (commit via the flush, not an explicit "Save changes"
+            // click) is visible in its own read-only card's metadata line.
+            cut.FindAll("li.sheet-rule-card").Should().Contain(li => li.TextContent.Contains("Autre"));
+        });
+
+    [Fact]
+    public async Task ModifyingAnotherSheet_WhenCurrentIsInvalid_KeepsCurrentOpenAndDoesNotSwitch() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-step-input").Change("0");
+
+            cut.Find("#modify-sheet-rule-button-1").Click();
+
+            cut.FindAll("#edit-0-sheet-rule-step-input").Should().HaveCount(1);
+            cut.FindAll("#edit-1-sheet-rule-name-input").Should().BeEmpty();
+            cut.FindAll(".alert-danger").Should().NotBeEmpty();
+        });
+
+    [Fact]
+    public async Task ValidAddFormOpen_ThenModifyingAnExistingSheet_AddsTheNewSheet_AndOpensEdit() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#toggle-add-sheet-rule-form-button").Click();
+            cut.Find("#sheet-rule-name-input").Change("PLATINES");
+            cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
+            cut.Find("#sheet-rule-step-input").Change("8");
+            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
+            cut.Find("#block-field-name-input").Change("Identification");
+            cut.Find("#block-field-absolute-range-input").Change("B17:E17");
+            cut.Find("#add-block-field-button").Click();
+
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.Markup.Should().Contain("PLATINES");
+            cut.FindAll("#edit-0-sheet-rule-name-input").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task OpeningEdit_ThenClickingAddToggle_CommitsTheEditAndOpensAdd() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+
+            cut.Find("#toggle-add-sheet-rule-form-button").Click();
+
+            cut.FindAll("#edit-0-sheet-rule-stop-field-name-input").Should().BeEmpty();
+            cut.FindAll("#sheet-rule-name-input").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task CancelOnModifiedEditForm_DiscardsChanges_NoCommit_NoOtherFormOpens() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+
+            cut.Find("#cancel-sheet-rule-button-0").Click();
+
+            cut.Find("#save-profile-button").Click();
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Single().Locator.StopFieldName.Should().Be("Identification");
+            cut.FindAll("#sheet-rule-name-input").Should().BeEmpty();
+            cut.FindAll("#edit-0-sheet-rule-name-input").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task PendingDeleteConfirmation_ThenModifyingAnotherSheet_ClosesConfirmation_DeletesNothing() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#delete-sheet-rule-button-1").Click();
+            cut.FindAll("#confirm-delete-sheet-rule-button-1").Should().HaveCount(1);
+
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            cut.FindAll("#confirm-delete-sheet-rule-button-1").Should().BeEmpty();
+
+            var reloaded = (await Store.GetAllAsync()).Single();
+            reloaded.SheetRules.Should().HaveCount(2);
+        });
+
+    [Fact]
+    public async Task AtMostOneSheetRuleFormRendered_AcrossMultipleOpenActions() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.FindAll("input[id*='sheet-rule-name-input']").Should().HaveCount(1);
+
+            cut.Find("#modify-sheet-rule-button-1").Click();
+            cut.FindAll("input[id*='sheet-rule-name-input']").Should().HaveCount(1);
+
+            cut.Find("#toggle-add-sheet-rule-form-button").Click();
+            cut.FindAll("input[id*='sheet-rule-name-input']").Should().HaveCount(1);
+        });
+
+    [Fact]
+    public async Task EditingCard_CarriesEditingItemClass_OthersDoNot() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithTwoSheetRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-1").Click();
+
+            var items = cut.FindAll("li.sheet-rule-editing-item, li.sheet-rule-card");
+            items.Should().HaveCount(2);
+            items[0].ClassList.Should().Contain("sheet-rule-card");
+            items[1].ClassList.Should().Contain("sheet-rule-editing-item");
+        });
 }

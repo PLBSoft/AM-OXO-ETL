@@ -299,8 +299,8 @@ else
         {
             var index = i;
             var rule = _sheetRules[index];
-            <li class="@(_editingIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
-                @if (_editingIndex == index)
+            <li class="@(_openSheetRuleForm.EditIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
+                @if (_openSheetRuleForm.EditIndex == index)
                 {
                     <SheetRuleForm @ref="_editSheetRuleFormRef"
                                    IdPrefix="@($"edit-{index}-")"
@@ -309,7 +309,7 @@ else
                                    SubmitLabel="@Loc["ImportProfileEditor_ApplySheetRuleButton"]"
                                    ShowCancel="true"
                                    CancelButtonId="@($"cancel-sheet-rule-button-{index}")"
-                                   OnCancel="() => _editingIndex = null"
+                                   OnCancel="() => _openSheetRuleForm = SheetRuleFormOpenState.None"
                                    OnDirty="MarkAsChanged"
                                    OnSubmit="(SheetExtractionRule updated) => HandleSaveSheetRule(index, updated)" />
                 }
@@ -404,13 +404,13 @@ else
                             <button id="@($"modify-sheet-rule-button-{index}")" type="button"
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_ModifyButton"]" title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                    @onclick="() => _editingIndex = index">
+                                    @onclick="() => RequestOpenEditAsync(index)">
                                 @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="@($"delete-sheet-rule-button-{index}")" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_DeleteButton"]" title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                    @onclick="() => _pendingDeleteIndex = index">
+                                    @onclick="() => RequestDeleteSheetRuleAsync(index)">
                                 @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         </div>
@@ -431,7 +431,7 @@ else
         <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
         <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
                 @onclick="ToggleAddSheetRuleFormAsync">
-            @if (_isAddFormOpen)
+            @if (_openSheetRuleForm.IsAdd)
             {
                 @Loc["ImportProfileEditor_AddSheetToggleCloseButton"]
             }
@@ -442,7 +442,7 @@ else
         </button>
     </div>
     <div class="card-body">
-        @if (_isAddFormOpen)
+        @if (_openSheetRuleForm.IsAdd)
         {
             <SheetRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
         }
@@ -492,23 +492,35 @@ else
     private string? _defaultApplicationNameEditError;
 
     private readonly List<SheetExtractionRule> _sheetRules = [];
-    private int? _editingIndex;
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
-    // Lot 056 (56.2): references to the (at most two) sheet-rule-form render locations that exist
-    // today -- the add-mode instance (always rendered) and, when one is open, the edit-mode
-    // instance. "Save profile" flushes both before persisting; TryCommitAsync() no-ops for a form
-    // that was never touched. Lot 057 will collapse this to a single open-form state, but this lot
-    // doesn't need to wait for that.
+    // Lot 057 (57.2): the single open-form state -- replaces the pre-057 pair of independent
+    // fields (56.2's _editingIndex, 57.1's own add-open bool), whose combination could otherwise
+    // silently contradict itself (e.g. both "editing index 2" and "add form open" true at once).
+    // Exactly one of the three states holds at any time: none, add, or edit of a specific index --
+    // enforced at the type level (only None/Add/Edit(n) can ever be constructed), not by two
+    // mutable fields a caller could set independently.
+    private readonly record struct SheetRuleFormOpenState(bool IsAdd, int? EditIndex)
+    {
+        public static readonly SheetRuleFormOpenState None = new(false, null);
+
+        public static SheetRuleFormOpenState Add => new(true, null);
+
+        public static SheetRuleFormOpenState Edit(int index) => new(false, index);
+    }
+
+    // Defaults to Add (creation mode, "/new" -- an empty screen with no indication of what to do
+    // next would cost more than the accepted asymmetry with edit mode) and is set to None in
+    // OnInitializedAsync when editing an existing profile (repli par défaut, Simon's 29/07 decision).
+    private SheetRuleFormOpenState _openSheetRuleForm = SheetRuleFormOpenState.Add;
+
+    // Lot 056 (56.2): references to the (at most one, since 57.2's mutual exclusion) currently-
+    // rendered sheet-rule-form -- the add-mode instance or the edit-mode instance. "Save profile"
+    // flushes whichever is open before persisting; TryCommitAsync() no-ops for a form that was
+    // never touched.
     private SheetRuleForm? _addSheetRuleFormRef;
     private SheetRuleForm? _editSheetRuleFormRef;
-
-    // Lot 057 (57.1): whether the add-sheet-rule form is currently rendered. Defaults to true
-    // (creation mode, "/new" -- an empty screen with no indication of what to do next would cost
-    // more than the accepted asymmetry with edit mode) and is set to false in OnInitializedAsync
-    // when editing an existing profile (repli par défaut, per Simon's 29/07 decision).
-    private bool _isAddFormOpen = true;
 
     // Lot 043: a single global flag, not a per-field diff -- see the ticket's own KISS/YAGNI
     // rationale. Set by every mutation entry point below, cleared only on a successful save.
@@ -525,7 +537,7 @@ else
             return;
         }
 
-        _isAddFormOpen = false;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
 
         var profile = await ImportProfileStore.GetByIdAsync(Id.Value);
         if (profile is null)
@@ -643,26 +655,83 @@ else
         MarkAsChanged();
     }
 
-    // Lot 057 (57.1): a plain toggle for now -- 57.2 will fold this into the single open-form
-    // state and add the mutual-exclusion flush; this sub-ticket only introduces the repli/bascule
-    // itself, per the ticket's own recommended order.
-    private Task ToggleAddSheetRuleFormAsync()
+    // Lot 057 (57.2): the one place that closes whichever sheet-rule form is currently open,
+    // trying to commit it first via TryCommitAsync() (the single validation path from 56.2 -- this
+    // lot reuses it as-is, per its own inter-lot contract). Returns false, leaving the form open
+    // with its own alert, when the commit fails -- callers must not proceed to open a different
+    // form (or a delete confirmation) in that case. A no-op (true) when nothing is open, or when
+    // the open form was never touched (TryCommitAsync's own "blank form" short-circuit).
+    private async Task<bool> TryCloseOpenFormAsync()
     {
-        _isAddFormOpen = !_isAddFormOpen;
-        return Task.CompletedTask;
+        if (_openSheetRuleForm.EditIndex is not null && _editSheetRuleFormRef is not null)
+        {
+            return await _editSheetRuleFormRef.TryCommitAsync();
+        }
+
+        if (_openSheetRuleForm.IsAdd && _addSheetRuleFormRef is not null)
+        {
+            return await _addSheetRuleFormRef.TryCommitAsync();
+        }
+
+        return true;
+    }
+
+    // Opening any form (add or edit) also cancels a pending delete confirmation -- "one thing in
+    // progress at a time" covers that case too (constat 5).
+    private async Task RequestOpenEditAsync(int index)
+    {
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
+    }
+
+    // The toggle's "close" state (already open) is an explicit abandon, matching "Cancel"'s own
+    // semantics exactly -- no commit attempt, per the ticket's explicit distinction between an
+    // implicit (flush-then-switch) and an explicit (discard) closure.
+    private async Task ToggleAddSheetRuleFormAsync()
+    {
+        if (_openSheetRuleForm.IsAdd)
+        {
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
+            return;
+        }
+
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.Add;
+    }
+
+    // Requesting a delete first tries to close whichever form is open (flushing it) -- the
+    // ticket's own "l'inverse est vrai aussi" requirement.
+    private async Task RequestDeleteSheetRuleAsync(int index)
+    {
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = index;
     }
 
     private void HandleAddSheetRule(SheetExtractionRule rule)
     {
         _sheetRules.Add(rule);
-        _isAddFormOpen = false;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
     private void HandleSaveSheetRule(int index, SheetExtractionRule updated)
     {
         _sheetRules[index] = updated;
-        _editingIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
@@ -675,9 +744,9 @@ else
     private void DeleteSheetRule(int index)
     {
         _sheetRules.RemoveAt(index);
-        if (_editingIndex == index)
+        if (_openSheetRuleForm.EditIndex == index)
         {
-            _editingIndex = null;
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
         }
         MarkAsChanged();
     }
@@ -688,26 +757,6 @@ else
         {
             _expandedSheetRuleDetails.Remove(index);
         }
-    }
-
-    // Lot 056 (56.2): commits whichever sheet-rule form(s) are currently rendered before
-    // constructing/persisting the profile -- "one flush in memory, then one write", never an
-    // intermediate SaveAsync call. A validation failure on either form aborts the whole save: no
-    // navigation, no persistence, the failing form keeps its own alert (single source of truth for
-    // the error, per the ticket's own requirement).
-    private async Task<bool> TryFlushOpenSheetRuleFormsAsync()
-    {
-        if (_editSheetRuleFormRef is not null && !await _editSheetRuleFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_addSheetRuleFormRef is not null && !await _addSheetRuleFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        return true;
     }
 
     // Lot 056 (56.5): Ctrl+Enter triggers the exact same save path as the CTA click, including the
@@ -725,7 +774,7 @@ else
     {
         _profileErrorMessage = null;
 
-        if (!await TryFlushOpenSheetRuleFormsAsync())
+        if (!await TryCloseOpenFormAsync())
         {
             return;
         }

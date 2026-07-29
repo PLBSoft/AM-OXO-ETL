@@ -77,8 +77,8 @@ else
             {
                 var index = i;
                 var rule = _sheetRules[index];
-                <li class="@(_editingIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
-                    @if (_editingIndex == index)
+                <li class="@(_openSheetRuleForm.EditIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
+                    @if (_openSheetRuleForm.EditIndex == index)
                     {
                         <SheetGenerationRuleForm @ref="_editSheetRuleFormRef"
                                                   IdPrefix="@($"edit-{index}-")"
@@ -87,7 +87,7 @@ else
                                                   SubmitLabel="@Loc["ExportProfileEditor_ApplySheetRuleButton"]"
                                                   ShowCancel="true"
                                                   CancelButtonId="@($"cancel-sheet-generation-rule-button-{index}")"
-                                                  OnCancel="() => _editingIndex = null"
+                                                  OnCancel="() => _openSheetRuleForm = SheetRuleFormOpenState.None"
                                                   OnDirty="MarkAsChanged"
                                                   OnSubmit="(SheetGenerationRule updated) => HandleSaveSheetRule(index, updated)" />
                     }
@@ -153,13 +153,13 @@ else
                                 <button id="@($"modify-sheet-generation-rule-button-{index}")" type="button"
                                         class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                         aria-label="@Loc["ExportProfileEditor_ModifyButton"]" title="@Loc["ExportProfileEditor_ModifyButton"]"
-                                        @onclick="() => _editingIndex = index">
+                                        @onclick="() => RequestOpenEditAsync(index)">
                                     @((MarkupString)AdminIconMarkup.Pencil)
                                 </button>
                                 <button id="@($"delete-sheet-generation-rule-button-{index}")" type="button"
                                         class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["ExportProfileEditor_DeleteButton"]" title="@Loc["ExportProfileEditor_DeleteButton"]"
-                                        @onclick="() => _pendingDeleteIndex = index">
+                                        @onclick="() => RequestDeleteSheetRuleAsync(index)">
                                     @((MarkupString)AdminIconMarkup.Trash)
                                 </button>
                             </div>
@@ -176,7 +176,7 @@ else
             <span>@Loc["ExportProfileEditor_AddSheetHeading"]</span>
             <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
                     @onclick="ToggleAddSheetRuleFormAsync">
-                @if (_isAddFormOpen)
+                @if (_openSheetRuleForm.IsAdd)
                 {
                     @Loc["ExportProfileEditor_AddSheetToggleCloseButton"]
                 }
@@ -187,7 +187,7 @@ else
             </button>
         </div>
         <div class="card-body">
-            @if (_isAddFormOpen)
+            @if (_openSheetRuleForm.IsAdd)
             {
                 <SheetGenerationRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ExportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
             }
@@ -221,16 +221,24 @@ else
     private string? _profileErrorMessage;
 
     private readonly List<SheetGenerationRule> _sheetRules = [];
-    private int? _editingIndex;
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
+
+    // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own single open-form state.
+    private readonly record struct SheetRuleFormOpenState(bool IsAdd, int? EditIndex)
+    {
+        public static readonly SheetRuleFormOpenState None = new(false, null);
+
+        public static SheetRuleFormOpenState Add => new(true, null);
+
+        public static SheetRuleFormOpenState Edit(int index) => new(false, index);
+    }
+
+    private SheetRuleFormOpenState _openSheetRuleForm = SheetRuleFormOpenState.Add;
 
     // Lot 056 (56.2): mirror of ImportProfileEditor.razor's own form references.
     private SheetGenerationRuleForm? _addSheetRuleFormRef;
     private SheetGenerationRuleForm? _editSheetRuleFormRef;
-
-    // Lot 057 (57.1): mirror of ImportProfileEditor.razor's own repli/toggle state.
-    private bool _isAddFormOpen = true;
 
     // Lot 043 (43.2): mirror of ImportProfileEditor.razor's own state/logic (43.1).
     private bool _hasUnsavedChanges;
@@ -246,7 +254,7 @@ else
             return;
         }
 
-        _isAddFormOpen = false;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
 
         var profile = await ExportProfileStore.GetByIdAsync(Id.Value);
         if (profile is null)
@@ -262,24 +270,71 @@ else
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
-    // Lot 057 (57.1): mirror of ImportProfileEditor.razor's own plain toggle (57.2 unifies).
-    private Task ToggleAddSheetRuleFormAsync()
+    // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own mutual-exclusion helpers.
+    private async Task<bool> TryCloseOpenFormAsync()
     {
-        _isAddFormOpen = !_isAddFormOpen;
-        return Task.CompletedTask;
+        if (_openSheetRuleForm.EditIndex is not null && _editSheetRuleFormRef is not null)
+        {
+            return await _editSheetRuleFormRef.TryCommitAsync();
+        }
+
+        if (_openSheetRuleForm.IsAdd && _addSheetRuleFormRef is not null)
+        {
+            return await _addSheetRuleFormRef.TryCommitAsync();
+        }
+
+        return true;
+    }
+
+    private async Task RequestOpenEditAsync(int index)
+    {
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
+    }
+
+    private async Task ToggleAddSheetRuleFormAsync()
+    {
+        if (_openSheetRuleForm.IsAdd)
+        {
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
+            return;
+        }
+
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.Add;
+    }
+
+    private async Task RequestDeleteSheetRuleAsync(int index)
+    {
+        if (!await TryCloseOpenFormAsync())
+        {
+            return;
+        }
+
+        _pendingDeleteIndex = index;
     }
 
     private void HandleAddSheetRule(SheetGenerationRule rule)
     {
         _sheetRules.Add(rule);
-        _isAddFormOpen = false;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
     private void HandleSaveSheetRule(int index, SheetGenerationRule updated)
     {
         _sheetRules[index] = updated;
-        _editingIndex = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
@@ -292,9 +347,9 @@ else
     private void DeleteSheetRule(int index)
     {
         _sheetRules.RemoveAt(index);
-        if (_editingIndex == index)
+        if (_openSheetRuleForm.EditIndex == index)
         {
-            _editingIndex = null;
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
         }
         MarkAsChanged();
     }
@@ -305,22 +360,6 @@ else
         {
             _expandedSheetRuleDetails.Remove(index);
         }
-    }
-
-    // Lot 056 (56.2): mirror of ImportProfileEditor.razor's own implicit-flush helper.
-    private async Task<bool> TryFlushOpenSheetRuleFormsAsync()
-    {
-        if (_editSheetRuleFormRef is not null && !await _editSheetRuleFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_addSheetRuleFormRef is not null && !await _addSheetRuleFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        return true;
     }
 
     // Lot 056 (56.5): mirror of ImportProfileEditor.razor's own Ctrl+Enter handler.
@@ -336,7 +375,7 @@ else
     {
         _profileErrorMessage = null;
 
-        if (!await TryFlushOpenSheetRuleFormsAsync())
+        if (!await TryCloseOpenFormAsync())
         {
             return;
         }
