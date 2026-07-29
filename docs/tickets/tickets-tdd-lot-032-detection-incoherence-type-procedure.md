@@ -106,7 +106,7 @@ dur dans `ProcedureExtractionService`, pas généralisée dans le catalogue (`Im
   recréer une nouvelle en parallèle.
 - [ ] Vérifier si `ExtractionErrorCode` est consommé par un `switch` exhaustif ailleurs dans le
   code (Blazor, mapping de message localisé, etc.) qui devrait gérer explicitement le nouveau
-  membre `TypeIncoherenceDansTacheMultiple` plutôt que de tomber silencieusement dans un cas
+  membre `TacheMultipleTypeMismatch` plutôt que de tomber silencieusement dans un cas
   `default`.
 - [ ] Confirmer le format exact attendu pour `ExtractionError.BlockIdentifier` sur ce cas (proposé :
   `"{titre section} (tâches {N1}-{N2})"`, ex. `"10-MISE EN SERVICE DU COMPRESSEUR (tâches 73-78)"`)
@@ -170,12 +170,12 @@ que l'autre, seule la description de la position diffère (voir décision 7).
 ## 32.3. Construction du message et câblage dans `ExtractionError`
 
 **Comportement attendu** :
-- Ajout du membre `TypeIncoherenceDansTacheMultiple` à `ExtractionErrorCode`.
+- Ajout du membre `TacheMultipleTypeMismatch` à `ExtractionErrorCode`.
 - Pour chaque run minoritaire détecté (32.1) et classifié (32.2), construction d'un
   `ExtractionError` :
   - `Sheet` = `"PROCEDURE"`
   - `BlockIdentifier` = format confirmé en 32.0
-  - `Code` = `ExtractionErrorCode.TypeIncoherenceDansTacheMultiple`
+  - `Code` = `ExtractionErrorCode.TacheMultipleTypeMismatch`
   - `Message` = libellé sandwich ou bord (décision 7), avec les valeurs interpolées (titre
     section, plage de tâches, type minoritaire, type majoritaire, "début"/"fin" pour le cas bord).
 - Pour une section "ambiguë" (égalité stricte, 32.1), construction d'un unique `ExtractionError`
@@ -183,7 +183,7 @@ que l'autre, seule la description de la position diffère (voir décision 7).
   - `Sheet` = `"PROCEDURE"`
   - `BlockIdentifier` = couvre la section entière (ex. `"10-MISE EN SERVICE DU COMPRESSEUR"`,
     sans plage de tâches puisqu'aucune n'est désignée comme anormale)
-  - `Code` = `ExtractionErrorCode.TypeIncoherenceDansTacheMultiple` (même code — c'est la même
+  - `Code` = `ExtractionErrorCode.TacheMultipleTypeMismatch` (même code — c'est la même
     famille d'anomalie, seule la présentation diffère)
   - `Message` = libellé "égalité stricte" (décision 7, à confirmer en 32.0), énumérant chaque
     type concerné et sa/ses plage(s) de tâches, sans désigner de type correct.
@@ -193,13 +193,13 @@ que l'autre, seule la description de la position diffère (voir décision 7).
 
 **Tests** (xUnit, contre la fixture réelle **C7401** — ground truth) :
 - `ProcedureExtractionService` appliqué à `Dossier_de_MaD_IDL__C7401.xlsx` produit exactement un
-  `ExtractionError` de code `TypeIncoherenceDansTacheMultiple`, avec `BlockIdentifier` couvrant
+  `ExtractionError` de code `TacheMultipleTypeMismatch`, avec `BlockIdentifier` couvrant
   les tâches 73–78, et un message correspondant au libellé "sandwich" (type minoritaire MAD,
   type majoritaire REL).
 - Toutes les `TacheMultiplePivot` 73 à 78 sont malgré tout présentes et correctement extraites
   dans le résultat (non-régression : l'anomalie ne bloque rien).
 - Test de non-régression sur les fixtures **D8570** et **G6306B** : aucun `ExtractionError` de
-  code `TypeIncoherenceDansTacheMultiple` n'est produit (toutes leurs sections sont homogènes) —
+  code `TacheMultipleTypeMismatch` n'est produit (toutes leurs sections sont homogènes) —
   garde-fou explicite contre un faux positif introduit par erreur d'implémentation.
 - Test synthétique dédié (pas de fixture réelle disponible) pour le cas "bord de section" : à
   construire à partir d'un classeur minimal en mémoire (ou d'un objet intermédiaire, selon la

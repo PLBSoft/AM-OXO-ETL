@@ -70,8 +70,7 @@ réouvert.
   `Errors.Count > 0`.
 
 **Tests** : `Run_D8570Fixture_ShowsVanneAsNonBlockingWarning_NotAsFileRejection` (67 isolements
-rendus, table d'avertissements non bloquants présente dans le markup, avec le code
-`NoConditionalPointCreated`),
+rendus, libellé "Non-blocking warnings" + code `NoConditionalPointCreated` dans le markup),
 `SelectingFile_ThatFailsProcedureValidation_ShowsRejectedFileSection_NotAsAWarning` (rejet total
 avec classeur synthétique invalide).
 
