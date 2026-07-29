@@ -216,7 +216,7 @@ public class GenerationPipelineIntegrationTests
     }
 
     [Fact]
-    public void GenerateFromD8570Fixture_KeepsUnrecognizedTypeElementIsolementAsNormalRow()
+    public void GenerateFromD8570Fixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
     {
         var (importResult, generated) = RunPipeline("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 

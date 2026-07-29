@@ -221,7 +221,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
-    public async Task Process_WithD8570Fixture_KeepsUnrecognizedTypeElementIsolementAsNormalRow()
+    public async Task Process_WithD8570Fixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
     {
         var client = CreateAuthenticatedClient();
         var (importProfileId, exportProfileId) = await SeedProfilesAsync();

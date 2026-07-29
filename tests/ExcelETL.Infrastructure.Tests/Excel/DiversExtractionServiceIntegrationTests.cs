@@ -100,7 +100,7 @@ public class DiversExtractionServiceIntegrationTests
 
         // "POINT DE FEU" (real cell) vs "POINT FEU" (confirmed base value) is a genuine spelling
         // mismatch -- no PF Points created, exactly one aggregate warning for that one Isolement.
-        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     private DiversSheetExtractionResult ExtractFromFixture(string fileName)

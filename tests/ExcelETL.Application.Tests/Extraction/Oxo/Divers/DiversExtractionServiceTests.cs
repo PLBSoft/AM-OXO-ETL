@@ -145,7 +145,7 @@ public class DiversExtractionServiceTests
 
         result.Isolements.Should().ContainSingle();
         result.Points.Should().BeEmpty();
-        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     [Fact]

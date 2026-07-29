@@ -150,7 +150,7 @@ public class IsolementExtractionServiceTests
             new PointPivot("DEPROLOCK VANNES", "D8570-V4")
         ]);
         result.Points.Should().NotContain(p => p.ColonneNom == ZeroEnergieColonneName);
-        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     [Fact]
@@ -215,11 +215,11 @@ public class IsolementExtractionServiceTests
 
         result.Isolements.Should().ContainSingle().Which.Repere.Should().Be("C7401-V2");
         // V1's block is skipped (RequiredFieldMissing); V2 survives but, being "PROLOCK" (not "ZERO
-        // ENERGIE"), also gets an UnrecognizedTypeElement warning from the non-matching conditional
+        // ENERGIE"), also gets an NoConditionalPointCreated warning from the non-matching conditional
         // Colonne group -- the same evaluator behavior already established in Lot B4 (e.g. a TUBING
         // isolement not matching AUTRES JOINTS TOUCHES' "Pose Étiquettes" rule also warns).
         result.Errors.Should().HaveCount(2);
         result.Errors.Should().ContainSingle(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
-        result.Errors.Should().ContainSingle(e => e.Code == ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().ContainSingle(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
     }
 }

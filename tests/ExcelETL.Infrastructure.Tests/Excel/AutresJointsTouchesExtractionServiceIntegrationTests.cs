@@ -84,7 +84,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 
         // The 2 TUBING isolements each produce one non-blocking warning (POSE ÉTIQUETTES correctly
         // not matching), the 2 TUYAUTERIE ones produce none.
-        result.Errors.Should().HaveCount(2).And.OnlyContain(e => e.Code == ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().HaveCount(2).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

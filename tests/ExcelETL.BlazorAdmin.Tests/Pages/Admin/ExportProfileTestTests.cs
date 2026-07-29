@@ -465,7 +465,7 @@ public class ExportProfileTestTests : BunitContext
         });
 
     // Client-reported gap: a file badged "Warning" (BatchFileStatus.Warning, e.g. D8570's non-blocking
-    // "VANNE" UnrecognizedTypeElement) showed no way to see what the warning actually was on this page,
+    // "VANNE" NoConditionalPointCreated) showed no way to see what the warning actually was on this page,
     // unlike ImportProfileTest.razor's own warnings table -- fixed by rendering the same
     // details/summary + table for ImportResult.Errors, right where the import page shows it.
     [Fact]
@@ -482,7 +482,7 @@ public class ExportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("Non-blocking warnings"));
 
             cut.Find("#warnings-table").Should().NotBeNull();
-            cut.Find("#warnings-table").InnerHtml.Should().Contain("UnrecognizedTypeElement");
+            cut.Find("#warnings-table").InnerHtml.Should().Contain("NoConditionalPointCreated");
         });
 
     [Fact]
@@ -496,7 +496,7 @@ public class ExportProfileTestTests : BunitContext
             var inputFileComponent = cut.FindComponent<InputFile>();
             inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
             cut.Find("#warnings-details-toggle").Click();
             cut.FindAll("#warnings-table").Should().BeEmpty();

@@ -113,7 +113,7 @@ public class AutresJointsTouchesExtractionServiceTests
         var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
 
         result.Points.Should().NotContain(p => p.ColonneNom == PoseEtiquettesColonneName);
-        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     [Fact]

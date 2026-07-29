@@ -190,7 +190,7 @@ public class ImportPipelineOrchestratorIntegrationTests
 
         var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
         result.Errors.Should().Contain(e =>
-            e.Code == ExtractionErrorCode.UnrecognizedTypeElement && e.BlockIdentifier == vanne.Repere);
+            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == vanne.Repere);
     }
 
     [Fact]

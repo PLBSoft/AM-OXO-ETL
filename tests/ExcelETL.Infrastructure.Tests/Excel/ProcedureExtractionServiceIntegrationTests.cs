@@ -84,7 +84,7 @@ public class ProcedureExtractionServiceIntegrationTests
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
-        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeIncoherence);
+        error.Code.Should().Be(ExtractionErrorCode.TacheMultipleTypeMismatch);
         error.Sheet.Should().Be(Sheet);
         error.BlockIdentifier.Should().Be("10-MISE EN SERVICE DU COMPRESSEUR (tâches 73-78)");
         error.Message.Should().Be(
@@ -141,7 +141,7 @@ public class ProcedureExtractionServiceIntegrationTests
         // 2 fixtures is perfectly homogeneous, unlike C7401's single anomalous section above.
         var result = ExtractFromFixture(fileName);
 
-        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.TacheMultipleTypeIncoherence);
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.TacheMultipleTypeMismatch);
     }
 
     private ImportResult ExtractFromFixture(string fileName)

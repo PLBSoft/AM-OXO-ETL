@@ -123,7 +123,7 @@ public class ImportPipelineOrchestratorTests
                 "ZONE 1",
                 [new IsolementPivot("38-C7401-LT1", "Transmetteur", "INSTRUMENTATION", "", "")],
                 [new PointPivot("SYNCHRONISATION INSTRUMENTATION", "38-C7401-LT1")],
-                [new ExtractionError("DIVERS", "38-C7401-XX", ExtractionErrorCode.UnrecognizedTypeElement, "warning")]));
+                [new ExtractionError("DIVERS", "38-C7401-XX", ExtractionErrorCode.NoConditionalPointCreated, "warning")]));
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());

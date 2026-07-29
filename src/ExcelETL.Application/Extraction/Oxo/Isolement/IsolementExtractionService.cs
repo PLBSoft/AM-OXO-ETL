@@ -108,7 +108,7 @@ public sealed class IsolementExtractionService(
 
             if (warning is not null)
             {
-                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.UnrecognizedTypeElement, warning);
+                var error = new ExtractionError(sheet, repere, ExtractionErrorCode.NoConditionalPointCreated, warning);
                 ExtractionErrorLogging.Log(logger, error);
                 errors.Add(error);
             }

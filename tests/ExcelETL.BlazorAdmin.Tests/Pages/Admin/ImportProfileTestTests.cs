@@ -478,7 +478,7 @@ public class ImportProfileTestTests : BunitContext
             cut.Find("#isolements-table").Should().NotBeNull();
             cut.FindAll("#isolements-table tbody tr").Should().HaveCount(67);
             cut.Markup.Should().Contain("Non-blocking warnings");
-            cut.Markup.Should().Contain("UnrecognizedTypeElement");
+            cut.Markup.Should().Contain("NoConditionalPointCreated");
 
             // Lot 031: section title now shows the element count, same "{0} ({1})"-shaped format as
             // ExportProfileTest.razor's sheet titles (e.g. "Parents (1)").
@@ -530,7 +530,7 @@ public class ImportProfileTestTests : BunitContext
             var inputFileComponent = cut.FindComponent<InputFile>();
             inputFileComponent.UploadFiles(FixtureAsInputFile(fixtureFileName));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
             cut.Find("#warnings-details-toggle").TextContent.Should()
                 .Contain($"Non-blocking warnings ({expected.Errors.Count})");
@@ -665,7 +665,7 @@ public class ImportProfileTestTests : BunitContext
             var inputFileComponent = cut.FindComponent<InputFile>();
             inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("UnrecognizedTypeElement"));
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
             cut.Find("#warnings-details-toggle").Click();
             cut.FindAll("#warnings-table").Should().BeEmpty();
@@ -798,7 +798,7 @@ public class ImportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
 
             // All 3 real fixtures currently carry their own non-blocking warning (C7401: Lot 032
-            // TYPE-incoherence in PROCEDURE; D8570: the "VANNE" UnrecognizedTypeElement; G6306B: the
+            // TYPE-incoherence in PROCEDURE; D8570: the "VANNE" NoConditionalPointCreated; G6306B: the
             // "POINT DE FEU"/"POINT FEU" DIVERS spelling mismatch) -- none is a plain OK today.
             var summary = cut.Find("#batch-summary").TextContent;
             summary.Should().Contain("3 file(s) processed:");

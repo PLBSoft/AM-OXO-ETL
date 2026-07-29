@@ -108,7 +108,7 @@ public sealed class ProcedureExtractionService(
                 "se partagent la section à parts égales — impossible de déterminer le type correct, vérifier manuellement.";
 
             return [new ExtractionError(
-                sheet, sectionTitle, ExtractionErrorCode.TacheMultipleTypeIncoherence, message)];
+                sheet, sectionTitle, ExtractionErrorCode.TacheMultipleTypeMismatch, message)];
         }
 
         var errors = new List<ExtractionError>();
@@ -125,7 +125,7 @@ public sealed class ProcedureExtractionService(
                   $"à des tâches en {analysis.MajorityType} — vérifier une possible erreur de saisie.";
 
             errors.Add(new ExtractionError(
-                sheet, blockIdentifier, ExtractionErrorCode.TacheMultipleTypeIncoherence, message));
+                sheet, blockIdentifier, ExtractionErrorCode.TacheMultipleTypeMismatch, message));
         }
 
         return errors;

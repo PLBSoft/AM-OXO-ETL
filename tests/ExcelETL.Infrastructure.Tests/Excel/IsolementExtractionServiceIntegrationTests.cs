@@ -13,7 +13,7 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 // Runs IsolementExtractionService (Application, Lot C2) against the real ClosedXmlWorkbookReader and
 // the 3 real client fixtures. None of the 3 files contain a "ZERO ENERGIE"-typed row in ISOLEMENT, so
 // every extracted isolement (all "PROLOCK" except D8570's one "VANNE") legitimately produces an
-// UnrecognizedTypeElement warning for the unmatched conditional Colonne -- see
+// NoConditionalPointCreated warning for the unmatched conditional Colonne -- see
 // IsolementExtractionService's comment on why that's correct here, not a bug.
 public class IsolementExtractionServiceIntegrationTests
 {
@@ -43,7 +43,7 @@ public class IsolementExtractionServiceIntegrationTests
         result.Isolements.Should().HaveCount(8);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         result.Points.Should().HaveCount(8 * 2);
-        result.Errors.Should().HaveCount(8).And.OnlyContain(e => e.Code == ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().HaveCount(8).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class IsolementExtractionServiceIntegrationTests
             new PointPivot("PROLOCK VANNES", "D8570-V4"),
             new PointPivot("DEPROLOCK VANNES", "D8570-V4")
         ]);
-        result.Errors.Should().HaveCount(15).And.OnlyContain(e => e.Code == ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().HaveCount(15).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class IsolementExtractionServiceIntegrationTests
         result.Isolements.Should().HaveCount(3);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         result.Points.Should().HaveCount(3 * 2);
-        result.Errors.Should().HaveCount(3).And.OnlyContain(e => e.Code == ExtractionErrorCode.UnrecognizedTypeElement);
+        result.Errors.Should().HaveCount(3).And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

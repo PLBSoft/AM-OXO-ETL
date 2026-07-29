@@ -66,7 +66,7 @@ public class ProcessOxoFileServiceTests
 
     private static ImportResult WarningImportResult() => new(
         new EquipementPivot("38-D8570", "Compresseur D8570", "MAD TRAVAUX"), [], [], [],
-        [new ExtractionError("ISOLEMENT", "D8570-V4", ExtractionErrorCode.UnrecognizedTypeElement, "VANNE inconnu")]);
+        [new ExtractionError("ISOLEMENT", "D8570-V4", ExtractionErrorCode.NoConditionalPointCreated, "VANNE inconnu")]);
 
     private static ImportResult RejectedImportResult() => new(
         null, [], [], [],

@@ -72,11 +72,11 @@ public class ImportPipelineOrchestratorLoggingIntegrationTests
 
         var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
         result.Errors.Should().Contain(e =>
-            e.Code == ExtractionErrorCode.UnrecognizedTypeElement && e.BlockIdentifier == vanne.Repere);
+            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == vanne.Repere);
 
         _isolementLog.Entries.Should().Contain(e =>
             e.Level == LogLevel.Warning &&
-            e.Message.Contains(nameof(ExtractionErrorCode.UnrecognizedTypeElement)) &&
+            e.Message.Contains(nameof(ExtractionErrorCode.NoConditionalPointCreated)) &&
             e.Message.Contains(vanne.Repere));
     }
 
