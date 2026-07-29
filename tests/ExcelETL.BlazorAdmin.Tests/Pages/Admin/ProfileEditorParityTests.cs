@@ -415,6 +415,52 @@ public class ProfileEditorParityTests : BunitContext
         }
     });
 
+    // Lot 056 (56.8, closing test of the lot): compares the sticky save bar (56.6) and the
+    // sub-form submit/cancel buttons in edit mode (56.7) between the two editors -- strict string
+    // comparison, not "both non-empty", per this file's own established convention. Deliberately
+    // the last test written for lot 056: if it passed before 56.1-56.7 were done on both sides,
+    // it wouldn't actually be comparing what it claims to.
+    [Fact]
+    public void SaveBar_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importBarClass = importCut.Find(".profile-editor-save-bar").GetAttribute("class");
+        var exportBarClass = exportCut.Find(".profile-editor-save-bar").GetAttribute("class");
+
+        importBarClass.Should().Be(exportBarClass);
+        importBarClass.Should().Be("profile-editor-save-bar");
+    });
+
+    [Fact]
+    public async Task SheetRuleFormEditMode_SubmitAndCancelButtonClasses_AreIdenticalBetweenImportAndExportEditors() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = BuildImportProfileWithTwoSheetRules();
+            await ImportStore.SaveAsync(importProfile);
+            var exportProfile = BuildExportProfileWithTwoSheetRules();
+            await ExportStore.SaveAsync(exportProfile);
+
+            var importCut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, importProfile.Id));
+            var exportCut = Render<ExportProfileEditor>(parameters => parameters.Add(p => p.Id, exportProfile.Id));
+
+            importCut.Find("#modify-sheet-rule-button-0").Click();
+            exportCut.Find("#modify-sheet-generation-rule-button-0").Click();
+
+            var importSubmitClass = importCut.Find("#save-sheet-rule-button-0").GetAttribute("class");
+            var exportSubmitClass = exportCut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class");
+            importSubmitClass.Should().Be(exportSubmitClass);
+            importSubmitClass.Should().Be("btn btn-secondary w-100 mt-3");
+
+            var importCancelClass = importCut.Find("#cancel-sheet-rule-button-0").GetAttribute("class");
+            var exportCancelClass = exportCut.Find("#cancel-sheet-generation-rule-button-0").GetAttribute("class");
+            importCancelClass.Should().Be(exportCancelClass);
+            importCancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+
+            importSubmitClass.Should().NotBe(importCancelClass);
+        });
+
     private static void WithCulture(string cultureName, Action action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;
