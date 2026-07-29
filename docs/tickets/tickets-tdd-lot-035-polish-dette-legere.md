@@ -99,11 +99,19 @@ Domain (déclaration de l'enum) **et** Application (points de construction —
 `TacheMultipleTypeCoherenceAnalyzer` et tout `switch`/mapping de message localisé qui le
 référence).
 
-**Comportement attendu** : renommer le membre en `TacheMultipleTypeIncoherence` (ou
-`TacheMultipleTypeMismatch` — Claude Code choisit celui qui est le plus cohérent avec les noms de
-membres voisins de la même enum, ex. `UnrecognizedTypeElement`) et répercuter le renommage sur
-tous les points d'usage (`TacheMultipleTypeCoherenceAnalyzer`, tests, ressources `.resx` si une
-clé y référence littéralement le nom du membre C#).
+**Comportement attendu** : renommer le membre avec un identifiant anglais et répercuter le
+renommage sur tous les points d'usage (`TacheMultipleTypeCoherenceAnalyzer`, tests, ressources
+`.resx` si une clé y référence littéralement le nom du membre C#).
+
+*Nom retenu à l'exécution de ce lot : `TacheMultipleTypeIncoherence`. **Ce nom n'est plus le nom
+courant** — le lot 055 a stabilisé l'enum sur `TacheMultipleTypeMismatch`, l'autre option que ce
+sous-ticket proposait. Se référer à `modele-domaine-import-profile.md` §3 pour la liste courante
+des membres, jamais à ce ticket.*
+
+> **Note de convention, à ne pas rouvrir** : `TacheMultipleTypeMismatch` reste un identifiant
+> hybride. `TacheMultiple` est du vocabulaire métier français, conservé en français partout dans le
+> Domain (`TacheMultiplePivot`, `TypeTacheMultiple`). La règle réelle du projet est : *les noms
+> d'entités métier restent en français, tout le reste est en anglais* — et non « 100 % anglais ».
 
 **Tests** :
 - [ ] Tous les tests existants qui référencent `ExtractionErrorCode.TypeIncoherenceDansTacheMultiple`

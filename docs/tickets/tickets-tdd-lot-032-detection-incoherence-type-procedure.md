@@ -41,9 +41,12 @@ dur dans `ProcedureExtractionService`, pas généralisée dans le catalogue (`Im
    paramétrable par profil (`ImportProfile`), c'est un garde-fou qualité des données, cohérent
    avec les autres cas ad hoc déjà câblés en dur sur cette même feuille (règle `Ordre`/ligne
    factice).
-4. **Nouveau membre d'`ExtractionErrorCode`** : `TypeIncoherenceDansTacheMultiple` — aucun des 3
-   membres existants (`RequiredFieldMissing`, `UnparsableValue`, `UnrecognizedTypeElement`) ne
-   correspond sémantiquement à ce cas.
+4. **Nouveau membre d'`ExtractionErrorCode`** : aucun des membres existants ne correspond
+   sémantiquement à ce cas, un membre dédié est donc ajouté. *Nommage actuel :
+   `TacheMultipleTypeMismatch` — le nom retenu à l'origine par ce lot
+   (`TypeIncoherenceDansTacheMultiple`) a été anglicisé au lot 035 puis stabilisé au lot 055 ; se
+   référer à `modele-domaine-import-profile.md` §3 pour la liste courante des membres, jamais à
+   ce ticket.*
 5. **Détermination du type majoritaire** : le type totalisant le plus de tâches sur l'ensemble de
    la section (somme des runs de ce type, pas seulement le run le plus long individuellement).
 6. **Cas d'égalité stricte** (deux types — ou plus — se partagent exactement le plus grand nombre

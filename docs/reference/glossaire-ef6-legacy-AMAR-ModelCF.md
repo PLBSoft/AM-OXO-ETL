@@ -13,7 +13,7 @@
 | `Code` | `Nom` | Statut / usage connu dans le pipeline AM-OXO-ETL |
 |---|---|---|
 | `MAD` | **MAD TRAVAUX** | `TypeElement.Nom` de l'Équipement parent pour un dossier MAD (confirmé). Paramétrable dans le profil d'import (`ImportProfile.EquipementTypeElementNom`), jamais codé en dur. C'est la seule valeur utilisée pour ce champ — il n'y a pas de dossier REL distinct (les tâches REL sont extraites du même fichier MAD, voir plus bas). |
-| `PROLOCK` | PROLOCK | Isolement, feuille ISOLEMENT. Cas dégénéré Code=Nom. Déclenche `PROLOCK VANNES`/`DEPROLOCK VANNES` — **inconditionnel pour tout isolement de la feuille**, pas seulement `TypeElement = "PROLOCK"`. |
+| `PROLOCK` | PROLOCK | Isolement, feuille ISOLEMENT. Cas dégénéré Code=Nom. Déclenche `PROLOCK VANNES`/`DEPROLOCK VANNES` — **inconditionnel pour tout isolement de la feuille**, pas seulement `TypeElement = "PROLOCK"`. Valeur **majoritaire** de la feuille ISOLEMENT dans les 3 fichiers source (25 éléments sur 26). Ne satisfait aucune `ConditionalPointRule` de cette feuille, dont la seule condition porte sur `"ZERO ENERGIE"` : **un avertissement `NoConditionalPointCreated` est donc émis à chaque import, sans que cela signale un problème de donnée** — la valeur est confirmée en base, ses Points inconditionnels sont créés normalement. Voir `modele-domaine-import-profile.md` §3.2. |
 | `TP` | TAMPON PLEIN | Isolement, feuille PLATINES. `Categorie = ISOLEMENTS`. |
 | `PT` | PLATINE | Isolement, feuille PLATINES. `Categorie = ISOLEMENTS`. |
 | `TH` | TROU D'HOMME | Isolement, feuille ORIFICES CAPACITES. `Categorie = ISOLEMENTS`. |
