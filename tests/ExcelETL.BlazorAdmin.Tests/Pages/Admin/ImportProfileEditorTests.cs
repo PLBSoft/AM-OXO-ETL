@@ -590,18 +590,21 @@ public class ImportProfileEditorTests : BunitContext
     // doubled, per the ticket's own instruction. Solid secondary + Plus icon + visible label
     // (never an icon-only button, so no aria-label/title is added here).
     [Fact]
+    // Lot 058 (58.2): fixed in place -- both buttons gained .field-inline-action so they can fill
+    // their column's height alongside the adjacent field (>=768px only, see app.css); the rest of
+    // the class list, and the icon/label check, are unchanged.
     public void AddDefaultTableauAndApplication_AddButtons_AreSecondaryWithPlusIconAndVisibleLabel() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
 
             var tableauButton = cut.Find("#add-default-tableau-button");
-            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto");
+            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action");
             tableauButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             tableauButton.TextContent.Trim().Should().NotBeNullOrEmpty();
 
             var applicationButton = cut.Find("#add-default-application-name-button");
-            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto");
+            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action");
             applicationButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             applicationButton.TextContent.Trim().Should().NotBeNullOrEmpty();
         });

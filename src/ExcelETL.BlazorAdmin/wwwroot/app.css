@@ -259,4 +259,15 @@ h1:focus {
     .w-md-auto {
         width: auto !important;
     }
+
+    /* Lot 058 (58.2): makes an add-button sitting beside a field (ImportProfileEditor.razor's
+       Tableaux/Applications rows) fill its column's full height -- i.e. the same height as the
+       adjacent form-floating field, since the row no longer forces align-items-end (the field
+       and button columns stretch to match by Bootstrap's own row default). Scoped to >=768px
+       only: below that the row stacks vertically and a 58px-tall button would be disproportionate
+       (mobile-first precedent from lots V/030/53.5). No fixed pixel height anywhere -- height
+       always follows the field's own, never replicates it by coincidence. */
+    .field-inline-action {
+        height: 100%;
+    }
 }

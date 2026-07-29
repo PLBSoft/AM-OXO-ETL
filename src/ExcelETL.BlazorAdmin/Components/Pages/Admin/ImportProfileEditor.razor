@@ -173,8 +173,13 @@ else
              button at the row's natural right edge by construction (no .right-aligned-actions
              wrapper needed, per convention-ui-blazor-alignement-boutons.md's own carve-out for
              this exact case). Below 768px both stack full-width, unchanged from the lot V/30.3
-             pattern. -->
-        <div class="row g-2 align-items-end">
+             pattern.
+             Lot 058 (58.2): align-items-end removed here (the actual cause of the button being
+             shorter than the field, not a missing h-100) so the column can stretch to the row's
+             full height; .field-inline-action then makes the button fill that height, but only
+             at >=768px (see app.css) -- below that the two elements stack and the button keeps
+             its natural height. -->
+        <div class="row g-2">
             <div class="col-12 col-md">
                 <div class="form-floating">
                     <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
@@ -183,7 +188,7 @@ else
                 </div>
             </div>
             <div class="col-12 col-md-auto">
-                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto" @onclick="AddDefaultTableau">
+                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto field-inline-action" @onclick="AddDefaultTableau">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTableauButton"]
                 </button>
             </div>
@@ -268,8 +273,9 @@ else
                 }
             </ul>
         }
-        <!-- Lot 053 (53.3/53.4): same mono-field add row treatment as Tableaux above. -->
-        <div class="row g-2 align-items-end">
+        <!-- Lot 053 (53.3/53.4): same mono-field add row treatment as Tableaux above.
+             Lot 058 (58.2): same align-items-end removal + .field-inline-action treatment. -->
+        <div class="row g-2">
             <div class="col-12 col-md">
                 <div class="form-floating">
                     <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
@@ -278,7 +284,7 @@ else
                 </div>
             </div>
             <div class="col-12 col-md-auto">
-                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto" @onclick="AddDefaultApplicationName">
+                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto field-inline-action" @onclick="AddDefaultApplicationName">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddApplicationButton"]
                 </button>
             </div>
