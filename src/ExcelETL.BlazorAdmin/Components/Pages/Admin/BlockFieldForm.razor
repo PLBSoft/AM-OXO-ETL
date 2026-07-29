@@ -18,7 +18,8 @@
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}name-input")" class="form-control" @bind="_name"
+        <input id="@($"{IdPrefix}name-input")" @ref="_nameInputRef" class="form-control" @bind="_name"
+               @onkeydown="OnRowKeyDownAsync"
                placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}name-input")">@Loc["ImportProfileEditor_FieldNameLabel"]</label>
     </div>
@@ -26,6 +27,7 @@
 <div class="mb-3">
     <div class="form-floating">
         <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
+               @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
                placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
         <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
     </div>
@@ -88,6 +90,7 @@
     private string _absoluteRange = string.Empty;
     private string? _errorMessage;
     private string? _warningMessage;
+    private ElementReference _nameInputRef;
 
     // Only ever runs once per mounted instance -- same reasoning as SheetRuleForm.OnInitialized:
     // the parent gives an edit-mode instance a fresh component identity, so InitialField never
@@ -130,10 +133,36 @@
             }
 
             ResetForm();
+
+            // Lot 056 (56.4): after a successful blur/Enter-triggered add, return focus to the first
+            // field of the row so a rapid, mouse-free "type, type, next" entry rhythm is possible.
+            await _nameInputRef.FocusAsync();
         }
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    // Lot 056 (56.4): validation on blur of the row's last field, or Enter anywhere in the row --
+    // but only when every field of the row is already filled in. A partially-filled row produces no
+    // add and no error message on blur (a normal "click elsewhere" gesture must never surface a red
+    // alert); the button click remains a fully equivalent, always-available third path.
+    private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(_name) && !string.IsNullOrWhiteSpace(_absoluteRange);
+
+    private async Task OnLastFieldBlurAsync()
+    {
+        if (IsRowFullyFilled())
+        {
+            await Submit();
+        }
+    }
+
+    private async Task OnRowKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && IsRowFullyFilled())
+        {
+            await Submit();
         }
     }
 

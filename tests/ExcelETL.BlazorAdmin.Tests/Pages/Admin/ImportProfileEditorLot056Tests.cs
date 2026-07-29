@@ -347,4 +347,138 @@ public class ImportProfileEditorLot056Tests : BunitContext
         var title = cut.Find("#save-profile-button").GetAttribute("title");
         title.Should().NotBeNullOrEmpty();
     });
+
+    // ------------------------------------------------------------------------------------------
+    // 56.4: blur/Enter validation on the 3 eligible 1-2 field sub-lists (BlockFieldForm,
+    // HeaderCompositeRuleForm, the inline unconditional-colonne row). Exercised through the
+    // always-present "add a sheet rule" card, since that's where these sub-forms live unprefixed.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void BlockField_BothFieldsFilled_BlurOnLastField_AddsWithoutAnyClick()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#block-field-name-input").Change("Identification");
+        var rangeInput = cut.Find("#block-field-absolute-range-input");
+        rangeInput.Change("B9:E9");
+
+        rangeInput.FocusOut();
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Identification");
+    }
+
+    [Fact]
+    public void BlockField_OnlyOneFieldFilled_Blur_AddsNothingAndShowsNoAlert()
+    {
+        var cut = Render<ImportProfileEditor>();
+        var rangeInput = cut.Find("#block-field-absolute-range-input");
+        cut.Find("#block-field-name-input").Change("Identification");
+        // Range left blank.
+
+        rangeInput.FocusOut();
+
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+        cut.FindAll(".alert-danger").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void BlockField_BothFieldsFilled_EnterOnFirstField_Adds()
+    {
+        var cut = Render<ImportProfileEditor>();
+        var nameInput = cut.Find("#block-field-name-input");
+        nameInput.Change("Identification");
+        cut.Find("#block-field-absolute-range-input").Change("B9:E9");
+
+        nameInput.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Enter" });
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Identification");
+    }
+
+    [Fact]
+    public void BlockField_InvalidRange_Blur_ShowsErrorAndKeepsInputValues()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#block-field-name-input").Change("Identification");
+        var rangeInput = cut.Find("#block-field-absolute-range-input");
+        rangeInput.Change("ZZZ");
+
+        rangeInput.FocusOut();
+
+        cut.Find(".alert-danger").Should().NotBeNull();
+        cut.Find("#block-field-name-input").GetAttribute("value").Should().Be("Identification");
+        cut.Find("#block-field-absolute-range-input").GetAttribute("value").Should().Be("ZZZ");
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void BlockField_SuccessfulBlurAdd_ClearsBothInputs()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#block-field-name-input").Change("Identification");
+        var rangeInput = cut.Find("#block-field-absolute-range-input");
+        rangeInput.Change("B9:E9");
+        rangeInput.FocusOut();
+
+        cut.Find("#block-field-name-input").GetAttribute("value").Should().BeNullOrEmpty();
+        cut.Find("#block-field-absolute-range-input").GetAttribute("value").Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public void BlockField_BeyondPracticalRange_Blur_AddsAndShowsNonBlockingWarning()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#block-field-name-input").Change("Identification");
+        var rangeInput = cut.Find("#block-field-absolute-range-input");
+        rangeInput.Change("BA1");
+
+        rangeInput.FocusOut();
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Identification");
+        cut.FindAll(".alert-warning").Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void UnconditionalColonne_Filled_Blur_AddsWithoutClick()
+    {
+        var cut = Render<ImportProfileEditor>();
+        var input = cut.Find("#unconditional-colonne-name-input");
+        input.Change("PROLOCK VANNES");
+
+        input.FocusOut();
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "PROLOCK VANNES");
+    }
+
+    [Fact]
+    public void HeaderComposite_BothFieldsFilled_Blur_AddsWithoutClick()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#header-composite-header-composite-name-input").Change("Designation");
+        var templateInput = cut.Find("#header-composite-header-composite-template-input");
+        templateInput.Change("Rév {revision}");
+
+        templateInput.FocusOut();
+
+        cut.FindAll(".block-field-name").Should().Contain(e => e.TextContent == "Designation");
+    }
+
+    // 56.4's own explicit non-generalization guard-rail: an excluded sub-list (point rules, 3
+    // inputs + 1 select) must never auto-submit on blur -- only the click path adds it. There is no
+    // @onfocusout handler wired on this field at all, so bUnit itself refuses to dispatch the event
+    // -- that refusal *is* the proof of the exclusion, not an incidental test artifact.
+    [Fact]
+    public void PointRule_LastFieldHasNoBlurHandlerWired_ProvingItIsExcludedFrom564()
+    {
+        var cut = Render<ImportProfileEditor>();
+        cut.Find("#point-rule-colonne-name-input").Change("ZÉRO ENERGIE...");
+        cut.Find("#point-rule-source-field-name-input").Change("TypeElement");
+        cut.Find("#point-rule-operator-select").Change(nameof(ConditionOperator.Equals));
+        var comparisonInput = cut.Find("#point-rule-comparison-value-input");
+        comparisonInput.Change("ZERO ENERGIE");
+
+        var act = () => comparisonInput.FocusOut();
+        act.Should().Throw<Bunit.MissingEventHandlerException>();
+
+        cut.FindAll(".block-field-name").Should().BeEmpty();
+    }
 }

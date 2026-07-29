@@ -187,7 +187,8 @@
 }
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}unconditional-colonne-name-input")" class="form-control" @bind="_newUnconditionalColonneName"
+        <input id="@($"{IdPrefix}unconditional-colonne-name-input")" @ref="_unconditionalColonneNameInputRef" class="form-control" @bind="_newUnconditionalColonneName"
+               @onkeydown="OnUnconditionalColonneRowKeyDownAsync" @onfocusout="OnUnconditionalColonneRowBlurAsync"
                placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
         <label for="@($"{IdPrefix}unconditional-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
     </div>
@@ -523,6 +524,7 @@
     private int? _editingFieldIndex;
 
     private string _newUnconditionalColonneName = string.Empty;
+    private ElementReference _unconditionalColonneNameInputRef;
     private string _newPointRuleColonneName = string.Empty;
     private string _newPointRuleSourceFieldName = string.Empty;
     private ConditionOperator _newPointRuleOperator = ConditionOperator.Equals;
@@ -598,6 +600,31 @@
         _unconditionalColonneNames.Add(_newUnconditionalColonneName);
         _newUnconditionalColonneName = string.Empty;
         MarkDirty();
+    }
+
+    // Lot 056 (56.4): a single-field row's "all fields filled" check is just the field itself --
+    // AddUnconditionalColonneName() already no-ops silently on a blank value. Focus is only stolen
+    // back to the field when something was actually added -- otherwise a blank-field blur (e.g. the
+    // user tabbing/clicking away to a different button entirely) would fight that click by
+    // re-focusing this field out from under it.
+    private async Task OnUnconditionalColonneRowBlurAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        {
+            return;
+        }
+
+        AddUnconditionalColonneName();
+        await _unconditionalColonneNameInputRef.FocusAsync();
+    }
+
+    private async Task OnUnconditionalColonneRowKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        {
+            AddUnconditionalColonneName();
+            await _unconditionalColonneNameInputRef.FocusAsync();
+        }
     }
 
     private void StartUnconditionalColonneEdit(int itemIndex)

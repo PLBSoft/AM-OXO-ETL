@@ -13,7 +13,8 @@
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-composite-name-input")" class="form-control" @bind="_name"
+        <input id="@($"{IdPrefix}header-composite-name-input")" @ref="_nameInputRef" class="form-control" @bind="_name"
+               @onkeydown="OnRowKeyDownAsync"
                placeholder="@Loc["ImportProfileEditor_HeaderCompositeNamePlaceholder"]" />
         <label for="@($"{IdPrefix}header-composite-name-input")">@Loc["ImportProfileEditor_HeaderCompositeNameLabel"]</label>
     </div>
@@ -21,6 +22,7 @@
 <div class="mb-3">
     <div class="form-floating">
         <input id="@($"{IdPrefix}header-composite-template-input")" class="form-control" @bind="_template"
+               @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
                placeholder="@Loc["ImportProfileEditor_HeaderCompositeTemplatePlaceholder"]" />
         <label for="@($"{IdPrefix}header-composite-template-input")">@Loc["ImportProfileEditor_HeaderCompositeTemplateLabel"]</label>
     </div>
@@ -77,6 +79,7 @@
     private string _name = string.Empty;
     private string _template = string.Empty;
     private string? _errorMessage;
+    private ElementReference _nameInputRef;
 
     // Only ever runs once per mounted instance -- same reasoning as HeaderFieldRuleForm.OnInitialized.
     protected override void OnInitialized()
@@ -101,10 +104,32 @@
             await OnSubmit.InvokeAsync(composite);
 
             ResetForm();
+
+            // Lot 056 (56.4): return focus to the row's first field after a successful blur/Enter add.
+            await _nameInputRef.FocusAsync();
         }
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    // Lot 056 (56.4): same "all fields filled" blur/Enter contract as BlockFieldForm.
+    private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(_name) && !string.IsNullOrWhiteSpace(_template);
+
+    private async Task OnLastFieldBlurAsync()
+    {
+        if (IsRowFullyFilled())
+        {
+            await Submit();
+        }
+    }
+
+    private async Task OnRowKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && IsRowFullyFilled())
+        {
+            await Submit();
         }
     }
 
