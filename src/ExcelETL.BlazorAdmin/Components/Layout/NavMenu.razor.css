@@ -153,15 +153,25 @@
     color: var(--m3-on-primary);
 }
 
-/* Lot 061: client logo, last child of the sidebar. */
+/* Lot 061: client logo. Bottom padding trimmed at Lot 062 -- the version/date block right below it
+   now owns the sidebar's final bottom padding, so the two blocks don't stack a double gap. */
 .sidebar-logo-container {
-    padding: 1rem 0 0.5rem;
+    padding: 1rem 0 0.25rem;
     text-align: center;
 }
 
 .sidebar-logo-container img {
     max-width: 70%;
     height: auto;
+}
+
+/* Lot 062 (62.3): version/build-date indicator, last child of the sidebar. Discrete, consistent
+   with the sidebar's other secondary elements (small font size, muted color). */
+.sidebar-version-info {
+    padding: 0 0 1rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: color-mix(in srgb, var(--m3-on-primary) 60%, transparent);
 }
 
 .nav-scrollable {

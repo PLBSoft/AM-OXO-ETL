@@ -18,4 +18,42 @@
     <InternalsVisibleTo Include="ExcelETL.BlazorAdmin.Tests" />
   </ItemGroup>
 
+  <!-- Lot 062 (62.1): version counter incremented on Publish only (never on a plain dotnet
+       build/F5), plus the UTC build date, both baked into the published assembly's metadata so
+       the sidebar can display which version is actually deployed without any manual bump.
+
+       Hooked on BeforeTargets="BeforeBuild" and NOT on BeforeTargets="Publish": empirically
+       confirmed via a probe MSBuild project that a target's own DependsOnTargets always run
+       before any target attached via BeforeTargets. The Publish target's DependsOnTargets chain
+       already runs Build (and therefore GenerateAssemblyInfo/CoreCompile, which bakes
+       Version/AssemblyMetadata into the compiled DLL) before a BeforeTargets="Publish" hook would
+       ever fire, which is too late to affect the compiled output. BeforeBuild is the standard
+       early extension point that Build's own dependency chain runs first, before CoreCompile.
+       Gated on _IsPublishing, a global MSBuild property that dotnet publish itself passes on the
+       command line (confirmed via a diagnostic verbosity publish run), never set by a plain
+       dotnet build/F5, so the counter and the Version/AssemblyMetadata overrides below are inert
+       outside a real publish. -->
+  <PropertyGroup>
+    <VersionCounterFile>$(MSBuildProjectDirectory)\version.txt</VersionCounterFile>
+  </PropertyGroup>
+
+  <Target Name="IncrementVersionCounterOnPublish" BeforeTargets="BeforeBuild" Condition="'$(_IsPublishing)' == 'true'">
+    <ReadLinesFromFile File="$(VersionCounterFile)">
+      <Output TaskParameter="Lines" ItemName="_VersionCounterLines" />
+    </ReadLinesFromFile>
+    <PropertyGroup>
+      <_CurrentVersionCounter Condition="'@(_VersionCounterLines)' != ''">@(_VersionCounterLines)</_CurrentVersionCounter>
+      <_CurrentVersionCounter Condition="'$(_CurrentVersionCounter)' == ''">0</_CurrentVersionCounter>
+      <_NextVersionCounter>$([MSBuild]::Add($(_CurrentVersionCounter), 1))</_NextVersionCounter>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(VersionCounterFile)" Lines="$(_NextVersionCounter)" Overwrite="true" />
+    <PropertyGroup>
+      <Version>1.0.$(_NextVersionCounter)</Version>
+      <AssemblyInformationalVersion>1.0.$(_NextVersionCounter)</AssemblyInformationalVersion>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="BuildDate" Value="$([System.DateTime]::UtcNow.ToString(&quot;o&quot;))" />
+    </ItemGroup>
+  </Target>
+
 </Project>

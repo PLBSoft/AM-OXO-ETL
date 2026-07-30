@@ -79,6 +79,10 @@ builder.Services.AddDbContextFactory<ExcelEtlDbContext>(options =>
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
 
+// Lot 062 (62.2): reads Assembly.GetExecutingAssembly() once per process -- see ApplicationBuildInfo
+// itself and the version-counter target in ExcelETL.BlazorAdmin.csproj (62.1) it depends on.
+builder.Services.AddSingleton<ApplicationBuildInfo>();
+
 // Lot 034: read access to the generated-files archive (/generated-files admin page) -- same
 // GeneratedFilesArchive:RootPath section and registrations as ExcelETL.WebAPI/Program.cs, which is
 // the host that actually writes to this archive via POST /api/oxo/process.

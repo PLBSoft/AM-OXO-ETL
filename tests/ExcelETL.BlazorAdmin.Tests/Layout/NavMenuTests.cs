@@ -2,6 +2,7 @@ using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Layout;
 using ExcelETL.BlazorAdmin.Resources;
+using ExcelETL.BlazorAdmin.Services;
 using ExcelETL.Infrastructure.Identity;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,14 @@ namespace ExcelETL.BlazorAdmin.Tests.Layout;
 
 public class NavMenuTests : BunitContext
 {
-    public NavMenuTests() => Services.AddLocalization();
+    public NavMenuTests()
+    {
+        Services.AddLocalization();
+        // Lot 062 (62.3): NavMenu now injects ApplicationBuildInfo -- registered once here so every
+        // pre-existing test in this file (none of which cares about version/build date) keeps
+        // rendering unmodified. Individual Lot 062 tests below override this per-test where needed.
+        Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
+    }
 
     private static void WithCulture(string cultureName, Action action)
     {
@@ -486,11 +494,15 @@ public class NavMenuTests : BunitContext
         navScrollable.GetAttribute("tabindex").Should().BeNull();
     });
 
-    // Lot 061: client logo at the bottom of the sidebar. Placed as the last child of
-    // `nav.nav.flex-column`, outside of any AuthorizeView, so it is always the last DOM node and is
-    // visible regardless of authentication state (61.0.3/61.0.4).
+    // Lot 061: client logo at the bottom of the sidebar, outside of any AuthorizeView, so it is
+    // always visible regardless of authentication state (61.0.3/61.0.4). Its own intention ("last
+    // child of nav.nav.flex-column") is revised in place at Lot 062: the version/build-date block
+    // (62.3) now takes that literal last-child position, right after the logo -- fixed here rather
+    // than duplicated, per this project's established convention, since the underlying claim this
+    // test protects ("the logo sits at the very bottom of the sidebar, above only the version
+    // info") is unchanged in spirit, only its precise DOM position moved by one sibling.
     [Fact]
-    public void NavMenu_AlwaysRendersClientLogo_AsLastNavItem() => WithCulture("en-US", () =>
+    public void NavMenu_AlwaysRendersClientLogo_AsSecondToLastNavItem() => WithCulture("en-US", () =>
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
@@ -500,7 +512,9 @@ public class NavMenuTests : BunitContext
         logo.GetAttribute("src").Should().Be("images/client-logo.png");
 
         var nav = cut.Find("nav.nav.flex-column");
-        nav.Children.Last().QuerySelector("#sidebar-client-logo").Should().NotBeNull();
+        var children = nav.Children;
+        children[^2].QuerySelector("#sidebar-client-logo").Should().NotBeNull();
+        children[^1].Id.Should().Be("sidebar-version-info");
     });
 
     [Fact]
@@ -529,5 +543,82 @@ public class NavMenuTests : BunitContext
         this.AddAuthorization().SetNotAuthorized();
         var notAuthorizedCut = Render<NavMenu>();
         notAuthorizedCut.FindAll("#sidebar-client-logo").Should().HaveCount(1);
+    });
+
+    // --- Lot 062 (62.3): version/build-date indicator, last child of the sidebar -----------------
+
+    // Builds a real dynamic Assembly carrying the same AssemblyMetadata("BuildDate", ...) attribute
+    // the ExcelETL.BlazorAdmin.csproj version-counter target (62.1) bakes in at Publish time -- same
+    // technique as ApplicationBuildInfoTests, self-contained rather than depending on how this test
+    // project itself was built.
+    private static ApplicationBuildInfo BuildInfoWithBuildDate(string buildDateUtcIso8601)
+    {
+        var assemblyName = new System.Reflection.AssemblyName($"Lot062NavMenuFixture_{Guid.NewGuid():N}")
+        {
+            Version = new Version(1, 0, 0, 0)
+        };
+        var assemblyBuilder = System.Reflection.Emit.AssemblyBuilder.DefineDynamicAssembly(
+            assemblyName, System.Reflection.Emit.AssemblyBuilderAccess.Run);
+
+        var metadataCtor = typeof(System.Reflection.AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!;
+        assemblyBuilder.SetCustomAttribute(
+            new System.Reflection.Emit.CustomAttributeBuilder(metadataCtor, ["BuildDate", buildDateUtcIso8601]));
+
+        assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
+
+        return new ApplicationBuildInfo(assemblyBuilder);
+    }
+
+    [Fact]
+    public void NavMenu_WithKnownBuildDate_ShowsVersionAndFormattedDate() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+        Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
+
+        var cut = Render<NavMenu>();
+
+        var versionInfo = cut.Find("#sidebar-version-info");
+        versionInfo.TextContent.Should().Contain("v1.0.0.0");
+        versionInfo.TextContent.Should().Contain("30/07/2026");
+    });
+
+    [Fact]
+    public void NavMenu_WithoutBuildDate_ShowsOnlyVersion_NoDate_NoErrorText() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+        // Default ctor-registered ApplicationBuildInfo (the test assembly itself) has no BuildDate
+        // metadata -- the real "absent" case, not a fabricated one.
+
+        var cut = Render<NavMenu>();
+
+        var versionInfo = cut.Find("#sidebar-version-info");
+        versionInfo.TextContent.Should().Contain("v");
+        versionInfo.TextContent.Should().NotContain("/");
+        versionInfo.TextContent.Should().NotContainAny("null", "error", "Error", "erreur", "Erreur");
+    });
+
+    [Fact]
+    public void NavMenu_VersionInfo_IsPositionedAfterClientLogo_InTheDom() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        var nav = cut.Find("nav.nav.flex-column");
+        nav.Children.Last().Id.Should().Be("sidebar-version-info");
+
+        var logoIndex = cut.Markup.IndexOf("sidebar-client-logo", StringComparison.Ordinal);
+        var versionIndex = cut.Markup.IndexOf("sidebar-version-info", StringComparison.Ordinal);
+        versionIndex.Should().BeGreaterThan(logoIndex);
+    });
+
+    [Fact]
+    public void NavMenu_VersionInfo_VisibleRegardlessOfAuthorizationState() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#sidebar-version-info").Should().HaveCount(1);
     });
 }

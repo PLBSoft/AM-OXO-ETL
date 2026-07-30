@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using Bunit;
 using ExcelETL.BlazorAdmin.Components.Layout;
+using ExcelETL.BlazorAdmin.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
 using Xunit;
@@ -14,6 +15,11 @@ public class MainLayoutTests : BunitContext
     {
         Services.AddLocalization();
         this.AddAuthorization().SetNotAuthorized();
+
+        // Lot 062 (62.3): MainLayout renders NavMenu, which now injects ApplicationBuildInfo. Must be
+        // registered before SetRendererInfo below -- that call resolves a service internally, which
+        // locks the bUnit service provider against any further registration.
+        Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
 
         // Lot 045 (45.4): MainLayout now renders PasswordChangeGuard, which reads RendererInfo to
         // decide whether to render <NavigationLock> (only supported in an interactive render mode --

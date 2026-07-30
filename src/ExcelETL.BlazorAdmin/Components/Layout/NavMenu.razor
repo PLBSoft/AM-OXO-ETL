@@ -2,8 +2,11 @@
 
 @using ExcelETL.Infrastructure.Identity
 
+@using ExcelETL.BlazorAdmin.Services
+
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject ApplicationBuildInfo BuildInfo
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid d-flex align-items-center">
@@ -109,10 +112,20 @@
             </NotAuthorized>
         </AuthorizeView>
 
-        <!-- Lot 061: client logo, last child of the sidebar, outside of any AuthorizeView so it is
-             always visible regardless of authentication state (61.0.3/61.0.4). -->
+        <!-- Lot 061: client logo, outside of any AuthorizeView so it is always visible regardless
+             of authentication state (61.0.3/61.0.4). -->
         <div class="sidebar-logo-container">
             <img id="sidebar-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
+        </div>
+
+        <!-- Lot 062 (62.3): version/build-date indicator, last child of the sidebar, right after the
+             client logo. Outside of any AuthorizeView, same visibility rule as the logo (62.3). -->
+        <div id="sidebar-version-info" class="sidebar-version-info">
+            v@(BuildInfo.Version)
+            @if (BuildInfo.BuildDateUtc is not null)
+            {
+                @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
+            }
         </div>
     </nav>
 </div>
