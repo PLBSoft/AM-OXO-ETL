@@ -9,33 +9,72 @@
   --m3-primary-rgb: 216, 31, 17;
   --m3-on-primary: #FFFFFF;
 
-  --m3-secondary: #775652;
-  --m3-secondary-rgb: 119, 86, 82;
-  --m3-on-secondary: #FFFFFF;
+  /* Lot 060 (60.2): tonal container pair for the primary role, same M3 tonal-palette algorithm
+     (seed = the base --m3-primary above, tons 90/10) already used for --m3-secondary-container at
+     lot 058. Declared for model completeness -- no Bootstrap component consumes it yet (YAGNI,
+     see the lot 060 ticket's own explicit scope decision), so no -rgb variant either. */
+  --m3-primary-container: #FFDAD4;
+  --m3-on-primary-container: #410100;
+
+  /* Lot 060 (60.3): Expressive-variant secondary, replacing the taupe/brown default (algorithmically
+     correct for a TonalSpot variant on a warm red seed, but disliked by the client). Same seed
+     (--m3-primary), different M3 palette variant -- Expressive shifts hue instead of desaturating.
+     See docs/tickets/tickets-tdd-lot-060-palette-m3-complete-suppression-dette-couleurs.md 60.0.5. */
+  --m3-secondary: #3E6474;
+  --m3-secondary-rgb: 62, 100, 116;
+  --m3-on-secondary: #F2FAFF;
 
   /* Lot 058 (58.1): tonal "container" pair for .btn-secondary (fond plein), distinct from
      --m3-secondary above which stays the .btn-outline-secondary/.text-bg-secondary role,
-     untouched. M3 baseline values for the red family, not a new palette choice -- 13.3:1 contrast
-     in this (light) theme. */
-  --m3-secondary-container: #FFDAD6;
-  --m3-secondary-container-rgb: 255, 218, 214;
-  --m3-on-secondary-container: #2C1512;
+     untouched. Lot 060 (60.3): values recalculated for the new Expressive secondary hue above
+     (same role/consumer, same algorithm, only the resulting tone changed) -- contrast re-verified
+     >= 6:1 in this (light) theme. */
+  --m3-secondary-container: #C4EBFF;
+  --m3-secondary-container-rgb: 196, 235, 255;
+  --m3-on-secondary-container: #325868;
+
+  /* Lot 060 (60.4): new tertiary role, coordinated with the Expressive secondary above (both
+     computed together by the same M3 variant from the same seed, not picked independently). No
+     Bootstrap component consumes it yet (YAGNI, same scope decision as the containers below) --
+     --m3-tertiary-rgb is kept though, matching --m3-primary-rgb/--m3-secondary-rgb's own pattern of
+     the file's "accent" roles always carrying a -rgb variant regardless of a live consumer. */
+  --m3-tertiary: #00687F;
+  --m3-tertiary-rgb: 0, 104, 127;
+  --m3-on-tertiary: #F1FAFF;
+  --m3-tertiary-container: #5BD5FA;
+  --m3-on-tertiary-container: #004657;
 
   --m3-success: #2E7D32;
   --m3-success-rgb: 46, 125, 50;
   --m3-on-success: #FFFFFF;
 
+  /* Lot 060 (60.2): tonal container pair, same algorithm as primary-container above. */
+  --m3-success-container: #A3F69C;
+  --m3-on-success-container: #002204;
+
   --m3-danger: #BA1A1A;
   --m3-danger-rgb: 186, 26, 26;
   --m3-on-danger: #FFFFFF;
+
+  /* Lot 060 (60.2): tonal container pair, same algorithm as primary-container above. */
+  --m3-danger-container: #FFDAD5;
+  --m3-on-danger-container: #410002;
 
   --m3-warning: #ff7518;
   --m3-warning-rgb: 255, 117, 24;
   --m3-on-warning: #000000;
 
+  /* Lot 060 (60.2): tonal container pair, same algorithm as primary-container above. */
+  --m3-warning-container: #FFDBCB;
+  --m3-on-warning-container: #341100;
+
   --m3-info: #008c94;
   --m3-info-rgb: 0, 140, 148;
   --m3-on-info: #FFFFFF;
+
+  /* Lot 060 (60.2): tonal container pair, same algorithm as primary-container above. */
+  --m3-info-container: #8CF2FB;
+  --m3-on-info-container: #002022;
 
   --m3-background: #FFFBFF;
   --m3-on-background: #201A19;
@@ -110,34 +149,69 @@
   --m3-primary-rgb: 255, 180, 171;
   --m3-on-primary: #690100;
 
-  --m3-secondary: #E7BDB8;
-  --m3-secondary-rgb: 231, 189, 184;
-  --m3-on-secondary: #442925;
+  /* Lot 060 (60.2): tonal container pair, dark-theme tons (30/90), same algorithm as the light
+     block above. Declared for model completeness -- no live consumer yet. */
+  --m3-primary-container: #930200;
+  --m3-on-primary-container: #FFDAD4;
+
+  /* Lot 060 (60.3): Expressive-variant secondary, coordinated with the light theme's replacement
+     above (same seed, same variant, dark tons of the same computed hue). */
+  --m3-secondary: #B4CAD5;
+  --m3-secondary-rgb: 180, 202, 213;
+  --m3-on-secondary: #2E434C;
 
   /* Lot 058 (58.1): dark-theme tonal "container" pair, M3 baseline values -- 7.3:1 contrast.
      Deliberate visible change from the pre-058 rendering (fond rosé clair -> fond brun foncé),
      Variante A per the ticket, not a regression: the light theme is the one with the real defect
      (a dull taupe indistinguishable from a disabled field), the dark theme never had that problem
-     but keeps the canonical M3 role value rather than a copy of --m3-secondary. -->
-  --m3-secondary-container: #5D3F3B;
-  --m3-secondary-container-rgb: 93, 63, 59;
-  --m3-on-secondary-container: #FFDAD6;
+     but keeps the canonical M3 role value rather than a copy of --m3-secondary.
+     Lot 060 (60.3): values recalculated for the Expressive secondary hue above (same role/consumer,
+     same algorithm, only the resulting tone changed) -- contrast re-verified >= 6:1. -->
+  --m3-secondary-container: #132831;
+  --m3-secondary-container-rgb: 19, 40, 49;
+  --m3-on-secondary-container: #91A7B2;
+
+  /* Lot 060 (60.4): new tertiary role, coordinated with the Expressive secondary above. Note:
+     tertiary-container/on-tertiary-container compute the *same* value in light and dark for this
+     hue/chroma under the Expressive variant -- verified against the reference algorithm, not a
+     copy-paste mistake (see the ticket's own 60.0/60.4 note). */
+  --m3-tertiary: #88E0FF;
+  --m3-tertiary-rgb: 136, 224, 255;
+  --m3-on-tertiary: #005063;
+  --m3-tertiary-container: #5BD5FA;
+  --m3-on-tertiary-container: #004657;
 
   --m3-success: #81C784;
   --m3-success-rgb: 129, 199, 132;
   --m3-on-success: #1B5E20;
 
+  /* Lot 060 (60.2): tonal container pair, dark-theme tons, same algorithm as the light block. */
+  --m3-success-container: #005312;
+  --m3-on-success-container: #A3F69C;
+
   --m3-danger: #FFB4AB;
   --m3-danger-rgb: 255, 180, 171;
   --m3-on-danger: #690002;
+
+  /* Lot 060 (60.2): tonal container pair, dark-theme tons, same algorithm as the light block. */
+  --m3-danger-container: #930009;
+  --m3-on-danger-container: #FFDAD5;
 
   --m3-warning: #edb050;
   --m3-warning-rgb: 237, 176, 80;
   --m3-on-warning: #442925;
 
+  /* Lot 060 (60.2): tonal container pair, dark-theme tons, same algorithm as the light block. */
+  --m3-warning-container: #783100;
+  --m3-on-warning-container: #FFDBCB;
+
   --m3-info: #13d9e3;
   --m3-info-rgb: 19, 217, 227;
   --m3-on-info: #003333;
+
+  /* Lot 060 (60.2): tonal container pair, dark-theme tons, same algorithm as the light block. */
+  --m3-info-container: #004F54;
+  --m3-on-info-container: #8CF2FB;
 
   --m3-background: #201A19;
   --m3-on-background: #EDE0DE;
