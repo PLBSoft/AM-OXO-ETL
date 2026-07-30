@@ -14,6 +14,7 @@
 - **Green** (faire passer le test au plus simple) : effort standard suffit.
 - **Refactor** : réserver l'effort élevé/réflexion approfondie à cette étape, où le raisonnement architectural compte réellement.
 - Ne pas activer un mode de réflexion élevé pour l'ensemble du ticket par défaut — le préciser explicitement seulement pour le refactor si nécessaire.
+- Ce même principe s'applique à la **phase de rédaction** des tickets, pas seulement à leur implémentation : voir section 8.
 
 ## 3. Réduction du bruit des tests
 
@@ -60,3 +61,46 @@ Chaque ticket doit inclure :
 - Les pistes de refactor à considérer, si pertinent
 - Toute contrainte d'effort/mode à appliquer selon l'étape (cf. section 2)
 - Pour tout comportement de routage/navigation/redirection : le test HTTP exigé par la section 6
+- Aucune information recopiée d'un autre document du contexte : la citer par son nom de fichier
+  (cf. section 8, « un fait, un endroit »)
+
+## 8. Coût d'une session de rédaction de tickets (leçon des lots 056 / 057 / 058)
+
+Rédiger des tickets consomme des ressources dans le même ordre de grandeur que les implémenter. La
+séance qui a produit les lots 056 à 058 a été mesurée : **le texte produit pesait 44 % du coût total**
+(rédaction des lots + discussion des options), la lecture des documents du contexte 20 %, et
+l'inspection du code seulement 11 %. Ce n'est donc pas la lecture du dépôt qui coûte cher, c'est
+l'écriture — et la réécriture.
+
+Règles, par ordre de gain décroissant :
+
+- **Rassembler les faits avant de rédiger, jamais après.** Un ticket écrit sur hypothèses puis réécrit
+  sur constats coûte deux fois le ticket. Si la demande porte sur du code existant, vérifier d'abord
+  que le dépôt est accessible et le demander **dans la première réponse** s'il ne l'est pas — pas après
+  avoir produit une première version. C'était le principal gâchis de la séance 056-058 (~12 % du total,
+  entièrement évitable).
+- **Déléguer la reconnaissance de code à un sous-agent**, avec une consigne fermée et un retour limité
+  aux faits demandés (recensement d'`id`, de chaînes de classes, de clés `.resx`, de compteurs de
+  champs). Charger les fichiers dans le contexte principal les fait relire à chaque tour suivant.
+- **Un fait, un endroit.** Ce qui vaut pour plusieurs lots (conventions en place, garde-fous
+  transverses) va dans une convention citée par son nom de fichier, pas recopié dans chaque lot.
+  Trois lots frères qui répètent la même section « Conventions déjà en place » paient trois fois la
+  même information — et divergeront.
+- **Effort élevé pour les arbitrages, standard pour le reste.** Choisir un modèle d'enregistrement,
+  peser des options qui s'excluent, détecter qu'une demande contredit une décision antérieure : effort
+  élevé, c'est là que se joue la valeur. Recenser des identifiants, appliquer une décision déjà prise
+  aux deux éditeurs, publier les documents : effort standard.
+- **Moins de tours, pas des tours plus courts.** Le préambule (instructions système + liste d'outils)
+  est rechargé à chaque aller-retour et représentait 22 % de la séance mesurée. Grouper les appels
+  d'outils indépendants dans un même tour vaut mieux que multiplier les petits tours.
+
+Ce qui **ne se coupe pas**, même pour raccourcir un ticket :
+
+- les constats sourcés (fichier, ligne, valeur réelle) qui remplacent une hypothèse ;
+- les décisions écartées **et leur raison** — sans elles, la décision est rouverte au lot suivant ;
+- la section « hors périmètre » (exigée par les instructions projet) ;
+- les tests de garde-fou de non-généralisation.
+
+Ces quatre postes sont précisément ceux qui évitent une séance d'implémentation jetée. Les supprimer
+pour économiser du texte déplace la dépense au lieu de la réduire, et la déplace vers l'endroit où
+elle coûte le plus cher.
