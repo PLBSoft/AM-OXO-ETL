@@ -479,6 +479,30 @@ public class ProfileEditorParityTests : BunitContext
         importToggleClass.Should().Be("btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1");
     });
 
+    // Lot 058 (58.4, closing test of the lot): the icon+label gabarit (58.3) on the add-sheet-rule
+    // buttons of both editors -- the comparable this lot actually extends. The teinte (58.1) isn't
+    // a separate comparable here: it's carried by the already-compared .btn-secondary class, not a
+    // new class string. The height fix (58.2) isn't compared either: it's import-only, the same
+    // documented asymmetry as ShortFieldGrid_HasNoExportCounterpart_ImportOnlyAssertion.
+    // IntermediateAddButton_CssClass_IsIdenticalBetweenImportAndExportEditors above already
+    // includes the gabarit since 58.3's own fix -- this test is the dedicated, explicitly-58.4-named
+    // closing assertion the ticket calls for, re-confirming the same property on the top-level
+    // "Add sheet rule" buttons specifically (not just the nested sub-form ones).
+    [Fact]
+    public void AddSheetRuleButton_CssClass_IncludingGabarit_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importAddSheetRuleButton = importCut.Find("#add-sheet-rule-button");
+        var exportAddSheetRuleButton = exportCut.Find("#add-sheet-generation-rule-button");
+
+        importAddSheetRuleButton.GetAttribute("class").Should().Be(exportAddSheetRuleButton.GetAttribute("class"));
+        importAddSheetRuleButton.GetAttribute("class").Should().Contain("d-flex align-items-center justify-content-center gap-1");
+        importAddSheetRuleButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        exportAddSheetRuleButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+    });
+
     private static void WithCulture(string cultureName, Action action)
     {
         var originalCulture = CultureInfo.CurrentUICulture;
