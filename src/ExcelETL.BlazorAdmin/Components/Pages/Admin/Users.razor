@@ -207,7 +207,7 @@ else
                                 @if (CanDelete(user))
                                 {
                                     <button id="@($"delete-user-button-{user.Id}")" type="button"
-                                            class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                            class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                             aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
                                             @onclick="() => RequestDelete(user.Id)">
                                         @((MarkupString)AdminIconMarkup.Trash)
@@ -216,7 +216,7 @@ else
                                 else
                                 {
                                     <button id="@($"delete-user-button-{user.Id}")" type="button" disabled
-                                            class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                            class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                             aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
                                         @((MarkupString)AdminIconMarkup.Trash)
                                     </button>
@@ -337,7 +337,7 @@ else
                             @if (CanDelete(user))
                             {
                                 <button id="@($"delete-user-button-card-{user.Id}")" type="button"
-                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["Users_Delete", user.Email ?? user.Id]" title="@Loc["Users_Delete", user.Email ?? user.Id]"
                                         @onclick="() => RequestDelete(user.Id)">
                                     @((MarkupString)AdminIconMarkup.Trash)
@@ -346,7 +346,7 @@ else
                             else
                             {
                                 <button id="@($"delete-user-button-card-{user.Id}")" type="button" disabled
-                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@DeleteDisabledReason(user)" title="@DeleteDisabledReason(user)">
                                     @((MarkupString)AdminIconMarkup.Trash)
                                 </button>

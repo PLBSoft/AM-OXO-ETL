@@ -206,7 +206,10 @@ h1:focus {
 
 .sheet-rule-sublist-details > summary {
     cursor: pointer;
-    color: var(--bs-link-color);
+    /* Lot 059 (59.5): was the app's link-color token, the same red used for alerts/the CTA,
+       making a purely-informational disclosure read as an error. Neutral secondary-color token
+       instead -- the disclosure affordance is carried by the cursor/underline, not by color. */
+    color: var(--bs-secondary-color);
     font-size: 0.9rem;
     list-style: none;
 }

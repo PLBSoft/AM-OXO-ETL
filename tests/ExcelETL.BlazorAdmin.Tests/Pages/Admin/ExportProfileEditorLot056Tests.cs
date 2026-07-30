@@ -252,6 +252,9 @@ public class ExportProfileEditorLot056Tests : BunitContext
     public void SaveProfileButton_HasNonEmptyTitle_MentioningShortcut() => WithCulture("en-US", () =>
     {
         var cut = Render<ExportProfileEditor>();
+        // Lot 059 (59.4): the title is conditional on _hasUnsavedChanges -- a real pending change
+        // is needed for this test to actually prove what its name claims.
+        cut.Find("#export-profile-name-input").Change("Profil export OXO standard");
 
         var title = cut.Find("#save-export-profile-button").GetAttribute("title");
         title.Should().NotBeNullOrEmpty();

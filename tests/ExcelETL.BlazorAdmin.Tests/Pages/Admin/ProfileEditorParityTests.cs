@@ -385,6 +385,7 @@ public class ProfileEditorParityTests : BunitContext
             "add-default-tableau-button", "add-default-application-name-button",
             "add-block-field-button", "add-unconditional-colonne-button", "add-point-rule-button",
             "add-sheet-rule-button", "add-header-field-button", "add-header-composite-button",
+            "toggle-add-sheet-rule-form-button",
         })
         {
             importCut.Find($"#{id}").ClassList.Should().Contain("w-100");
@@ -395,6 +396,7 @@ public class ProfileEditorParityTests : BunitContext
         {
             "add-sheet-generation-rule-button", "add-column-definition-button",
             "add-point-column-definition-button", "add-application-column-definition-button",
+            "toggle-add-sheet-generation-rule-form-button",
         })
         {
             exportCut.Find($"#{id}").ClassList.Should().Contain("w-100");
@@ -476,7 +478,11 @@ public class ProfileEditorParityTests : BunitContext
         var exportToggleClass = exportCut.Find("#toggle-add-sheet-generation-rule-form-button").GetAttribute("class");
 
         importToggleClass.Should().Be(exportToggleClass);
-        importToggleClass.Should().Be("btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1");
+        // Lot 059 (59.6): the toggle now shares the exact gabarit of every other "Add" button (mt-3
+        // excepted -- it sits at the top of its own card, not the bottom of a form), rather than a
+        // narrower btn-sm/outline treatment that was the only button on the page not full-width and
+        // not filled -- matching that gabarit, class-for-class, in both open and closed states.
+        importToggleClass.Should().Be("btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1");
     });
 
     // Lot 058 (58.4, closing test of the lot): the icon+label gabarit (58.3) on the add-sheet-rule
@@ -532,4 +538,67 @@ public class ProfileEditorParityTests : BunitContext
             CultureInfo.CurrentUICulture = originalCulture;
         }
     }
+
+    // Lot 059 (59.8, closing test of the lot): the CTA's `disabled`/`title` behavior (59.4) behaves
+    // identically on both editors, in both states -- the class string itself is already covered,
+    // unmodified, by FinalSaveButton_CssClass_IsIdenticalBetweenImportAndExportEditors above.
+    [Fact]
+    public void SaveButtonDisabledAndTitle_BehaveIdenticallyBetweenImportAndExportEditors_WhenClean() =>
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfileEditor>();
+            var exportCut = Render<ExportProfileEditor>();
+
+            var importButton = importCut.Find("#save-profile-button");
+            var exportButton = exportCut.Find("#save-export-profile-button");
+
+            importButton.HasAttribute("disabled").Should().Be(exportButton.HasAttribute("disabled"));
+            importButton.HasAttribute("disabled").Should().BeTrue();
+        });
+
+    [Fact]
+    public void SaveButtonDisabledAndTitle_BehaveIdenticallyBetweenImportAndExportEditors_WhenDirty() =>
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfileEditor>();
+            importCut.Find("#profile-name-input").Change("Profil OXO standard");
+
+            var exportCut = Render<ExportProfileEditor>();
+            exportCut.Find("#export-profile-name-input").Change("Profil export OXO standard");
+
+            var importButton = importCut.Find("#save-profile-button");
+            var exportButton = exportCut.Find("#save-export-profile-button");
+
+            importButton.HasAttribute("disabled").Should().Be(exportButton.HasAttribute("disabled"));
+            importButton.HasAttribute("disabled").Should().BeFalse();
+            importButton.GetAttribute("title").Should().Contain("Ctrl+Enter");
+            exportButton.GetAttribute("title").Should().Contain("Ctrl+Enter");
+        });
+
+    // Lot 059 (59.8): the add-sheet-rule toggle's CSS class is already covered, unmodified in
+    // intention (only the expected string changed, 59.6), by
+    // AddSheetRuleToggleButton_CssClass_IsIdenticalBetweenImportAndExportEditors above.
+
+    // Lot 059 (59.8): sheet-rule-sublist-details (59.5) has no comparable to add here -- its class
+    // list is entirely unchanged (only app.css's declared color token changed), and the pre-existing
+    // SheetRuleSublistDetails_CollapsedByDefaultBehavior_IsIdenticalBetweenImportAndExportEditors test
+    // above stays green, unmodified. Documented explicitly rather than inventing a comparable for
+    // symmetry's own sake, same convention as ShortFieldGrid_HasNoExportCounterpart_ImportOnlyAssertion.
+
+    // Lot 059 (59.8): 59.1/59.2/59.3 (Tableaux/Applications validation, UI surfacing, two-column
+    // layout) have no export-side counterpart at all -- ExportProfile carries no such collection
+    // (constat 3). Documented explicitly, same convention as
+    // ShortFieldGrid_HasNoExportCounterpart_ImportOnlyAssertion, rather than a silently-missing test.
+    [Fact]
+    public void DefaultTableauxAndApplications_HaveNoExportCounterpart_ImportOnlyAssertion() =>
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfileEditor>();
+            importCut.FindAll("#default-tableau-name-input").Should().ContainSingle();
+            importCut.FindAll("#default-application-name-input").Should().ContainSingle();
+
+            var exportCut = Render<ExportProfileEditor>();
+            exportCut.FindAll("#default-tableau-name-input").Should().BeEmpty();
+            exportCut.FindAll("#default-application-name-input").Should().BeEmpty();
+        });
 }

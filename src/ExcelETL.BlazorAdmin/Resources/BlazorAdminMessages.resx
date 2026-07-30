@@ -472,6 +472,9 @@
   <data name="ImportProfileEditor_SaveButtonShortcutHint" xml:space="preserve">
     <value>Shortcut: Ctrl+Enter</value>
   </data>
+  <data name="ImportProfileEditor_SaveButtonNoChangesHint" xml:space="preserve">
+    <value>Nothing to save yet</value>
+  </data>
   <data name="ImportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Sheet rules</value>
   </data>
@@ -918,6 +921,9 @@
   </data>
   <data name="ExportProfileEditor_SaveButtonShortcutHint" xml:space="preserve">
     <value>Shortcut: Ctrl+Enter</value>
+  </data>
+  <data name="ExportProfileEditor_SaveButtonNoChangesHint" xml:space="preserve">
+    <value>Nothing to save yet</value>
   </data>
   <data name="ExportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Sheet rules</value>

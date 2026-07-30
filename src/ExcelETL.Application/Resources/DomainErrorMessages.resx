@@ -79,6 +79,24 @@
   <data name="ImportProfile_NameTooLong" xml:space="preserve">
     <value>Name must not exceed {0} characters.</value>
   </data>
+  <data name="ImportProfile_EmptyTableauName" xml:space="preserve">
+    <value>Tableau name must not be empty.</value>
+  </data>
+  <data name="ImportProfile_TableauNameTooLong" xml:space="preserve">
+    <value>Tableau name must not exceed {0} characters.</value>
+  </data>
+  <data name="ImportProfile_DuplicateTableauName" xml:space="preserve">
+    <value>Tableau name '{0}' already exists.</value>
+  </data>
+  <data name="ImportProfile_EmptyApplicationName" xml:space="preserve">
+    <value>Application name must not be empty.</value>
+  </data>
+  <data name="ImportProfile_ApplicationNameTooLong" xml:space="preserve">
+    <value>Application name must not exceed {0} characters.</value>
+  </data>
+  <data name="ImportProfile_DuplicateApplicationName" xml:space="preserve">
+    <value>Application name '{0}' already exists.</value>
+  </data>
   <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
     <value>Sheet name must not be empty.</value>
   </data>

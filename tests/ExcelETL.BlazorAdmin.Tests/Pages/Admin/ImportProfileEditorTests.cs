@@ -2121,6 +2121,162 @@ public class ImportProfileEditorTests : BunitContext
             all.Single().DefaultApplicationNames.Should().BeEmpty();
         });
 
+    // Lot 059 (59.2): AddDefaultTableau/AddDefaultApplicationName and the in-line Save actions now
+    // route through ImportProfile's own public validator (59.1) instead of a silent blank-check --
+    // the same validation path used by the Domain constructor.
+
+    [Fact]
+    public void DefaultTableau_AddDuplicateName_ShowsAlert_KeepsSingleItem_AndPreservesTypedInput() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("zzz");
+            cut.Find("#add-default-tableau-button").Click();
+            cut.Find("#default-tableau-name-input").Change("zzz");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle();
+            cut.Find("[role='alert']").TextContent.Should().Contain("zzz");
+            cut.Find("#default-tableau-name-input").GetAttribute("value").Should().Be("zzz");
+        });
+
+    [Fact]
+    public void DefaultTableau_AddCaseInsensitiveDuplicateName_ShowsAlert_KeepsSingleItem() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("zzz");
+            cut.Find("#add-default-tableau-button").Click();
+            cut.Find("#default-tableau-name-input").Change("ZZZ");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle();
+            cut.Find("[role='alert']").Should().NotBeNull();
+        });
+
+    [Fact]
+    public void DefaultTableau_AddNameOf51Characters_ShowsAlert_AddsNothing() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change(new string('A', 51));
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.FindAll(".block-field-name").Should().BeEmpty();
+            cut.Find("[role='alert']").Should().NotBeNull();
+        });
+
+    [Fact]
+    public void DefaultTableau_AddBlankName_ShowsAlert_InsteadOfSilentlyDoingNothing() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("   ");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.FindAll(".block-field-name").Should().BeEmpty();
+            cut.Find("[role='alert']").Should().NotBeNull();
+        });
+
+    [Fact]
+    public void DefaultTableau_AddNameWithSurroundingWhitespace_StoresTrimmedValue() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("  zzz  ");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find(".block-field-name").TextContent.Should().Be("zzz");
+        });
+
+    [Fact]
+    public void DefaultTableau_RenameItemToItsOwnValue_IsAccepted_NoAlert() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("zzz");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-0").Click();
+            cut.Find("#default-tableau-edit-input-0").Change("zzz");
+            cut.Find("#save-default-tableau-button-0").Click();
+
+            cut.FindAll("#default-tableau-edit-input-0").Should().BeEmpty();
+            cut.FindAll("[role='alert']").Should().BeEmpty();
+            cut.Find(".block-field-name").TextContent.Should().Be("zzz");
+        });
+
+    [Fact]
+    public void DefaultTableau_RenameItemToAnotherItemsName_ShowsAlert_KeepsEditModeOpen_DoesNotOverwriteOriginal() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("zzz");
+            cut.Find("#add-default-tableau-button").Click();
+            cut.Find("#default-tableau-name-input").Change("yyy");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.Find("#edit-default-tableau-button-1").Click();
+            cut.Find("#default-tableau-edit-input-1").Change("zzz");
+            cut.Find("#save-default-tableau-button-1").Click();
+
+            cut.FindAll("#default-tableau-edit-input-1").Should().HaveCount(1);
+            cut.Find("[role='alert']").Should().NotBeNull();
+            cut.FindAll(".block-field-name").Should().ContainSingle(e => e.TextContent == "zzz");
+        });
+
+    [Fact]
+    public void DefaultTableau_AddRejectedOnFreshProfile_UnsavedChangesIndicatorStaysAbsent() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-tableau-name-input").Change("");
+            cut.Find("#add-default-tableau-button").Click();
+
+            cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
+        });
+
+    [Fact]
+    public void DefaultApplicationName_AddDuplicateName_ShowsAlert_KeepsSingleItem_AndPreservesTypedInput() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+            cut.Find("#default-application-name-input").Change("progress");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.FindAll(".block-field-name").Should().ContainSingle();
+            cut.Find("[role='alert']").Should().NotBeNull();
+            cut.Find("#default-application-name-input").GetAttribute("value").Should().Be("progress");
+        });
+
+    [Fact]
+    public void DefaultApplicationName_RenameItemToItsOwnValue_IsAccepted_NoAlert() =>
+        WithCulture("en-US", () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            cut.Find("#default-application-name-input").Change("PROGRESS");
+            cut.Find("#add-default-application-name-button").Click();
+
+            cut.Find("#edit-default-application-name-button-0").Click();
+            cut.Find("#default-application-name-edit-input-0").Change("PROGRESS");
+            cut.Find("#save-default-application-name-button-0").Click();
+
+            cut.FindAll("#default-application-name-edit-input-0").Should().BeEmpty();
+            cut.FindAll("[role='alert']").Should().BeEmpty();
+        });
+
     // Lot W: edit/delete of an already-added ConditionalPointRule.
 
     private static void AddPointRule(IRenderedComponent<ImportProfileEditor> cut, string colonneName, string sourceFieldName,

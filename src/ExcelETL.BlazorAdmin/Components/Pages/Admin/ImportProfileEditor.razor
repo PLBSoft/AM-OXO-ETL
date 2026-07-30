@@ -92,6 +92,12 @@ else
     </div>
 </div>
 
+<!-- Lot 059 (59.3): the two blocks sit side by side above 768px, each h2 inside its own column
+     (not above the row -- otherwise both titles would end up on one line and both cards on
+     another). Nothing changes inside either card: the g-2 add-row, field-inline-action, ids and
+     button classes are all untouched. -->
+<div class="row g-3">
+<div class="col-12 col-md-6">
 <h2 class="h3">@Loc["ImportProfileEditor_DefaultTableauxHeading"]</h2>
 <div class="card bg-light mb-3">
     <div class="card-body">
@@ -179,6 +185,10 @@ else
              full height; .field-inline-action then makes the button fill that height, but only
              at >=768px (see app.css) -- below that the two elements stack and the button keeps
              its natural height. -->
+        @if (!string.IsNullOrEmpty(_defaultTableauAddError))
+        {
+            <div class="alert alert-danger" role="alert">@_defaultTableauAddError</div>
+        }
         <div class="row g-2">
             <div class="col-12 col-md">
                 <div class="form-floating">
@@ -195,7 +205,9 @@ else
         </div>
     </div>
 </div>
+</div>
 
+<div class="col-12 col-md-6">
 <h2 class="h3">@Loc["ImportProfileEditor_DefaultApplicationNamesHeading"]</h2>
 <div class="card bg-light mb-3">
     <div class="card-body">
@@ -275,6 +287,10 @@ else
         }
         <!-- Lot 053 (53.3/53.4): same mono-field add row treatment as Tableaux above.
              Lot 058 (58.2): same align-items-end removal + .field-inline-action treatment. -->
+        @if (!string.IsNullOrEmpty(_defaultApplicationNameAddError))
+        {
+            <div class="alert alert-danger" role="alert">@_defaultApplicationNameAddError</div>
+        }
         <div class="row g-2">
             <div class="col-12 col-md">
                 <div class="form-floating">
@@ -290,6 +306,8 @@ else
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 
 <h2 class="h3">@Loc["ImportProfileEditor_SheetRulesHeading"]</h2>
@@ -435,7 +453,7 @@ else
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
-        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
                 @onclick="ToggleAddSheetRuleFormAsync">
             @if (_openSheetRuleForm.IsAdd)
             {
@@ -464,7 +482,9 @@ else
     }
     <div class="right-aligned-actions">
         <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1"
-                title="@Loc["ImportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
+                disabled="@(!_hasUnsavedChanges)"
+                title="@(_hasUnsavedChanges ? Loc["ImportProfileEditor_SaveButtonShortcutHint"] : Loc["ImportProfileEditor_SaveButtonNoChangesHint"])"
+                @onclick="SaveProfileAsync">
             @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
         </button>
     </div>
@@ -492,10 +512,12 @@ else
     private int? _editingDefaultTableauIndex;
     private string _editingDefaultTableauValue = string.Empty;
     private string? _defaultTableauEditError;
+    private string? _defaultTableauAddError;
 
     private int? _editingDefaultApplicationNameIndex;
     private string _editingDefaultApplicationNameValue = string.Empty;
     private string? _defaultApplicationNameEditError;
+    private string? _defaultApplicationNameAddError;
 
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _pendingDeleteIndex;
@@ -565,25 +587,37 @@ else
 
     private void AddDefaultTableau()
     {
-        if (string.IsNullOrWhiteSpace(_newDefaultTableauName))
+        try
         {
+            ImportProfile.ValidateDefaultTableauName(_newDefaultTableauName, _defaultTableaux);
+        }
+        catch (DomainValidationException ex)
+        {
+            _defaultTableauAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
             return;
         }
 
-        _defaultTableaux.Add(_newDefaultTableauName);
+        _defaultTableaux.Add(_newDefaultTableauName.Trim());
         _newDefaultTableauName = string.Empty;
+        _defaultTableauAddError = null;
         MarkAsChanged();
     }
 
     private void AddDefaultApplicationName()
     {
-        if (string.IsNullOrWhiteSpace(_newDefaultApplicationName))
+        try
         {
+            ImportProfile.ValidateDefaultApplicationName(_newDefaultApplicationName, _defaultApplicationNames);
+        }
+        catch (DomainValidationException ex)
+        {
+            _defaultApplicationNameAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
             return;
         }
 
-        _defaultApplicationNames.Add(_newDefaultApplicationName);
+        _defaultApplicationNames.Add(_newDefaultApplicationName.Trim());
         _newDefaultApplicationName = string.Empty;
+        _defaultApplicationNameAddError = null;
         MarkAsChanged();
     }
 
@@ -596,13 +630,21 @@ else
 
     private void SaveDefaultTableauEdit(int itemIndex)
     {
-        if (string.IsNullOrWhiteSpace(_editingDefaultTableauValue))
+        // Excludes the item under edit from the comparison list -- otherwise renaming "zzz" to
+        // "zzz" (a no-op) would reject itself as a duplicate of its own prior value.
+        var otherTableaux = _defaultTableaux.Where((_, i) => i != itemIndex).ToList();
+
+        try
         {
-            _defaultTableauEditError = Loc["ImportProfileEditor_EmptyTableauNameError"];
+            ImportProfile.ValidateDefaultTableauName(_editingDefaultTableauValue, otherTableaux);
+        }
+        catch (DomainValidationException ex)
+        {
+            _defaultTableauEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
             return;
         }
 
-        _defaultTableaux[itemIndex] = _editingDefaultTableauValue;
+        _defaultTableaux[itemIndex] = _editingDefaultTableauValue.Trim();
         _editingDefaultTableauIndex = null;
         _defaultTableauEditError = null;
         MarkAsChanged();
@@ -633,13 +675,19 @@ else
 
     private void SaveDefaultApplicationNameEdit(int itemIndex)
     {
-        if (string.IsNullOrWhiteSpace(_editingDefaultApplicationNameValue))
+        var otherApplicationNames = _defaultApplicationNames.Where((_, i) => i != itemIndex).ToList();
+
+        try
         {
-            _defaultApplicationNameEditError = Loc["ImportProfileEditor_EmptyApplicationNameError"];
+            ImportProfile.ValidateDefaultApplicationName(_editingDefaultApplicationNameValue, otherApplicationNames);
+        }
+        catch (DomainValidationException ex)
+        {
+            _defaultApplicationNameEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
             return;
         }
 
-        _defaultApplicationNames[itemIndex] = _editingDefaultApplicationNameValue;
+        _defaultApplicationNames[itemIndex] = _editingDefaultApplicationNameValue.Trim();
         _editingDefaultApplicationNameIndex = null;
         _defaultApplicationNameEditError = null;
         MarkAsChanged();
@@ -770,7 +818,7 @@ else
     // validation inside a sub-list.
     private async Task OnRootKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
     {
-        if (args is { Key: "Enter", CtrlKey: true })
+        if (args is { Key: "Enter", CtrlKey: true } && _hasUnsavedChanges)
         {
             await SaveProfileAsync();
         }

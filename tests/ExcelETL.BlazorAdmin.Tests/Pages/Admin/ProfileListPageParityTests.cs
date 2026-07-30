@@ -4,6 +4,10 @@ using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
+using ExcelETL.Domain.Extraction.Primitives;
+using ExcelETL.Domain.Extraction.Profile;
+using ExcelETL.Domain.Generation.Fields;
+using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
 using FluentAssertions;
@@ -73,4 +77,73 @@ public class ProfileListPageParityTests : BunitContext
             importCreateButtonClass.Should().Be(exportCreateButtonClass);
             importCreateButtonClass.Should().Contain("flex-fill");
         });
+
+    // Lot 059 (59.7/59.8): row-level delete buttons harmonized onto the exact outline-danger class
+    // already used by the editors' own delete-row buttons (e.g. delete-default-tableau-button-0) --
+    // strict string comparison, both between the two profile lists and against that editor
+    // reference, token order included. Modify/Duplicate stay outline-secondary on both lists.
+    private const string EditorDeleteButtonReferenceClass = "btn btn-sm btn-outline-danger block-field-icon-btn";
+
+    private static ImportProfile BuildImportProfileForParity()
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
+        return new ImportProfile("MAD OXO parity", "MAD TRAVAUX", [], [], [sheetRule]);
+    }
+
+    private static ExportProfile BuildExportProfileForParity() =>
+        new("MAD OXO export parity",
+            [
+                new SheetGenerationRule(
+                    "Parents", PivotSource.Equipement,
+                    [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                    [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+                    [])
+            ]);
+
+    [Fact]
+    public async Task DeleteButton_CssClass_IsIdenticalBetweenImportAndExportProfilesLists_AndMatchesEditorReference()
+    {
+        var importProfile = BuildImportProfileForParity();
+        var exportProfile = BuildExportProfileForParity();
+        await Services.GetRequiredService<IImportProfileStore>().SaveAsync(importProfile);
+        await Services.GetRequiredService<IExportProfileStore>().SaveAsync(exportProfile);
+
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfiles>();
+            var exportCut = Render<ExportProfiles>();
+
+            var importDeleteClass = importCut.Find($"#delete-profile-button-{importProfile.Id}").GetAttribute("class");
+            var exportDeleteClass = exportCut.Find($"#delete-export-profile-button-{exportProfile.Id}").GetAttribute("class");
+
+            importDeleteClass.Should().Be(exportDeleteClass);
+            importDeleteClass.Should().Be(EditorDeleteButtonReferenceClass);
+        });
+    }
+
+    [Fact]
+    public async Task ModifyAndDuplicateButtons_StayOutlineSecondary_OnBothProfileLists()
+    {
+        var importProfile = BuildImportProfileForParity();
+        var exportProfile = BuildExportProfileForParity();
+        await Services.GetRequiredService<IImportProfileStore>().SaveAsync(importProfile);
+        await Services.GetRequiredService<IExportProfileStore>().SaveAsync(exportProfile);
+
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfiles>();
+            var exportCut = Render<ExportProfiles>();
+
+            const string nonDestructiveClass = "btn btn-outline-secondary btn-sm block-field-icon-btn";
+
+            importCut.Find($"#edit-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+            importCut.Find($"#duplicate-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+            exportCut.Find($"#edit-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+            exportCut.Find($"#duplicate-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+        });
+    }
 }

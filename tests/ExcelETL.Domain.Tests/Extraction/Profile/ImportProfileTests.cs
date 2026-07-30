@@ -192,4 +192,168 @@ public class ImportProfileTests
 
         profile.Name.Should().Be(name);
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WithEmptyTableauName_ThrowsDomainValidationException(string invalidName)
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [invalidName], [], [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_EmptyTableauName);
+    }
+
+    [Fact]
+    public void Constructor_WithTableauNameOfExactly50Characters_CreatesImportProfile()
+    {
+        var name = new string('A', 50);
+
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [name], [], [ValidRule()]);
+
+        profile.DefaultTableaux.Should().BeEquivalentTo([name]);
+    }
+
+    [Fact]
+    public void Constructor_WithTableauNameOf51Characters_ThrowsDomainValidationException()
+    {
+        var name = new string('A', 51);
+
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [name], [], [ValidRule()]);
+
+        var exception = act.Should().Throw<DomainValidationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_TableauNameTooLong);
+        exception.Args.Should().ContainSingle().Which.Should().Be(50);
+    }
+
+    [Fact]
+    public void Constructor_WithTableauNameOf55CharactersTrimmingTo50_CreatesImportProfile()
+    {
+        var name = "  " + new string('A', 50) + "   ";
+
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [name], [], [ValidRule()]);
+
+        profile.DefaultTableaux.Should().BeEquivalentTo([new string('A', 50)]);
+    }
+
+    [Fact]
+    public void Constructor_WithCaseInsensitiveDuplicateTableauNames_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, ["zzz", "ZZZ"], [], [ValidRule()]);
+
+        var exception = act.Should().Throw<DomainValidationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateTableauName);
+        exception.Args.Should().ContainSingle().Which.Should().Be("ZZZ");
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicateTableauNamesDifferingOnlyByWhitespace_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, ["zzz", " zzz "], [], [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateTableauName);
+    }
+
+    [Fact]
+    public void Constructor_WithTableauNameSurroundedByWhitespace_StoresTrimmedValue()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, ["  zzz  "], [], [ValidRule()]);
+
+        profile.DefaultTableaux.Should().BeEquivalentTo(["zzz"]);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WithEmptyApplicationName_ThrowsDomainValidationException(string invalidName)
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [invalidName], [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_EmptyApplicationName);
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationNameOfExactly50Characters_CreatesImportProfile()
+    {
+        var name = new string('A', 50);
+
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [name], [ValidRule()]);
+
+        profile.DefaultApplicationNames.Should().BeEquivalentTo([name]);
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationNameOf51Characters_ThrowsDomainValidationException()
+    {
+        var name = new string('A', 51);
+
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [name], [ValidRule()]);
+
+        var exception = act.Should().Throw<DomainValidationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_ApplicationNameTooLong);
+        exception.Args.Should().ContainSingle().Which.Should().Be(50);
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationNameOf55CharactersTrimmingTo50_CreatesImportProfile()
+    {
+        var name = "  " + new string('A', 50) + "   ";
+
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [name], [ValidRule()]);
+
+        profile.DefaultApplicationNames.Should().BeEquivalentTo([new string('A', 50)]);
+    }
+
+    [Fact]
+    public void Constructor_WithCaseInsensitiveDuplicateApplicationNames_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], ["PROGRESS", "progress"], [ValidRule()]);
+
+        var exception = act.Should().Throw<DomainValidationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateApplicationName);
+        exception.Args.Should().ContainSingle().Which.Should().Be("progress");
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicateApplicationNamesDifferingOnlyByWhitespace_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], ["PROGRESS", " PROGRESS "], [ValidRule()]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateApplicationName);
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationNameSurroundedByWhitespace_StoresTrimmedValue()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], ["  PROGRESS  "], [ValidRule()]);
+
+        profile.DefaultApplicationNames.Should().BeEquivalentTo(["PROGRESS"]);
+    }
+
+    [Fact]
+    public void Constructor_WithSameNameInBothTableauxAndApplicationNames_CreatesImportProfile()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, ["SHARED"], ["SHARED"], [ValidRule()]);
+
+        profile.DefaultTableaux.Should().BeEquivalentTo(["SHARED"]);
+        profile.DefaultApplicationNames.Should().BeEquivalentTo(["SHARED"]);
+    }
 }

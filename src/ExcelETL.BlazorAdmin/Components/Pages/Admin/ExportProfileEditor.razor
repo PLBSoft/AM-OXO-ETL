@@ -174,7 +174,7 @@ else
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>@Loc["ExportProfileEditor_AddSheetHeading"]</span>
-            <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+            <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
                     @onclick="ToggleAddSheetRuleFormAsync">
                 @if (_openSheetRuleForm.IsAdd)
                 {
@@ -202,7 +202,9 @@ else
         }
         <div class="right-aligned-actions">
             <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1"
-                    title="@Loc["ExportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
+                    disabled="@(!_hasUnsavedChanges)"
+                    title="@(_hasUnsavedChanges ? Loc["ExportProfileEditor_SaveButtonShortcutHint"] : Loc["ExportProfileEditor_SaveButtonNoChangesHint"])"
+                    @onclick="SaveProfileAsync">
                 @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
             </button>
         </div>
@@ -365,7 +367,7 @@ else
     // Lot 056 (56.5): mirror of ImportProfileEditor.razor's own Ctrl+Enter handler.
     private async Task OnRootKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
     {
-        if (args is { Key: "Enter", CtrlKey: true })
+        if (args is { Key: "Enter", CtrlKey: true } && _hasUnsavedChanges)
         {
             await SaveProfileAsync();
         }

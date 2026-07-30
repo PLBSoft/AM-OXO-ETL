@@ -12,6 +12,10 @@ public sealed class ImportProfile : Entity
     public const string DefaultReperePrefix = "MAD-OXO-";
     public const int MaxNameLength = ProfileNaming.MaxNameLength;
 
+    // Distinct from MaxNameLength (the profile's own Name, 60 chars) -- this bounds one element of
+    // DefaultTableaux/DefaultApplicationNames.
+    public const int MaxListItemNameLength = 50;
+
     // See RepeatingBlockLocator.Fields (Extraction/Primitives) for why SheetRules needs a backing
     // field instead of a plain auto-property: EF Core cannot constructor-bind an entity-collection
     // navigation.
@@ -99,12 +103,69 @@ public sealed class ImportProfile : Entity
                 "Sheet rules must contain at least one rule.", nameof(sheetRules), DomainErrorCode.ImportProfile_NoSheetRules);
         }
 
+        var trimmedTableaux = new List<string>();
+        foreach (var tableau in defaultTableaux)
+        {
+            ValidateDefaultTableauName(tableau, trimmedTableaux);
+            trimmedTableaux.Add(tableau.Trim());
+        }
+
+        var trimmedApplicationNames = new List<string>();
+        foreach (var applicationName in defaultApplicationNames)
+        {
+            ValidateDefaultApplicationName(applicationName, trimmedApplicationNames);
+            trimmedApplicationNames.Add(applicationName.Trim());
+        }
+
         Name = name;
         ReperePrefix = reperePrefix;
         EquipementTypeElementNom = equipementTypeElementNom;
-        DefaultTableaux = [.. defaultTableaux];
-        DefaultApplicationNames = [.. defaultApplicationNames];
+        DefaultTableaux = trimmedTableaux;
+        DefaultApplicationNames = trimmedApplicationNames;
         _sheetRules = [.. sheetRules];
+    }
+
+    // The single validation path for one candidate Tableau name against the (already-trimmed) names
+    // already accepted into its own list -- called both by this constructor (in a loop) and by
+    // ImportProfileEditor.razor's own add/edit-in-line UI (Lot 059), so the two never drift into two
+    // separate notions of "valid".
+    public static void ValidateDefaultTableauName(string candidate, IReadOnlyList<string> existing) =>
+        ValidateListItemName(
+            candidate, existing,
+            DomainErrorCode.ImportProfile_EmptyTableauName,
+            DomainErrorCode.ImportProfile_TableauNameTooLong,
+            DomainErrorCode.ImportProfile_DuplicateTableauName);
+
+    public static void ValidateDefaultApplicationName(string candidate, IReadOnlyList<string> existing) =>
+        ValidateListItemName(
+            candidate, existing,
+            DomainErrorCode.ImportProfile_EmptyApplicationName,
+            DomainErrorCode.ImportProfile_ApplicationNameTooLong,
+            DomainErrorCode.ImportProfile_DuplicateApplicationName);
+
+    private static void ValidateListItemName(
+        string candidate, IReadOnlyList<string> existing,
+        DomainErrorCode emptyCode, DomainErrorCode tooLongCode, DomainErrorCode duplicateCode)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            throw new DomainValidationException("Name must not be empty.", nameof(candidate), emptyCode);
+        }
+
+        var trimmed = candidate.Trim();
+
+        if (trimmed.Length > MaxListItemNameLength)
+        {
+            throw new DomainValidationException(
+                $"Name must not exceed {MaxListItemNameLength} characters.", nameof(candidate), tooLongCode,
+                MaxListItemNameLength);
+        }
+
+        if (existing.Any(e => string.Equals(e.Trim(), trimmed, StringComparison.OrdinalIgnoreCase)))
+        {
+            throw new DomainValidationException(
+                $"Name '{trimmed}' already exists.", nameof(candidate), duplicateCode, trimmed);
+        }
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

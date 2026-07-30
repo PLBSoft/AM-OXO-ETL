@@ -343,6 +343,10 @@ public class ImportProfileEditorLot056Tests : BunitContext
     public void SaveProfileButton_HasNonEmptyTitle_MentioningShortcut() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
+        // Lot 059 (59.4): the title is conditional on _hasUnsavedChanges -- an unmodified profile
+        // shows the "nothing to save" hint, not the shortcut one. A real pending change is needed
+        // for this test to actually prove what its name claims.
+        cut.Find("#profile-name-input").Change("Profil OXO standard");
 
         var title = cut.Find("#save-profile-button").GetAttribute("title");
         title.Should().NotBeNullOrEmpty();

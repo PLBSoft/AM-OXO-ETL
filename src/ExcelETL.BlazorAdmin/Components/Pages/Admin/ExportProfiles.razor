@@ -81,7 +81,7 @@ else
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-export-profile-button-@profile.Id" type="button"
-                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
                                 @((MarkupString)AdminIconMarkup.Trash)
@@ -132,7 +132,7 @@ else
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
                             <button id="delete-export-profile-button-card-@profile.Id" type="button"
-                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
                                     @onclick="() => RequestDeleteProfile(profile)">
                                 @((MarkupString)AdminIconMarkup.Trash)

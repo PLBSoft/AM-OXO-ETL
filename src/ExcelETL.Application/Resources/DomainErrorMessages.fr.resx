@@ -79,6 +79,24 @@
   <data name="ImportProfile_NameTooLong" xml:space="preserve">
     <value>Le nom ne doit pas dépasser {0} caractères.</value>
   </data>
+  <data name="ImportProfile_EmptyTableauName" xml:space="preserve">
+    <value>Le nom du tableau ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_TableauNameTooLong" xml:space="preserve">
+    <value>Le nom du tableau ne doit pas dépasser {0} caractères.</value>
+  </data>
+  <data name="ImportProfile_DuplicateTableauName" xml:space="preserve">
+    <value>Le nom de tableau '{0}' existe déjà.</value>
+  </data>
+  <data name="ImportProfile_EmptyApplicationName" xml:space="preserve">
+    <value>Le nom de l'application ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_ApplicationNameTooLong" xml:space="preserve">
+    <value>Le nom de l'application ne doit pas dépasser {0} caractères.</value>
+  </data>
+  <data name="ImportProfile_DuplicateApplicationName" xml:space="preserve">
+    <value>Le nom d'application '{0}' existe déjà.</value>
+  </data>
   <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
     <value>Le nom de la feuille ne doit pas être vide.</value>
   </data>
