@@ -69,7 +69,7 @@ else
     </div>
 
     <div class="right-aligned-actions">
-        <button id="process-button" type="button" class="btn btn-primary btn-lg" disabled="@(!CanProcess || _processing)" @onclick="ProcessAsync">
+        <button id="process-button" type="button" class="btn btn-primary btn-lg d-flex align-items-center justify-content-center gap-1" disabled="@(!CanProcess || _processing)" @onclick="ProcessAsync">
             @((MarkupString)AdminIconMarkup.Send) @Loc["ApiTest_ProcessButton"]
         </button>
     </div>

@@ -102,7 +102,7 @@ else
                 </div>
 
                 <!-- V12: primary action button only -- full width below md, natural width from md up. -->
-                <button id="generate-workbook-button" class="btn btn-primary btn-lg w-100 w-md-auto mb-3" @onclick="GenerateWorkbooksForBatch">
+                <button id="generate-workbook-button" class="btn btn-primary btn-lg w-100 w-md-auto mb-3 d-flex align-items-center justify-content-center gap-1" @onclick="GenerateWorkbooksForBatch">
                     @((MarkupString)AdminIconMarkup.FileEarmarkSpreadsheet) @Loc["ExportProfileTest_GenerateButton"]
                 </button>
 

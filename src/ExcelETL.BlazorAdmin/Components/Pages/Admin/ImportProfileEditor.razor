@@ -188,7 +188,7 @@ else
                 </div>
             </div>
             <div class="col-12 col-md-auto">
-                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto field-inline-action" @onclick="AddDefaultTableau">
+                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultTableau">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTableauButton"]
                 </button>
             </div>
@@ -284,7 +284,7 @@ else
                 </div>
             </div>
             <div class="col-12 col-md-auto">
-                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto field-inline-action" @onclick="AddDefaultApplicationName">
+                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultApplicationName">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddApplicationButton"]
                 </button>
             </div>
@@ -435,7 +435,7 @@ else
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
-        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
+        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                 @onclick="ToggleAddSheetRuleFormAsync">
             @if (_openSheetRuleForm.IsAdd)
             {
@@ -463,7 +463,7 @@ else
         <span id="unsaved-changes-indicator" class="text-warning">@Loc["ImportProfileEditor_UnsavedChangesIndicator"]</span>
     }
     <div class="right-aligned-actions">
-        <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
+        <button id="save-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1"
                 title="@Loc["ImportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
             @((MarkupString)AdminIconMarkup.Check) @Loc["ImportProfileEditor_SaveButton"]
         </button>

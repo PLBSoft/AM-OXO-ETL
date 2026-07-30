@@ -1625,13 +1625,13 @@ public class ExportProfileEditorTests : BunitContext
             OpenAddSheetRuleFormIfClosed(cut);
 
             cut.Find("#add-sheet-generation-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#add-sheet-generation-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#add-sheet-generation-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             cut.Find("#modify-sheet-generation-rule-button-0").Click();
 
             // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
             cut.Find("#save-sheet-generation-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 
     // Lot 041 (41.3) / Lot 053 (53.4): ColumnDefinitionForm is one of the "6 nested sub-forms" --
@@ -1647,13 +1647,13 @@ public class ExportProfileEditorTests : BunitContext
             cut.Find("#modify-sheet-generation-rule-button-0").Click();
 
             cut.Find("#edit-0-add-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#edit-0-add-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#edit-0-add-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             cut.Find("#edit-0-modify-column-definition-button-0").Click();
 
             // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
             cut.Find("#edit-0-save-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#edit-0-save-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#edit-0-save-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 
     // Lot 041 (41.3) / Lot 053 (53.4): PointColumnDefinitionForm is one of the "6 nested sub-forms"
@@ -1668,13 +1668,13 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#add-point-column-definition-button").Click();
 
         cut.Find("#add-point-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-        cut.Find("#add-point-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#add-point-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
         cut.Find("#modify-point-column-definition-button-0").Click();
 
         // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
         cut.Find("#save-point-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-        cut.Find("#save-point-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#save-point-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
     });
 
     // Lot 041 (41.3) / Lot 053 (53.4): ApplicationColumnDefinitionForm is one of the "6 nested
@@ -1689,13 +1689,13 @@ public class ExportProfileEditorTests : BunitContext
         cut.Find("#add-application-column-definition-button").Click();
 
         cut.Find("#add-application-column-definition-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-        cut.Find("#add-application-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#add-application-column-definition-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
         cut.Find("#modify-application-column-definition-button-0").Click();
 
         // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
         cut.Find("#save-application-column-definition-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-        cut.Find("#save-application-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#save-application-column-definition-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
     });
 
     // Lot 041 (41.3): confirms the previously-missing `title` on the Application-column

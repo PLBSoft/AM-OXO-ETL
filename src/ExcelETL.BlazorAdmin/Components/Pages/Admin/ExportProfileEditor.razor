@@ -174,7 +174,7 @@ else
     <div class="card mb-3">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>@Loc["ExportProfileEditor_AddSheetHeading"]</span>
-            <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary"
+            <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                     @onclick="ToggleAddSheetRuleFormAsync">
                 @if (_openSheetRuleForm.IsAdd)
                 {
@@ -201,7 +201,7 @@ else
             <span id="unsaved-changes-indicator" class="text-warning">@Loc["ExportProfileEditor_UnsavedChangesIndicator"]</span>
         }
         <div class="right-aligned-actions">
-            <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4"
+            <button id="save-export-profile-button" class="btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1"
                     title="@Loc["ExportProfileEditor_SaveButtonShortcutHint"]" @onclick="SaveProfileAsync">
                 @((MarkupString)AdminIconMarkup.Check) @Loc["ExportProfileEditor_SaveButton"]
             </button>

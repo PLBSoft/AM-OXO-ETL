@@ -196,7 +196,7 @@ public class ProfileEditorParityTests : BunitContext
         var exportAddButton = exportCut.Find("#add-column-definition-button");
 
         importAddButton.GetAttribute("class").Should().Be(exportAddButton.GetAttribute("class"));
-        importAddButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        importAddButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         importAddButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
         exportAddButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
     });
@@ -245,7 +245,7 @@ public class ProfileEditorParityTests : BunitContext
         var exportSaveButtonClass = exportCut.Find("#save-export-profile-button").GetAttribute("class");
 
         importSaveButtonClass.Should().Be(exportSaveButtonClass);
-        importSaveButtonClass.Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4");
+        importSaveButtonClass.Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1");
     });
 
     // Lot 037: closes the one sheet-rule-card element R1-R3/30.5 never compared -- the Modify/
@@ -451,7 +451,7 @@ public class ProfileEditorParityTests : BunitContext
             var importSubmitClass = importCut.Find("#save-sheet-rule-button-0").GetAttribute("class");
             var exportSubmitClass = exportCut.Find("#save-sheet-generation-rule-button-0").GetAttribute("class");
             importSubmitClass.Should().Be(exportSubmitClass);
-            importSubmitClass.Should().Be("btn btn-secondary w-100 mt-3");
+            importSubmitClass.Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             var importCancelClass = importCut.Find("#cancel-sheet-rule-button-0").GetAttribute("class");
             var exportCancelClass = exportCut.Find("#cancel-sheet-generation-rule-button-0").GetAttribute("class");
@@ -476,7 +476,7 @@ public class ProfileEditorParityTests : BunitContext
         var exportToggleClass = exportCut.Find("#toggle-add-sheet-generation-rule-form-button").GetAttribute("class");
 
         importToggleClass.Should().Be(exportToggleClass);
-        importToggleClass.Should().Be("btn btn-sm btn-outline-secondary");
+        importToggleClass.Should().Be("btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1");
     });
 
     private static void WithCulture(string cultureName, Action action)

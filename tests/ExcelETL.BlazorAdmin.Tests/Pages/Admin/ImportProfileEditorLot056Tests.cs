@@ -560,7 +560,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
             var submitClass = cut.Find("#edit-0-save-header-field-button-0").GetAttribute("class");
             var cancelClass = cut.Find("#edit-0-cancel-header-field-button-0").GetAttribute("class");
 
-            submitClass.Should().Be("btn btn-secondary w-100 mt-3");
+            submitClass.Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
             cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
             submitClass.Should().NotBe(cancelClass);
         });
@@ -579,7 +579,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
             var submitClass = cut.Find("#edit-0-save-header-composite-button-0").GetAttribute("class");
             var cancelClass = cut.Find("#edit-0-cancel-header-composite-button-0").GetAttribute("class");
 
-            submitClass.Should().Be("btn btn-secondary w-100 mt-3");
+            submitClass.Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
             cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
             submitClass.Should().NotBe(cancelClass);
         });
@@ -589,7 +589,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
-        cut.Find("#add-header-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
-        cut.Find("#add-header-composite-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+        cut.Find("#add-header-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
+        cut.Find("#add-header-composite-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
     }
 }

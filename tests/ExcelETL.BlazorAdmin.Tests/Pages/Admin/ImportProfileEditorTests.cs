@@ -599,12 +599,12 @@ public class ImportProfileEditorTests : BunitContext
             var cut = Render<ImportProfileEditor>();
 
             var tableauButton = cut.Find("#add-default-tableau-button");
-            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action");
+            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1");
             tableauButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             tableauButton.TextContent.Trim().Should().NotBeNullOrEmpty();
 
             var applicationButton = cut.Find("#add-default-application-name-button");
-            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action");
+            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1");
             applicationButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             applicationButton.TextContent.Trim().Should().NotBeNullOrEmpty();
         });
@@ -658,7 +658,7 @@ public class ImportProfileEditorTests : BunitContext
         foreach (var id in new[] { "add-block-field-button", "add-unconditional-colonne-button", "add-point-rule-button", "add-sheet-rule-button" })
         {
             var button = cut.Find($"#{id}");
-            button.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            button.GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
             button.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             button.TextContent.Trim().Should().NotBeNullOrEmpty();
         }
@@ -683,7 +683,7 @@ public class ImportProfileEditorTests : BunitContext
         {
             var cut = Render<ImportProfileEditor>();
 
-            cut.Find("#save-profile-button").GetAttribute("class").Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4");
+            cut.Find("#save-profile-button").GetAttribute("class").Should().Be("btn btn-primary w-100 w-md-auto btn-lg mt-4 mb-4 d-flex align-items-center justify-content-center gap-1");
         });
 
     [Fact]
@@ -2316,7 +2316,7 @@ public class ImportProfileEditorTests : BunitContext
             OpenAddSheetRuleFormIfClosed(cut);
 
             cut.Find("#add-sheet-rule-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#add-sheet-rule-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             cut.Find("#modify-sheet-rule-button-0").Click();
 
@@ -2325,7 +2325,7 @@ public class ImportProfileEditorTests : BunitContext
             // previously btn-outline-secondary here, indistinguishable from "Cancel" right next to
             // it. Fixed in place, not duplicated (same instruction as Lots 51.2/53.2).
             cut.Find("#save-sheet-rule-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#save-sheet-rule-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#save-sheet-rule-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 
     // Lot 041 (41.3) / Lot 053 (53.4): BlockFieldForm is one of the "6 nested sub-forms" -- same
@@ -2341,13 +2341,13 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#modify-sheet-rule-button-0").Click();
 
             cut.Find("#edit-0-add-block-field-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#edit-0-add-block-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#edit-0-add-block-field-button").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             cut.Find("#edit-0-modify-block-field-button-0").Click();
 
             // Lot 056 (56.7): fixed in place -- class is now solid btn-secondary in both modes.
             cut.Find("#edit-0-save-block-field-button-0").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
-            cut.Find("#edit-0-save-block-field-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3");
+            cut.Find("#edit-0-save-block-field-button-0").GetAttribute("class").Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 
     // Lot 041 (41.3): confirms the previously-missing `title` on the block-field Modify/Delete

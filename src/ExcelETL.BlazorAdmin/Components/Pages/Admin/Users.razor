@@ -17,7 +17,7 @@
 <h1>@Loc["Users_PageTitle"]</h1>
 
 <div class="right-aligned-actions mb-3">
-    <button id="create-user-button" type="button" class="btn btn-primary" @onclick="ShowCreateForm">
+    <button id="create-user-button" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1" @onclick="ShowCreateForm">
         @((MarkupString)AdminIconMarkup.Plus) @Loc["Users_CreateButton"]
     </button>
 </div>
@@ -70,7 +70,7 @@
                 <button id="create-user-cancel-button" type="button" class="btn btn-secondary" @onclick="CancelCreate">
                     @Loc["Users_CreateCancelButton"]
                 </button>
-                <button id="create-user-submit-button" type="button" class="btn btn-primary" @onclick="SubmitCreateAsync">
+                <button id="create-user-submit-button" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1" @onclick="SubmitCreateAsync">
                     @((MarkupString)AdminIconMarkup.Check) @Loc["Users_CreateSubmitButton"]
                 </button>
             </div>
@@ -181,7 +181,7 @@ else
                                                 @onclick="CancelEdit">
                                             @Loc["Users_EditCancelButton"]
                                         </button>
-                                        <button id="@($"save-edit-user-button-{user.Id}")" type="button" class="btn btn-primary"
+                                        <button id="@($"save-edit-user-button-{user.Id}")" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1"
                                                 @onclick="SubmitEditAsync">
                                             @((MarkupString)AdminIconMarkup.Check) @Loc["Users_EditSubmitButton"]
                                         </button>
@@ -311,7 +311,7 @@ else
                                             @onclick="CancelEdit">
                                         @Loc["Users_EditCancelButton"]
                                     </button>
-                                    <button id="@($"save-edit-user-button-card-{user.Id}")" type="button" class="btn btn-primary"
+                                    <button id="@($"save-edit-user-button-card-{user.Id}")" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1"
                                             @onclick="SubmitEditAsync">
                                         @((MarkupString)AdminIconMarkup.Check) @Loc["Users_EditSubmitButton"]
                                     </button>

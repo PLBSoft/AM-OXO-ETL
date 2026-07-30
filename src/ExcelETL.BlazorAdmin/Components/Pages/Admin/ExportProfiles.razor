@@ -20,7 +20,7 @@
     <button id="test-export-profile-button" class="btn btn-secondary flex-fill" @onclick="TestProfile">
         @Loc["NavMenu_ExportProfileTest"]
     </button>
-    <button id="create-export-profile-button" class="btn btn-primary flex-fill" @onclick="CreateProfile">
+    <button id="create-export-profile-button" class="btn btn-primary flex-fill d-flex align-items-center justify-content-center gap-1" @onclick="CreateProfile">
         @((MarkupString)AdminIconMarkup.Plus) @Loc["ExportProfiles_Create"]
     </button>
 </div>

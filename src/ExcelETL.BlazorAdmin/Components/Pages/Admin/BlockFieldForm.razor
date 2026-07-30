@@ -38,7 +38,7 @@
      mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
      btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)

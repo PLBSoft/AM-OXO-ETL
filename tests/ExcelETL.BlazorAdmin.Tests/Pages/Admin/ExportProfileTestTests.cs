@@ -320,8 +320,9 @@ public class ExportProfileTestTests : BunitContext
         ]);
 
     // Lot 041 (41.2): generate-workbook-button was one of the audit's flagged icon-less CTAs.
+    // Lot 058 (58.3): extended in place (not duplicated) with the icon+label gabarit check.
     [Fact]
-    public async Task GenerateWorkbookButton_HasIcon() =>
+    public async Task GenerateWorkbookButton_HasIcon_AndCarriesTheIconLabelGabarit() =>
         await WithCultureAsync("en-US", async () =>
         {
             var importProfile = await SeedRealImportProfileAsync();
@@ -336,7 +337,9 @@ public class ExportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
             SelectExportProfile(cut, exportProfile.Id);
 
-            cut.Find("#generate-workbook-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            var button = cut.Find("#generate-workbook-button");
+            button.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+            button.ClassList.Should().Contain("d-flex").And.Contain("align-items-center").And.Contain("justify-content-center").And.Contain("gap-1");
         });
 
     [Fact]

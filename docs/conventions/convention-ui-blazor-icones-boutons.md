@@ -71,6 +71,36 @@ reconnaître l'action *avant* la lecture du texte. Si non, ne pas en ajouter.
 - **Choix de l'icône** : icônes Bootstrap Icons universelles et non ambiguës uniquement. Ne pas
   ajouter d'icône seulement pour « faire joli » sur une action non standard — cf. règle générale.
 
+## Icône + libellé : gabarit unique (Lot 058)
+
+**Origine** : deux formes de markup coexistaient pour un bouton icône + libellé — un espace blanc
+littéral dans le source Razor entre l'icône et `@Loc[...]` (rendu correctement), ou l'icône dans un
+bloc `@if`/`else` suivi du libellé sur la ligne suivante (aucun espace rendu, icône collée au
+texte). La correction ne porte pas fichier par fichier : elle rend l'espacement **indépendant du
+blanc de la source**.
+
+- **Chaîne d'utilitaires exacte** à ajouter à la classe du bouton, dans cet ordre, en plus des
+  classes déjà en place (couleur, largeur, marges — jamais remplacées) :
+  `d-flex align-items-center justify-content-center gap-1`.
+- **Interdit** : faire reposer l'espacement icône/libellé sur un blanc de source Razor, ou sur une
+  marge posée au cas par cas (`ms-1` sur le libellé, `me-1` dans la constante d'icône). L'espacement
+  vient uniquement du `gap-1` du conteneur flex.
+- `d-flex` (et non `d-inline-flex`) fonctionne aussi bien avec `w-100` qu'avec une largeur naturelle
+  grâce à `justify-content-center` : une seule combinaison à retenir pour tous les cas, y compris un
+  bouton de largeur naturelle (`justify-content-center` y est alors simplement sans effet visible).
+- Effet de bord bénéfique : l'icône se retrouve centrée verticalement par rapport au texte, ce qui
+  n'était pas garanti non plus avec les deux formes précédentes.
+- **L'icône reste décorative** (`aria-hidden="true"`, déjà porté par chaque constante
+  `AdminIconMarkup`) tant qu'un libellé texte visible subsiste — ce gabarit ne change rien à la
+  règle d'accessibilité déjà énoncée ci-dessous.
+- Exemple réel, après application (`create-profile-button`) :
+
+```razor
+<button id="create-profile-button" class="btn btn-primary flex-fill d-flex align-items-center justify-content-center gap-1" @onclick="CreateProfile">
+    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfiles_Create"]
+</button>
+```
+
 ## Accessibilité (A11Y)
 
 - **Bouton icône + texte** : l'icône est décorative, elle doit être masquée aux lecteurs d'écran —
