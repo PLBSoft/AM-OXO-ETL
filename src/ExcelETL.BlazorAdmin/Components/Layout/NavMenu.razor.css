@@ -153,6 +153,17 @@
     color: var(--m3-on-primary);
 }
 
+/* Lot 061: client logo, last child of the sidebar. */
+.sidebar-logo-container {
+    padding: 1rem 0 0.5rem;
+    text-align: center;
+}
+
+.sidebar-logo-container img {
+    max-width: 70%;
+    height: auto;
+}
+
 .nav-scrollable {
     display: none;
 }

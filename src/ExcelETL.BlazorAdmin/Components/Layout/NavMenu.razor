@@ -108,6 +108,12 @@
                 </div>
             </NotAuthorized>
         </AuthorizeView>
+
+        <!-- Lot 061: client logo, last child of the sidebar, outside of any AuthorizeView so it is
+             always visible regardless of authentication state (61.0.3/61.0.4). -->
+        <div class="sidebar-logo-container">
+            <img id="sidebar-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
+        </div>
     </nav>
 </div>
 

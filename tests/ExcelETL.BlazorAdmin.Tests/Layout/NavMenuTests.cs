@@ -485,4 +485,49 @@ public class NavMenuTests : BunitContext
         navScrollable.GetAttribute("role").Should().BeNull();
         navScrollable.GetAttribute("tabindex").Should().BeNull();
     });
+
+    // Lot 061: client logo at the bottom of the sidebar. Placed as the last child of
+    // `nav.nav.flex-column`, outside of any AuthorizeView, so it is always the last DOM node and is
+    // visible regardless of authentication state (61.0.3/61.0.4).
+    [Fact]
+    public void NavMenu_AlwaysRendersClientLogo_AsLastNavItem() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        var logo = cut.Find("#sidebar-client-logo");
+        logo.GetAttribute("src").Should().Be("images/client-logo.png");
+
+        var nav = cut.Find("nav.nav.flex-column");
+        nav.Children.Last().QuerySelector("#sidebar-client-logo").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavMenu_ClientLogo_AndEnglishCulture_HasEnglishAltText() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#sidebar-client-logo").GetAttribute("alt").Should().Contain("Client logo");
+    });
+
+    [Fact]
+    public void NavMenu_ClientLogo_AndFrenchCulture_HasFrenchAltText() => WithCulture("fr-FR", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#sidebar-client-logo").GetAttribute("alt").Should().Contain("Logo client");
+    });
+
+    [Fact]
+    public void NavMenu_ClientLogo_VisibleRegardlessOfAuthorizationState() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+        var notAuthorizedCut = Render<NavMenu>();
+        notAuthorizedCut.FindAll("#sidebar-client-logo").Should().HaveCount(1);
+    });
 }

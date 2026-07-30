@@ -43,6 +43,9 @@
   <data name="NavMenu_Login" xml:space="preserve">
     <value>Login</value>
   </data>
+  <data name="NavMenu_ClientLogoAlt" xml:space="preserve">
+    <value>Client logo</value>
+  </data>
   <data name="MainLayout_UnhandledError" xml:space="preserve">
     <value>An unhandled error has occurred.</value>
   </data>
