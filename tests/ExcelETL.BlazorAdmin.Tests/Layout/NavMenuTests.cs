@@ -496,26 +496,29 @@ public class NavMenuTests : BunitContext
 
     // Lot 061: client logo at the bottom of the sidebar, outside of any AuthorizeView, so it is
     // always visible regardless of authentication state (61.0.3/61.0.4). Its own intention ("last
-    // child of nav.nav.flex-column") is revised in place at Lot 062: the version/build-date block
-    // (62.3) now takes that literal last-child position, right after the logo -- fixed here rather
-    // than duplicated, per this project's established convention, since the underlying claim this
-    // test protects ("the logo sits at the very bottom of the sidebar, above only the version
-    // info") is unchanged in spirit, only its precise DOM position moved by one sibling.
+    // child of nav.nav.flex-column") is revised in place at the post-062 follow-up: the logo and
+    // version-info are now both grouped inside one `#sidebar-footer` div (so CSS can push the pair
+    // to the true bottom of the sidebar via margin-top:auto, and hide the pair entirely on mobile)
+    // -- fixed here rather than duplicated, per this project's established convention, since the
+    // underlying claim this test protects ("the logo sits at the very bottom of the sidebar, above
+    // only the version info") is unchanged in spirit, only its precise DOM wrapping changed.
     [Fact]
-    public void NavMenu_AlwaysRendersClientLogo_AsSecondToLastNavItem() => WithCulture("en-US", () =>
-    {
-        this.AddAuthorization().SetAuthorized("admin@example.com");
+    public void NavMenu_AlwaysRendersClientLogoAndVersionInfo_InsideTheLastNavItem_AsASingleFooter() =>
+        WithCulture("en-US", () =>
+        {
+            this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+            var cut = Render<NavMenu>();
 
-        var logo = cut.Find("#sidebar-client-logo");
-        logo.GetAttribute("src").Should().Be("images/client-logo.png");
+            var logo = cut.Find("#sidebar-client-logo");
+            logo.GetAttribute("src").Should().Be("images/client-logo.png");
 
-        var nav = cut.Find("nav.nav.flex-column");
-        var children = nav.Children;
-        children[^2].QuerySelector("#sidebar-client-logo").Should().NotBeNull();
-        children[^1].Id.Should().Be("sidebar-version-info");
-    });
+            var nav = cut.Find("nav.nav.flex-column");
+            var footer = nav.Children.Last();
+            footer.Id.Should().Be("sidebar-footer");
+            footer.QuerySelector("#sidebar-client-logo").Should().NotBeNull();
+            footer.QuerySelector("#sidebar-version-info").Should().NotBeNull();
+        });
 
     [Fact]
     public void NavMenu_ClientLogo_AndEnglishCulture_HasEnglishAltText() => WithCulture("en-US", () =>
@@ -604,9 +607,6 @@ public class NavMenuTests : BunitContext
 
         var cut = Render<NavMenu>();
 
-        var nav = cut.Find("nav.nav.flex-column");
-        nav.Children.Last().Id.Should().Be("sidebar-version-info");
-
         var logoIndex = cut.Markup.IndexOf("sidebar-client-logo", StringComparison.Ordinal);
         var versionIndex = cut.Markup.IndexOf("sidebar-version-info", StringComparison.Ordinal);
         versionIndex.Should().BeGreaterThan(logoIndex);
@@ -620,5 +620,52 @@ public class NavMenuTests : BunitContext
         var cut = Render<NavMenu>();
 
         cut.FindAll("#sidebar-version-info").Should().HaveCount(1);
+    });
+
+    // --- Follow-up (post-062): a detailed on-hover tooltip. The desktop-bottom-alignment / mobile-
+    // hidden CSS rules themselves are covered by NavMenuRazorCssSidebarFooterVisibilityTests.cs
+    // (Styling/), reusing that folder's own "read the .razor.css as plain text" convention rather
+    // than duplicating it inline here, since bUnit computes no CSS/layout at all. ------------------
+
+    [Fact]
+    public void NavMenu_VersionInfo_TooltipShowsDetailedDateAndTime_WhenBuildDateKnown() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+        Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
+
+        var cut = Render<NavMenu>();
+
+        var title = cut.Find("#sidebar-version-info").GetAttribute("title");
+        title.Should().NotBeNullOrWhiteSpace();
+        title.Should().Contain("2026");
+        title.Should().Contain("16:49");
+        title.Should().Contain("Thursday");
+        title.Should().Contain("July");
+    });
+
+    [Fact]
+    public void NavMenu_VersionInfo_TooltipShowsDetailedDateAndTime_InFrench() => WithCulture("fr-FR", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+        Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
+
+        var cut = Render<NavMenu>();
+
+        var title = cut.Find("#sidebar-version-info").GetAttribute("title");
+        title.Should().Contain("2026");
+        title.Should().Contain("16:49");
+        title.Should().Contain("juillet");
+        title.Should().Contain("Publié le");
+    });
+
+    [Fact]
+    public void NavMenu_VersionInfo_HasNoTooltip_WhenBuildDateUnknown() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+        // Default ctor-registered ApplicationBuildInfo (the test assembly itself) has no BuildDate.
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#sidebar-version-info").GetAttribute("title").Should().BeNullOrEmpty();
     });
 }

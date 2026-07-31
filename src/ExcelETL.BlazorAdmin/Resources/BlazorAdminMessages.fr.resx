@@ -46,6 +46,9 @@
   <data name="NavMenu_ClientLogoAlt" xml:space="preserve">
     <value>Logo client</value>
   </data>
+  <data name="NavMenu_BuildDateTooltip" xml:space="preserve">
+    <value>Publié le {0}</value>
+  </data>
   <data name="MainLayout_UnhandledError" xml:space="preserve">
     <value>Une erreur non gérée s'est produite.</value>
   </data>

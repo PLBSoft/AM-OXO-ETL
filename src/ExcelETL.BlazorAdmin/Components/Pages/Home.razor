@@ -2,13 +2,31 @@
 @attribute [Authorize]
 
 @using ExcelETL.Application.Home
+@using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.BlazorAdmin.Shared
 @using Microsoft.AspNetCore.Authorization
 
 @inject IHomeIndicatorsService HomeIndicatorsService
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject ApplicationBuildInfo BuildInfo
 
 <PageTitle>@Loc["Home_PageTitle"]</PageTitle>
+
+<!-- Follow-up (post-062): the sidebar hides the client logo/version footer on mobile
+     (NavMenu.razor.css, <641px) -- shown here instead on the landing page, per the client's own
+     request, since it's the one page every account reaches right after signing in. Hidden on
+     desktop (Home.razor.css, >=641px), so the sidebar stays the single place showing this
+     information there, never duplicated. -->
+<div class="home-mobile-brand">
+    <img id="home-mobile-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
+    <div id="home-mobile-version-info" class="home-mobile-version-info" title="@BuildDateTooltip">
+        v@(BuildInfo.Version)
+        @if (BuildInfo.BuildDateUtc is not null)
+        {
+            @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
+        }
+    </div>
+</div>
 
 <h1>@Loc["Home_PageTitle"]</h1>
 <p class="text-muted small">@Loc["Home_Intro"]</p>
@@ -133,6 +151,15 @@ else
 @code {
     private HomeIndicators? _indicators;
     private bool _loadError;
+
+    // Same computation as NavMenu.razor's own BuildDateTooltip -- kept duplicated rather than
+    // factored into a shared helper, consistent with this project's precedent of accepting small
+    // duplication over a premature abstraction for a two-line computed property.
+    private string? BuildDateTooltip => BuildInfo.BuildDateUtc is { } buildDateUtc
+        ? string.Format(
+            Loc["NavMenu_BuildDateTooltip"].Value,
+            buildDateUtc.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture))
+        : null;
 
     protected override async Task OnInitializedAsync()
     {

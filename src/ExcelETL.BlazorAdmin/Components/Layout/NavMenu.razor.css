@@ -153,25 +153,34 @@
     color: var(--m3-on-primary);
 }
 
-/* Lot 061: client logo. Bottom padding trimmed at Lot 062 -- the version/date block right below it
-   now owns the sidebar's final bottom padding, so the two blocks don't stack a double gap. */
+/* Follow-up (post-062): the logo + version/date footer is hidden on mobile entirely (the same
+   information moves to Home.razor there, since the client reported this block rendering poorly
+   inside the mobile open-menu) and, on desktop, pushed to the true bottom of the sidebar via
+   `margin-top: auto` on the flex `<nav>` below -- previously the footer just sat right after the
+   last nav link, leaving a visible gap under it whenever the current account's link list was short. */
+.sidebar-footer {
+    display: none;
+}
+
 .sidebar-logo-container {
     padding: 1rem 0 0.25rem;
     text-align: center;
 }
 
 .sidebar-logo-container img {
-    max-width: 70%;
+    max-width: 80%;
     height: auto;
 }
 
-/* Lot 062 (62.3): version/build-date indicator, last child of the sidebar. Discrete, consistent
-   with the sidebar's other secondary elements (small font size, muted color). */
+/* Discrete, consistent with the sidebar's other secondary elements (small font size, muted color).
+   `cursor: default` signals the `title` tooltip (detailed publication date/time) without implying
+   the element is interactive/clickable. */
 .sidebar-version-info {
     padding: 0 0 1rem;
     text-align: center;
     font-size: 0.75rem;
     color: color-mix(in srgb, var(--m3-on-primary) 60%, transparent);
+    cursor: default;
 }
 
 .nav-scrollable {
@@ -194,5 +203,19 @@
         /* Allow sidebar to scroll for tall menus */
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
+    }
+
+    /* Fills .nav-scrollable's fixed height above so the flex footer below has real spare space to
+       be pushed into via margin-top:auto, instead of only taking its content's natural height. */
+    .nav-scrollable > nav.nav.flex-column {
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+    }
+
+    .sidebar-footer {
+        display: flex;
+        flex-direction: column;
+        margin-top: auto;
     }
 }

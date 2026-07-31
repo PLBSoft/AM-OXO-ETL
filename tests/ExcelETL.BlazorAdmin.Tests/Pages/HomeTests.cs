@@ -1,6 +1,7 @@
 using Bunit;
 using ExcelETL.Application.Home;
 using ExcelETL.BlazorAdmin.Components.Pages;
+using ExcelETL.BlazorAdmin.Services;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -19,6 +20,9 @@ public class HomeTests : BunitContext
     {
         Services.AddSingleton(_serviceMock.Object);
         Services.AddLocalization();
+        // Follow-up (post-062): Home.razor now also injects ApplicationBuildInfo for its mobile-only
+        // client-logo/version footer.
+        Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
     }
 
     private static HomeIndicators KnownIndicators(
@@ -192,5 +196,64 @@ public class HomeTests : BunitContext
         cut.FindAll("#home-kpi-export-profiles").Should().HaveCount(1);
         cut.FindAll("#home-kpi-generated-files").Should().HaveCount(1);
         cut.FindAll("#home-kpi-last-generation").Should().HaveCount(1);
+    }
+
+    // --- Follow-up (post-062): mobile-only client logo + version/date, since the sidebar hides its
+    // own equivalent footer at that same viewport width (Home.razor.css, see
+    // SidebarFooterMobileVisibilityTests.cs for the CSS-level visibility toggle itself). ------------
+
+    [Fact]
+    public void MobileBrand_RendersTheClientLogo_WithLocalizedAltText()
+    {
+        var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en-US");
+        try
+        {
+            _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+            var cut = Render<Home>();
+
+            var logo = cut.Find("#home-mobile-client-logo");
+            logo.GetAttribute("src").Should().Be("images/client-logo.png");
+            logo.GetAttribute("alt").Should().Be("Client logo");
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    [Fact]
+    public void MobileBrand_RendersVersionInfo_WithATooltipWhenBuildDateKnown()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+        var assemblyName = new System.Reflection.AssemblyName($"Lot062PostFixHomeFixture_{Guid.NewGuid():N}") { Version = new Version(1, 0, 3, 0) };
+        var assemblyBuilder = System.Reflection.Emit.AssemblyBuilder.DefineDynamicAssembly(assemblyName, System.Reflection.Emit.AssemblyBuilderAccess.Run);
+        var metadataCtor = typeof(System.Reflection.AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!;
+        assemblyBuilder.SetCustomAttribute(new System.Reflection.Emit.CustomAttributeBuilder(metadataCtor, ["BuildDate", "2026-07-30T16:49:02.0716047Z"]));
+        assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
+        Services.AddSingleton(new ApplicationBuildInfo(assemblyBuilder));
+
+        var cut = Render<Home>();
+
+        var versionInfo = cut.Find("#home-mobile-version-info");
+        versionInfo.TextContent.Should().Contain("v1.0.3.0");
+        versionInfo.TextContent.Should().Contain("30/07/2026");
+        versionInfo.GetAttribute("title").Should().Contain("16:49");
+    }
+
+    [Fact]
+    public void MobileBrand_IsPresentEvenBeforeIndicatorsFinishLoading()
+    {
+        var tcs = new TaskCompletionSource<HomeIndicators>();
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).Returns(tcs.Task);
+
+        var cut = Render<Home>();
+
+        cut.FindAll("#home-mobile-client-logo").Should().HaveCount(1);
+        cut.FindAll("#home-mobile-version-info").Should().HaveCount(1);
+
+        tcs.SetResult(KnownIndicators());
+        cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
     }
 }

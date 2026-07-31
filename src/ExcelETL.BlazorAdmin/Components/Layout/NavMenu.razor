@@ -112,20 +112,25 @@
             </NotAuthorized>
         </AuthorizeView>
 
-        <!-- Lot 061: client logo, outside of any AuthorizeView so it is always visible regardless
-             of authentication state (61.0.3/61.0.4). -->
-        <div class="sidebar-logo-container">
-            <img id="sidebar-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
-        </div>
-
-        <!-- Lot 062 (62.3): version/build-date indicator, last child of the sidebar, right after the
-             client logo. Outside of any AuthorizeView, same visibility rule as the logo (62.3). -->
-        <div id="sidebar-version-info" class="sidebar-version-info">
-            v@(BuildInfo.Version)
-            @if (BuildInfo.BuildDateUtc is not null)
-            {
-                @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
-            }
+        <!-- Follow-up (post-062): client logo + version/date, outside of any AuthorizeView so they
+             are always visible regardless of authentication state (61.0.3/61.0.4), grouped into one
+             `.sidebar-footer` so `margin-top:auto` (NavMenu.razor.css) pushes them to the true
+             bottom of the sidebar regardless of how many nav links the current account sees --
+             previously two loose siblings simply sat right after the last link, which left a large
+             visible gap below them whenever the link list was short. Hidden entirely on mobile
+             (NavMenu.razor.css, <641px) -- the same information is shown on Home.razor instead
+             there, since the client reported the mobile open-menu rendering of this block as poor. -->
+        <div id="sidebar-footer" class="sidebar-footer">
+            <div class="sidebar-logo-container">
+                <img id="sidebar-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
+            </div>
+            <div id="sidebar-version-info" class="sidebar-version-info" title="@BuildDateTooltip">
+                v@(BuildInfo.Version)
+                @if (BuildInfo.BuildDateUtc is not null)
+                {
+                    @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
+                }
+            </div>
         </div>
     </nav>
 </div>
@@ -146,6 +151,16 @@
     private bool _isNavExpanded;
 
     private void OnTogglerChanged(ChangeEventArgs e) => _isNavExpanded = e.Value is true;
+
+    // Follow-up (post-062): a native `title` tooltip, shown on hover, gives the full publication
+    // date/time (day name, month name, hour, minute) -- the visible label stays a compact
+    // `dd/MM/yyyy` (Lot 062), this is only the on-hover detail. Culture-aware via .NET's own date
+    // formatting, no new resx date-pattern string needed -- only the surrounding sentence is localized.
+    private string? BuildDateTooltip => BuildInfo.BuildDateUtc is { } buildDateUtc
+        ? string.Format(
+            Loc["NavMenu_BuildDateTooltip"].Value,
+            buildDateUtc.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture))
+        : null;
 
     protected override void OnInitialized()
     {
