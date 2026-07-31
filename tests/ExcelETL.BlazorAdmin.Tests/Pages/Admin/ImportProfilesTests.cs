@@ -175,6 +175,16 @@ public class ImportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/import-profiles/test");
     });
 
+    [Fact]
+    public void ImportProfiles_DisplaysNonTechnicalIntroText() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ImportProfiles>();
+
+        var intro = cut.Find("#import-profiles-intro");
+        intro.ClassList.Should().Contain("alert").And.Contain("alert-info");
+        intro.TextContent.Should().NotBeNullOrWhiteSpace();
+    });
+
     // Lot 041 (41.2): the "Créer un profil" CTA was one of the audit's flagged icon-less CTAs.
     [Fact]
     public void CreateProfileButton_HasIcon() => WithCulture("en-US", () =>

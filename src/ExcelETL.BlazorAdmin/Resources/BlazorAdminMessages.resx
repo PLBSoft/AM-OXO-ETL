@@ -400,6 +400,9 @@
   <data name="ImportProfiles_PageTitle" xml:space="preserve">
     <value>Import Profiles</value>
   </data>
+  <data name="ImportProfiles_Intro" xml:space="preserve">
+    <value>An import profile tells the application how to read a source Excel file and turn it into the information needed for a MAD/REL dossier. Create one profile per source file layout, then reuse it whenever you process a similar file.</value>
+  </data>
   <data name="ImportProfiles_Loading" xml:space="preserve">
     <value>Loading...</value>
   </data>
@@ -864,6 +867,9 @@
   </data>
   <data name="ExportProfiles_PageTitle" xml:space="preserve">
     <value>Export Profiles</value>
+  </data>
+  <data name="ExportProfiles_Intro" xml:space="preserve">
+    <value>An export profile tells the application how to build the target Excel file that gets handed back once a source file has been processed. Create one profile per target layout, then reuse it whenever you generate a similar file.</value>
   </data>
   <data name="ExportProfiles_Loading" xml:space="preserve">
     <value>Loading...</value>

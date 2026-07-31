@@ -174,6 +174,16 @@ public class ExportProfilesTests : BunitContext
         navigationManager.Uri.Should().EndWith("/export-profiles/test");
     });
 
+    [Fact]
+    public void ExportProfiles_DisplaysNonTechnicalIntroText() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ExportProfiles>();
+
+        var intro = cut.Find("#export-profiles-intro");
+        intro.ClassList.Should().Contain("alert").And.Contain("alert-info");
+        intro.TextContent.Should().NotBeNullOrWhiteSpace();
+    });
+
     // Lot 030 (30.7): reopens V4/X2's mobile stacking decision on explicit client request -- the
     // two buttons now share the row's width equally (flex-fill) instead of each going full-width
     // on its own line.
