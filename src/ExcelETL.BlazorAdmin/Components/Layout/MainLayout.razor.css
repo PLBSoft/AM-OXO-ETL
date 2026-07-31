@@ -9,9 +9,13 @@ main {
     min-width: 0;
 }
 
+/* Fed by --m3-sidebar-bg-start/-end/-fg (theme-m3.css), not --m3-primary/--m3-on-primary
+   directly -- dark theme degenerates the gradient to a flat fill (start == end) since it consumes
+   the near-black --m3-background instead of the bright primary, per the client-reported dark-mode
+   readability fix. */
 .sidebar {
-    background-image: linear-gradient(180deg, var(--m3-primary) 0%, color-mix(in srgb, var(--m3-primary) 65%, black) 100%);
-    color: var(--m3-on-primary);
+    background-image: linear-gradient(180deg, var(--m3-sidebar-bg-start) 0%, var(--m3-sidebar-bg-end) 100%);
+    color: var(--m3-sidebar-fg);
 }
 
 .top-row {

@@ -83,6 +83,19 @@
   --m3-on-surface: var(--m3-on-background);
   --m3-border: #857371;
 
+  /* Client-reported (2026-07-31): the sidebar/nav-menu is styled from these tokens rather than
+     consuming --m3-primary/--m3-on-primary directly in MainLayout.razor.css/NavMenu.razor.css --
+     this indirection is what lets light and dark theme apply genuinely different treatments (a
+     bold brand-color fill vs a near-neutral background, see the dark block below) without
+     duplicating every consumer rule per theme. Light theme reproduces the pre-existing brand-
+     forward sidebar exactly (identical color-mix formulas -- zero visual change here). */
+  --m3-sidebar-bg-start: var(--m3-primary);
+  --m3-sidebar-bg-end: color-mix(in srgb, var(--m3-primary) 65%, black);
+  --m3-sidebar-fg: var(--m3-on-primary);
+  --m3-sidebar-active-bg: color-mix(in srgb, var(--m3-on-primary) 30%, transparent);
+  --m3-sidebar-active-fg: var(--m3-on-primary);
+  --m3-sidebar-hover-bg: color-mix(in srgb, var(--m3-on-primary) 12%, transparent);
+
   --bs-primary: var(--m3-primary);
   --bs-primary-rgb: var(--m3-primary-rgb);
   --bs-secondary: var(--m3-secondary);
@@ -180,7 +193,7 @@
      (a dull taupe indistinguishable from a disabled field), the dark theme never had that problem
      but keeps the canonical M3 role value rather than a copy of --m3-secondary.
      Lot 060 (60.3): values recalculated for the Expressive secondary hue above (same role/consumer,
-     same algorithm, only the resulting tone changed) -- contrast re-verified >= 6:1. -->
+     same algorithm, only the resulting tone changed) -- contrast re-verified >= 6:1. */
   --m3-secondary-container: #132831;
   --m3-secondary-container-rgb: 19, 40, 49;
   --m3-on-secondary-container: #91A7B2;
@@ -233,6 +246,22 @@
   --m3-surface-rgb: 83, 67, 65;
   --m3-on-surface: var(--m3-on-background);
   --m3-border: #A08C8A;
+
+  /* Client-reported (2026-07-31): the sidebar filled with --m3-primary (a *light* salmon in dark
+     theme, #FFB4AB -- M3's dark scheme deliberately keeps `primary` light so it reads as a text/
+     accent color ON a dark surface, never as a bright fill covering a large area) made the whole
+     sidebar the brightest, most attention-grabbing element on the page -- the opposite of dark
+     mode's own elevation model (differentiate surfaces via low luminance, not via a saturated or
+     bright fill). Dark theme's sidebar now consumes the same near-black tone as the page body --
+     it recedes instead of dominating -- and marks the active nav item with --m3-primary as a
+     *text* accent (M3's own intended dark-theme role for this token) plus a faint background
+     tint, rather than a solid fill. */
+  --m3-sidebar-bg-start: var(--m3-background);
+  --m3-sidebar-bg-end: var(--m3-background);
+  --m3-sidebar-fg: var(--m3-on-background);
+  --m3-sidebar-active-bg: color-mix(in srgb, var(--m3-primary) 16%, transparent);
+  --m3-sidebar-active-fg: var(--m3-primary);
+  --m3-sidebar-hover-bg: color-mix(in srgb, var(--m3-on-background) 8%, transparent);
 
   --bs-primary: var(--m3-primary);
   --bs-primary-rgb: var(--m3-primary-rgb);
