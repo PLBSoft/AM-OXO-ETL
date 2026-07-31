@@ -184,21 +184,27 @@ else
              shorter than the field, not a missing h-100) so the column can stretch to the row's
              full height; .field-inline-action then makes the button fill that height, but only
              at >=768px (see app.css) -- below that the two elements stack and the button keeps
-             its natural height. -->
+             its natural height.
+             Lot 063: col-md/col-md-auto (flex-grow, flex-shrink:0, 0% basis) let the input's
+             browser-default intrinsic min-width force an overflow into the button once this
+             card is itself squeezed to half-width by the outer col-md-6 split (roughly
+             768-1150px, before .profile-editor-container's 1140px cap gives enough room again).
+             Fixed proportional columns (width-based, no content-driven min-width fight) avoid
+             the overlap at every width in between -- KISS over re-tuning breakpoints. -->
         @if (!string.IsNullOrEmpty(_defaultTableauAddError))
         {
             <div class="alert alert-danger" role="alert">@_defaultTableauAddError</div>
         }
         <div class="row g-2">
-            <div class="col-12 col-md">
+            <div class="col-12 col-md-8">
                 <div class="form-floating">
                     <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
                            placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
                     <label for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
                 </div>
             </div>
-            <div class="col-12 col-md-auto">
-                <button id="add-default-tableau-button" class="btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultTableau">
+            <div class="col-12 col-md-4">
+                <button id="add-default-tableau-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultTableau">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTableauButton"]
                 </button>
             </div>
@@ -292,15 +298,15 @@ else
             <div class="alert alert-danger" role="alert">@_defaultApplicationNameAddError</div>
         }
         <div class="row g-2">
-            <div class="col-12 col-md">
+            <div class="col-12 col-md-8">
                 <div class="form-floating">
                     <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
                            placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
                     <label for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
                 </div>
             </div>
-            <div class="col-12 col-md-auto">
-                <button id="add-default-application-name-button" class="btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultApplicationName">
+            <div class="col-12 col-md-4">
+                <button id="add-default-application-name-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultApplicationName">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddApplicationButton"]
                 </button>
             </div>

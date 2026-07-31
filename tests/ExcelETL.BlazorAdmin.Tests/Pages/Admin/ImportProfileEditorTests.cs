@@ -560,17 +560,21 @@ public class ImportProfileEditorTests : BunitContext
             applicationFieldContainer.ParentElement.Should().Be(applicationButtonContainer.ParentElement);
         });
 
+    // Lot 063: fixed in place -- col-md/col-md-auto (flex-grow, flex-shrink:0, 0% basis) let the
+    // input's browser-default intrinsic min-width overflow into the button once this card is
+    // itself squeezed to half-width by the outer col-md-6 split (~768-1150px). Fixed proportional
+    // columns avoid that content-driven overflow at every width in between.
     [Fact]
     public void DefaultTableauxAndApplications_FieldAndButtonContainers_HaveExpectedColumnClasses() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
 
-            cut.Find("#default-tableau-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md");
-            cut.Find("#add-default-tableau-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-auto");
+            cut.Find("#default-tableau-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-8");
+            cut.Find("#add-default-tableau-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-4");
 
-            cut.Find("#default-application-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md");
-            cut.Find("#add-default-application-name-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-auto");
+            cut.Find("#default-application-name-input").ParentElement!.ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-8");
+            cut.Find("#add-default-application-name-button").ParentElement!.GetAttribute("class").Should().Be("col-12 col-md-4");
         });
 
     // Lot 053 (53.3): the button is now at its row's right edge by construction, so the
@@ -590,21 +594,23 @@ public class ImportProfileEditorTests : BunitContext
     // doubled, per the ticket's own instruction. Solid secondary + Plus icon + visible label
     // (never an icon-only button, so no aria-label/title is added here).
     [Fact]
-    // Lot 058 (58.2): fixed in place -- both buttons gained .field-inline-action so they can fill
-    // their column's height alongside the adjacent field (>=768px only, see app.css); the rest of
-    // the class list, and the icon/label check, are unchanged.
+    // Lot 058 (58.2): both buttons gained .field-inline-action so they can fill their column's
+    // height alongside the adjacent field (>=768px only, see app.css).
+    // Lot 063: w-md-auto (shrink-to-content at >=768px) is gone -- kept w-100 so the button always
+    // fills its now-fixed col-md-4 column instead of a natural content width that could overflow
+    // it, closing the same overlap the column-class fix above addresses.
     public void AddDefaultTableauAndApplication_AddButtons_AreSecondaryWithPlusIconAndVisibleLabel() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
 
             var tableauButton = cut.Find("#add-default-tableau-button");
-            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1");
+            tableauButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1");
             tableauButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             tableauButton.TextContent.Trim().Should().NotBeNullOrEmpty();
 
             var applicationButton = cut.Find("#add-default-application-name-button");
-            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 w-md-auto field-inline-action d-flex align-items-center justify-content-center gap-1");
+            applicationButton.GetAttribute("class").Should().Be("btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1");
             applicationButton.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             applicationButton.TextContent.Trim().Should().NotBeNullOrEmpty();
         });

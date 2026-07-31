@@ -32,6 +32,9 @@ public class ImportProfileEditorLot058Tests : BunitContext
     // 58.2
     // ------------------------------------------------------------------------------------------
 
+    // Lot 063: fixed in place -- w-md-auto (shrink-to-content at >=768px) was removed so the
+    // button always fills its now-fixed col-md-4 column instead of a content width that could
+    // overflow it and collide with the field (a mid-viewport overlap client reported).
     [Fact]
     public void TableauAndApplicationAddButtons_CarryFieldInlineActionClass_AndKeepExistingClasses()
     {
@@ -44,7 +47,7 @@ public class ImportProfileEditorLot058Tests : BunitContext
             button.ClassList.Should().Contain("btn");
             button.ClassList.Should().Contain("btn-secondary");
             button.ClassList.Should().Contain("w-100");
-            button.ClassList.Should().Contain("w-md-auto");
+            button.ClassList.Should().NotContain("w-md-auto");
         }
     }
 

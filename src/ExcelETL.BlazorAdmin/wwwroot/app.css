@@ -243,12 +243,19 @@ h1:focus {
    inherits width from a `position: sticky` ancestor, which doesn't constrain a bar's own width on
    its own. `.right-aligned-actions` inside it is unaffected by the `.sheet-rule-card > ...` rule
    above (that selector only ever matches a direct child of a card). No fixed width/min-width, only
-   a max-width -- full-bleed on mobile, matching every prior mobile-first rule in this file. */
+   a max-width -- full-bleed on mobile, matching every prior mobile-first rule in this file.
+   z-index: Bootstrap's own `.form-floating > label` sets an explicit `z-index: 2` (to sit above
+   its own input) -- with no z-index here (auto), a field's label painted after this bar in
+   in-flow terms would still win, since an explicit positive z-index always paints above a
+   z-index:auto sibling in the same stacking context regardless of DOM order. Most visible on
+   mobile, where the bar's full-bleed width puts it directly under a field's label as the page
+   scrolls. A z-index comfortably above 2 keeps the bar on top, as intended. */
 .profile-editor-save-bar {
     position: sticky;
     bottom: 0;
     left: 0;
     right: 0;
+    z-index: 10;
     max-width: 1140px;
     margin-inline: auto;
     background-color: var(--bs-body-bg);
