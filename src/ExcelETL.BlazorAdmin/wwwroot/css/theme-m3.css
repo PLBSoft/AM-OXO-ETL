@@ -79,6 +79,7 @@
   --m3-background: #FFFBFF;
   --m3-on-background: #201A19;
   --m3-surface: #F5DDDA;
+  --m3-surface-rgb: 245, 221, 218;
   --m3-on-surface: var(--m3-on-background);
   --m3-border: #857371;
 
@@ -118,6 +119,19 @@
   --bs-card-color: var(--m3-on-surface);
   --bs-card-border-color: var(--m3-border);
   --bs-card-cap-bg: color-mix(in srgb, var(--m3-surface) 92%, black);
+
+  /* `.bg-light`/`.bg-light`'s -rgb Bootstrap tokens are declared once at :root in the vendored
+     bootstrap.css and never touched by Bootstrap's own [data-bs-theme=dark] block (only the
+     "-subtle"/"-text-emphasis" variants are) -- left unmapped here, `.card.bg-light` (used by
+     SheetRuleForm.razor/SheetGenerationRuleForm.razor/Users.razor for nested grouping cards) kept
+     a fixed near-white #f8f9fa background in dark theme while its text still read --bs-card-color
+     (--m3-on-surface, a *light* color meant for a dark surface) -- light text on a light
+     background, reported illegible. Aliased onto --m3-surface (the same tone a plain `.card`
+     already uses) rather than a distinct tint: none of these `.bg-light` cards are nested inside a
+     second `.card` in this app, so there is no visual-hierarchy need for a different shade, and
+     reusing --m3-surface/-on-surface guarantees the same contrast guarantee `.card` already has. */
+  --bs-light: var(--m3-surface);
+  --bs-light-rgb: var(--m3-surface-rgb);
 
   --bs-modal-bg: var(--m3-surface);
   --bs-modal-color: var(--m3-on-surface);
@@ -216,6 +230,7 @@
   --m3-background: #201A19;
   --m3-on-background: #EDE0DE;
   --m3-surface: #534341;
+  --m3-surface-rgb: 83, 67, 65;
   --m3-on-surface: var(--m3-on-background);
   --m3-border: #A08C8A;
 
@@ -255,6 +270,11 @@
   --bs-card-color: var(--m3-on-surface);
   --bs-card-border-color: var(--m3-border);
   --bs-card-cap-bg: color-mix(in srgb, var(--m3-surface) 92%, white);
+
+  /* See the light block's own comment above -- `.bg-light` was fixed to a near-white background
+     regardless of theme, making it illegible against --m3-on-surface's light-on-dark text. */
+  --bs-light: var(--m3-surface);
+  --bs-light-rgb: var(--m3-surface-rgb);
 
   --bs-modal-bg: var(--m3-surface);
   --bs-modal-color: var(--m3-on-surface);
