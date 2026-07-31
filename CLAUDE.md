@@ -115,7 +115,7 @@ Only translate messages a **user or admin actually sees** (validation failures, 
 
 ### Host wiring
 - **WebAPI**: `RequestLocalizationOptions` negotiates culture from `Accept-Language` only (it's M2M — no cookie/query-string relevance). The `GlobalExceptionHandler` resolves a thrown `DomainErrorCode` + `Args` against `DomainErrorMessages` to build the localized HTTP error payload.
-- **BlazorAdmin**: default provider order (query string, then culture cookie, then `Accept-Language`) so an admin's language choice persists. A circuit is long-lived, so switching language requires a real navigation — done via the `/culture/set` minimal API endpoint (`CultureEndpointRouteBuilderExtensions`), not a component re-render.
+- **BlazorAdmin**: default provider order (query string, then culture cookie, then `Accept-Language`) so an admin's language choice persists. A circuit is long-lived, so switching language requires a real navigation — done via the `/culture/set` minimal API endpoint (`CultureEndpointRouteBuilderExtensions`), not a component re-render. **User-facing entry point (2026-07-31)**: `/profile`'s "Language" section — two toggle buttons (English/Français) linking to `/culture/set`, the current language highlighted via `CultureInfo.CurrentUICulture`. This is the only UI trigger for this mechanism — no selector on the sidebar or the Login page.
 
 ### Workflow
 Work proceeds milestone by milestone (one Clean Architecture layer, or one batch of Razor components, at a time). At the end of each milestone: stop, summarize, and wait for validation plus the next milestone's files before continuing. Each milestone's deliverable includes an EN/FR resource key table.
