@@ -20,13 +20,46 @@ public class SidebarDarkThemeLuminanceTests
     private static string NavMenuCss { get; } = File.ReadAllText(RepoPath("src", "ExcelETL.BlazorAdmin", "Components", "Layout", "NavMenu.razor.css"));
 
     [Fact]
-    public void DarkTheme_SidebarBackground_IsTheNearBlackAppBackground_NotTheBrightPrimary()
+    public void DarkTheme_SidebarBackground_IsAnElevatedToneBetweenBackgroundAndSurface_NotTheBrightPrimary()
     {
         var darkBlock = ExtractBlock(ThemeCss, "[data-bs-theme=\"dark\"] {");
 
-        darkBlock.Should().Contain("--m3-sidebar-bg-start: var(--m3-background);");
-        darkBlock.Should().Contain("--m3-sidebar-bg-end: var(--m3-background);");
+        // Follow-up (client-reported): a flat --m3-background fill made the sidebar
+        // indistinguishable from the page content behind it -- dark mode simulates elevation via a
+        // slightly lighter tone, not via box-shadow. A 15% step toward --m3-surface (not all the
+        // way to it, so the sidebar stays visually "behind" a card).
+        darkBlock.Should().Contain("--m3-sidebar-bg-start: color-mix(in srgb, var(--m3-background) 85%, var(--m3-surface) 15%);");
+        darkBlock.Should().Contain("--m3-sidebar-bg-end: color-mix(in srgb, var(--m3-background) 85%, var(--m3-surface) 15%);");
         darkBlock.Should().Contain("--m3-sidebar-fg: var(--m3-on-background);");
+    }
+
+    [Fact]
+    public void DarkTheme_SidebarBackground_ComputesStrictlyBetweenBackgroundAndSurface_NotEqualToEitherEndpoint()
+    {
+        // A numeric guard against the elevation tone silently drifting to one of its two endpoints
+        // (which would reintroduce either the "flat, indistinguishable from the page" defect this
+        // fix closes, or a card-level elevation that's too close to a real .card).
+        var darkBlock = ExtractBlock(ThemeCss, "[data-bs-theme=\"dark\"] {");
+        var background = ParseHex(ExtractValue(darkBlock, "--m3-background"));
+        var surface = ParseHex(ExtractValue(darkBlock, "--m3-surface"));
+        var mixed = MixSrgb(background, surface, 0.15);
+
+        mixed.R.Should().BeInRange(background.R + 1, surface.R - 1);
+        mixed.G.Should().BeInRange(background.G + 1, surface.G - 1);
+        mixed.B.Should().BeInRange(background.B + 1, surface.B - 1);
+    }
+
+    [Fact]
+    public void DarkTheme_SidebarForegroundOnElevatedBackground_MeetsWcagAaContrast()
+    {
+        var darkBlock = ExtractBlock(ThemeCss, "[data-bs-theme=\"dark\"] {");
+        var background = ParseHex(ExtractValue(darkBlock, "--m3-background"));
+        var surface = ParseHex(ExtractValue(darkBlock, "--m3-surface"));
+        var mixed = MixSrgb(background, surface, 0.15);
+        // --m3-sidebar-fg is `var(--m3-on-background)` in the dark block.
+        var foreground = ParseHex(ExtractValue(darkBlock, "--m3-on-background"));
+
+        ContrastRatio(foreground, mixed).Should().BeGreaterThanOrEqualTo(4.5);
     }
 
     [Fact]
@@ -88,6 +121,61 @@ public class SidebarDarkThemeLuminanceTests
 
         var closeBraceIndex = css.IndexOf('}', startIndex);
         return css[startIndex..(closeBraceIndex + 1)];
+    }
+
+    private static string ExtractValue(string cssBlock, string variableName)
+    {
+        var marker = $"{variableName}:";
+        var startIndex = cssBlock.IndexOf(marker, StringComparison.Ordinal);
+        startIndex.Should().BeGreaterThanOrEqualTo(0, $"'{variableName}' should be declared in this block");
+
+        var valueStart = startIndex + marker.Length;
+        var valueEnd = cssBlock.IndexOf(';', valueStart);
+        return cssBlock[valueStart..valueEnd].Trim();
+    }
+
+    private static (int R, int G, int B) ParseHex(string hex)
+    {
+        var value = hex.TrimStart('#');
+        var r = Convert.ToInt32(value[..2], 16);
+        var g = Convert.ToInt32(value[2..4], 16);
+        var b = Convert.ToInt32(value[4..6], 16);
+        return (r, g, b);
+    }
+
+    // Mirrors CSS's own `color-mix(in srgb, A p1%, B p2%)` semantics (linear per-channel blend in
+    // sRGB space, not linear-light) closely enough for this test's purposes -- browsers' actual
+    // `color-mix` implementation is what production relies on, this is only a numeric sanity check.
+    private static (int R, int G, int B) MixSrgb((int R, int G, int B) background, (int R, int G, int B) surface, double surfaceWeight)
+    {
+        int Mix(int a, int b) => (int)Math.Round((a * (1 - surfaceWeight)) + (b * surfaceWeight));
+        return (Mix(background.R, surface.R), Mix(background.G, surface.G), Mix(background.B, surface.B));
+    }
+
+    private static double ContrastRatio((int R, int G, int B) a, (int R, int G, int B) b)
+    {
+        var luminanceA = RelativeLuminance(a);
+        var luminanceB = RelativeLuminance(b);
+
+        var lighter = Math.Max(luminanceA, luminanceB);
+        var darker = Math.Min(luminanceA, luminanceB);
+
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private static double RelativeLuminance((int R, int G, int B) rgb)
+    {
+        var rLin = LinearizeChannel(rgb.R);
+        var gLin = LinearizeChannel(rgb.G);
+        var bLin = LinearizeChannel(rgb.B);
+
+        return (0.2126 * rLin) + (0.7152 * gLin) + (0.0722 * bLin);
+    }
+
+    private static double LinearizeChannel(int channel8Bit)
+    {
+        var c = channel8Bit / 255.0;
+        return c <= 0.03928 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
     }
 
     private static string RepoPath(params string[] segments)

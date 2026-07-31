@@ -252,12 +252,19 @@
      accent color ON a dark surface, never as a bright fill covering a large area) made the whole
      sidebar the brightest, most attention-grabbing element on the page -- the opposite of dark
      mode's own elevation model (differentiate surfaces via low luminance, not via a saturated or
-     bright fill). Dark theme's sidebar now consumes the same near-black tone as the page body --
-     it recedes instead of dominating -- and marks the active nav item with --m3-primary as a
-     *text* accent (M3's own intended dark-theme role for this token) plus a faint background
-     tint, rather than a solid fill. */
-  --m3-sidebar-bg-start: var(--m3-background);
-  --m3-sidebar-bg-end: var(--m3-background);
+     bright fill). Dark theme's sidebar marks the active nav item with --m3-primary as a *text*
+     accent (M3's own intended dark-theme role for this token) plus a faint background tint,
+     rather than a solid fill.
+     Follow-up, same day (client-reported): a flat --m3-background fill made the sidebar
+     indistinguishable from the page content behind it -- dark mode can't lean on box-shadow for
+     depth the way light mode does, so two adjacent surfaces sharing the exact same background
+     read as one flat, undifferentiated block. Per M3's own elevation model (surfaces get very
+     slightly *lighter*, not shadowed, as they rise), the sidebar now sits on an intermediate tone
+     between the page background and the (lighter) card surface -- a subtle 15% step toward
+     --m3-surface, not all the way to it, so the sidebar stays visually "behind" a card rather than
+     matching its elevation. */
+  --m3-sidebar-bg-start: color-mix(in srgb, var(--m3-background) 85%, var(--m3-surface) 15%);
+  --m3-sidebar-bg-end: color-mix(in srgb, var(--m3-background) 85%, var(--m3-surface) 15%);
   --m3-sidebar-fg: var(--m3-on-background);
   --m3-sidebar-active-bg: color-mix(in srgb, var(--m3-primary) 16%, transparent);
   --m3-sidebar-active-fg: var(--m3-primary);
