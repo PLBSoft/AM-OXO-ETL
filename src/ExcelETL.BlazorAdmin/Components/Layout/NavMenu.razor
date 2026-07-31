@@ -3,6 +3,7 @@
 @using ExcelETL.Infrastructure.Identity
 
 @using ExcelETL.BlazorAdmin.Services
+@using ExcelETL.BlazorAdmin.Shared
 
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<BlazorAdminMessages> Loc
@@ -123,6 +124,19 @@
         <div id="sidebar-footer" class="sidebar-footer">
             <div class="sidebar-logo-container">
                 <img id="sidebar-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
+            </div>
+            <!-- Dark/light theme toggle: a plain HTML onclick calling straight into
+                 window.amOxoTheme.toggle() (wwwroot/js/theme.js), not @onclick/IJSRuntime -- works
+                 without a circuit round trip, same convention as the mobile hamburger toggler above.
+                 Both icon spans are always in the DOM; NavMenu.razor.css shows only the one matching
+                 the current [data-bs-theme] attribute on <html> via a CSS attribute selector. -->
+            <div class="sidebar-theme-toggle-container">
+                <button type="button" id="theme-toggle-button" class="sidebar-theme-toggle"
+                        onclick="window.amOxoTheme.toggle()"
+                        title="@Loc["NavMenu_ThemeToggleTitle"]" aria-label="@Loc["NavMenu_ThemeToggleTitle"]">
+                    <span class="theme-toggle-icon theme-toggle-icon-sun">@((MarkupString)AdminIconMarkup.Sun)</span>
+                    <span class="theme-toggle-icon theme-toggle-icon-moon">@((MarkupString)AdminIconMarkup.Moon)</span>
+                </button>
             </div>
             <div id="sidebar-version-info" class="sidebar-version-info" title="@BuildDateTooltip">
                 v@(BuildInfo.Version)

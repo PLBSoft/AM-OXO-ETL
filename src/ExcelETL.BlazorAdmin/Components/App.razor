@@ -7,6 +7,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <!-- Dark/light theme: must run before any stylesheet link below, synchronously (no defer/async),
+         so [data-bs-theme] is set on <html> before first paint -- see wwwroot/js/theme.js. -->
+    <script src="@Assets["js/theme.js"]"></script>
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["css/theme-m3.css"]" />

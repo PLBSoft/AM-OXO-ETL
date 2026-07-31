@@ -172,6 +172,49 @@
     height: auto;
 }
 
+/* Dark/light theme toggle button. Centered like the logo above it; both icon spans are always
+   rendered, only one shown at a time via the attribute selectors below. The selector targets
+   `:root[data-bs-theme=...]` (the <html> element, set by wwwroot/js/theme.js) rather than a class
+   scoped to this component -- Blazor's CSS isolation only appends the scope attribute to the last
+   compound selector in each rule (`.theme-toggle-icon-*` here), so `:root[...]` still matches the
+   real document root while `.theme-toggle-icon-*` still only targets this component's own markup. */
+.sidebar-theme-toggle-container {
+    text-align: center;
+    padding: 0 0 0.5rem;
+}
+
+.sidebar-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    color: color-mix(in srgb, var(--m3-on-primary) 80%, var(--m3-primary) 20%);
+    background: none;
+    border: 1px solid color-mix(in srgb, var(--m3-on-primary) 25%, transparent);
+}
+
+.sidebar-theme-toggle:hover,
+.sidebar-theme-toggle:focus-visible {
+    background-color: color-mix(in srgb, var(--m3-on-primary) 12%, transparent);
+    color: var(--m3-on-primary);
+}
+
+.theme-toggle-icon-moon {
+    display: none;
+}
+
+:root[data-bs-theme="dark"] .theme-toggle-icon-sun {
+    display: none;
+}
+
+:root[data-bs-theme="dark"] .theme-toggle-icon-moon {
+    display: inline-flex;
+}
+
 /* Discrete, consistent with the sidebar's other secondary elements (small font size, muted color).
    `cursor: default` signals the `title` tooltip (detailed publication date/time) without implying
    the element is interactive/clickable. */

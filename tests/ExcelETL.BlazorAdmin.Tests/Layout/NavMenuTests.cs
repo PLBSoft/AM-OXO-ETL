@@ -668,4 +668,86 @@ public class NavMenuTests : BunitContext
 
         cut.Find("#sidebar-version-info").GetAttribute("title").Should().BeNullOrEmpty();
     });
+
+    // --- Dark/light theme toggle. The button is a plain HTML onclick calling straight into
+    // window.amOxoTheme.toggle() (wwwroot/js/theme.js) -- no @onclick/IJSRuntime interop, so bUnit
+    // can only assert the markup/wiring is correct, never the actual client-side toggling or CSS
+    // attribute-selector behavior (Styling/NavMenuRazorCssThemeToggleTests.cs covers the CSS text). ---
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_CallsAmOxoThemeToggle_OnClick() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        var button = cut.Find("#theme-toggle-button");
+        button.GetAttribute("onclick").Should().Be("window.amOxoTheme.toggle()");
+        button.GetAttribute("type").Should().Be("button");
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_HasAriaLabelMatchingTitle() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        var button = cut.Find("#theme-toggle-button");
+        var title = button.GetAttribute("title");
+        title.Should().NotBeNullOrWhiteSpace();
+        button.GetAttribute("aria-label").Should().Be(title);
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_AndEnglishCulture_HasEnglishLabel() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#theme-toggle-button").GetAttribute("title").Should().Contain("light and dark");
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_AndFrenchCulture_HasFrenchLabel() => WithCulture("fr-FR", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#theme-toggle-button").GetAttribute("title").Should().Contain("clair et sombre");
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_RendersBothSunAndMoonIcons() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        var button = cut.Find("#theme-toggle-button");
+        button.QuerySelector(".theme-toggle-icon-sun svg").Should().NotBeNull();
+        button.QuerySelector(".theme-toggle-icon-moon svg").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_IsInsideTheSidebarFooter() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetAuthorized("admin@example.com");
+
+        var cut = Render<NavMenu>();
+
+        cut.Find("#sidebar-footer").QuerySelector("#theme-toggle-button").Should().NotBeNull();
+    });
+
+    [Fact]
+    public void NavMenu_ThemeToggleButton_VisibleRegardlessOfAuthorizationState() => WithCulture("en-US", () =>
+    {
+        this.AddAuthorization().SetNotAuthorized();
+
+        var cut = Render<NavMenu>();
+
+        cut.FindAll("#theme-toggle-button").Should().HaveCount(1);
+    });
 }
