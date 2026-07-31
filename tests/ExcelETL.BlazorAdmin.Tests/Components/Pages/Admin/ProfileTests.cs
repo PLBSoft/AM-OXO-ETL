@@ -221,4 +221,36 @@ public class ProfileTests : BunitContext
         confirm.GetAttribute("aria-describedby").Should().Be("Password.Confirm-validation");
         cut.Find("#Password\\.Confirm-validation").Should().NotBeNull();
     });
+
+    [Fact]
+    public void LanguageSection_WithEnglishCulture_HighlightsEnglishButton_AndLinksBothToCultureEndpoint() => WithCulture("en-US", () =>
+    {
+        var cut = Render<Profile>();
+
+        var english = cut.Find("#language-english-button");
+        var french = cut.Find("#language-french-button");
+
+        english.ClassList.Should().Contain("btn-secondary");
+        english.GetAttribute("aria-current").Should().Be("true");
+        english.GetAttribute("href").Should().Be("culture/set?culture=en-US&redirectUri=%2Fprofile");
+
+        french.ClassList.Should().Contain("btn-outline-secondary");
+        french.GetAttribute("aria-current").Should().BeNull();
+        french.GetAttribute("href").Should().Be("culture/set?culture=fr-FR&redirectUri=%2Fprofile");
+    });
+
+    [Fact]
+    public void LanguageSection_WithFrenchCulture_HighlightsFrenchButton() => WithCulture("fr-FR", () =>
+    {
+        var cut = Render<Profile>();
+
+        var english = cut.Find("#language-english-button");
+        var french = cut.Find("#language-french-button");
+
+        french.ClassList.Should().Contain("btn-secondary");
+        french.GetAttribute("aria-current").Should().Be("true");
+
+        english.ClassList.Should().Contain("btn-outline-secondary");
+        english.GetAttribute("aria-current").Should().BeNull();
+    });
 }

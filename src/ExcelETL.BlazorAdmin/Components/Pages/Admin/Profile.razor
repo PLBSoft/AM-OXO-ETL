@@ -99,6 +99,29 @@ else
             }
         </div>
     </div>
+
+    <hr />
+
+    <div class="row mt-5">
+        <div class="col-lg-6">
+            <h2>@Loc["Profile_LanguageHeading"]</h2>
+            <p class="text-muted small">@Loc["Profile_LanguageExplanation"]</p>
+            <div class="btn-group" role="group" aria-label="@Loc["Profile_LanguageAriaLabel"]">
+                <a id="language-english-button"
+                   href="@BuildCultureLink("en-US")"
+                   class="btn @(IsCurrentCulture("en-US") ? "btn-secondary" : "btn-outline-secondary")"
+                   aria-current="@(IsCurrentCulture("en-US") ? "true" : null)">
+                    @Loc["Profile_LanguageEnglishButton"]
+                </a>
+                <a id="language-french-button"
+                   href="@BuildCultureLink("fr-FR")"
+                   class="btn @(IsCurrentCulture("fr-FR") ? "btn-secondary" : "btn-outline-secondary")"
+                   aria-current="@(IsCurrentCulture("fr-FR") ? "true" : null)">
+                    @Loc["Profile_LanguageFrenchButton"]
+                </a>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -198,6 +221,12 @@ else
             _isChangingPassword = false;
         }
     }
+
+    private static string BuildCultureLink(string culture) =>
+        $"culture/set?culture={Uri.EscapeDataString(culture)}&redirectUri={Uri.EscapeDataString("/profile")}";
+
+    private static bool IsCurrentCulture(string culture) =>
+        string.Equals(System.Globalization.CultureInfo.CurrentUICulture.Name, culture, StringComparison.OrdinalIgnoreCase);
 
     private sealed class InfoInputModel
     {

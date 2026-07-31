@@ -49,6 +49,9 @@
   <data name="NavMenu_BuildDateTooltip" xml:space="preserve">
     <value>Publié le {0}</value>
   </data>
+  <data name="NavMenu_ThemeToggleTitle" xml:space="preserve">
+    <value>Basculer entre thème clair et sombre</value>
+  </data>
   <data name="MainLayout_UnhandledError" xml:space="preserve">
     <value>Une erreur non gérée s'est produite.</value>
   </data>
@@ -393,6 +396,21 @@
   </data>
   <data name="Profile_ReloginButton" xml:space="preserve">
     <value>Se reconnecter</value>
+  </data>
+  <data name="Profile_LanguageHeading" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="Profile_LanguageExplanation" xml:space="preserve">
+    <value>Choisissez la langue utilisée dans l'ensemble de l'application.</value>
+  </data>
+  <data name="Profile_LanguageAriaLabel" xml:space="preserve">
+    <value>Choisir la langue d'affichage</value>
+  </data>
+  <data name="Profile_LanguageEnglishButton" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Profile_LanguageFrenchButton" xml:space="preserve">
+    <value>Français</value>
   </data>
   <data name="NavMenu_ImportProfiles" xml:space="preserve">
     <value>Profils d'import</value>
