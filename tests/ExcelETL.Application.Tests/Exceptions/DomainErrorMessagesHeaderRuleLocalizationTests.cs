@@ -91,6 +91,16 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
         AssertLocalizedMessageDiffersFromKey(
             "SheetExtractionRule_HeaderCompositeReferencesUnknownField", BuildRuleWithUnknownPlaceholder, "fr");
 
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankZeroEnergieExpectedValue_ReturnsMessageDifferentFromTheRawKey_InEnglish() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankZeroEnergieExpectedValue", BuildRuleWithBlankZeroEnergieExpectedValue, "en");
+
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankZeroEnergieExpectedValue_ReturnsMessageDifferentFromTheRawKey_InFrench() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankZeroEnergieExpectedValue", BuildRuleWithBlankZeroEnergieExpectedValue, "fr");
+
     private static object BuildRuleWithUnknownPlaceholder()
     {
         var locator = new RepeatingBlockLocator(
@@ -101,6 +111,17 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [],
             headerFields: [],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {inconnu}")]);
+    }
+
+    private static object BuildRuleWithBlankZeroEnergieExpectedValue()
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT", firstBlockStartRow: 19, step: 7, stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+
+        return new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [],
+            headerFields: [], headerComposites: [], zeroEnergieExpectedValue: "   ");
     }
 
     private static void AssertLocalizedMessageDiffersFromKey(string resourceKey, Func<object> triggeringAction, string cultureName)

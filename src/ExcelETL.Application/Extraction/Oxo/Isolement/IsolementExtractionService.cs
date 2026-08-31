@@ -37,6 +37,10 @@ public sealed class IsolementExtractionService(
         var positionField = FindField(locator, IsolementFieldNames.PositionALaPose);
         var typeElementField = FindField(locator, IsolementFieldNames.TypeElement);
 
+        // Lot 063: optional -- a profile that hasn't configured this field yet (predating this lot)
+        // keeps working exactly as before, HasZeroEnergie simply staying false for every block.
+        var hasZeroEnergieField = FindOptionalField(locator, IsolementFieldNames.HasZeroEnergie);
+
         // Grouped by ColonneName, then aggregated via ConditionalPointGroupEvaluator so a warning
         // only fires when *none* of the sheet's conditional Colonnes matched (model doc §3.2) --
         // ISOLEMENT has exactly one conditional Colonne (ZERO ENERGIE), so every non-"ZERO ENERGIE"
@@ -48,6 +52,7 @@ public sealed class IsolementExtractionService(
         var points = new List<PointPivot>();
         var errors = new List<ExtractionError>();
         var warningTracker = new NoConditionalPointCreatedWarningTracker(sheet);
+        var unexpectedZeroEnergieValueWarningTracker = new UnexpectedZeroEnergieValueWarningTracker(sheet);
         var blockIndex = 0;
 
         while (true)
@@ -92,14 +97,44 @@ public sealed class IsolementExtractionService(
                 continue;
             }
 
-            isolements.Add(new IsolementPivot(repere, designation, typeElement!, positionALaPose!, ""));
+            // Lot 063: cellule vide/blanche -> false, aucun warning. Cellule = ZeroEnergieExpectedValue
+            // (trim + insensible à la casse, cohérent avec ConditionalPointRuleEvaluator, spec §7) ->
+            // true. Toute autre valeur non blanche -> false, plus un warning non bloquant -- mais
+            // uniquement quand une valeur attendue est réellement configurée sur le profil : un profil
+            // qui n'a pas encore ce champ (ZeroEnergieExpectedValue == null) ne doit jamais juger le
+            // contenu de la cellule, comportement inchangé.
+            var hasZeroEnergie = false;
+            if (hasZeroEnergieField is not null)
+            {
+                var hasZeroEnergieRawValue = workbookReader.ReadCellValue(
+                    sheet, BlockFieldRangeCalculator.BuildRange(hasZeroEnergieField, blockStartRow));
+
+                if (!string.IsNullOrWhiteSpace(hasZeroEnergieRawValue) && sheetRule.ZeroEnergieExpectedValue is not null)
+                {
+                    if (string.Equals(
+                        hasZeroEnergieRawValue.Trim(), sheetRule.ZeroEnergieExpectedValue.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasZeroEnergie = true;
+                    }
+                    else
+                    {
+                        unexpectedZeroEnergieValueWarningTracker.RecordIfNew(repere, hasZeroEnergieRawValue, logger, errors);
+                    }
+                }
+            }
+
+            isolements.Add(new IsolementPivot(repere, designation, typeElement!, positionALaPose!, "", hasZeroEnergie));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {
                 points.Add(new PointPivot(colonneName, repere));
             }
 
-            var extractedFields = new Dictionary<string, string> { [IsolementFieldNames.TypeElement] = typeElement! };
+            var extractedFields = new Dictionary<string, string>
+            {
+                [IsolementFieldNames.TypeElement] = typeElement!,
+                [IsolementFieldNames.HasZeroEnergie] = hasZeroEnergie ? "true" : "false"
+            };
             var (colonneNames, warning) = ConditionalPointGroupEvaluator.Evaluate(
                 conditionalPointRuleEvaluator, pointRuleGroups, extractedFields);
             foreach (var colonneName in colonneNames)
@@ -137,4 +172,7 @@ public sealed class IsolementExtractionService(
 
     private static BlockFieldDefinition FindField(RepeatingBlockLocator locator, string name) =>
         locator.Fields.First(f => f.Name == name);
+
+    private static BlockFieldDefinition? FindOptionalField(RepeatingBlockLocator locator, string name) =>
+        locator.Fields.FirstOrDefault(f => f.Name == name);
 }

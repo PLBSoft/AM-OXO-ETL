@@ -10,4 +10,11 @@ public static class IsolementFieldNames
     public const string Designation = "Designation";
     public const string PositionALaPose = "PositionALaPose";
     public const string TypeElement = "TypeElement";
+
+    // Lot 063: the dedicated "zero energie" cell (column V), optional in the RepeatingBlockLocator --
+    // a profile that doesn't configure it (predating this lot) keeps working unchanged. Used both as
+    // this field's BlockFieldDefinition.Name and, once read, as the extracted-field key ("true"/
+    // "false") the PS941 ConditionalPointRule's SourceFieldName targets -- see
+    // IsolementExtractionService.
+    public const string HasZeroEnergie = "HasZeroEnergie";
 }

@@ -106,6 +106,9 @@
   <data name="SheetExtractionRule_HeaderCompositeReferencesUnknownField" xml:space="preserve">
     <value>La règle composée d'en-tête '{0}' référence un placeholder inconnu '{1}'.</value>
   </data>
+  <data name="SheetExtractionRule_BlankZeroEnergieExpectedValue" xml:space="preserve">
+    <value>La valeur « zéro énergie » attendue ne doit pas être vide si elle est renseignée.</value>
+  </data>
   <data name="HeaderFieldRule_EmptyName" xml:space="preserve">
     <value>Le nom ne doit pas être vide.</value>
   </data>

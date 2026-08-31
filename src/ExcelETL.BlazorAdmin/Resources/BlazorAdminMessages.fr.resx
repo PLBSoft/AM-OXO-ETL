@@ -541,6 +541,15 @@
   <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
     <value>Nom du champ d'arrêt</value>
   </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder" xml:space="preserve">
+    <value>Valeur « zéro énergie » attendue</value>
+  </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValueLabel" xml:space="preserve">
+    <value>Valeur « zéro énergie » attendue</value>
+  </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValueSummary" xml:space="preserve">
+    <value>Valeur « zéro énergie » attendue : {0}</value>
+  </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Champs du bloc</value>
   </data>

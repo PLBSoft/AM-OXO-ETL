@@ -1,4 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Fields;
@@ -107,8 +108,14 @@ public class DefaultProfileSeederTests
         isolement.Locator.Step.Should().Be(7);
         isolement.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES", "DEPROLOCK VANNES");
         isolement.PointRules.Should().ContainSingle();
-        isolement.PointRules.Single().ComparisonValue.Should().Be("ZERO ENERGIE");
+        isolement.PointRules.Single().SourceFieldName.Should().Be(IsolementFieldNames.HasZeroEnergie);
+        isolement.PointRules.Single().ComparisonValue.Should().Be("true");
         isolement.PointRules.Single().ColonneName.Should().Be("ZÉRO ENERGIE EN PRESENCE EE (PS941)");
+        isolement.ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
+        var hasZeroEnergieField = isolement.Locator.Fields.Single(f => f.Name == IsolementFieldNames.HasZeroEnergie);
+        hasZeroEnergieField.ColumnRange.Should().Be("V");
+        hasZeroEnergieField.RowOffsetStart.Should().Be(-1);
+        hasZeroEnergieField.RowOffsetEnd.Should().Be(0);
 
         var platines = profile.SheetRules.Single(r => r.SheetName == "PLATINES");
         platines.Locator.Step.Should().Be(8);

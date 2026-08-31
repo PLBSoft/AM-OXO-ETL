@@ -348,6 +348,10 @@ else
                     <div class="sheet-rule-card-header">
                         <h3 class="sheet-rule-card-title h4">@rule.SheetName</h3>
                         <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]</span>
+                        @if (rule.ZeroEnergieExpectedValue is not null)
+                        {
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueSummary", rule.ZeroEnergieExpectedValue]</span>
+                        }
                     </div>
                     <ul class="block-field-list block-field-grid">
                         @foreach (var field in rule.Locator.Fields)

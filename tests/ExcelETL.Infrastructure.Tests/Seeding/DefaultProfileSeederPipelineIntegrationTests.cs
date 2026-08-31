@@ -74,6 +74,22 @@ public class DefaultProfileSeederPipelineIntegrationTests
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
     }
 
+    // Lot 063's central invariant, verified against the profile as seeded and fetched back via
+    // IImportProfileStore (not a hand-built rule) -- only C7401's "V4" block changes observable
+    // behavior; isolement/point/warning counts elsewhere are untouched.
+    [Fact]
+    public async Task Run_C7401Fixture_WithSeededProfile_V4IsolementHasZeroEnergieAndPS941PointWithoutWarning()
+    {
+        var (importProfile, _) = await SeedAndFetchProfilesAsync();
+        var result = RunOnFixture("Dossier.de.MaD.IDL.-.C7401.xlsx", importProfile);
+
+        var v4 = result.Isolements.Should().ContainSingle(i => i.Repere == "C7401-V4").Which;
+        v4.HasZeroEnergie.Should().BeTrue();
+        result.Points.Should().Contain(new PointPivot("ZÉRO ENERGIE EN PRESENCE EE (PS941)", "C7401-V4"));
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+        result.Isolements.Should().HaveCount(23);
+    }
+
     [Fact]
     public async Task Run_D8570Fixture_WithSeededProfile_ExtractsVanneIsolementAlongsideEverythingElse()
     {

@@ -34,13 +34,20 @@ public sealed class SheetExtractionRule
     public IReadOnlyList<HeaderFieldRule> HeaderFields => _headerFields;
     public IReadOnlyList<HeaderCompositeRule> HeaderComposites => _headerComposites;
 
+    // Lot 063: the text a bloc's dedicated "zero energie" column must equal for ISOLEMENT's PS941
+    // rule to consider it matched -- a field dedicated to this one sheet's own rule, not a generic
+    // reusable mechanism (no other sheet has this notion). null = no such field configured for this
+    // sheet (every sheet other than ISOLEMENT, and any ISOLEMENT profile predating this lot).
+    public string? ZeroEnergieExpectedValue { get; }
+
     public SheetExtractionRule(
         string sheetName,
         RepeatingBlockLocator locator,
         IReadOnlyList<ConditionalPointRule> pointRules,
         IReadOnlyList<string> unconditionalColonneNames,
         IReadOnlyList<HeaderFieldRule> headerFields,
-        IReadOnlyList<HeaderCompositeRule> headerComposites)
+        IReadOnlyList<HeaderCompositeRule> headerComposites,
+        string? zeroEnergieExpectedValue = null)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -53,6 +60,13 @@ public sealed class SheetExtractionRule
         ArgumentNullException.ThrowIfNull(unconditionalColonneNames);
         ArgumentNullException.ThrowIfNull(headerFields);
         ArgumentNullException.ThrowIfNull(headerComposites);
+
+        if (zeroEnergieExpectedValue is not null && string.IsNullOrWhiteSpace(zeroEnergieExpectedValue))
+        {
+            throw new DomainValidationException(
+                "Zero energie expected value must not be blank when provided.", nameof(zeroEnergieExpectedValue),
+                DomainErrorCode.SheetExtractionRule_BlankZeroEnergieExpectedValue);
+        }
 
         if (sheetName != locator.Sheet)
         {
@@ -84,6 +98,7 @@ public sealed class SheetExtractionRule
         UnconditionalColonneNames = unconditionalColonneNames;
         _headerFields = [.. headerFields];
         _headerComposites = [.. headerComposites];
+        ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

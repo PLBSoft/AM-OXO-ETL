@@ -41,6 +41,13 @@
         <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
     </div>
 </div>
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")" class="form-control" @bind="_zeroEnergieExpectedValue" @bind:after="MarkDirty"
+               placeholder="@Loc["ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueLabel"]</label>
+    </div>
+</div>
 
 <div class="card bg-light mb-3">
 <div class="card-body">
@@ -517,6 +524,7 @@
     private int _firstBlockStartRow;
     private int _step;
     private string _stopFieldName = string.Empty;
+    private string _zeroEnergieExpectedValue = string.Empty;
     private readonly List<BlockFieldDefinition> _fields = [];
     private readonly List<string> _unconditionalColonneNames = [];
     private readonly List<ConditionalPointRule> _pointRules = [];
@@ -562,6 +570,7 @@
         _firstBlockStartRow = InitialRule.Locator.FirstBlockStartRow;
         _step = InitialRule.Locator.Step;
         _stopFieldName = InitialRule.Locator.StopFieldName;
+        _zeroEnergieExpectedValue = InitialRule.ZeroEnergieExpectedValue ?? string.Empty;
         _fields.AddRange(InitialRule.Locator.Fields);
         _unconditionalColonneNames.AddRange(InitialRule.UnconditionalColonneNames);
         _pointRules.AddRange(InitialRule.PointRules);
@@ -823,7 +832,7 @@
     // never-interacted-with add-sheet-rule form on every save without spuriously failing validation.
     private bool IsBlank() =>
         string.IsNullOrEmpty(_sheetName) && _firstBlockStartRow == 0 && _step == 0 &&
-        string.IsNullOrEmpty(_stopFieldName) && _fields.Count == 0 &&
+        string.IsNullOrEmpty(_stopFieldName) && string.IsNullOrEmpty(_zeroEnergieExpectedValue) && _fields.Count == 0 &&
         _unconditionalColonneNames.Count == 0 && _pointRules.Count == 0 &&
         _headerFields.Count == 0 && _headerComposites.Count == 0;
 
@@ -851,7 +860,8 @@
             // SheetExtractionRule stores these lists by reference (unlike PointRules, which it copies) --
             // pass snapshots so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
             var rule = new SheetExtractionRule(
-                _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites]);
+                _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites],
+                string.IsNullOrWhiteSpace(_zeroEnergieExpectedValue) ? null : _zeroEnergieExpectedValue);
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -875,6 +885,7 @@
         _firstBlockStartRow = 0;
         _step = 0;
         _stopFieldName = string.Empty;
+        _zeroEnergieExpectedValue = string.Empty;
         _fields.Clear();
         _unconditionalColonneNames.Clear();
         _pointRules.Clear();

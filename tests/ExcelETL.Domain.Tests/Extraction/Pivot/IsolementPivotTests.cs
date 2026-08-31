@@ -20,6 +20,26 @@ public class IsolementPivotTests
         isolement.Tableaux.Should().BeEmpty();
         isolement.Applications.Should().BeEmpty();
         isolement.RepereParent.Should().BeEmpty();
+        isolement.HasZeroEnergie.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Constructor_WithHasZeroEnergieTrue_AssignsProperty()
+    {
+        var isolement = new IsolementPivot(
+            "C7401-V4", "Vanne principale", "PROLOCK", "FERMÉE", "Zone A", hasZeroEnergie: true);
+
+        isolement.HasZeroEnergie.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Equals_WithDifferentHasZeroEnergie_AreNotStructurallyEqual()
+    {
+        var first = new IsolementPivot("C7401-V4", "Vanne principale", "PROLOCK", "FERMÉE", "Zone A", hasZeroEnergie: false);
+        var second = new IsolementPivot("C7401-V4", "Vanne principale", "PROLOCK", "FERMÉE", "Zone A", hasZeroEnergie: true);
+
+        first.Should().NotBe(second);
+        first.GetHashCode().Should().NotBe(second.GetHashCode());
     }
 
     [Fact]

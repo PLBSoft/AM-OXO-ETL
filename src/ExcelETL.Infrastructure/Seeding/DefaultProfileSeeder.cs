@@ -141,13 +141,14 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
                     new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
+                    new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
                 ]),
                 [
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName)
+                        IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", IsolementZeroEnergieColonneName)
                 ],
-                ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []),
+                ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE"),
             new SheetExtractionRule(
                 "PLATINES",
                 new RepeatingBlockLocator("PLATINES", 17, 8, IsolementFieldNames.Identification,

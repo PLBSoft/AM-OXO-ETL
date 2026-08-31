@@ -8,5 +8,6 @@ public enum ExtractionErrorCode
     RequiredFieldMissing,
     UnparsableValue,
     NoConditionalPointCreated,
-    TacheMultipleTypeMismatch
+    TacheMultipleTypeMismatch,
+    UnexpectedZeroEnergieValue
 }

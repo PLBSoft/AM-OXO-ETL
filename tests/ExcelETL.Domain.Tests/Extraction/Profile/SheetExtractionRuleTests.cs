@@ -29,6 +29,29 @@ public class SheetExtractionRuleTests
         rule.UnconditionalColonneNames.Should().BeEquivalentTo(unconditionalColonneNames);
         rule.HeaderFields.Should().BeEmpty();
         rule.HeaderComposites.Should().BeEmpty();
+        rule.ZeroEnergieExpectedValue.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithZeroEnergieExpectedValue_AssignsProperty()
+    {
+        var rule = new SheetExtractionRule(
+            "ISOLEMENT", Locator("ISOLEMENT"), [], [], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
+
+        rule.ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Constructor_WithBlankZeroEnergieExpectedValue_ThrowsDomainValidationException(string blankValue)
+    {
+        var act = () => new SheetExtractionRule(
+            "ISOLEMENT", Locator("ISOLEMENT"), [], [], [], [], zeroEnergieExpectedValue: blankValue);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("zeroEnergieExpectedValue")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_BlankZeroEnergieExpectedValue);
     }
 
     [Fact]

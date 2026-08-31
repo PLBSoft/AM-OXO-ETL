@@ -18,7 +18,25 @@ public class IsolementExtractionServiceTests
     private readonly IsolementExtractionService _sut =
         new(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance);
 
+    // Lot 063: PS941's condition is now tested against HasZeroEnergie ("true"/"false", derived from
+    // the dedicated column V cell), not against TypeElement -- see IsolementExtractionService's own
+    // comment on why. ZeroEnergieExpectedValue reproduces the client's current real value.
     private static SheetExtractionRule CreateSheetRule() => new(
+        Sheet,
+        new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
+        [
+            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
+            new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
+            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
+            new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
+        ]),
+        [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
+        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
+
+    // A profile predating this lot -- no HasZeroEnergie field configured at all, no
+    // ZeroEnergieExpectedValue -- must keep behaving exactly as it did before this lot.
+    private static SheetExtractionRule CreateSheetRuleWithoutZeroEnergieField() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
         [
@@ -27,7 +45,7 @@ public class IsolementExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
-        [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
+        [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
         ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
@@ -106,7 +124,31 @@ public class IsolementExtractionServiceTests
     }
 
     [Fact]
-    public void Extract_WithZeroEnergieType_CreatesConditionalPoint()
+    public void Extract_WithZeroEnergieCellMatchingExpectedValue_CreatesConditionalPointAndSetsHasZeroEnergie()
+    {
+        // Real C7401 fixture, block "V4": TypeElement is "PROLOCK", not "ZERO ENERGIE" -- the signal
+        // lives in the dedicated column V cell (trim/casse variables), totally independent of TypeElement.
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["V18:V19"] = " zero energie ",
+            ["B26:E27"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+
+        result.Isolements.Should().ContainSingle().Which.HasZeroEnergie.Should().BeTrue();
+        result.Points.Should().Contain(new PointPivot(ZeroEnergieColonneName, "C7401-V1"));
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_WithBlankZeroEnergieCell_SetsHasZeroEnergieFalseWithoutWarning()
     {
         var cells = new Dictionary<string, string?>
         {
@@ -114,14 +156,135 @@ public class IsolementExtractionServiceTests
             ["B19:E20"] = "V1",
             ["H18:U19"] = "Aspiration",
             ["H20:O21"] = "FERMÉE",
-            ["B22:E23"] = "ZERO ENERGIE",
+            ["B22:E23"] = "PROLOCK",
+            ["V18:V19"] = null,
             ["B26:E27"] = null
         };
         var workbookReader = CreateWorkbookReader(cells);
 
         var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
 
-        result.Points.Should().Contain(new PointPivot(ZeroEnergieColonneName, "C7401-V1"));
+        result.Isolements.Should().ContainSingle().Which.HasZeroEnergie.Should().BeFalse();
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+    }
+
+    [Fact]
+    public void Extract_WithUnexpectedZeroEnergieCellValue_SetsHasZeroEnergieFalseAndAddsWarning()
+    {
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["V18:V19"] = "0 ENERGIE",
+            ["B26:E27"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule());
+
+        result.Isolements.Should().ContainSingle().Which.HasZeroEnergie.Should().BeFalse();
+        var warning = result.Errors.Should().ContainSingle(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue).Subject;
+        warning.ExtractedValue.Should().Be("0 ENERGIE");
+    }
+
+    [Fact]
+    public void Extract_WithNoZeroEnergieExpectedValueConfigured_NeverJudgesTheCellContent()
+    {
+        // A profile without ZeroEnergieExpectedValue must never throw nor warn, even if the cell
+        // holds text -- HasZeroEnergie stays false regardless, per the explicit "unchanged behavior"
+        // requirement for a profile that hasn't configured this notion yet.
+        var sheetRule = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
+                new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
+            ]),
+            [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
+            ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["V18:V19"] = "ZERO ENERGIE",
+            ["B26:E27"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.HasZeroEnergie.Should().BeFalse();
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+    }
+
+    [Fact]
+    public void Extract_WithoutZeroEnergieFieldConfiguredInLocator_LeavesHasZeroEnergieFalseForEveryBlock()
+    {
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["B26:E27"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRuleWithoutZeroEnergieField());
+
+        result.Isolements.Should().ContainSingle().Which.HasZeroEnergie.Should().BeFalse();
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+    }
+
+    [Fact]
+    public void Extract_WithDifferentZeroEnergieExpectedValuesOnTwoProfiles_EachRestitutesItsOwnResult()
+    {
+        // Anti-hardcoding guard-rail, same pattern as Lot C1's EquipementTypeElementNom test: the
+        // expected text must come from the profile, never a service-level constant.
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["V18:V19"] = "0 ENERGIE",
+            ["B26:E27"] = null
+        };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var ruleExpectingZeroEnergie = CreateSheetRule();
+        var ruleExpectingZeroDigitEnergie = new SheetExtractionRule(
+            Sheet,
+            new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
+                new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
+            ]),
+            [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
+            ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "0 ENERGIE");
+
+        var resultExpectingZeroEnergie = _sut.Extract(workbookReader.Object, ruleExpectingZeroEnergie);
+        var resultExpectingZeroDigitEnergie = _sut.Extract(workbookReader.Object, ruleExpectingZeroDigitEnergie);
+
+        resultExpectingZeroEnergie.Isolements.Single().HasZeroEnergie.Should().BeFalse();
+        resultExpectingZeroEnergie.Errors.Should().Contain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+
+        resultExpectingZeroDigitEnergie.Isolements.Single().HasZeroEnergie.Should().BeTrue();
+        resultExpectingZeroDigitEnergie.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
     }
 
     [Fact]

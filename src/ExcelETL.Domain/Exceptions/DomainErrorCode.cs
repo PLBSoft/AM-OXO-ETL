@@ -46,6 +46,7 @@ public enum DomainErrorCode
     SheetExtractionRule_EmptySheetName,
     SheetExtractionRule_SheetNameLocatorMismatch,
     SheetExtractionRule_HeaderCompositeReferencesUnknownField,
+    SheetExtractionRule_BlankZeroEnergieExpectedValue,
     HeaderFieldRule_EmptyName,
     HeaderFieldRule_BlankDateFormat,
     HeaderCompositeRule_EmptyName,

@@ -541,6 +541,15 @@
   <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
     <value>Stop field name</value>
   </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder" xml:space="preserve">
+    <value>Zero energie expected value</value>
+  </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValueLabel" xml:space="preserve">
+    <value>Zero energie expected value</value>
+  </data>
+  <data name="ImportProfileEditor_ZeroEnergieExpectedValueSummary" xml:space="preserve">
+    <value>Zero energie expected value: {0}</value>
+  </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Block fields</value>
   </data>

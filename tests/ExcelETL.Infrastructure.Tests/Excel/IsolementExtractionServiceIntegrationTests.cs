@@ -25,6 +25,9 @@ public class IsolementExtractionServiceIntegrationTests
     private readonly IsolementExtractionService _sut =
         new(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance);
 
+    // Lot 063: PS941's condition now tests HasZeroEnergie (derived from the dedicated column V cell),
+    // not TypeElement -- see IsolementExtractionService's own comment. ZeroEnergieExpectedValue
+    // reproduces the client's current real value, same as the seeded default import profile.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
@@ -32,10 +35,11 @@ public class IsolementExtractionServiceIntegrationTests
             new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
             new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
+            new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
         ]),
-        [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
-        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
+        [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
+        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsAllPlainProlockIsolements()
@@ -44,9 +48,28 @@ public class IsolementExtractionServiceIntegrationTests
 
         result.Isolements.Should().HaveCount(8);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
-        result.Points.Should().HaveCount(8 * 2);
+        // 8 isolements * 2 unconditional Points, plus 1 PS941 Point for the "V4" block (Lot 063 --
+        // see the dedicated test below).
+        result.Points.Should().HaveCount(8 * 2 + 1);
         result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
             e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "PROLOCK");
+    }
+
+    // Lot 063's central non-regression case: C7401's "V4" block (TypeElement "PROLOCK") carries
+    // "ZERO ENERGIE" in its dedicated column V cell (merged V32:V33) -- confirmed by hand via openpyxl
+    // against the real fixture. Before this lot it matched no PS941 condition (tested on TypeElement);
+    // after this lot it must produce the PS941 Point, HasZeroEnergie == true, and no
+    // UnexpectedZeroEnergieValue warning for this specific block.
+    [Fact]
+    public void Extract_C7401Fixture_V4Isolement_HasZeroEnergieAndCreatesPS941PointWithoutWarning()
+    {
+        var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
+
+        var v4 = result.Isolements.Should().ContainSingle(i => i.Repere == "C7401-V4").Which;
+        v4.TypeElementNom.Should().Be("PROLOCK");
+        v4.HasZeroEnergie.Should().BeTrue();
+        result.Points.Should().Contain(new PointPivot(ZeroEnergieColonneName, "C7401-V4"));
+        result.Errors.Should().NotContain(e => e.BlockIdentifier == "C7401-V4");
     }
 
     [Fact]

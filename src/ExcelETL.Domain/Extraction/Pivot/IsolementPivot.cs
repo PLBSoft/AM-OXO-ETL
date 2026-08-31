@@ -35,7 +35,16 @@ public sealed record IsolementPivot
     public IReadOnlyList<string> Applications { get; init; }
     public string RepereParent { get; init; }
 
-    public IsolementPivot(string repere, string designation, string typeElementNom, string positionALaPose, string localisation)
+    // Lot 063: unlike Localisation/Tableaux/Applications/RepereParent, this is known at construction
+    // time -- read from the same ISOLEMENT block as Identification/Designation/TypeElement, not
+    // diffused after the fact by the orchestrator -- hence a constructor parameter, not an init
+    // property. Defaults to false so the 4 other isolement-style services (which have no notion of
+    // this at all -- PLATINES/ORIFICES CAPACITES/AUTRES JOINTS TOUCHES/DIVERS) are unaffected.
+    public bool HasZeroEnergie { get; }
+
+    public IsolementPivot(
+        string repere, string designation, string typeElementNom, string positionALaPose, string localisation,
+        bool hasZeroEnergie = false)
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -58,6 +67,7 @@ public sealed record IsolementPivot
         Tableaux = [];
         Applications = [];
         RepereParent = "";
+        HasZeroEnergie = hasZeroEnergie;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
@@ -72,7 +82,8 @@ public sealed record IsolementPivot
         && Localisation == other.Localisation
         && Tableaux.SequenceEqual(other.Tableaux)
         && Applications.SequenceEqual(other.Applications)
-        && RepereParent == other.RepereParent;
+        && RepereParent == other.RepereParent
+        && HasZeroEnergie == other.HasZeroEnergie;
 
     public override int GetHashCode()
     {
@@ -83,6 +94,7 @@ public sealed record IsolementPivot
         hash.Add(PositionALaPose);
         hash.Add(Localisation);
         hash.Add(RepereParent);
+        hash.Add(HasZeroEnergie);
         foreach (var tableau in Tableaux)
         {
             hash.Add(tableau);

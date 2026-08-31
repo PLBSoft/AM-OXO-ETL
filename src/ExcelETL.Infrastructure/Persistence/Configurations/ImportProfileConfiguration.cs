@@ -60,6 +60,11 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                 .IsRequired()
                 .HasMaxLength(200);
 
+            // Lot 063: optional -- null for every sheet other than ISOLEMENT, and for any ISOLEMENT
+            // rule predating this lot.
+            rules.Property(r => r.ZeroEnergieExpectedValue)
+                .HasMaxLength(200);
+
             // UnconditionalColonneNames is a plain list of strings, not a related entity -- mapped as
             // an EF Core primitive collection (JSON column on SqlServer) rather than a second owned
             // entity type, since there is nothing beyond the string itself to model.

@@ -208,6 +208,40 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithZeroEnergieExpectedValue_RoundTripsIdentically()
+    {
+        // Lot 063.
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT", 19, 7, "Identification",
+            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("HasZeroEnergie", "V", -1, 0)]);
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator,
+            [new ConditionalPointRule("HasZeroEnergie", ConditionOperator.Equals, "true", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")],
+            ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
+        var profile = new ImportProfile("Profil zero energie", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNullZeroEnergieExpectedValue_PersistsAndReloadsAsNull()
+    {
+        // Not an empty string by default value -- same requirement as the other nullable owned-type
+        // columns on this mapping (e.g. ColumnDefinition.Source, Lot I6).
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().ZeroEnergieExpectedValue.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetByIdAsync_WithUnknownId_ReturnsNull()
     {
         var store = CreateStore();
