@@ -250,6 +250,30 @@ public class ApiTestTests : BunitContext
         result.TextContent.Should().NotContain("500");
     }));
 
+    // Lot 065.2: when the WebAPI's GlobalExceptionHandler surfaces an exception type + message
+    // (Lot 065.1), the page shows that directly instead of the generic message -- selected by a
+    // stable id, not by text, per the ticket's own explicit requirement.
+    [Fact]
+    public void ProcessButton_Click_WithTechnicalErrorCarryingExceptionDetail_RendersTypeAndMessage() => WithCulture("en-US", () => RunAsync(async () =>
+    {
+        var (importProfile, exportProfile) = await SeedProfilesAsync();
+        _oxoApiTestClientMock
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiTestResult.TechnicalError(
+                500, "UnknownFieldReferenceException", "Field 'HasZeroEnergie' was not found among the already-extracted fields."));
+
+        var cut = Render<ApiTest>();
+        cut.Find("#import-profile-select").Change(importProfile.Id.ToString());
+        cut.Find("#export-profile-select").Change(exportProfile.Id.ToString());
+        SelectFile(cut);
+
+        cut.Find("#process-button").Click();
+
+        var detail = cut.Find("#api-test-technical-error-detail");
+        detail.TextContent.Should().Contain("UnknownFieldReferenceException");
+        detail.TextContent.Should().Contain("Field 'HasZeroEnergie' was not found among the already-extracted fields.");
+    }));
+
     [Fact]
     public void ProcessButton_Click_WithConnectionError_RendersServerUnreachableMessage() => WithCulture("en-US", () => RunAsync(async () =>
     {

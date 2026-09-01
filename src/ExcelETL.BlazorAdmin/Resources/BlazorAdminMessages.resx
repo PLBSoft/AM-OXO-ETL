@@ -1309,6 +1309,9 @@
   <data name="ApiTest_TechnicalErrorMessage" xml:space="preserve">
     <value>An unexpected error occurred while calling the Web API. Check the server logs for details.</value>
   </data>
+  <data name="ApiTest_TechnicalErrorDetail" xml:space="preserve">
+    <value>Technical error: {0} -- {1}</value>
+  </data>
   <data name="ApiTest_ConnectionErrorMessage" xml:space="preserve">
     <value>Could not connect to the Web API. Make sure the server is running and that OxoApiTestClient:BaseUrl in this application's configuration points to it.</value>
   </data>

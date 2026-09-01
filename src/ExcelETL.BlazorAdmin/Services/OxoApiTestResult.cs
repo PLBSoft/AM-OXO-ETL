@@ -14,10 +14,11 @@ public sealed record OxoApiTestRejectionError(string? Sheet, string? BlockIdenti
 
 // Lot 038 (38.2): one variant per category OxoController can actually return, per the ticket's own
 // explicit requirement -- ApiTest.razor switches on Status, never on a raw HttpStatusCode or a
-// propagated exception. TechnicalError deliberately carries no message text of its own (only the raw
-// status code, for logging/debugging, never rendered) -- the page shows a generic localized message
-// for that variant, consistent with the project's "no raw stack trace/technical detail in the UI"
-// principle applied elsewhere.
+// propagated exception. TechnicalError optionally carries the short exception type name + message
+// the WebAPI's GlobalExceptionHandler now surfaces for any unmapped exception (Lot 065) -- never a
+// stack trace, that response body property doesn't exist. Both stay null when the response body
+// wasn't a parsable ProblemDetails carrying them (e.g. an empty body) -- the page falls back to its
+// pre-existing generic localized message in that case, exactly as before Lot 065.
 // ConnectionError (added post-delivery, 2026-07-26) is the one variant that never originates from an
 // HTTP response at all -- it's the client-side "no TCP connection could be established" failure
 // (server not running, wrong OxoApiTestClientOptions.BaseUrl, firewall) that OxoApiTestClient.
@@ -41,6 +42,10 @@ public sealed class OxoApiTestResult
 
     public int? HttpStatusCode { get; private init; }
 
+    public string? ExceptionType { get; private init; }
+
+    public string? ExceptionMessage { get; private init; }
+
     public static OxoApiTestResult Success(Stream generatedFileContent, string generatedFileName) => new()
     {
         Status = OxoApiTestResultStatus.Success,
@@ -62,10 +67,13 @@ public sealed class OxoApiTestResult
 
     public static OxoApiTestResult Unauthorized() => new() { Status = OxoApiTestResultStatus.Unauthorized };
 
-    public static OxoApiTestResult TechnicalError(int? httpStatusCode) => new()
+    public static OxoApiTestResult TechnicalError(
+        int? httpStatusCode, string? exceptionType = null, string? exceptionMessage = null) => new()
     {
         Status = OxoApiTestResultStatus.TechnicalError,
-        HttpStatusCode = httpStatusCode
+        HttpStatusCode = httpStatusCode,
+        ExceptionType = exceptionType,
+        ExceptionMessage = exceptionMessage
     };
 
     public static OxoApiTestResult ConnectionError() => new() { Status = OxoApiTestResultStatus.ConnectionError };

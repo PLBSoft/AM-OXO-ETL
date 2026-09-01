@@ -86,6 +86,15 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
                 var rejectionBody = await TryReadProblemDetailsAsync(response, cancellationToken);
                 return OxoApiTestResult.BusinessRejection(rejectionBody?.Errors ?? []);
 
+            case HttpStatusCode.InternalServerError:
+                // Lot 065: GlobalExceptionHandler now surfaces the exception's short type name and
+                // message for any unmapped exception -- both stay null (falling back to the page's
+                // pre-existing generic message) when the body isn't a parsable ProblemDetails
+                // carrying them, e.g. an empty response.
+                var technicalErrorBody = await TryReadProblemDetailsAsync(response, cancellationToken);
+                return OxoApiTestResult.TechnicalError(
+                    (int)response.StatusCode, technicalErrorBody?.ExceptionType, technicalErrorBody?.ExceptionMessage);
+
             default:
                 return OxoApiTestResult.TechnicalError((int)response.StatusCode);
         }
@@ -111,5 +120,9 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
         public string? Detail { get; set; }
 
         public List<OxoApiTestRejectionError>? Errors { get; set; }
+
+        public string? ExceptionType { get; set; }
+
+        public string? ExceptionMessage { get; set; }
     }
 }

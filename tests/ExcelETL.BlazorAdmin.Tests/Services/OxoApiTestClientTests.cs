@@ -125,6 +125,48 @@ public class OxoApiTestClientTests
         result.HttpStatusCode.Should().Be((int)statusCode);
     }
 
+    // Lot 065.2: GlobalExceptionHandler (Lot 065.1) surfaces the unmapped exception's short type
+    // name and message as ProblemDetails extensions on a 500 -- read here into the result so
+    // ApiTest.razor can display them directly.
+    [Fact]
+    public async Task ProcessAsync_WithInternalServerErrorCarryingExceptionDetail_ReturnsTechnicalErrorWithTypeAndMessage()
+    {
+        var (client, _) = CreateClient(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.InternalServerError)
+            {
+                Content = new StringContent(
+                    """
+                    {"status":500,"exceptionType":"UnknownFieldReferenceException",
+                     "exceptionMessage":"Field 'HasZeroEnergie' was not found among the already-extracted fields."}
+                    """,
+                    Encoding.UTF8, "application/problem+json")
+            };
+            return Task.FromResult(response);
+        });
+
+        var result = await client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", CancellationToken.None);
+
+        result.Status.Should().Be(OxoApiTestResultStatus.TechnicalError);
+        result.HttpStatusCode.Should().Be(500);
+        result.ExceptionType.Should().Be("UnknownFieldReferenceException");
+        result.ExceptionMessage.Should().Be("Field 'HasZeroEnergie' was not found among the already-extracted fields.");
+    }
+
+    // Explicit repli case (65.2): a 500 with an empty/non-parsable body must not throw and must
+    // leave ExceptionType/ExceptionMessage null, letting the page fall back to its generic message.
+    [Fact]
+    public async Task ProcessAsync_WithInternalServerErrorAndEmptyBody_ReturnsTechnicalErrorWithNoExceptionDetail()
+    {
+        var (client, _) = CreateClient(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
+
+        var result = await client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", CancellationToken.None);
+
+        result.Status.Should().Be(OxoApiTestResultStatus.TechnicalError);
+        result.ExceptionType.Should().BeNull();
+        result.ExceptionMessage.Should().BeNull();
+    }
+
     [Fact]
     public async Task ProcessAsync_WhenNoConnectionCanBeEstablished_ReturnsConnectionErrorInsteadOfThrowing()
     {
