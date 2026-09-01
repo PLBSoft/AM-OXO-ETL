@@ -470,6 +470,46 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         body.Should().Contain(exceptionMessage);
     }
 
+    // Correctif (2026-09-01): reproduces the real production case that prompted this ticket --
+    // UnknownFieldReferenceException *is* a mapped business exception (IHasApplicationErrorCode),
+    // so it used to take the "detail is not null" branch and skip the exceptionType/exceptionMessage
+    // extensions entirely; since it has no explicit StatusCodeFor case and no ApplicationMessages
+    // resx entry, the response was a 500 whose Detail was just the raw, unhelpful resource key
+    // string ("UnknownFieldReference") -- indistinguishable from the pre-Lot-065 generic message
+    // once ApiTest.razor only reads the extensions. This is the case the standing guard-rail below
+    // (0/1) protects: the extensions must be present whenever the final status is 500, whether or
+    // not BusinessExceptionLocalizer produced a Detail.
+    [Fact]
+    public async Task Process_WhenAMappedExceptionHasNoExplicitStatusCodeCase_StillReturnsExceptionTypeAndMessage()
+    {
+        var throwingService = new Mock<IProcessOxoFileService>();
+        throwingService
+            .Setup(s => s.ProcessAsync(It.IsAny<ProcessOxoFileCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new UnknownFieldReferenceException("HasZeroEnergie"));
+
+        using var throwingFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IProcessOxoFileService>();
+                services.AddScoped(_ => throwingService.Object);
+            });
+        });
+        var client = throwingFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(throwingFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("UnknownFieldReferenceException");
+        body.Should().Contain("HasZeroEnergie");
+    }
+
     // Explicit guard-rail: this must keep failing a future refactor that starts serializing
     // exception.StackTrace onto the response, whether via a literal StackTrace property or by
     // passing the raw exception through ToString().

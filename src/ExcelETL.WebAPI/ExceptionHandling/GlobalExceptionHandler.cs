@@ -18,6 +18,13 @@ namespace ExcelETL.WebAPI.ExceptionHandling;
 // message) so a caller (e.g. /api-test) doesn't have to go spelunking through SystemLogs for a
 // technical failure it can't self-diagnose from an empty response. The stack trace is never
 // included, by construction: only exception.GetType().Name and exception.Message are read.
+// Correctif (2026-09-01): a *mapped* business exception (has a resource key, IHasApplicationErrorCode/
+// IHasDomainErrorCode) can still resolve to 500 when StatusCodeFor below has no explicit case for
+// it -- e.g. UnknownFieldReferenceException, the real exception that motivated this lot, which had
+// no ApplicationMessages resx entry at all, so its Detail was just the raw, unhelpful resource key
+// string. The exceptionType/exceptionMessage extensions are therefore attached whenever the final
+// status is 500, regardless of which branch below produced it -- not only for a fully unmapped
+// exception.
 public sealed class GlobalExceptionHandler(
     BusinessExceptionLocalizer businessExceptionLocalizer,
     IProblemDetailsService problemDetailsService,
@@ -40,12 +47,16 @@ public sealed class GlobalExceptionHandler(
         else
         {
             problemDetails.Status = StatusCodes.Status500InternalServerError;
-            problemDetails.Extensions["exceptionType"] = exception.GetType().Name;
-            problemDetails.Extensions["exceptionMessage"] = exception.Message;
 
             logger.LogError(exception,
                 "Unhandled {ExceptionType} reached the global exception handler, mapped to HTTP {StatusCode}",
                 exception.GetType().Name, problemDetails.Status);
+        }
+
+        if (problemDetails.Status == StatusCodes.Status500InternalServerError)
+        {
+            problemDetails.Extensions["exceptionType"] = exception.GetType().Name;
+            problemDetails.Extensions["exceptionMessage"] = exception.Message;
         }
 
         httpContext.Response.StatusCode = problemDetails.Status!.Value;
