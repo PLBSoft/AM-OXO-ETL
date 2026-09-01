@@ -3,6 +3,7 @@ using ExcelETL.Application.Home;
 using ExcelETL.BlazorAdmin.Components.Pages;
 using ExcelETL.BlazorAdmin.Services;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Xunit;
@@ -15,14 +16,27 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages;
 public class HomeTests : BunitContext
 {
     private readonly Mock<IHomeIndicatorsService> _serviceMock = new();
+    private readonly Mock<ILocalTimeFormatter> _localTimeFormatterMock = new();
+
+    // Resolved lazily (see the AddSingleton factory below), so
+    // MobileBrand_RendersVersionInfo_WithATooltipWhenBuildDateKnown can still swap in a fixture
+    // assembly by mutating this field -- registering a *new* service after SetRendererInfo below
+    // (which resolves a service internally, locking the container, same as MainLayoutTests' own
+    // documented ordering requirement) throws.
+    private Func<ApplicationBuildInfo> _buildInfoFactory =
+        () => new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly());
 
     public HomeTests()
     {
         Services.AddSingleton(_serviceMock.Object);
+        Services.AddSingleton(_localTimeFormatterMock.Object);
         Services.AddLocalization();
         // Follow-up (post-062): Home.razor now also injects ApplicationBuildInfo for its mobile-only
         // client-logo/version footer.
-        Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
+        Services.AddSingleton(_ => _buildInfoFactory());
+
+        // Lot 064: see LogsTests.cs's own constructor comment -- same RendererInfo requirement.
+        SetRendererInfo(new RendererInfo("Static", isInteractive: false));
     }
 
     private static HomeIndicators KnownIndicators(
@@ -232,7 +246,7 @@ public class HomeTests : BunitContext
         var metadataCtor = typeof(System.Reflection.AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!;
         assemblyBuilder.SetCustomAttribute(new System.Reflection.Emit.CustomAttributeBuilder(metadataCtor, ["BuildDate", "2026-07-30T16:49:02.0716047Z"]));
         assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
-        Services.AddSingleton(new ApplicationBuildInfo(assemblyBuilder));
+        _buildInfoFactory = () => new ApplicationBuildInfo(assemblyBuilder);
 
         var cut = Render<Home>();
 
@@ -240,6 +254,34 @@ public class HomeTests : BunitContext
         versionInfo.TextContent.Should().Contain("v1.0.3.0");
         versionInfo.TextContent.Should().Contain("30/07/2026");
         versionInfo.GetAttribute("title").Should().Contain("16:49");
+    }
+
+    // Lot 064 (64.2): same stable-id/UTC-fallback + interactive-conversion mechanism as
+    // Logs.razor/GeneratedFiles.razor, for the one raw timestamp this page shows.
+    [Fact]
+    public void LastGenerationValue_HasStableId_AndShowsUtcFallback_WhenNotYetInteractive()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-last-generation-value").Count == 1);
+
+        cut.Find("#home-kpi-last-generation-value").TextContent.Should().Be("28/07/2026 10:30");
+    }
+
+    [Fact]
+    public void LastGenerationValue_UpdatesToTheLocalTimeFormatterResult_OnceInteractive()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+        _localTimeFormatterMock
+            .Setup(f => f.FormatAsync(It.IsAny<DateTime>(), "dd/MM/yyyy HH:mm"))
+            .ReturnsAsync("STUBBED-LOCAL-TIME");
+        SetRendererInfo(new RendererInfo("Server", isInteractive: true));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.Find("#home-kpi-last-generation-value").TextContent == "STUBBED-LOCAL-TIME");
+
+        _localTimeFormatterMock.Verify(f => f.FormatAsync(It.IsAny<DateTime>(), "dd/MM/yyyy HH:mm"), Times.Once);
     }
 
     [Fact]

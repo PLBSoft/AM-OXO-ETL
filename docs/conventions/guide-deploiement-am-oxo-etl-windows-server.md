@@ -130,6 +130,8 @@ voulu). Mot de passe admin manquant → `LogWarning` seulement, compte simplemen
 - [ ] `ImportProfileTest.razor`/`ExportProfileTest.razor` : test avec un fichier fixture réel
 - [ ] `/api-test` (si livré) : appel HTTP réel bout-en-bout vers le WebAPI
 - [ ] `SystemLogs` reçoit bien des entrées (confirme le sink Serilog MSSqlServer)
+- [ ] Page « Journaux » (`/logs`) : l'heure affichée correspond à l'heure locale du poste client,
+  pas à celle du serveur (Lot 064 — conversion navigateur, non testable automatiquement)
 
 ---
 

@@ -9,6 +9,7 @@
 @inject IHomeIndicatorsService HomeIndicatorsService
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject ApplicationBuildInfo BuildInfo
+@inject ILocalTimeFormatter LocalTimeFormatter
 
 <PageTitle>@Loc["Home_PageTitle"]</PageTitle>
 
@@ -127,14 +128,14 @@ else
                         @((MarkupString)AdminIconMarkup.Clock)
                         <span id="home-kpi-last-generation-label" class="text-muted">@Loc["Home_LastGenerationLabel"]</span>
                     </div>
-                    <p class="fs-4 mb-0" aria-labelledby="home-kpi-last-generation-label">
+                    <p class="fs-4 mb-0" id="home-kpi-last-generation-value" aria-labelledby="home-kpi-last-generation-label">
                         @if (_indicators.LastGenerationAtUtc.State == HomeIndicatorState.Unavailable)
                         {
                             <span class="text-danger">@Loc["Home_IndicatorUnavailable"]</span>
                         }
                         else if (_indicators.LastGenerationAtUtc.Value is { } lastGenerationAtUtc)
                         {
-                            @lastGenerationAtUtc.ToString("dd/MM/yyyy HH:mm")
+                            @LocalTimestampOrFallback(lastGenerationAtUtc)
                         }
                         else
                         {
@@ -149,8 +150,12 @@ else
 </div>
 
 @code {
+    private const string LastGenerationTimestampPattern = "dd/MM/yyyy HH:mm";
+
     private HomeIndicators? _indicators;
     private bool _loadError;
+    private string? _localLastGenerationTimestamp;
+    private DateTime? _localLastGenerationComputedFor;
 
     // Same computation as NavMenu.razor's own BuildDateTooltip -- kept duplicated rather than
     // factored into a shared helper, consistent with this project's precedent of accepting small
@@ -175,4 +180,25 @@ else
             _loadError = true;
         }
     }
+
+    // Lot 064: same browser-local-time mechanism as Logs.razor/GeneratedFiles.razor, single-value
+    // form -- only one timestamp to convert on this page.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!RendererInfo.IsInteractive
+            || _indicators?.LastGenerationAtUtc.Value is not { } lastGenerationAtUtc
+            || _localLastGenerationComputedFor == lastGenerationAtUtc)
+        {
+            return;
+        }
+
+        _localLastGenerationTimestamp = await LocalTimeFormatter.FormatAsync(lastGenerationAtUtc, LastGenerationTimestampPattern);
+        _localLastGenerationComputedFor = lastGenerationAtUtc;
+        StateHasChanged();
+    }
+
+    private string LocalTimestampOrFallback(DateTime lastGenerationAtUtc) =>
+        _localLastGenerationComputedFor == lastGenerationAtUtc && _localLastGenerationTimestamp is not null
+            ? _localLastGenerationTimestamp
+            : lastGenerationAtUtc.ToString(LastGenerationTimestampPattern);
 }

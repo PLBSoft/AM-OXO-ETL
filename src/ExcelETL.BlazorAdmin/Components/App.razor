@@ -10,6 +10,10 @@
     <!-- Dark/light theme: must run before any stylesheet link below, synchronously (no defer/async),
          so [data-bs-theme] is set on <html> before first paint -- see wwwroot/js/theme.js. -->
     <script src="@Assets["js/theme.js"]"></script>
+    <!-- Lot 064: browser-local timestamp conversion, invoked via IJSRuntime once the circuit is
+         interactive -- see wwwroot/js/localTime.js. No ordering requirement vs. the stylesheets
+         below (unlike theme.js), just loaded once with everything else. -->
+    <script src="@Assets["js/localTime.js"]"></script>
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["css/theme-m3.css"]" />

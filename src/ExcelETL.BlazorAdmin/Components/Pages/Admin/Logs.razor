@@ -2,12 +2,14 @@
 @attribute [Authorize(Roles = IdentitySeeder.AdminRoleName)]
 
 @using ExcelETL.Application.Diagnostics
+@using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.Infrastructure.Identity
 @using Microsoft.AspNetCore.Authorization
 
 @inject ISystemLogRepository SystemLogRepository
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject IJSRuntime JS
+@inject ILocalTimeFormatter LocalTimeFormatter
 
 <PageTitle>@Loc["Logs_PageTitle"]</PageTitle>
 
@@ -63,7 +65,7 @@ else
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th>@Loc["Logs_TimeUtc"]</th>
+                    <th>@Loc["Logs_TimeLocal"]</th>
                     <th>@Loc["Logs_Level"]</th>
                     <th>@Loc["Logs_Message"]</th>
                 </tr>
@@ -72,7 +74,7 @@ else
                 @foreach (var entry in filteredLogs)
                 {
                     <tr class="@LevelRowClass(entry.Level)">
-                        <td>@entry.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                        <td id="log-timestamp-@entry.Id">@LocalTimestampOrFallback(entry)</td>
                         <td>@entry.Level</td>
                         <td>
                             <div class="d-flex align-items-start gap-2">
@@ -145,6 +147,15 @@ else
     private string _timeFilter = string.Empty;
     private int? _copiedEntryId;
 
+    // Lot 064: TimestampUtc is stored/displayed via the browser's own local time zone, never a
+    // server-configured one -- see ILocalTimeFormatter. _localTimestamps is recomputed only when
+    // the set of visible log ids actually changes (Refresh/LoadMore/a filter narrowing/widening
+    // the table), not on every render, to avoid a JS interop call -> StateHasChanged -> render ->
+    // OnAfterRenderAsync loop.
+    private const string TimestampPattern = "yyyy-MM-dd HH:mm:ss";
+    private readonly Dictionary<int, string> _localTimestamps = new();
+    private HashSet<int>? _localTimestampsComputedForIds;
+
     private IReadOnlyList<string> AvailableLevels =>
         _logs?.Select(e => e.Level).Distinct().OrderBy(l => l, StringComparer.OrdinalIgnoreCase).ToList()
         ?? [];
@@ -189,6 +200,39 @@ else
     }
 
     protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // JS interop isn't available during static prerendering -- RendererInfo.IsInteractive is
+        // only true once the circuit is actually connected (same guard as PasswordChangeGuard.razor).
+        if (_logs is null || !RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        var currentIds = _logs.Select(e => e.Id).ToHashSet();
+        if (_localTimestampsComputedForIds is not null && _localTimestampsComputedForIds.SetEquals(currentIds))
+        {
+            return;
+        }
+
+        var formatted = await LocalTimeFormatter.FormatManyAsync(
+            _logs.Select(e => e.TimestampUtc).ToList(), TimestampPattern);
+
+        _localTimestamps.Clear();
+        for (var i = 0; i < _logs.Count; i++)
+        {
+            _localTimestamps[_logs[i].Id] = formatted[i];
+        }
+
+        _localTimestampsComputedForIds = currentIds;
+        StateHasChanged();
+    }
+
+    private string LocalTimestampOrFallback(SystemLogEntry entry) =>
+        _localTimestamps.TryGetValue(entry.Id, out var localTimestamp)
+            ? localTimestamp
+            : entry.TimestampUtc.ToString(TimestampPattern);
 
     private async Task RefreshAsync()
     {

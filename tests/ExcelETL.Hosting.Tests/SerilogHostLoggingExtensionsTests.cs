@@ -89,4 +89,21 @@ public sealed class SerilogHostLoggingExtensionsTests
 
         act.Should().NotThrow();
     }
+
+    // Lot 064: the default Serilog/MSSqlServer sink behavior writes the log-issuing host's own
+    // local wall-clock time into the TimeStamp column (no offset, indistinguishable from UTC) --
+    // this is what made the Logs page unreadable for a client in a different time zone than the
+    // production server. `TimeStamp.ConvertToUtc` is the sink's own documented fix, but it only
+    // takes effect inside the SQL writer at write time, not on the shared LogEvent object visible
+    // to other sinks -- so this test asserts the built ColumnOptions directly (the actual
+    // conversion behavior is the sink library's own responsibility, not re-tested here), same
+    // "assert the declared configuration, not real SQL Server behavior" convention already used
+    // for the EF Core model in ApplicationIdentityDbContextModelTests.
+    [Fact]
+    public void BuildSystemLogsColumnOptions_ConvertsTheTimeStampColumnToUtc()
+    {
+        var columnOptions = SerilogHostLoggingExtensions.BuildSystemLogsColumnOptions();
+
+        columnOptions.TimeStamp.ConvertToUtc.Should().BeTrue();
+    }
 }

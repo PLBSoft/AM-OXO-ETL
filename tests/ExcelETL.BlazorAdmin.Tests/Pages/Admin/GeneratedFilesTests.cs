@@ -2,10 +2,12 @@ using System.Globalization;
 using Bunit;
 using ExcelETL.Application.Archiving;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
+using ExcelETL.BlazorAdmin.Services;
 using ExcelETL.BlazorAdmin.Tests.Pages;
 using ExcelETL.Domain.Archiving;
 using ExcelETL.Infrastructure.Archiving;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -18,14 +20,19 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 public class GeneratedFilesTests : BunitContext
 {
     private readonly Mock<IGeneratedFileArchiveStore> _archiveStoreMock = new();
+    private readonly Mock<ILocalTimeFormatter> _localTimeFormatterMock = new();
     private readonly string _archiveRoot = Path.Combine(Path.GetTempPath(), "GeneratedFilesTests_" + Guid.NewGuid());
 
     public GeneratedFilesTests()
     {
         Services.AddSingleton(_archiveStoreMock.Object);
+        Services.AddSingleton(_localTimeFormatterMock.Object);
         Services.AddSingleton<IOptions<GeneratedFilesArchiveOptions>>(
             Options.Create(new GeneratedFilesArchiveOptions { RootPath = _archiveRoot }));
         Services.AddLocalization();
+
+        // Lot 064: see LogsTests.cs's own constructor comment -- same RendererInfo requirement.
+        SetRendererInfo(new RendererInfo("Static", isInteractive: false));
     }
 
     private static void WithCulture(string cultureName, Action action)
@@ -238,6 +245,42 @@ public class GeneratedFilesTests : BunitContext
 
         cut.FindAll($"#download-source-link-card-{record.Id}").Should().HaveCount(1);
     });
+
+    // Lot 064 (64.2): same stable-id/UTC-fallback + interactive-conversion mechanism as Logs.razor,
+    // extended to the scope this ticket was widened to (see the ticket doc's 64.0 investigation).
+    [Fact]
+    public void GeneratedFileDateCells_HaveStableIds_AndShowUtcFallback_WhenNotYetInteractive() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles("C7401", GeneratedFileArchiveStatus.Success, withTarget: true);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        var tableCell = cut.Find($"#generated-file-date-{record.Id}");
+        var cardCell = cut.Find($"#generated-file-date-card-{record.Id}");
+        tableCell.TextContent.Should().Be(record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss"));
+        cardCell.TextContent.Should().Be(tableCell.TextContent);
+    });
+
+    [Fact]
+    public void GeneratedFileDateCells_UpdateToTheLocalTimeFormatterResult_OnceInteractive() =>
+        WithCulture("en-US", () =>
+        {
+            var record = WriteRecordWithRealFiles("C7401", GeneratedFileArchiveStatus.Success, withTarget: true);
+            _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+            _localTimeFormatterMock
+                .Setup(f => f.FormatManyAsync(It.IsAny<IReadOnlyList<DateTime>>(), "dd/MM/yyyy HH:mm:ss"))
+                .ReturnsAsync((IReadOnlyList<DateTime> values, string _) =>
+                    values.Select(_ => "STUBBED-LOCAL-TIME").ToList());
+            SetRendererInfo(new RendererInfo("Server", isInteractive: true));
+
+            var cut = Render<GeneratedFiles>();
+            cut.WaitForState(() => cut.Find($"#generated-file-date-{record.Id}").TextContent == "STUBBED-LOCAL-TIME");
+
+            cut.Find($"#generated-file-date-card-{record.Id}").TextContent.Should().Be("STUBBED-LOCAL-TIME");
+        });
 
     protected override void Dispose(bool disposing)
     {

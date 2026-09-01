@@ -127,8 +127,8 @@
   <data name="Logs_NoLogEntries" xml:space="preserve">
     <value>Aucune entrée de journal enregistrée pour l'instant.</value>
   </data>
-  <data name="Logs_TimeUtc" xml:space="preserve">
-    <value>Heure (UTC)</value>
+  <data name="Logs_TimeLocal" xml:space="preserve">
+    <value>Heure</value>
   </data>
   <data name="Logs_Level" xml:space="preserve">
     <value>Niveau</value>

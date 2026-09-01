@@ -45,7 +45,22 @@ public static class SerilogHostLoggingExtensions
         {
             loggerConfiguration.WriteTo.MSSqlServer(
                 connectionString: connectionString,
-                sinkOptions: new MSSqlServerSinkOptions { TableName = SystemLogsTableName, AutoCreateSqlTable = true });
+                sinkOptions: new MSSqlServerSinkOptions { TableName = SystemLogsTableName, AutoCreateSqlTable = true },
+                columnOptions: BuildSystemLogsColumnOptions());
         }
+    }
+
+    /// <summary>
+    /// Column mapping for the shared <c>SystemLogs</c> table -- extracted from <see cref="Configure"/>
+    /// so <c>TimeStamp.ConvertToUtc</c> (Lot 064: the sink otherwise writes the log-issuing host's own
+    /// local wall-clock time, indistinguishable in the column from UTC, which made the Logs page
+    /// unreadable for a client in a different time zone than the production server) is directly
+    /// assertable by a test without opening a real SQL Server connection.
+    /// </summary>
+    public static ColumnOptions BuildSystemLogsColumnOptions()
+    {
+        var columnOptions = new ColumnOptions();
+        columnOptions.TimeStamp.ConvertToUtc = true;
+        return columnOptions;
     }
 }

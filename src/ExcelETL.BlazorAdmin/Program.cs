@@ -47,6 +47,10 @@ builder.Host.AddOxoHostLogging("ExcelETL.BlazorAdmin", connectionString);
 builder.Services.AddDbContextFactory<SystemLogsDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
 
+// Lot 064: browser-local timestamp display (Logs/GeneratedFiles/Home/NavMenu) -- Scoped, since
+// it wraps the per-circuit IJSRuntime.
+builder.Services.AddScoped<ILocalTimeFormatter, LocalTimeFormatter>();
+
 // AddEntityFrameworkStores<ApplicationIdentityDbContext>() below needs a directly-injectable
 // scoped ApplicationIdentityDbContext, so that registration is kept. IUserRepository is the only
 // consumer of the factory below -- unlike the Singleton factories elsewhere in this file, this one

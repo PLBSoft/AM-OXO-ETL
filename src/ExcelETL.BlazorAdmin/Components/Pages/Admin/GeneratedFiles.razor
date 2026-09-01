@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using ExcelETL.Application.Archiving
+@using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.Domain.Archiving
 @using ExcelETL.Infrastructure.Archiving
 @using Microsoft.AspNetCore.Authorization
@@ -10,6 +11,7 @@
 @inject IGeneratedFileArchiveStore GeneratedFileArchiveStore
 @inject IOptions<GeneratedFilesArchiveOptions> ArchiveOptions
 @inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject ILocalTimeFormatter LocalTimeFormatter
 
 <PageTitle>@Loc["GeneratedFiles_PageTitle"]</PageTitle>
 
@@ -57,7 +59,7 @@ else
             @foreach (var record in _records)
             {
                 <tr>
-                    <td>@record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <td id="generated-file-date-@record.Id">@LocalTimestampOrFallback(record)</td>
                     <td>@(record.EquipementRepere ?? "—")</td>
                     <td><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></td>
                     <td>
@@ -109,7 +111,7 @@ else
             <div class="card mb-3">
                 <div class="card-body">
                     <h2 class="card-title h5">@(record.EquipementRepere ?? "—")</h2>
-                    <p class="card-text mb-1">@record.GeneratedAtUtc.ToString("dd/MM/yyyy HH:mm:ss")</p>
+                    <p class="card-text mb-1" id="generated-file-date-card-@record.Id">@LocalTimestampOrFallback(record)</p>
                     <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
                     <div class="d-flex gap-2">
                         @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
@@ -160,7 +162,43 @@ else
     private readonly Dictionary<Guid, string> _sourceDownloadHrefs = new();
     private readonly Dictionary<Guid, string> _targetDownloadHrefs = new();
 
+    // Lot 064: same browser-local-time mechanism/dedup-by-visible-ids convention as Logs.razor.
+    private const string TimestampPattern = "dd/MM/yyyy HH:mm:ss";
+    private readonly Dictionary<Guid, string> _localTimestamps = new();
+    private HashSet<Guid>? _localTimestampsComputedForIds;
+
     protected override async Task OnInitializedAsync() => await LoadRecordsAsync();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_records is null || !RendererInfo.IsInteractive)
+        {
+            return;
+        }
+
+        var currentIds = _records.Select(r => r.Id).ToHashSet();
+        if (_localTimestampsComputedForIds is not null && _localTimestampsComputedForIds.SetEquals(currentIds))
+        {
+            return;
+        }
+
+        var formatted = await LocalTimeFormatter.FormatManyAsync(
+            _records.Select(r => r.GeneratedAtUtc).ToList(), TimestampPattern);
+
+        _localTimestamps.Clear();
+        for (var i = 0; i < _records.Count; i++)
+        {
+            _localTimestamps[_records[i].Id] = formatted[i];
+        }
+
+        _localTimestampsComputedForIds = currentIds;
+        StateHasChanged();
+    }
+
+    private string LocalTimestampOrFallback(GeneratedFileRecord record) =>
+        _localTimestamps.TryGetValue(record.Id, out var localTimestamp)
+            ? localTimestamp
+            : record.GeneratedAtUtc.ToString(TimestampPattern);
 
     private async Task LoadRecordsAsync() => _records = await GeneratedFileArchiveStore.SearchAsync(null);
 
