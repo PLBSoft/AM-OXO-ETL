@@ -10,9 +10,14 @@ namespace ExcelETL.WebAPI.ExceptionHandling;
 
 // Translates the business exceptions localized in Milestones 1-3 (Domain rule/validation
 // violations, Application not-found/state errors) into a ProblemDetails response using the
-// culture negotiated by RequestLocalizationOptions (Accept-Language -- see Program.cs). Anything
-// else falls through (returns false) to the default developer/problem-details middleware: this
-// handler is deliberately narrow to exception types that actually carry a resource key.
+// culture negotiated by RequestLocalizationOptions (Accept-Language -- see Program.cs).
+// Lot 065: every other exception reaching this handler (no resource key, would otherwise fall
+// through to the framework's own default ProblemDetails response) is also handled here now,
+// still as a 500, but with the exception's short type name and message surfaced in the response
+// body (Extensions, never Detail -- that property stays reserved for a localized business
+// message) so a caller (e.g. /api-test) doesn't have to go spelunking through SystemLogs for a
+// technical failure it can't self-diagnose from an empty response. The stack trace is never
+// included, by construction: only exception.GetType().Name and exception.Message are read.
 public sealed class GlobalExceptionHandler(
     BusinessExceptionLocalizer businessExceptionLocalizer,
     IProblemDetailsService problemDetailsService,
@@ -22,23 +27,34 @@ public sealed class GlobalExceptionHandler(
         HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
         var detail = businessExceptionLocalizer.TryLocalize(exception);
-        if (detail is null)
+        var problemDetails = new ProblemDetails();
+
+        if (detail is not null)
         {
-            return false;
+            problemDetails.Status = StatusCodeFor(exception);
+            problemDetails.Detail = detail;
+
+            logger.LogWarning(exception, "Handled {ExceptionType}, mapped to HTTP {StatusCode}",
+                exception.GetType().Name, problemDetails.Status);
+        }
+        else
+        {
+            problemDetails.Status = StatusCodes.Status500InternalServerError;
+            problemDetails.Extensions["exceptionType"] = exception.GetType().Name;
+            problemDetails.Extensions["exceptionMessage"] = exception.Message;
+
+            logger.LogError(exception,
+                "Unhandled {ExceptionType} reached the global exception handler, mapped to HTTP {StatusCode}",
+                exception.GetType().Name, problemDetails.Status);
         }
 
-        var statusCode = StatusCodeFor(exception);
-
-        logger.LogWarning(exception, "Handled {ExceptionType}, mapped to HTTP {StatusCode}",
-            exception.GetType().Name, statusCode);
-
-        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.StatusCode = problemDetails.Status!.Value;
 
         return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = httpContext,
             Exception = exception,
-            ProblemDetails = new ProblemDetails { Status = statusCode, Detail = detail }
+            ProblemDetails = problemDetails
         });
     }
 

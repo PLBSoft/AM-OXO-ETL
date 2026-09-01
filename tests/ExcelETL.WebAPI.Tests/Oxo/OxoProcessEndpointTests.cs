@@ -434,6 +434,115 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         body.Should().Contain("A non-empty .xlsx file must be uploaded.");
     }
 
+    // Lot 065.1: an exception with no resource key (not IHasDomainErrorCode/IHasApplicationErrorCode)
+    // reaching the global handler must no longer produce an opaque 500 -- the response body now
+    // carries the exception's short type name and message, never a stack trace, so a caller like
+    // /api-test can display something actionable instead of "check the server logs".
+    [Fact]
+    public async Task Process_WhenAnUnmappedExceptionOccurs_ReturnsInternalServerErrorWithExceptionTypeAndMessage()
+    {
+        const string exceptionMessage = "simulated unexpected failure";
+        var throwingService = new Mock<IProcessOxoFileService>();
+        throwingService
+            .Setup(s => s.ProcessAsync(It.IsAny<ProcessOxoFileCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException(exceptionMessage));
+
+        using var throwingFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IProcessOxoFileService>();
+                services.AddScoped(_ => throwingService.Object);
+            });
+        });
+        var client = throwingFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(throwingFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(nameof(InvalidOperationException));
+        body.Should().Contain(exceptionMessage);
+    }
+
+    // Explicit guard-rail: this must keep failing a future refactor that starts serializing
+    // exception.StackTrace onto the response, whether via a literal StackTrace property or by
+    // passing the raw exception through ToString().
+    [Fact]
+    public async Task Process_WhenAnUnmappedExceptionOccurs_NeverIncludesTheStackTrace()
+    {
+        var throwingService = new Mock<IProcessOxoFileService>();
+        throwingService
+            .Setup(s => s.ProcessAsync(It.IsAny<ProcessOxoFileCommand>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(BuildExceptionWithRealStackTrace());
+
+        using var throwingFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IProcessOxoFileService>();
+                services.AddScoped(_ => throwingService.Object);
+            });
+        });
+        var client = throwingFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(throwingFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContain("   at ");
+        body.Should().NotContainEquivalentOf("StackTrace");
+    }
+
+    [Fact]
+    public async Task Process_WithoutExportProfileIdField_StillReturnsExactlyTheLot036BadRequestBody()
+    {
+        // Non-regression: an exception already mapped by an explicit business check (Lot 036) keeps
+        // exactly its own response shape -- no exceptionType/exceptionMessage extension, since a
+        // ProblemDetails for this case never even reaches GlobalExceptionHandler (it's built and
+        // returned directly by the controller).
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, _) = await SeedProfilesAsync();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        var fileContent = new StreamContent(sourceWorkbook);
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        using var content = new MultipartFormDataContent
+        {
+            { new StringContent(importProfileId.ToString()), "ImportProfileId" },
+            { fileContent, "File", "source.xlsx" }
+        };
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("The ExportProfileId parameter is required.");
+        body.Should().NotContain("exceptionType");
+        body.Should().NotContain("exceptionMessage");
+    }
+
+    private static InvalidOperationException BuildExceptionWithRealStackTrace()
+    {
+        try
+        {
+            throw new InvalidOperationException("boom");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ex;
+        }
+    }
+
     private HttpClient CreateAuthenticatedClient()
     {
         var client = _factory.CreateClient();
