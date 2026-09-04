@@ -613,6 +613,24 @@
   <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
     <value>Add application</value>
   </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelsHeading" xml:space="preserve">
+    <value>Task type labels</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelCodeLabel" xml:space="preserve">
+    <value>Task type code</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder" xml:space="preserve">
+    <value>Task type code</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelLabelLabel" xml:space="preserve">
+    <value>Target label</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder" xml:space="preserve">
+    <value>Target label</value>
+  </data>
+  <data name="ImportProfileEditor_AddTacheMultipleTypeLabelButton" xml:space="preserve">
+    <value>Add task type label</value>
+  </data>
   <data name="ImportProfileEditor_EmptyTableauNameError" xml:space="preserve">
     <value>Tableau name must not be empty.</value>
   </data>

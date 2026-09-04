@@ -16,9 +16,10 @@ public class PivotFieldResolverTests
         new IsolementPivot("C7401-V4", "Vanne 4", "VANNE", "MAD", "ZONE 1")
             with { Tableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], RepereParent = "38-C7401" };
 
-    private static TacheMultiplePivot TacheMultiple() => new(
+    private static TacheMultiplePivot TacheMultiple() => new TacheMultiplePivot(
         ordre: 3, action: "Consigner", acteur: "ADF", risques: "Aucun",
-        typeTacheMultipleCode: "TM_PROC_MAD", dateValidation: new DateOnly(2026, 7, 22), estFactice: false);
+        typeTacheMultipleCode: "TM_PROC_MAD", dateValidation: new DateOnly(2026, 7, 22), estFactice: false)
+        with { Repere = "38-C7401", TypeElementNom = "MAD TRAVAUX", ColonneTravaux = "Procédure MAD" };
 
     [Fact]
     public void Resolve_EquipementRepere_ReturnsRepere()
@@ -134,6 +135,9 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.TacheMultipleActeur, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleRisques, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleDateValidation, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleRepere, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleTypeElementNom, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleColonneTravaux, PivotSource.TacheMultiple)]
     public void GetPivotSource_ForEveryField_ReturnsExpectedSource(PivotFieldRef fieldRef, PivotSource expected)
     {
         PivotFieldResolver.GetPivotSource(fieldRef).Should().Be(expected);
@@ -183,6 +187,32 @@ public class PivotFieldResolverTests
         var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false);
 
         PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleDateValidation).Should().Be(string.Empty);
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleRepere_ReturnsRepere()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleRepere).Should().Be("38-C7401");
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleTypeElementNom_ReturnsTypeElementNom()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleTypeElementNom).Should().Be("MAD TRAVAUX");
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleColonneTravaux_ReturnsColonneTravaux()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleColonneTravaux).Should().Be("Procédure MAD");
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleColonneTravauxWhenBlank_ReturnsEmptyString()
+    {
+        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_UNKNOWN", null, false);
+
+        PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleColonneTravaux).Should().BeEmpty();
     }
 
     [Fact]

@@ -107,16 +107,19 @@ public sealed class ImportPipelineOrchestrator(
             errors.AddRange(autresJointsTouchesResult.Errors);
             errors.AddRange(diversResult.Errors);
 
-            var totalElementCount = isolements.Count + points.Count + procedureResult.TachesMultiples.Count;
+            var tachesMultiples = BroadcastTachesMultiplesContext(
+                procedureResult.TachesMultiples, equipement, profile.TacheMultipleTypeLabels);
+
+            var totalElementCount = isolements.Count + points.Count + tachesMultiples.Count;
 
             logger.LogInformation(
                 "Completed import pipeline run for profile {ProfileName} in {ElapsedMs}ms: {SheetCount} sheet(s) " +
                 "processed, {TotalElementCount} element(s) extracted ({IsolementCount} isolement(s), " +
                 "{PointCount} point(s), {TacheMultipleCount} tache(s) multiple(s)), {ErrorCount} non-blocking warning(s)",
                 profile.Name, stopwatch.ElapsedMilliseconds, SheetsProcessedOnSuccess, totalElementCount,
-                isolements.Count, points.Count, procedureResult.TachesMultiples.Count, errors.Count);
+                isolements.Count, points.Count, tachesMultiples.Count, errors.Count);
 
-            return new ImportResult(equipement, isolements, points, procedureResult.TachesMultiples, errors);
+            return new ImportResult(equipement, isolements, points, tachesMultiples, errors);
         }
         catch (Exception ex)
         {
@@ -146,5 +149,31 @@ public sealed class ImportPipelineOrchestrator(
                 RepereParent = repereParent
             };
         }
+    }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md):
+    // Repere/TypeElementNom are broadcast from the run's single Equipement, same "sans exception"
+    // convention as BroadcastEquipementContext above. ColonneTravaux is resolved by looking up each
+    // tache's own TypeTacheMultipleCode in the profile's configured mapping -- trim + insensitive to
+    // case, consistent with every other Colonne-name comparison in this pipeline (spec §7) -- and stays
+    // "" when no configured entry matches, never an error.
+    private static List<TacheMultiplePivot> BroadcastTachesMultiplesContext(
+        IReadOnlyList<TacheMultiplePivot> tachesMultiples, EquipementPivot equipement,
+        IReadOnlyList<TacheMultipleTypeLabel> tacheMultipleTypeLabels) =>
+        [.. tachesMultiples.Select(tache => tache with
+        {
+            Repere = equipement.Repere,
+            TypeElementNom = equipement.TypeElementNom,
+            ColonneTravaux = ResolveColonneTravaux(tache.TypeTacheMultipleCode, tacheMultipleTypeLabels)
+        })];
+
+    private static string ResolveColonneTravaux(
+        string typeTacheMultipleCode, IReadOnlyList<TacheMultipleTypeLabel> tacheMultipleTypeLabels)
+    {
+        var normalizedCode = typeTacheMultipleCode.Trim();
+        var match = tacheMultipleTypeLabels.FirstOrDefault(
+            label => string.Equals(label.Code.Trim(), normalizedCode, StringComparison.OrdinalIgnoreCase));
+
+        return match?.Label ?? "";
     }
 }

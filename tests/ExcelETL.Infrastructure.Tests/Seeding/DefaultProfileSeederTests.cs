@@ -140,7 +140,13 @@ public class DefaultProfileSeederTests
         divers.PointRules.Should().HaveCount(7);
         divers.PointRules.Select(r => r.ColonneName).Should().Contain("PF : ACCORD TRAVAUX FEU");
         divers.PointRules.Select(r => r.ColonneName).Should().NotContain(name => name.Contains("POINT DE FEU"));
-        divers.PointRules.Select(r => r.ColonneName).Should().Contain("ZÉRO ENERGIE EN PRESENCE EE");
+
+        // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md), 66.1:
+        // DIVERS' "ZERO ENERGIE" rule is retargeted onto ISOLEMENT's own "(PS941)"-suffixed Colonne name
+        // (client decision, "fusionner les deux colonnes") -- both sheets now converge onto the same
+        // real Colonne, so a single export PointColumnDefinition covers both.
+        divers.PointRules.Select(r => r.ColonneName).Should().Contain("ZÉRO ENERGIE EN PRESENCE EE (PS941)");
+        divers.PointRules.Select(r => r.ColonneName).Should().NotContain("ZÉRO ENERGIE EN PRESENCE EE");
     }
 
     [Fact]
@@ -216,8 +222,7 @@ public class DefaultProfileSeederTests
 
         var parents = profile.SheetRules.Single(r => r.SheetName == "Parents");
         parents.PivotSource.Should().Be(PivotSource.Equipement);
-        parents.ColumnDefinitions.Should().OnlyContain(c => c.Source != null);
-        parents.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
+        parents.ColumnDefinitions.Where(c => c.Source != null).Select(c => c.Source).Should().BeEquivalentTo(
         [
             PivotFieldRef.EquipementRepere,
             PivotFieldRef.EquipementTypeElementNom,
@@ -225,13 +230,14 @@ public class DefaultProfileSeederTests
             PivotFieldRef.EquipementDesignation,
             PivotFieldRef.EquipementTableaux
         ]);
-        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        // Lot 066, 66.1: "TRAVAUX COMPLET"/"TRAVAUX DETAIL" are gone (redundant with "Tableaux") --
+        // 66.2/66.4 additions covered by their own dedicated tests below.
+        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotContain(["TRAVAUX COMPLET", "TRAVAUX DETAIL"]);
         parents.ApplicationColumnDefinitions.Should().ContainSingle(a => a.ApplicationNom == "PROGRESS" && a.MarkValue == "O");
 
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
         enfants.PivotSource.Should().Be(PivotSource.Isolement);
-        enfants.ColumnDefinitions.Should().OnlyContain(c => c.Source != null);
-        enfants.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
+        enfants.ColumnDefinitions.Where(c => c.Source != null).Select(c => c.Source).Should().BeEquivalentTo(
         [
             PivotFieldRef.IsolementRepere,
             PivotFieldRef.IsolementTypeElementNom,
@@ -243,7 +249,11 @@ public class DefaultProfileSeederTests
         ]);
         enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Type Elément" && c.Source == PivotFieldRef.IsolementTypeElementNom);
         enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "ELEMENT PARENT" && c.Source == PivotFieldRef.IsolementRepereParent);
-        enfants.PointColumnDefinitions.Should().HaveCount(17);
+        // Lot 066, 66.1: the bare "ZÉRO ENERGIE EN PRESENCE EE" PointColumnDefinition is gone -- DIVERS
+        // now targets the same "(PS941)" Colonne name as ISOLEMENT, so 17 collapses to 16.
+        enfants.PointColumnDefinitions.Should().HaveCount(16);
+        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotContain("ZÉRO ENERGIE EN PRESENCE EE");
+        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().Contain("ZÉRO ENERGIE EN PRESENCE EE (PS941)");
         enfants.ApplicationColumnDefinitions.Should().ContainSingle(a => a.ApplicationNom == "PROGRESS" && a.MarkValue == "O");
 
         var tachesMultiples = profile.SheetRules.Single(r => r.SheetName == "Tâches multiples");
@@ -251,12 +261,56 @@ public class DefaultProfileSeederTests
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
         tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
         [
+            PivotFieldRef.TacheMultipleRepere,
+            PivotFieldRef.TacheMultipleTypeElementNom,
             PivotFieldRef.TacheMultipleOrdre,
             PivotFieldRef.TacheMultipleAction,
             PivotFieldRef.TacheMultipleActeur,
             PivotFieldRef.TacheMultipleRisques,
-            PivotFieldRef.TacheMultipleDateValidation
+            PivotFieldRef.TacheMultipleDateValidation,
+            PivotFieldRef.TacheMultipleColonneTravaux
         ]);
+    }
+
+    // Lot 066, 66.2: unmapped identity ColumnDefinitions (decision 6) -- Source = null, a legitimately
+    // empty cell reserving a slot in the target workbook's known schema.
+    [Fact]
+    public async Task SeedAsync_CreatesExportProfile_WithExpectedUnmappedIdentityColumns()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await seeder.SeedAsync();
+
+        var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
+        string[] expectedParentsUnmappedHeaders = ["LOC2", "LOC3", "FLUIDE", "RECURRENT", "SUPPRESSION", "ADR Email", "COMMENTAIRES"];
+        parents.ColumnDefinitions.Where(c => expectedParentsUnmappedHeaders.Contains(c.Header))
+            .Should().HaveCount(expectedParentsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
+
+        var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
+        string[] expectedEnfantsUnmappedHeaders =
+        [
+            "LOC2", "LOC3", "PHASE PROCESS", "REMARQUES", "ETIQUETTE", "DIAMETRE INCH", "SERIE LBS",
+            "NATURE JOINT", "BESOIN ECHAF", "SUPPRESSION", "POSITION A LA DEPOSE"
+        ];
+        enfants.ColumnDefinitions.Where(c => expectedEnfantsUnmappedHeaders.Contains(c.Header))
+            .Should().HaveCount(expectedEnfantsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
+    }
+
+    // Lot 066, 66.4: the same 24 Point columns (16 after 66.1's dedup) now live on Parents too, in the
+    // same order as Enfants -- marked via SheetGenerationEngine's aggregation mechanism (66.3).
+    [Fact]
+    public async Task SeedAsync_CreatesExportProfile_WithParentsPointColumns_MatchingEnfantsExactly()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await seeder.SeedAsync();
+
+        var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
+        var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
+
+        parents.PointColumnDefinitions.Should().Equal(enfants.PointColumnDefinitions);
     }
 
     [Fact]
@@ -276,22 +330,6 @@ public class DefaultProfileSeederTests
         var enfants = exportProfile!.SheetRules.Single(r => r.SheetName == "Enfants");
         enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().OnlyContain(
             colonneNom => producedColonneNames.Contains(colonneNom));
-    }
-
-    [Fact]
-    public async Task SeedAsync_ExportParentsPointColumns_MatchImportProfilesDefaultTableaux()
-    {
-        // PROCEDURE's 2 Points are driven by ImportProfile.DefaultTableaux since Lot U3, not hardcoded
-        // in ProcedureExtractionService anymore -- so this is a real cross-profile comparison now, same
-        // shape as the Enfants test above (not a literal-vs-literal comparison anymore).
-        var seeder = CreateSeeder(out var importProfileStore, out var exportProfileStore);
-        await seeder.SeedAsync();
-
-        var importProfile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
-        var exportProfile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
-        var parents = exportProfile!.SheetRules.Single(r => r.SheetName == "Parents");
-
-        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().BeEquivalentTo(importProfile!.DefaultTableaux);
     }
 
     [Fact]
@@ -360,11 +398,14 @@ public class DefaultProfileSeederTests
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
         tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
         [
+            PivotFieldRef.TacheMultipleRepere,
+            PivotFieldRef.TacheMultipleTypeElementNom,
             PivotFieldRef.TacheMultipleOrdre,
             PivotFieldRef.TacheMultipleAction,
             PivotFieldRef.TacheMultipleActeur,
             PivotFieldRef.TacheMultipleRisques,
-            PivotFieldRef.TacheMultipleDateValidation
+            PivotFieldRef.TacheMultipleDateValidation,
+            PivotFieldRef.TacheMultipleColonneTravaux
         ]);
     }
 

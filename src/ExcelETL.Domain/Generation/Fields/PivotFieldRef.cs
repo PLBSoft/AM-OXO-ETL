@@ -22,5 +22,8 @@ public enum PivotFieldRef
     TacheMultipleAction,
     TacheMultipleActeur,
     TacheMultipleRisques,
-    TacheMultipleDateValidation
+    TacheMultipleDateValidation,
+    TacheMultipleRepere,
+    TacheMultipleTypeElementNom,
+    TacheMultipleColonneTravaux
 }

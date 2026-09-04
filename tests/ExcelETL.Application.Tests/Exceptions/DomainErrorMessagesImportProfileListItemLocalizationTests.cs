@@ -79,6 +79,34 @@ public class DomainErrorMessagesImportProfileListItemLocalizationTests
             () => new ImportProfile(
                 "Profil", "MAD-OXO-", EquipementTypeElementNom, [], ["PROGRESS", "progress"], [ValidRule()]),
         ];
+        // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md).
+        yield return
+        [
+            "TacheMultipleTypeLabel_EmptyCode",
+            () => new TacheMultipleTypeLabel("", "Procédure MAD"),
+        ];
+        yield return
+        [
+            "TacheMultipleTypeLabel_CodeTooLong",
+            () => new TacheMultipleTypeLabel(new string('A', 51), "Procédure MAD"),
+        ];
+        yield return
+        [
+            "TacheMultipleTypeLabel_EmptyLabel",
+            () => new TacheMultipleTypeLabel("TM_PROC_MAD", ""),
+        ];
+        yield return
+        [
+            "TacheMultipleTypeLabel_LabelTooLong",
+            () => new TacheMultipleTypeLabel("TM_PROC_MAD", new string('A', 51)),
+        ];
+        yield return
+        [
+            "ImportProfile_DuplicateTacheMultipleTypeLabelCode",
+            () => new ImportProfile(
+                "Profil", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
+                [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"), new TacheMultipleTypeLabel("tm_proc_mad", "Autre")]),
+        ];
     }
 
     [Theory]

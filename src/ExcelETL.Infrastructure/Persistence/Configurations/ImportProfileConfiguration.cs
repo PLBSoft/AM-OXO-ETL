@@ -45,6 +45,25 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
         builder.Property(p => p.DefaultApplicationNames)
             .IsRequired();
 
+        // Lot 067: TacheMultipleTypeLabel is a Code+Label pair, not a primitive scalar -- unlike
+        // DefaultTableaux/DefaultApplicationNames above, this needs a real owned-entity mapping (same
+        // shadow-Id-key convention as SheetRules below), not an EF Core primitive collection.
+        builder.OwnsMany(p => p.TacheMultipleTypeLabels, labels =>
+        {
+            labels.ToTable("ImportProfileTacheMultipleTypeLabels");
+            labels.WithOwner().HasForeignKey("ImportProfileId");
+            labels.Property<int>("Id");
+            labels.HasKey("Id");
+
+            labels.Property(l => l.Code)
+                .IsRequired()
+                .HasMaxLength(ImportProfile.MaxListItemNameLength);
+
+            labels.Property(l => l.Label)
+                .IsRequired()
+                .HasMaxLength(ImportProfile.MaxListItemNameLength);
+        });
+
         // SheetExtractionRule has no identity of its own (see the Domain type's own comment) -- it's
         // owned by ImportProfile, not a sibling entity like SheetConfig/CellMapping. A shadow "Id" key
         // is required because EF Core owned collections must have a key and SheetExtractionRule

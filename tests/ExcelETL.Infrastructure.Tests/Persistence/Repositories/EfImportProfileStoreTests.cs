@@ -18,7 +18,8 @@ public class EfImportProfileStoreTests
 
     private static ImportProfile CreateSampleProfile(
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX",
-        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null)
+        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null,
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
     {
         var locator = new RepeatingBlockLocator(
             "ISOLEMENT",
@@ -43,7 +44,8 @@ public class EfImportProfileStoreTests
 
         return new ImportProfile(
             name, "MAD-OXO-", equipementTypeElementNom,
-            defaultTableaux ?? ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], defaultApplicationNames ?? ["PROGRESS"], [sheetRule]);
+            defaultTableaux ?? ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], defaultApplicationNames ?? ["PROGRESS"], [sheetRule],
+            tacheMultipleTypeLabels);
     }
 
     [Fact]
@@ -105,6 +107,37 @@ public class EfImportProfileStoreTests
 
         reloaded!.DefaultTableaux.Should().BeEmpty();
         reloaded.DefaultApplicationNames.Should().BeEmpty();
+    }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md).
+    [Fact]
+    public async Task SaveAsync_WithTacheMultipleTypeLabels_PersistsAndReloadsThem()
+    {
+        var profile = CreateSampleProfile(tacheMultipleTypeLabels:
+        [
+            new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"),
+            new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")
+        ]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.TacheMultipleTypeLabels.Should().HaveCount(2);
+        reloaded.TacheMultipleTypeLabels.Should().Contain(l => l.Code == "TM_PROC_MAD" && l.Label == "Procédure MAD");
+        reloaded.TacheMultipleTypeLabels.Should().Contain(l => l.Code == "TM_PROC_REL" && l.Label == "Procédure REL");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithoutTacheMultipleTypeLabels_PersistsAndReloadsAsEmpty()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.TacheMultipleTypeLabels.Should().BeEmpty();
     }
 
     [Fact]

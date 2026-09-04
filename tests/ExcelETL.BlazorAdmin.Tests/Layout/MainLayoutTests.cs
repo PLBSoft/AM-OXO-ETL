@@ -5,6 +5,7 @@ using ExcelETL.BlazorAdmin.Components.Layout;
 using ExcelETL.BlazorAdmin.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
+using Moq;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Layout;
@@ -20,6 +21,10 @@ public class MainLayoutTests : BunitContext
         // registered before SetRendererInfo below -- that call resolves a service internally, which
         // locks the bUnit service provider against any further registration.
         Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
+        // Follow-up (post-064): NavMenu also injects ILocalTimeFormatter for its build-date footer --
+        // no Setup needed, the default ctor-registered ApplicationBuildInfo above has no BuildDate,
+        // so NavMenu's OnAfterRenderAsync never actually calls into it.
+        Services.AddSingleton(Mock.Of<ILocalTimeFormatter>());
 
         // Lot 045 (45.4): MainLayout now renders PasswordChangeGuard, which reads RendererInfo to
         // decide whether to render <NavigationLock> (only supported in an interactive render mode --

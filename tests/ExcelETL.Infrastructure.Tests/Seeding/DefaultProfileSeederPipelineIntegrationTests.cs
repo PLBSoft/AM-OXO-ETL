@@ -235,15 +235,61 @@ public class DefaultProfileSeederPipelineIntegrationTests
         foreach (var (code, count) in expectedCounts)
         {
             var sheet = reread.Worksheet(code);
-            sheet.Cell(1, 1).GetString().Should().Be("Ordre");
-            sheet.Cell(1, 2).GetString().Should().Be("Action");
+            sheet.Cell(1, 1).GetString().Should().Be("Repère TM");
+            sheet.Cell(1, 2).GetString().Should().Be("TYPE ELEMENT CODE");
+            sheet.Cell(1, 3).GetString().Should().Be("Ordre");
+            sheet.Cell(1, 4).GetString().Should().Be("Action");
             sheet.RowsUsed().Should().HaveCount(1 + count);
+        }
+    }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.4:
+    // against the profile as seeded and fetched back -- every row of both dynamic sheets carries the
+    // right Repère TM/TYPE ELEMENT CODE/Colonne Travaux value.
+    [Fact]
+    public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesRepereTypeAndColonneTravauxOnBothTacheMultipleSheets()
+    {
+        var (importProfile, exportProfile) = await SeedAndFetchProfilesAsync();
+
+        ImportResult importResult;
+        using (var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx")))
+        using (var workbookReader = new ClosedXmlWorkbookReader(sourceStream))
+        {
+            importResult = _orchestrator.Run(workbookReader, importProfile);
+        }
+
+        var generatedWorkbook = _generationEngine.Generate(importResult, exportProfile);
+        using var destination = new MemoryStream();
+        _writer.Write(generatedWorkbook, destination);
+        using var reread = new XLWorkbook(destination);
+
+        var expectedRepere = importResult.Equipement!.Repere;
+
+        var mad = reread.Worksheet("TM_PROC_MAD");
+        foreach (var row in mad.RowsUsed().Skip(1))
+        {
+            row.Cell(1).GetString().Should().Be(expectedRepere);
+            row.Cell(2).GetString().Should().Be("MAD TRAVAUX");
+            row.Cell(8).GetString().Should().Be("Procédure MAD");
+        }
+
+        var rel = reread.Worksheet("TM_PROC_REL");
+        foreach (var row in rel.RowsUsed().Skip(1))
+        {
+            row.Cell(1).GetString().Should().Be(expectedRepere);
+            row.Cell(2).GetString().Should().Be("MAD TRAVAUX");
+            row.Cell(8).GetString().Should().Be("Procédure REL");
         }
     }
 
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U6: header order (and content)
     // for the newly seeded Tableaux/PROGRESS/ELEMENT PARENT/Type Elément columns, against the profile
     // as seeded and fetched back -- not a hand-built profile.
+    //
+    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md), 66.5:
+    // rewritten to resolve headers/column indices dynamically from the profile itself, rather than
+    // hardcoded numeric indices -- per the ticket's own explicit instruction to avoid a manual-counting
+    // divergence risk once Parents/Enfants both carry ~30 columns.
     [Fact]
     public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesExpectedHeaderOrderAndNewColumnValues()
     {
@@ -261,36 +307,146 @@ public class DefaultProfileSeederPipelineIntegrationTests
         _writer.Write(generatedWorkbook, destination);
         using var reread = new XLWorkbook(destination);
 
+        var parentsRule = exportProfile.SheetRules.Single(r => r.SheetName == "Parents");
+        var expectedParentsHeaders = parentsRule.ColumnDefinitions.Select(c => c.Header)
+            .Concat(parentsRule.ApplicationColumnDefinitions.Select(a => a.Header))
+            .Concat(parentsRule.PointColumnDefinitions.Select(p => p.Header))
+            .ToList();
+
         var parents = reread.Worksheet("Parents");
-        parents.Cell(1, 1).GetString().Should().Be("Repère");
-        parents.Cell(1, 2).GetString().Should().Be("Type Elément");
-        parents.Cell(1, 3).GetString().Should().Be("Zone");
-        parents.Cell(1, 4).GetString().Should().Be("Désignation");
-        parents.Cell(1, 5).GetString().Should().Be("Tableaux");
-        parents.Cell(1, 6).GetString().Should().Be("PROGRESS");
-        parents.Cell(1, 7).GetString().Should().Be("TRAVAUX COMPLET");
-        parents.Cell(2, 5).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
-        parents.Cell(2, 6).GetString().Should().Be("O");
+        parents.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedParentsHeaders);
+
+        int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
+        parents.Cell(1, ParentsCol("Repère")).GetString().Should().Be("Repère");
+        parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("38-C7401");
+        parents.Cell(2, ParentsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+        parents.Cell(2, ParentsCol("PROGRESS")).GetString().Should().Be("O");
+
+        // 66.3's new aggregation exercised in real conditions: PROLOCK VANNES/PS941 are produced by
+        // C7401's ISOLEMENT isolements (unconditional/HasZeroEnergie's "C7401-V4"), never directly by
+        // the Equipement itself -- yet they still mark Parents.
+        parents.Cell(2, ParentsCol("PROLOCK VANNES")).GetString().Should().Be("X");
+        parents.Cell(2, ParentsCol("ZÉRO ENERGIE EN PRESENCE EE (PS941)")).GetString().Should().Be("X");
+        // C7401's DIVERS sheet produces zero isolements -- nothing aggregates its own Points onto
+        // Parents, so this column stays legitimately empty (non-regression against over-aggregating).
+        parents.Cell(2, ParentsCol("SYNCHRONISATION INSTRUMENTATION")).GetString().Should().Be("");
+
+        var enfantsRule = exportProfile.SheetRules.Single(r => r.SheetName == "Enfants");
+        var expectedEnfantsHeaders = enfantsRule.ColumnDefinitions.Select(c => c.Header)
+            .Concat(enfantsRule.ApplicationColumnDefinitions.Select(a => a.Header))
+            .Concat(enfantsRule.PointColumnDefinitions.Select(p => p.Header))
+            .ToList();
 
         var enfants = reread.Worksheet("Enfants");
-        enfants.Cell(1, 1).GetString().Should().Be("Numéro");
-        enfants.Cell(1, 2).GetString().Should().Be("Type Elément");
-        enfants.Cell(1, 3).GetString().Should().Be("Zone");
-        enfants.Cell(1, 4).GetString().Should().Be("ELEMENT PARENT");
-        enfants.Cell(1, 5).GetString().Should().Be("Désignation");
-        enfants.Cell(1, 6).GetString().Should().Be("Position à la pose");
-        enfants.Cell(1, 7).GetString().Should().Be("Tableaux");
-        enfants.Cell(1, 8).GetString().Should().Be("PROGRESS");
-        enfants.Cell(1, 9).GetString().Should().Be("PROLOCK VANNES");
+        enfants.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedEnfantsHeaders);
+
+        int EnfantsCol(string header) => expectedEnfantsHeaders.IndexOf(header) + 1;
 
         // Every Enfants row (23 for C7401) shares the same ELEMENT PARENT/Tableaux/PROGRESS values --
         // broadcast onto every Isolement of the run, same as Localisation.
         foreach (var row in enfants.RowsUsed().Skip(1))
         {
-            row.Cell(4).GetString().Should().Be("38-C7401");
-            row.Cell(7).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
-            row.Cell(8).GetString().Should().Be("O");
+            row.Cell(EnfantsCol("ELEMENT PARENT")).GetString().Should().Be("38-C7401");
+            row.Cell(EnfantsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+            row.Cell(EnfantsCol("PROGRESS")).GetString().Should().Be("O");
         }
+    }
+
+    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md), 66.5:
+    // one closing integration test per remaining fixture (C7401's own equivalent lives above, predating
+    // this lot), each checking in one place: Parents/Enfants' full header (resolved dynamically from
+    // the profile, per the ticket's own "figer par le test, pas par un décompte manuel" instruction),
+    // at least one data row per sheet with unmapped identity columns genuinely empty, and at least one
+    // Point column correctly aggregated (66.3) onto Parents from a child isolement.
+    [Fact]
+    public async Task Generate_D8570Fixture_WithSeededProfiles_ProducesCompleteHeadersAndAggregatedPoints()
+    {
+        var (importResult, reread, parentsRule, enfantsRule) =
+            await GenerateForFixtureAsync("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+
+        var expectedParentsHeaders = ExpectedHeaders(parentsRule);
+        var parents = reread.Worksheet("Parents");
+        parents.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedParentsHeaders);
+
+        int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
+        parents.RowsUsed().Should().HaveCount(2); // header + 1 Equipement row
+        parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("644-D8570");
+        parents.Cell(2, ParentsCol("LOC2")).GetString().Should().Be("");
+        parents.Cell(2, ParentsCol("COMMENTAIRES")).GetString().Should().Be("");
+
+        // DIVERS' 13 "ZERO ENERGIE" isolements now target the same "(PS941)" Colonne as ISOLEMENT
+        // (66.1's merge) -- none of them is ISOLEMENT's own repère, so this column is marked on
+        // Parents only via aggregation, not via a direct Equipement-attached Point.
+        parents.Cell(2, ParentsCol("ZÉRO ENERGIE EN PRESENCE EE (PS941)")).GetString().Should().Be("X");
+
+        var expectedEnfantsHeaders = ExpectedHeaders(enfantsRule);
+        var enfants = reread.Worksheet("Enfants");
+        enfants.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedEnfantsHeaders);
+        enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
+
+        int EnfantsCol(string header) => expectedEnfantsHeaders.IndexOf(header) + 1;
+        enfants.Cell(2, EnfantsCol("REMARQUES")).GetString().Should().Be("");
+        enfants.Cell(2, EnfantsCol("POSITION A LA DEPOSE")).GetString().Should().Be("");
+    }
+
+    [Fact]
+    public async Task Generate_G6306BFixture_WithSeededProfiles_ProducesCompleteHeadersAndAggregatedPoints()
+    {
+        var (importResult, reread, parentsRule, enfantsRule) =
+            await GenerateForFixtureAsync("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
+
+        var expectedParentsHeaders = ExpectedHeaders(parentsRule);
+        var parents = reread.Worksheet("Parents");
+        parents.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedParentsHeaders);
+
+        int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
+        parents.RowsUsed().Should().HaveCount(2);
+        parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("602-G6306B");
+        parents.Cell(2, ParentsCol("FLUIDE")).GetString().Should().Be("");
+
+        // DIVERS' one matching "INSTRUMENTATION" isolement marks this column on Parents purely via
+        // aggregation -- no Point is ever attached to the Equipement itself for this Colonne.
+        parents.Cell(2, ParentsCol("SYNCHRONISATION INSTRUMENTATION")).GetString().Should().Be("X");
+        // ISOLEMENT's unconditional Points aggregate onto Parents too.
+        parents.Cell(2, ParentsCol("PROLOCK VANNES")).GetString().Should().Be("X");
+        // DIVERS' one "POINT DE FEU" row never matches the confirmed base value "POINT FEU" --
+        // no PF Point is ever produced for this run, so every PF column stays empty on Parents.
+        parents.Cell(2, ParentsCol("PF : ACCORD TRAVAUX FEU")).GetString().Should().Be("");
+
+        var expectedEnfantsHeaders = ExpectedHeaders(enfantsRule);
+        var enfants = reread.Worksheet("Enfants");
+        enfants.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedEnfantsHeaders);
+        enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
+
+        int EnfantsCol(string header) => expectedEnfantsHeaders.IndexOf(header) + 1;
+        enfants.Cell(2, EnfantsCol("NATURE JOINT")).GetString().Should().Be("");
+    }
+
+    private static List<string> ExpectedHeaders(SheetGenerationRule rule) => rule.ColumnDefinitions.Select(c => c.Header)
+        .Concat(rule.ApplicationColumnDefinitions.Select(a => a.Header))
+        .Concat(rule.PointColumnDefinitions.Select(p => p.Header))
+        .ToList();
+
+    private async Task<(ImportResult ImportResult, XLWorkbook Generated, SheetGenerationRule ParentsRule, SheetGenerationRule EnfantsRule)>
+        GenerateForFixtureAsync(string fixtureFileName)
+    {
+        var (importProfile, exportProfile) = await SeedAndFetchProfilesAsync();
+
+        ImportResult importResult;
+        using (var sourceStream = File.OpenRead(FixturePath(fixtureFileName)))
+        using (var workbookReader = new ClosedXmlWorkbookReader(sourceStream))
+        {
+            importResult = _orchestrator.Run(workbookReader, importProfile);
+        }
+
+        var generatedWorkbook = _generationEngine.Generate(importResult, exportProfile);
+        using var destination = new MemoryStream();
+        _writer.Write(generatedWorkbook, destination);
+        var reread = new XLWorkbook(destination);
+
+        var parentsRule = exportProfile.SheetRules.Single(r => r.SheetName == "Parents");
+        var enfantsRule = exportProfile.SheetRules.Single(r => r.SheetName == "Enfants");
+        return (importResult, reread, parentsRule, enfantsRule);
     }
 
     private ImportResult RunOnFixture(string fileName, ImportProfile profile)

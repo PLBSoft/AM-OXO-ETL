@@ -60,4 +60,31 @@ public class TacheMultiplePivotTests
             .WithParameterName("action")
             .Which.ErrorCode.Should().Be(DomainErrorCode.TacheMultiplePivot_EmptyAction);
     }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md):
+    // Repere/TypeElementNom/ColonneTravaux are known only after construction (broadcast by
+    // ImportPipelineOrchestrator), same mechanism as IsolementPivot's own broadcast properties.
+    [Fact]
+    public void Constructor_DefaultsRepereTypeElementNomAndColonneTravaux_ToEmptyString()
+    {
+        var tache = new TacheMultiplePivot(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false);
+
+        tache.Repere.Should().BeEmpty();
+        tache.TypeElementNom.Should().BeEmpty();
+        tache.ColonneTravaux.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void With_SetsRepereTypeElementNomAndColonneTravaux_WithoutAffectingOtherFields()
+    {
+        var tache = new TacheMultiplePivot(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false);
+
+        var broadcast = tache with { Repere = "38-C7401", TypeElementNom = "MAD TRAVAUX", ColonneTravaux = "Procédure MAD" };
+
+        broadcast.Repere.Should().Be("38-C7401");
+        broadcast.TypeElementNom.Should().Be("MAD TRAVAUX");
+        broadcast.ColonneTravaux.Should().Be("Procédure MAD");
+        broadcast.Action.Should().Be("Action");
+        broadcast.TypeTacheMultipleCode.Should().Be("TM_PROC_MAD");
+    }
 }

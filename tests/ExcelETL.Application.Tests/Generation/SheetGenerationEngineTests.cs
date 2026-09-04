@@ -364,6 +364,134 @@ public class SheetGenerationEngineTests
         workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("O");
     }
 
+    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md, 66.3):
+    // Points created on an isolement-style sheet (ISOLEMENT/PLATINES/ORIFICES CAPACITES/AUTRES JOINTS
+    // TOUCHES) always carry ParentRepere = Isolement.Repere, never Equipement.Repere -- so without
+    // aggregation, an Equipement-sourced sheet's Point columns could never be marked from a child
+    // isolement's own Point. This aggregates "at least one child isolement carries the Point".
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksPointColumn_WhenAChildIsolementCarriesTheMatchingPoint()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }],
+            [new PointPivot("TRAVAUX COMPLET", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells.Should().Equal(
+            "38-C7401", "Compresseur C7401", "", "X", "");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksPointColumn_WhenOnlyOneOfTwoChildIsolementsCarriesThePoint()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [
+                new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" },
+                new IsolementPivot("C7401-V2", "Vanne 2", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }
+            ],
+            [new PointPivot("TRAVAUX COMPLET", "C7401-V2")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("X");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_LeavesPointColumnEmpty_WhenNoChildIsolementCarriesThePoint()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }],
+            [new PointPivot("DEPROLOCK VANNES", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_DoesNotAggregate_WhenIsolementRepereParentDoesNotMatchEquipement()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            // Defensive/theoretical case: RepereParent points at a different Equipement than this run's.
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "99-OTHER" }],
+            [new PointPivot("TRAVAUX COMPLET", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksPointColumn_ByAggregatedColonneNom_TrimmedAndCaseInsensitive()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }],
+            [new PointPivot(" travaux complet ", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("X");
+    }
+
+    // Non-regression: the historical direct-Point mechanism (Point.ParentRepere == Equipement.Repere)
+    // keeps working on its own, independently of aggregation -- already covered by
+    // Generate_ForEquipementSheet_WritesOneRowMarkingOnlyMatchingPoints above, restated here with a
+    // child isolement present too, so the two mechanisms are proven not to interfere with each other.
+    [Fact]
+    public void Generate_ForEquipementSheet_DirectPointStillMarksColumn_AlongsideAnUnrelatedChildIsolement()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }],
+            [new PointPivot("TRAVAUX COMPLET", "38-C7401")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("X");
+    }
+
+    // Non-regression: isolement rows keep matching Points directly by their own Repere -- no
+    // aggregation involved on that path.
+    [Fact]
+    public void Generate_ForIsolementSheet_StillMarksPointsDirectly_UnaffectedByEquipementAggregation()
+    {
+        var profile = new ExportProfile("Profil export test", [EnfantsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "") with { RepereParent = "38-C7401" }],
+            [new PointPivot("PROLOCK VANNES", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("X");
+    }
+
     [Fact]
     public void Generate_ForIsolementSheet_MarksApplicationColumnWhenPivotApplicationsContainsName()
     {

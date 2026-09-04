@@ -144,6 +144,137 @@ génération »), pas seulement à `Logs.razor`.
 
 ---
 
+---
+
+## 64.3. Correctif — horodatages affichés dans le futur en production (incident, 01/09)
+
+**Constat terrain** (deux captures prises au même instant réel sur le serveur de production) :
+- `/logs` affichait la dernière entrée à `2026-09-02 01h13`.
+- L'horloge système Windows du serveur affichait, au même instant, `1er septembre 2026, 23h23`.
+- Fuseau Windows du serveur : `(UTC+11:00) Solomon Is., New Caledonia`, réglage manuel
+  (« Set time zone automatically » = Off), synchronisation NTP active et récente.
+
+**Ce fuseau n'est pas une anomalie.** Ce serveur est dédié à un client final basé en
+Nouvelle-Calédonie (Alpha Maintenance héberge et travaille depuis la France, mais chaque
+déploiement d'AM-OXO-ETL peut être un serveur dédié à un client différent, dans un fuseau
+différent — c'est un cas normal et récurrent de l'architecture de déploiement de cette
+application). **Aucune modification de la configuration Windows du serveur n'a été recommandée
+ni effectuée** — elle est correcte telle quelle. Le code doit être robuste à n'importe quel
+fuseau serveur, sans aucune hypothèse implicite sur sa valeur.
+
+### Investigation (code réel cité, pas d'hypothèse)
+
+Décompilation directe des packages réellement installés dans ce dépôt
+(`Serilog.Sinks.MSSqlServer` 10.0.0, `Serilog.Extensions.Logging` 10.0.0 — via `ilspycmd`, aucun
+accès nécessaire à un serveur de production) :
+
+- `Serilog.Extensions.Logging.SerilogLogger.PrepareWrite` (le pont utilisé par tout `ILogger<T>`
+  de cette solution, y compris tout le pipeline OXO) construit chaque `LogEvent` avec
+  `LogEvent.UnstableAssembleFromParts(DateTimeOffset.Now, ...)` — une valeur qui porte
+  correctement le décalage réel du serveur au moment de l'écriture, quel qu'il soit.
+- `Serilog.Sinks.MSSqlServer.Output.StandardColumnDataGenerator
+  .GetTimeStampStandardColumnNameAndValue` calcule, quand `ColumnOptions.TimeStamp.ConvertToUtc`
+  vaut `true` (ce que `BuildSystemLogsColumnOptions()` fait déjà depuis 64.1) :
+  `logEvent.Timestamp.ToUniversalTime()`, puis — comme `TimeStamp.DataType` n'est jamais fixé
+  explicitement par ce dépôt et reste donc au défaut du package (`SqlDbType.DateTime`, confirmé
+  en décompilant `ColumnOptions.TimeStampColumnOptions..ctor` ; jamais `DateTimeOffset`) —
+  stocke `.UtcDateTime`.
+- `LocalTimeFormatter.ToIso8601Utc` (64.2) force `DateTimeKind.Utc` sur la valeur lue en base
+  avant sérialisation — correct **si et seulement si** la valeur stockée est déjà une vraie
+  instant UTC, ce qui est le cas d'après le point précédent.
+- `localTime.js` délègue entièrement à `Intl.DateTimeFormat(undefined, ...)` sur une chaîne ISO
+  8601 correctement suffixée `Z`, sans aucun calcul manuel de décalage — confirmé par lecture
+  directe, aucune régression trouvée côté 64.2.
+
+**Conclusion de l'investigation** : la chaîne `DateTimeOffset.Now` → `ConvertToUtc` →
+`.ToUniversalTime().UtcDateTime` → `LocalTimeFormatter` → `Intl.DateTimeFormat` est
+**mathématiquement correcte pour n'importe quel décalage serveur**, y compris +11:00. Le code
+source de ce dépôt tel qu'il existe aujourd'hui (commit `df5929f`, Lot 064) ne contient **pas**
+un simple ré-étiquetage de `DateTimeKind` sur une valeur toujours issue de `DateTime.Now` —
+l'hypothèse initiale envisagée pour cet incident. C'est un changement de source réel
+(`ColumnOptions.TimeStamp.ConvertToUtc = true`, qui fait effectivement exécuter
+`.ToUniversalTime()` côté sink) déjà en place.
+
+**Explication la plus probable de l'incident observé** : l'arithmétique
+`23h13 (NC, ≈ stockage local non converti) + 2h (fuseau du navigateur du client en France) =
+01h13 le lendemain` correspond exactement à la capture — c'est-à-dire au comportement
+**d'avant** le commit `df5929f` (aucune conversion appliquée à l'écriture, cumulée à la
+conversion navigateur ajoutée par 64.2). Cette session n'a pas eu accès au serveur de production
+pour confirmer directement quel binaire/quelle table `SystemLogs` étaient réellement actifs au
+moment de la capture — mais le calcul concorde exactement avec « le serveur écrit encore son
+heure locale telle quelle » (fix 64.1 pas encore effectif sur ce serveur au moment de cette
+entrée précise — binaire non republié et/ou table déjà existante avec des lignes antérieures au
+correctif), et ne concorde avec aucun défaut résiduel identifiable dans le code source actuel.
+
+### Correctif livré
+
+Aucun changement de code de production (l'investigation ne révèle aucun défaut dans le code
+source actuel — voir ci-dessus). Durcissement par les tests uniquement,
+`tests/ExcelETL.Hosting.Tests/SerilogHostLoggingExtensionsTests.cs` :
+
+- [x] `TimeStampConversion_GivenAnyServerTimeZoneOffset_NeverProducesAnInstantLaterThanUtcNow`
+  (`[Theory]`, 4 décalages dont +11:00 — l'incident réel, un décalage négatif, UTC, et un décalage
+  non entier) : **l'invariant explicite demandé** — un horodatage produit par la même opération
+  que celle appliquée par le sink (`DateTimeOffset.ToUniversalTime()`) n'est jamais postérieur à
+  un `DateTime.UtcNow` pris juste après. Volontairement indépendant du fuseau de la machine qui
+  exécute le test elle-même (CI, poste développeur en France, etc.) — documenté explicitement en
+  commentaire dans le test, précisément parce que le fuseau serveur peut légitimement varier d'un
+  déploiement client à l'autre.
+- [x] `BuildSystemLogsColumnOptions_TimeStampColumnStaysPlainDateTime_NotDateTimeOffset` : pin le
+  défaut vendeur (`SqlDbType.DateTime`) dont dépend implicitement le chemin de conversion, pour
+  détecter une régression silencieuse sur un futur upgrade de `Serilog.Sinks.MSSqlServer`.
+- **Limite de testabilité documentée, comme demandé, plutôt que comblée par un mécanisme non
+  sollicité** : aucune abstraction d'horloge injectable n'existe dans ce dépôt pour le pipeline
+  Serilog (`LogEvent.Timestamp` vient directement de l'appel BCL statique `DateTimeOffset.Now`,
+  pas d'un seam contrôlé par cette solution) — introduire une telle abstraction n'a pas été fait
+  ici, conformément à l'instruction de ne pas ajouter de mécanisme non demandé par le ticket
+  d'origine. Un test de bout en bout réel (écriture via le sink → lecture via
+  `SystemLogsDbContext` → assertion) nécessiterait une vraie base SQL Server dans la suite de
+  tests, contraire à la convention déjà établie de ce fichier
+  (`Configure_DoesNotOpenARealSqlConnection_WhenTheMsSqlServerSinkIsDisabled`).
+
+**Découverte annexe, non traitée (hors périmètre de ce correctif)** : `Logs.razor`'s filtre
+« Aujourd'hui »/« Hier » compare `SystemLogEntry.TimestampUtc.Date` à `DateTime.UtcNow.Date` —
+une frontière de journée calculée en UTC, pas dans le fuseau de l'utilisateur qui lit le libellé
+« Aujourd'hui ». C'est un défaut de filtrage distinct de l'affichage de l'heure elle-même
+(64.2 ne touche pas ce filtre) et n'est pas la cause de l'incident investigué ici — signalé pour
+un futur ticket, non corrigé dans ce correctif conformément à la consigne de ne pas élargir le
+périmètre sans preuve que 64.2 en est également la cause.
+
+**Action recommandée pour Simon (hors code, pas exécutée par cette session)** : au prochain
+déploiement, vérifier qu'une nouvelle entrée écrite après republication du binaire (Lot 064,
+commit `df5929f` ou plus récent) s'affiche correctement — la base sera de toute façon recréée
+avant publication (voir « Décisions actées », pas de migration des lignes déjà erronées).
+
+### Suite (même jour) — le correctif 64.3 confirmé, un second cas identique repéré
+
+Simon a confirmé, sur le serveur réel republié, que les logs affichent désormais l'heure locale
+correcte. Dans la foulée, il a repéré exactement le même défaut sur un affichage qui avait été
+**délibérément exclu** du périmètre de ce lot lors de l'arbitrage 64.0 : le pied de page « Publié
+le... » (`ApplicationBuildInfo.BuildDateUtc`, `NavMenu.razor`/`Home.razor`) affichait « mardi 1
+septembre 2026, 12h57 » pour une publication réellement effectuée à 14h57 (heure française) —
+même cause que le bug des logs (valeur UTC affichée telle quelle, seuls les noms de jour/mois
+étaient localisés), mais sur un mécanisme différent (jamais branché sur `ILocalTimeFormatter`).
+
+**Décision, demandée explicitement à Simon avant d'agir (réouverture d'une exclusion de
+périmètre actée)** : corriger maintenant, en réutilisant le même mécanisme que pour les logs.
+
+**Correctif** : `NavMenu.razor`/`Home.razor` injectent désormais `ILocalTimeFormatter` et
+convertissent `BuildDateUtc` en heure locale via `FormatAsync(buildDateUtc, "yyyy-MM-dd HH:mm")`
+(seul motif numérique supporté par `localTime.js`), puis re-parsent la chaîne locale obtenue en
+`DateTime` pour que `CultureInfo.CurrentUICulture` puisse toujours produire les noms de
+jour/mois corrects — pas de nouvelle méthode sur `ILocalTimeFormatter`, juste une réutilisation
+du motif existant. Repli sur l'ancienne valeur UTC brute tant que la conversion n'a pas eu lieu
+(même convention que le reste du lot 064). Aucune nouvelle clé `.resx` (réutilise
+`NavMenu_BuildDateTooltip` telle quelle).
+
+Détail complet dans `CLAUDE.md` (bullet « Follow-up, same day » sous le Lot 064). Suite de tests
+`ExcelETL.BlazorAdmin.Tests` : 965/965 verts (dont 2 nouveaux tests couvrant explicitement la
+conversion, avec un scénario qui traverse minuit pour prouver que le libellé compact change
+réellement, pas seulement l'infobulle).
+
+---
+
 ## Hors périmètre explicite de ce lot
 
 - `ApplicationBuildInfo.BuildDateUtc` (date de publication, affichée dans `NavMenu.razor`/

@@ -613,6 +613,24 @@
   <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
     <value>Ajouter l'application</value>
   </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelsHeading" xml:space="preserve">
+    <value>Libellés de type de tâche</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelCodeLabel" xml:space="preserve">
+    <value>Code du type de tâche</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder" xml:space="preserve">
+    <value>Code du type de tâche</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelLabelLabel" xml:space="preserve">
+    <value>Libellé cible</value>
+  </data>
+  <data name="ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder" xml:space="preserve">
+    <value>Libellé cible</value>
+  </data>
+  <data name="ImportProfileEditor_AddTacheMultipleTypeLabelButton" xml:space="preserve">
+    <value>Ajouter le libellé de type de tâche</value>
+  </data>
   <data name="ImportProfileEditor_EmptyTableauNameError" xml:space="preserve">
     <value>Le nom du tableau ne doit pas être vide.</value>
   </data>

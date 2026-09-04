@@ -20,11 +20,11 @@
      information there, never duplicated. -->
 <div class="home-mobile-brand">
     <img id="home-mobile-client-logo" src="images/client-logo.png" alt="@Loc["NavMenu_ClientLogoAlt"]" />
-    <div id="home-mobile-version-info" class="home-mobile-version-info" title="@BuildDateTooltip">
+    <div id="home-mobile-version-info" class="home-mobile-version-info" title="@(_localBuildDateTooltip ?? BuildDateTooltip)">
         v@(BuildInfo.Version)
         @if (BuildInfo.BuildDateUtc is not null)
         {
-            @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
+            @: (@(_localBuildDateLabel ?? BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy")))
         }
     </div>
 </div>
@@ -166,6 +166,13 @@ else
             buildDateUtc.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture))
         : null;
 
+    // Follow-up (post-064): same reopening/reasoning as NavMenu.razor's own build-date fields --
+    // duplicated here rather than shared, same precedent as BuildDateTooltip above.
+    private const string BuildDateNumericPattern = "yyyy-MM-dd HH:mm";
+    private string? _localBuildDateLabel;
+    private string? _localBuildDateTooltip;
+    private bool _localBuildDateComputed;
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -181,20 +188,49 @@ else
         }
     }
 
-    // Lot 064: same browser-local-time mechanism as Logs.razor/GeneratedFiles.razor, single-value
-    // form -- only one timestamp to convert on this page.
+    // Lot 064: same browser-local-time mechanism as Logs.razor/GeneratedFiles.razor. Two independent
+    // concerns (last-generation KPI, build-date footer) are each computed only once they have
+    // something new to convert -- neither is allowed to early-return past the other (a page with no
+    // generated file yet must still get its build date converted).
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!RendererInfo.IsInteractive
-            || _indicators?.LastGenerationAtUtc.Value is not { } lastGenerationAtUtc
-            || _localLastGenerationComputedFor == lastGenerationAtUtc)
+        if (!RendererInfo.IsInteractive)
         {
             return;
         }
 
-        _localLastGenerationTimestamp = await LocalTimeFormatter.FormatAsync(lastGenerationAtUtc, LastGenerationTimestampPattern);
-        _localLastGenerationComputedFor = lastGenerationAtUtc;
-        StateHasChanged();
+        var didUpdate = false;
+
+        if (_indicators?.LastGenerationAtUtc.Value is { } lastGenerationAtUtc
+            && _localLastGenerationComputedFor != lastGenerationAtUtc)
+        {
+            _localLastGenerationTimestamp = await LocalTimeFormatter.FormatAsync(lastGenerationAtUtc, LastGenerationTimestampPattern);
+            _localLastGenerationComputedFor = lastGenerationAtUtc;
+            didUpdate = true;
+        }
+
+        if (!_localBuildDateComputed && BuildInfo.BuildDateUtc is { } buildDateUtc)
+        {
+            var localNumeric = await LocalTimeFormatter.FormatAsync(buildDateUtc, BuildDateNumericPattern);
+            if (DateTime.TryParseExact(
+                    localNumeric, BuildDateNumericPattern,
+                    System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None,
+                    out var localBuildDate))
+            {
+                _localBuildDateLabel = localBuildDate.ToString("dd/MM/yyyy");
+                _localBuildDateTooltip = string.Format(
+                    Loc["NavMenu_BuildDateTooltip"].Value,
+                    localBuildDate.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture));
+            }
+
+            _localBuildDateComputed = true;
+            didUpdate = true;
+        }
+
+        if (didUpdate)
+        {
+            StateHasChanged();
+        }
     }
 
     private string LocalTimestampOrFallback(DateTime lastGenerationAtUtc) =>

@@ -356,4 +356,60 @@ public class ImportProfileTests
         profile.DefaultTableaux.Should().BeEquivalentTo(["SHARED"]);
         profile.DefaultApplicationNames.Should().BeEquivalentTo(["SHARED"]);
     }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md):
+    // TacheMultipleTypeLabels is a deliberately optional, last-position parameter (decision 5) --
+    // omitting it must keep every pre-existing call site (like every test above) working unchanged.
+    [Fact]
+    public void Constructor_WithoutTacheMultipleTypeLabels_DefaultsToEmptyList()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        profile.TacheMultipleTypeLabels.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithTacheMultipleTypeLabels_StoresThemTrimmed()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
+            [new TacheMultipleTypeLabel(" TM_PROC_MAD ", " Procédure MAD ")]);
+
+        profile.TacheMultipleTypeLabels.Should().ContainSingle();
+        profile.TacheMultipleTypeLabels[0].Code.Should().Be("TM_PROC_MAD");
+        profile.TacheMultipleTypeLabels[0].Label.Should().Be("Procédure MAD");
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicateTacheMultipleTypeLabelCode_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
+            [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"), new TacheMultipleTypeLabel("TM_PROC_MAD", "Autre libellé")]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateTacheMultipleTypeLabelCode);
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicateTacheMultipleTypeLabelCodeDifferingOnlyByWhitespaceAndCase_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
+            [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"), new TacheMultipleTypeLabel(" tm_proc_mad ", "Autre libellé")]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicateTacheMultipleTypeLabelCode);
+    }
+
+    [Fact]
+    public void Constructor_WithDifferentCodesSharingTheSameLabel_CreatesImportProfile()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
+            [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure"), new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure")]);
+
+        profile.TacheMultipleTypeLabels.Should().HaveCount(2);
+    }
 }

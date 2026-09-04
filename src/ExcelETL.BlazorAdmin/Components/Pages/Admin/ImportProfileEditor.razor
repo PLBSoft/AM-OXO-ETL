@@ -316,6 +316,130 @@ else
 </div>
 </div>
 
+<!-- Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.5:
+     same root-level add/edit/delete pattern as Tableaux/Applications above, but each row is a
+     Code/Label pair instead of a single string -- kept inline here (not a separate XxxForm.razor
+     component) for consistency with how Tableaux/Applications are handled at this same root level;
+     the dedicated sub-form components elsewhere in this file are reserved for nested SheetRuleForm
+     lists, a different context. -->
+<h2 class="h3">@Loc["ImportProfileEditor_TacheMultipleTypeLabelsHeading"]</h2>
+<div class="card bg-light mb-3">
+    <div class="card-body">
+        @if (_tacheMultipleTypeLabels.Count > 0)
+        {
+            <ul id="tache-multiple-type-labels-list" class="block-field-list">
+                @for (var j = 0; j < _tacheMultipleTypeLabels.Count; j++)
+                {
+                    var itemIndex = j;
+                    @if (_editingTacheMultipleTypeLabelIndex == itemIndex)
+                    {
+                        <li class="block-field-item-editing">
+                            @if (!string.IsNullOrEmpty(_tacheMultipleTypeLabelEditError))
+                            {
+                                <div class="alert alert-danger" role="alert">@_tacheMultipleTypeLabelEditError</div>
+                            }
+                            <div class="row g-2 align-items-end">
+                                <div class="col-12 col-md-5">
+                                    <div class="form-floating">
+                                        <input id="@($"tache-multiple-type-label-edit-code-input-{itemIndex}")" class="form-control"
+                                               @bind="_editingTacheMultipleTypeLabelCode"
+                                               placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder"]" />
+                                        <label for="@($"tache-multiple-type-label-edit-code-input-{itemIndex}")">@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodeLabel"]</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <div class="form-floating">
+                                        <input id="@($"tache-multiple-type-label-edit-label-input-{itemIndex}")" class="form-control"
+                                               @bind="_editingTacheMultipleTypeLabelLabel"
+                                               placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder"]" />
+                                        <label for="@($"tache-multiple-type-label-edit-label-input-{itemIndex}")">@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelLabel"]</label>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-2 block-field-actions">
+                                    <button id="@($"save-tache-multiple-type-label-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            @onclick="() => SaveTacheMultipleTypeLabelEdit(itemIndex)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                                        </svg>
+                                    </button>
+                                    <button id="@($"cancel-tache-multiple-type-label-edit-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                            title="@Loc["ImportProfileEditor_CancelButton"]"
+                                            @onclick="CancelTacheMultipleTypeLabelEdit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@_tacheMultipleTypeLabels[itemIndex].Code</span>
+                                <span class="block-field-range">@_tacheMultipleTypeLabels[itemIndex].Label</span>
+                            </div>
+                            <div class="block-field-actions">
+                                <button id="@($"edit-tache-multiple-type-label-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        @onclick="() => StartTacheMultipleTypeLabelEdit(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
+                                        <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                                    </svg>
+                                </button>
+                                <button id="@($"delete-tache-multiple-type-label-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        @onclick="() => DeleteTacheMultipleTypeLabel(itemIndex)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>
+                    }
+                }
+            </ul>
+        }
+        @if (!string.IsNullOrEmpty(_tacheMultipleTypeLabelAddError))
+        {
+            <div class="alert alert-danger" role="alert">@_tacheMultipleTypeLabelAddError</div>
+        }
+        <div class="row g-2">
+            <div class="col-12 col-md-5">
+                <div class="form-floating">
+                    <input id="tache-multiple-type-label-code-input" class="form-control" @bind="_newTacheMultipleTypeLabelCode"
+                           placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder"]" />
+                    <label for="tache-multiple-type-label-code-input">@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodeLabel"]</label>
+                </div>
+            </div>
+            <div class="col-12 col-md-5">
+                <div class="form-floating">
+                    <input id="tache-multiple-type-label-label-input" class="form-control" @bind="_newTacheMultipleTypeLabelLabel"
+                           placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder"]" />
+                    <label for="tache-multiple-type-label-label-input">@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelLabel"]</label>
+                </div>
+            </div>
+            <div class="col-12 col-md-2">
+                <button id="add-tache-multiple-type-label-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddTacheMultipleTypeLabel">
+                    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTacheMultipleTypeLabelButton"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h2 class="h3">@Loc["ImportProfileEditor_SheetRulesHeading"]</h2>
 
 @if (_sheetRules.Count == 0)
@@ -529,6 +653,18 @@ else
     private string? _defaultApplicationNameEditError;
     private string? _defaultApplicationNameAddError;
 
+    // Lot 067: real Domain value objects, not raw strings -- mirrors _sheetRules' own convention of
+    // holding the actual Domain type directly in component state.
+    private readonly List<TacheMultipleTypeLabel> _tacheMultipleTypeLabels = [];
+    private string _newTacheMultipleTypeLabelCode = string.Empty;
+    private string _newTacheMultipleTypeLabelLabel = string.Empty;
+    private string? _tacheMultipleTypeLabelAddError;
+
+    private int? _editingTacheMultipleTypeLabelIndex;
+    private string _editingTacheMultipleTypeLabelCode = string.Empty;
+    private string _editingTacheMultipleTypeLabelLabel = string.Empty;
+    private string? _tacheMultipleTypeLabelEditError;
+
     private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
@@ -590,6 +726,7 @@ else
         _equipementTypeElementNom = profile.EquipementTypeElementNom;
         _defaultTableaux.AddRange(profile.DefaultTableaux);
         _defaultApplicationNames.AddRange(profile.DefaultApplicationNames);
+        _tacheMultipleTypeLabels.AddRange(profile.TacheMultipleTypeLabels);
         _sheetRules.AddRange(profile.SheetRules);
     }
 
@@ -715,6 +852,80 @@ else
         if (_editingDefaultApplicationNameIndex == itemIndex)
         {
             _editingDefaultApplicationNameIndex = null;
+        }
+        MarkAsChanged();
+    }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.5:
+    // same add/edit/delete shape as Tableaux/Applications above, but each candidate is built via
+    // TacheMultipleTypeLabel's own constructor first (catches empty/too-long Code or Label) before
+    // ImportProfile.ValidateTacheMultipleTypeLabelCode checks for a duplicate Code against the rest
+    // of the list -- the same two-stage validation split the constructor itself uses.
+    private void AddTacheMultipleTypeLabel()
+    {
+        TacheMultipleTypeLabel candidate;
+        try
+        {
+            candidate = new TacheMultipleTypeLabel(_newTacheMultipleTypeLabelCode, _newTacheMultipleTypeLabelLabel);
+            ImportProfile.ValidateTacheMultipleTypeLabelCode(candidate, _tacheMultipleTypeLabels);
+        }
+        catch (DomainValidationException ex)
+        {
+            _tacheMultipleTypeLabelAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return;
+        }
+
+        _tacheMultipleTypeLabels.Add(candidate);
+        _newTacheMultipleTypeLabelCode = string.Empty;
+        _newTacheMultipleTypeLabelLabel = string.Empty;
+        _tacheMultipleTypeLabelAddError = null;
+        MarkAsChanged();
+    }
+
+    private void StartTacheMultipleTypeLabelEdit(int itemIndex)
+    {
+        _editingTacheMultipleTypeLabelIndex = itemIndex;
+        _editingTacheMultipleTypeLabelCode = _tacheMultipleTypeLabels[itemIndex].Code;
+        _editingTacheMultipleTypeLabelLabel = _tacheMultipleTypeLabels[itemIndex].Label;
+        _tacheMultipleTypeLabelEditError = null;
+    }
+
+    private void SaveTacheMultipleTypeLabelEdit(int itemIndex)
+    {
+        // Excludes the item under edit from the comparison list -- otherwise renaming a Code to its
+        // own unchanged value would reject itself as a duplicate of its own prior value.
+        var otherLabels = _tacheMultipleTypeLabels.Where((_, i) => i != itemIndex).ToList();
+
+        TacheMultipleTypeLabel candidate;
+        try
+        {
+            candidate = new TacheMultipleTypeLabel(_editingTacheMultipleTypeLabelCode, _editingTacheMultipleTypeLabelLabel);
+            ImportProfile.ValidateTacheMultipleTypeLabelCode(candidate, otherLabels);
+        }
+        catch (DomainValidationException ex)
+        {
+            _tacheMultipleTypeLabelEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return;
+        }
+
+        _tacheMultipleTypeLabels[itemIndex] = candidate;
+        _editingTacheMultipleTypeLabelIndex = null;
+        _tacheMultipleTypeLabelEditError = null;
+        MarkAsChanged();
+    }
+
+    private void CancelTacheMultipleTypeLabelEdit()
+    {
+        _editingTacheMultipleTypeLabelIndex = null;
+        _tacheMultipleTypeLabelEditError = null;
+    }
+
+    private void DeleteTacheMultipleTypeLabel(int itemIndex)
+    {
+        _tacheMultipleTypeLabels.RemoveAt(itemIndex);
+        if (_editingTacheMultipleTypeLabelIndex == itemIndex)
+        {
+            _editingTacheMultipleTypeLabelIndex = null;
         }
         MarkAsChanged();
     }
@@ -848,9 +1059,10 @@ else
             var profile = _editingId.HasValue
                 ? new ImportProfile(
                     _editingId.Value, _name, _reperePrefix, _equipementTypeElementNom,
-                    _defaultTableaux, _defaultApplicationNames, _sheetRules)
+                    _defaultTableaux, _defaultApplicationNames, _sheetRules, _tacheMultipleTypeLabels)
                 : new ImportProfile(
-                    _name, _reperePrefix, _equipementTypeElementNom, _defaultTableaux, _defaultApplicationNames, _sheetRules);
+                    _name, _reperePrefix, _equipementTypeElementNom, _defaultTableaux, _defaultApplicationNames, _sheetRules,
+                    _tacheMultipleTypeLabels);
 
             await ImportProfileStore.SaveAsync(profile);
             _hasUnsavedChanges = false;

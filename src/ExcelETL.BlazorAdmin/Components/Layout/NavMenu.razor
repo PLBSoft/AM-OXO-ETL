@@ -8,6 +8,7 @@
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject ApplicationBuildInfo BuildInfo
+@inject ILocalTimeFormatter LocalTimeFormatter
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid d-flex align-items-center">
@@ -138,11 +139,11 @@
                     <span class="theme-toggle-icon theme-toggle-icon-moon">@((MarkupString)AdminIconMarkup.Moon)</span>
                 </button>
             </div>
-            <div id="sidebar-version-info" class="sidebar-version-info" title="@BuildDateTooltip">
+            <div id="sidebar-version-info" class="sidebar-version-info" title="@(_localBuildDateTooltip ?? BuildDateTooltip)">
                 v@(BuildInfo.Version)
                 @if (BuildInfo.BuildDateUtc is not null)
                 {
-                    @: (@BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy"))
+                    @: (@(_localBuildDateLabel ?? BuildInfo.BuildDateUtc.Value.ToString("dd/MM/yyyy")))
                 }
             </div>
         </div>
@@ -166,20 +167,55 @@
 
     private void OnTogglerChanged(ChangeEventArgs e) => _isNavExpanded = e.Value is true;
 
-    // Follow-up (post-062): a native `title` tooltip, shown on hover, gives the full publication
-    // date/time (day name, month name, hour, minute) -- the visible label stays a compact
-    // `dd/MM/yyyy` (Lot 062), this is only the on-hover detail. Culture-aware via .NET's own date
-    // formatting, no new resx date-pattern string needed -- only the surrounding sentence is localized.
+    // Follow-up (post-064): raw-UTC fallback, shown until the browser-local conversion below
+    // resolves (or forever, under non-interactive rendering -- prerendering/bUnit's default) --
+    // same "never a blank cell, brief documented flash" convention as Logs.razor/GeneratedFiles.razor.
     private string? BuildDateTooltip => BuildInfo.BuildDateUtc is { } buildDateUtc
         ? string.Format(
             Loc["NavMenu_BuildDateTooltip"].Value,
             buildDateUtc.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture))
         : null;
 
+    // Follow-up (post-064): the publication date/time was initially left out of Lot 064's browser-
+    // local-time conversion (a build date, not an incident timestamp to correlate) -- reopened once
+    // Simon actually compared a real publish against the displayed value and got confused by the
+    // same UTC-vs-local gap. `ILocalTimeFormatter.FormatAsync` only supports numeric tokens
+    // (yyyy/MM/dd/HH/mm/ss, see localTime.js) -- no day/month name support -- so the browser-local
+    // numeric string is parsed back into a plain `DateTime` here and re-formatted with
+    // `CultureInfo.CurrentUICulture` for the day/month names, exactly like the pre-existing
+    // server-side-only BuildDateTooltip above did with the (wrong) UTC value.
+    private const string BuildDateNumericPattern = "yyyy-MM-dd HH:mm";
+    private string? _localBuildDateLabel;
+    private string? _localBuildDateTooltip;
+    private bool _localBuildDateComputed;
+
     protected override void OnInitialized()
     {
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!RendererInfo.IsInteractive || _localBuildDateComputed || BuildInfo.BuildDateUtc is not { } buildDateUtc)
+        {
+            return;
+        }
+
+        var localNumeric = await LocalTimeFormatter.FormatAsync(buildDateUtc, BuildDateNumericPattern);
+        if (DateTime.TryParseExact(
+                localNumeric, BuildDateNumericPattern,
+                System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None,
+                out var localBuildDate))
+        {
+            _localBuildDateLabel = localBuildDate.ToString("dd/MM/yyyy");
+            _localBuildDateTooltip = string.Format(
+                Loc["NavMenu_BuildDateTooltip"].Value,
+                localBuildDate.ToString("dddd d MMMM yyyy, HH:mm", System.Globalization.CultureInfo.CurrentUICulture));
+        }
+
+        _localBuildDateComputed = true;
+        StateHasChanged();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

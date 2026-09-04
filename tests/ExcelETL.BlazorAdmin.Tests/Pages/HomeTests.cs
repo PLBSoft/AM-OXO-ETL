@@ -256,6 +256,51 @@ public class HomeTests : BunitContext
         versionInfo.GetAttribute("title").Should().Contain("16:49");
     }
 
+    // Follow-up (post-064): mirrors NavMenuTests.cs's own
+    // NavMenu_VersionInfo_UpdatesLabelAndTooltip_ToLocalTimeFormatterResult_OnceInteractive --
+    // reopens Lot 064's own explicit exclusion of the build date once Simon hit the same UTC-vs-
+    // local confusion here that Lot 064 had already fixed for the log table. Day-crossing stub
+    // (23:49 UTC -> 01:49 local, next day) so both the compact label and the tooltip prove they
+    // used the *converted* value, not the same UTC one under a different label.
+    [Fact]
+    public void MobileBrand_VersionInfo_UpdatesLabelAndTooltip_ToLocalTimeFormatterResult_OnceInteractive()
+    {
+        var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("en-US");
+        try
+        {
+            _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+            var assemblyName = new System.Reflection.AssemblyName($"Lot064PostFixHomeFixture_{Guid.NewGuid():N}") { Version = new Version(1, 0, 3, 0) };
+            var assemblyBuilder = System.Reflection.Emit.AssemblyBuilder.DefineDynamicAssembly(assemblyName, System.Reflection.Emit.AssemblyBuilderAccess.Run);
+            var metadataCtor = typeof(System.Reflection.AssemblyMetadataAttribute).GetConstructor([typeof(string), typeof(string)])!;
+            assemblyBuilder.SetCustomAttribute(new System.Reflection.Emit.CustomAttributeBuilder(metadataCtor, ["BuildDate", "2026-07-30T23:49:02.0000000Z"]));
+            assemblyBuilder.DefineDynamicModule(assemblyName.Name!);
+            _buildInfoFactory = () => new ApplicationBuildInfo(assemblyBuilder);
+            _localTimeFormatterMock
+                .Setup(f => f.FormatAsync(It.IsAny<DateTime>(), "yyyy-MM-dd HH:mm"))
+                .ReturnsAsync("2026-07-31 01:49");
+            SetRendererInfo(new RendererInfo("Server", isInteractive: true));
+
+            var cut = Render<Home>();
+            cut.WaitForState(() => cut.Find("#home-mobile-version-info").TextContent.Contains("31/07/2026"));
+
+            cut.Find("#home-mobile-version-info").TextContent.Should().Contain("31/07/2026");
+            cut.Find("#home-mobile-version-info").TextContent.Should().NotContain("30/07/2026");
+
+            var title = cut.Find("#home-mobile-version-info").GetAttribute("title");
+            title.Should().Contain("01:49");
+            title.Should().Contain("Friday");
+            title.Should().NotContain("Thursday");
+
+            _localTimeFormatterMock.Verify(
+                f => f.FormatAsync(It.IsAny<DateTime>(), "yyyy-MM-dd HH:mm"), Times.Once);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
     // Lot 064 (64.2): same stable-id/UTC-fallback + interactive-conversion mechanism as
     // Logs.razor/GeneratedFiles.razor, for the one raw timestamp this page shows.
     [Fact]

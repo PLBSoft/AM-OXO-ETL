@@ -97,6 +97,21 @@
   <data name="ImportProfile_DuplicateApplicationName" xml:space="preserve">
     <value>Application name '{0}' already exists.</value>
   </data>
+  <data name="ImportProfile_DuplicateTacheMultipleTypeLabelCode" xml:space="preserve">
+    <value>Code '{0}' already exists.</value>
+  </data>
+  <data name="TacheMultipleTypeLabel_EmptyCode" xml:space="preserve">
+    <value>Code must not be empty.</value>
+  </data>
+  <data name="TacheMultipleTypeLabel_CodeTooLong" xml:space="preserve">
+    <value>Code must not exceed {0} characters.</value>
+  </data>
+  <data name="TacheMultipleTypeLabel_EmptyLabel" xml:space="preserve">
+    <value>Label must not be empty.</value>
+  </data>
+  <data name="TacheMultipleTypeLabel_LabelTooLong" xml:space="preserve">
+    <value>Label must not exceed {0} characters.</value>
+  </data>
   <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
     <value>Sheet name must not be empty.</value>
   </data>

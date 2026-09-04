@@ -208,8 +208,16 @@ public class DefaultProfileSeeder(
                 [
                     new ConditionalPointRule(
                         IsolementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
+                    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md,
+                    // 66.1): retargeted onto ISOLEMENT's own "ZERO ENERGIE" Colonne name (client decision,
+                    // "fusionner les deux colonnes") -- DIVERS' "ZERO ENERGIE" TypeElement used to produce a
+                    // second, differently-spelled real Colonne ("ZÉRO ENERGIE EN PRESENCE EE", no "(PS941)"
+                    // suffix), confirmed by this ticket's own 66.0 investigation to be a genuinely distinct,
+                    // real extraction output (not the accidental export-side duplicate the ticket originally
+                    // assumed -- D8570 alone produces 13 of these). Merging both sheets onto the same target
+                    // Colonne name means a single PointColumnDefinition on the export profile now covers both.
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE"),
+                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName),
                     new ConditionalPointRule(
                         IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT"),
                     new ConditionalPointRule(
@@ -227,6 +235,13 @@ public class DefaultProfileSeeder(
                 [],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6"))],
                 [])
+        ],
+        // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md):
+        // the "Colonne Travaux" values discussed with Simon -- configuration, no longer a hardcoded
+        // switch in the generation engine (see ImportPipelineOrchestrator.ResolveColonneTravaux).
+        [
+            new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"),
+            new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")
         ]);
 
     // Minimal by design (ticket's "Décision actée" §3, client-confirmed): only the descriptive fields
@@ -243,6 +258,54 @@ public class DefaultProfileSeeder(
     // IsolementTypeElementNom -- decision #5, no new pivot field needed) for naming consistency with
     // Parents' own "Type Elément" column.
     //
+    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md):
+    // - 66.1: "TRAVAUX COMPLET"/"TRAVAUX DETAIL" dropped from Parents (redundant with "Tableaux", same
+    //   information exploded into two columns -- decision 2). Enfants' bare "ZÉRO ENERGIE EN PRESENCE
+    //   EE" PointColumnDefinition is gone too -- not because it was a duplicate (66.0 found it wasn't;
+    //   DIVERS genuinely produces that exact Colonne name), but because DIVERS' own ConditionalPointRule
+    //   was retargeted onto ISOLEMENT's "(PS941)"-suffixed name instead (see BuildDefaultImportProfile's
+    //   DIVERS rule), merging both sheets' output onto the one PS941 PointColumnDefinition that remains.
+    // - 66.2: 7 (Parents) / 11 (Enfants) unmapped identity ColumnDefinitions (Source = null), decision 6
+    //   -- a legitimately empty cell reserving a slot in the target workbook's known schema, same
+    //   pattern already established by GenerationPipelineIntegrationTests' own "Fluide"/"Commentaires"
+    //   approximation. Positioned per the ticket's own (explicitly non-blocking) guidance from
+    //   OXO_TRAME_IMPORT_MAD.xlsx's column order; "SUPPRESSION"/"ADR Email"/"COMMENTAIRES" (Parents) and
+    //   "SUPPRESSION" (Enfants) were asked to sit "after PROGRESS" specifically, which the engine cannot
+    //   express (ColumnDefinitions are always rendered before ApplicationColumnDefinitions, regardless
+    //   of list order -- see SheetGenerationEngine.GenerateSheet) -- placed at the end of the
+    //   descriptive-columns block instead, per the ticket's own fallback instruction.
+    // - 66.3/66.4: the same 16 Point columns now live on both Parents and Enfants (built from this one
+    //   shared definition, so the two rules can never silently drift apart) -- marked on Parents via
+    //   SheetGenerationEngine's new aggregation (66.3: at least one child IsolementPivot of this
+    //   Équipement carries the Point), on Enfants exactly as before (direct match). A *method*, not a
+    //   shared list, and called separately for each rule below -- deliberately, not an oversight: EF
+    //   Core's owned-collection change tracker cannot have the very same PointColumnDefinition object
+    //   instances be owned by two different SheetGenerationRule rows at once (confirmed empirically --
+    //   sharing one static list silently orphaned Parents' whole PointColumnDefinitions collection on
+    //   the very first SaveChangesAsync). Same "factory method, not a shared instance" precedent as
+    //   BuildTacheMultipleSheetRule below.
+    private static List<PointColumnDefinition> BuildIsolementStylePointColumnDefinitions() =>
+    [
+        new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES"),
+        new PointColumnDefinition("DEPROLOCK VANNES", "DEPROLOCK VANNES"),
+        new PointColumnDefinition(IsolementZeroEnergieColonneName, IsolementZeroEnergieColonneName),
+        new PointColumnDefinition(PoseEtiquettesColonneName, PoseEtiquettesColonneName),
+        new PointColumnDefinition(
+            "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"),
+        new PointColumnDefinition("CONTRÔLE ETANCHÉITÉS", "CONTRÔLE ETANCHÉITÉS"),
+        new PointColumnDefinition("RECEPTION DEBUT MAD", "RECEPTION DEBUT MAD"),
+        new PointColumnDefinition("RÉCEPTION PLATINES/TAMPONS PLEINS", "RÉCEPTION PLATINES/TAMPONS PLEINS"),
+        new PointColumnDefinition("RECEPTION DEBUT REL", "RECEPTION DEBUT REL"),
+        new PointColumnDefinition("PLATINES / TAMPONS PLEINS", "PLATINES / TAMPONS PLEINS"),
+        new PointColumnDefinition("SYNCHRONISATION INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
+        new PointColumnDefinition("SOUPAPE : CONSTAT ENCRASSEMENT", "SOUPAPE : CONSTAT ENCRASSEMENT"),
+        new PointColumnDefinition(
+            "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
+        new PointColumnDefinition("PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
+        new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
+        new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
+    ];
+
     // The third rule (Tâches multiples, Lot T) needs no Guid of its own, unlike ImportProfileId/
     // ExportProfileId above -- SheetGenerationRule is a plain record with no identity property (see
     // its own Domain source comment), not an aggregate root. For a brand-new profile, idempotence is
@@ -260,13 +323,17 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
                     new ColumnDefinition("Type Elément", PivotFieldRef.EquipementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.EquipementLocalisation),
+                    new ColumnDefinition("LOC2", null),
+                    new ColumnDefinition("LOC3", null),
                     new ColumnDefinition("Désignation", PivotFieldRef.EquipementDesignation),
-                    new ColumnDefinition("Tableaux", PivotFieldRef.EquipementTableaux)
+                    new ColumnDefinition("FLUIDE", null),
+                    new ColumnDefinition("RECURRENT", null),
+                    new ColumnDefinition("Tableaux", PivotFieldRef.EquipementTableaux),
+                    new ColumnDefinition("SUPPRESSION", null),
+                    new ColumnDefinition("ADR Email", null),
+                    new ColumnDefinition("COMMENTAIRES", null)
                 ],
-                [
-                    new PointColumnDefinition(TravauxCompletColonneName, TravauxCompletColonneName),
-                    new PointColumnDefinition(TravauxDetailColonneName, TravauxDetailColonneName)
-                ],
+                BuildIsolementStylePointColumnDefinitions(),
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             new SheetGenerationRule(
                 "Enfants",
@@ -275,34 +342,23 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere),
                     new ColumnDefinition("Type Elément", PivotFieldRef.IsolementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.IsolementLocalisation),
+                    new ColumnDefinition("LOC2", null),
+                    new ColumnDefinition("LOC3", null),
                     new ColumnDefinition("ELEMENT PARENT", PivotFieldRef.IsolementRepereParent),
                     new ColumnDefinition("Désignation", PivotFieldRef.IsolementDesignation),
                     new ColumnDefinition("Position à la pose", PivotFieldRef.IsolementPositionALaPose),
-                    new ColumnDefinition("Tableaux", PivotFieldRef.IsolementTableaux)
+                    new ColumnDefinition("POSITION A LA DEPOSE", null),
+                    new ColumnDefinition("PHASE PROCESS", null),
+                    new ColumnDefinition("REMARQUES", null),
+                    new ColumnDefinition("ETIQUETTE", null),
+                    new ColumnDefinition("DIAMETRE INCH", null),
+                    new ColumnDefinition("SERIE LBS", null),
+                    new ColumnDefinition("NATURE JOINT", null),
+                    new ColumnDefinition("BESOIN ECHAF", null),
+                    new ColumnDefinition("Tableaux", PivotFieldRef.IsolementTableaux),
+                    new ColumnDefinition("SUPPRESSION", null)
                 ],
-                [
-                    new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES"),
-                    new PointColumnDefinition("DEPROLOCK VANNES", "DEPROLOCK VANNES"),
-                    new PointColumnDefinition(IsolementZeroEnergieColonneName, IsolementZeroEnergieColonneName),
-                    new PointColumnDefinition(PoseEtiquettesColonneName, PoseEtiquettesColonneName),
-                    new PointColumnDefinition(
-                        "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
-                        "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"),
-                    new PointColumnDefinition("CONTRÔLE ETANCHÉITÉS", "CONTRÔLE ETANCHÉITÉS"),
-                    new PointColumnDefinition("RECEPTION DEBUT MAD", "RECEPTION DEBUT MAD"),
-                    new PointColumnDefinition("RÉCEPTION PLATINES/TAMPONS PLEINS", "RÉCEPTION PLATINES/TAMPONS PLEINS"),
-                    new PointColumnDefinition("RECEPTION DEBUT REL", "RECEPTION DEBUT REL"),
-                    new PointColumnDefinition("PLATINES / TAMPONS PLEINS", "PLATINES / TAMPONS PLEINS"),
-                    new PointColumnDefinition("SYNCHRONISATION INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
-                    new PointColumnDefinition("ZÉRO ENERGIE EN PRESENCE EE", "ZÉRO ENERGIE EN PRESENCE EE"),
-                    new PointColumnDefinition("SOUPAPE : CONSTAT ENCRASSEMENT", "SOUPAPE : CONSTAT ENCRASSEMENT"),
-                    new PointColumnDefinition(
-                        "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
-                    new PointColumnDefinition(
-                        "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
-                    new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
-                    new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
-                ],
+                BuildIsolementStylePointColumnDefinitions(),
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             BuildTacheMultipleSheetRule()
         ]);
@@ -310,15 +366,23 @@ public class DefaultProfileSeeder(
     // Extracted (T8) so the exact same rule definition is shared between the nominal seeding path
     // above (brand-new profile) and the migration path (MigrateTacheMultipleSheetRuleIfMissingAsync,
     // an already-seeded profile that predates this rule) -- one definition, never two copies to drift.
+    //
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md): gains
+    // "Repère TM"/"TYPE ELEMENT CODE" (identity columns, same lead position as Repère/Type Elément on
+    // Parents/Enfants) and "Colonne Travaux" (the legacy app's own linking column, positioned last --
+    // resolved per-row from ImportProfile.TacheMultipleTypeLabels, see ImportPipelineOrchestrator).
     private static SheetGenerationRule BuildTacheMultipleSheetRule() => new(
         "Tâches multiples",
         PivotSource.TacheMultiple,
         [
+            new ColumnDefinition("Repère TM", PivotFieldRef.TacheMultipleRepere),
+            new ColumnDefinition("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
             new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
             new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
             new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
             new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
-            new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation)
+            new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
+            new ColumnDefinition("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
         ],
         [],
         []);

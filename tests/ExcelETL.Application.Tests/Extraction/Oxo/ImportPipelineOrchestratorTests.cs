@@ -38,7 +38,8 @@ public class ImportPipelineOrchestratorTests
         new(sheet, 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]);
 
     private static ImportProfile CreateProfile(
-        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null) => new(
+        IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null,
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null) => new(
         "Profil OXO standard", ReperePrefix, EquipementTypeElementNom,
         defaultTableaux ?? [], defaultApplicationNames ?? [],
         [
@@ -48,7 +49,8 @@ public class ImportPipelineOrchestratorTests
             new SheetExtractionRule("ORIFICES CAPACITES", TrivialLocator("ORIFICES CAPACITES"), [], [], [], []),
             new SheetExtractionRule("AUTRES JOINTS TOUCHES", TrivialLocator("AUTRES JOINTS TOUCHES"), [], [], [], []),
             new SheetExtractionRule("DIVERS", TrivialLocator("DIVERS"), [], [], [], [])
-        ]);
+        ],
+        tacheMultipleTypeLabels);
 
     private static ImportResult RejectedProcedureResult() => new(
         null, [], [], [],
@@ -267,5 +269,89 @@ public class ImportPipelineOrchestratorTests
         var isolement = result.Isolements.Single();
         isolement.Tableaux.Should().BeEmpty();
         isolement.Applications.Should().BeEmpty();
+    }
+
+    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md).
+    private void SetupMinimalSuccessfulRun(IReadOnlyList<TacheMultiplePivot>? tachesMultiples = null)
+    {
+        var procedureResult = tachesMultiples is null
+            ? ValidProcedureResult()
+            : new ImportResult(
+                new EquipementPivot("38-C7401", "Rév 2 du 12/12/2025", EquipementTypeElementNom), [], [], tachesMultiples, []);
+
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns(procedureResult);
+        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _autresJointsTouchesService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _diversService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
+            .Returns(new DiversSheetExtractionResult("", [], [], []));
+    }
+
+    [Fact]
+    public void Run_BroadcastsEquipementRepereAndTypeElementNomOntoEveryTacheMultiple()
+    {
+        SetupMinimalSuccessfulRun([
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false)
+        ]);
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(workbookReader, CreateProfile());
+
+        result.TachesMultiples.Should().HaveCount(2);
+        result.TachesMultiples.Should().OnlyContain(t => t.Repere == result.Equipement!.Repere);
+        result.TachesMultiples.Should().OnlyContain(t => t.TypeElementNom == EquipementTypeElementNom);
+    }
+
+    [Fact]
+    public void Run_ResolvesColonneTravaux_FromMatchingTacheMultipleTypeLabel_TrimmedAndCaseInsensitive()
+    {
+        SetupMinimalSuccessfulRun([
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", " tm_proc_rel ", null, false)
+        ]);
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        var profile = CreateProfile(tacheMultipleTypeLabels:
+        [
+            new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"),
+            new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")
+        ]);
+
+        var result = _sut.Run(workbookReader, profile);
+
+        result.TachesMultiples.Should().Contain(t => t.TypeTacheMultipleCode == "TM_PROC_MAD" && t.ColonneTravaux == "Procédure MAD");
+        result.TachesMultiples.Should().Contain(t => t.ColonneTravaux == "Procédure REL");
+    }
+
+    [Fact]
+    public void Run_WhenNoTacheMultipleTypeLabelMatches_LeavesColonneTravauxBlank()
+    {
+        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false)]);
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        var profile = CreateProfile(tacheMultipleTypeLabels: [new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")]);
+
+        var result = _sut.Run(workbookReader, profile);
+
+        result.TachesMultiples.Should().ContainSingle().Which.ColonneTravaux.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Run_WithEmptyTacheMultipleTypeLabels_LeavesColonneTravauxBlankForEveryTache()
+    {
+        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false)]);
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(workbookReader, CreateProfile());
+
+        result.TachesMultiples.Should().ContainSingle().Which.ColonneTravaux.Should().BeEmpty();
     }
 }

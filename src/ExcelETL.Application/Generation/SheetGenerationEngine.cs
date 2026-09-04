@@ -113,7 +113,7 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         var applicationCells = rule.ApplicationColumnDefinitions.Select(
             application => HasApplication(equipement.Applications, application.ApplicationNom) ? application.MarkValue : string.Empty);
         var pointCells = rule.PointColumnDefinitions.Select(
-            point => HasPoint(importResult.Points, equipement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
+            point => HasPointForEquipement(importResult, equipement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
 
         return [new GeneratedRow([.. descriptiveCells, .. applicationCells, .. pointCells])];
     }
@@ -133,6 +133,33 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
 
     private static bool HasPoint(IReadOnlyList<PointPivot> points, string parentRepere, string colonneNom) =>
         points.Any(point => point.ParentRepere == parentRepere && point.ColonneNom == colonneNom);
+
+    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md, 66.3):
+    // a Point column on an Equipement-sourced sheet is marked either by a Point directly attached to
+    // the Equipement itself (the historical mechanism above, unchanged -- e.g. PROCEDURE's own
+    // unconditional Points), OR -- new -- by aggregation: at least one IsolementPivot of this run whose
+    // RepereParent equals this Equipement's Repere carries a matching Point. "At least one", not "all"
+    // -- a single child isolement marking a Point is enough to mark the parent row. ColonneNom is
+    // compared trimmed and case-insensitively for this aggregated path only (spec §7 convention),
+    // unlike the direct HasPoint check above, which stays untouched/exact per the ticket's own
+    // non-regression requirement.
+    private static bool HasPointForEquipement(ImportResult importResult, string equipementRepere, string colonneNom)
+    {
+        if (HasPoint(importResult.Points, equipementRepere, colonneNom))
+        {
+            return true;
+        }
+
+        var normalizedColonneNom = colonneNom.Trim();
+        var childRepères = importResult.Isolements
+            .Where(isolement => isolement.RepereParent == equipementRepere)
+            .Select(isolement => isolement.Repere)
+            .ToHashSet();
+
+        return importResult.Points.Any(point =>
+            childRepères.Contains(point.ParentRepere)
+            && string.Equals(point.ColonneNom.Trim(), normalizedColonneNom, StringComparison.OrdinalIgnoreCase));
+    }
 
     // Trimmed + case-insensitive, same recommendation transverse as TypeElement/Colonne.Nom comparisons
     // elsewhere in the pipeline (spec §7) -- real fixtures/profiles can differ by trailing whitespace or

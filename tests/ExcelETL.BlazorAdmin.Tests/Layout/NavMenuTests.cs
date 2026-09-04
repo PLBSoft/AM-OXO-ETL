@@ -5,14 +5,23 @@ using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.BlazorAdmin.Services;
 using ExcelETL.Infrastructure.Identity;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Moq;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Layout;
 
 public class NavMenuTests : BunitContext
 {
+    // Follow-up (post-064): NavMenu now also injects ILocalTimeFormatter for its build-date footer
+    // (see NavMenu_VersionInfo_TooltipUpdatesToLocalTime... below) -- same default-mock-plus-
+    // non-interactive-rendering convention as LogsTests/GeneratedFilesTests/HomeTests, so every
+    // pre-existing test in this file (none of which turns on interactivity) keeps asserting the
+    // same raw-UTC-fallback behavior it always did, unmodified.
+    private readonly Mock<ILocalTimeFormatter> _localTimeFormatterMock = new();
+
     public NavMenuTests()
     {
         Services.AddLocalization();
@@ -20,6 +29,26 @@ public class NavMenuTests : BunitContext
         // pre-existing test in this file (none of which cares about version/build date) keeps
         // rendering unmodified. Individual Lot 062 tests below override this per-test where needed.
         Services.AddSingleton(new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly()));
+        Services.AddSingleton(_localTimeFormatterMock.Object);
+
+        // Deliberately NOT calling SetRendererInfo here (unlike LogsTests/HomeTests/
+        // GeneratedFilesTests): NavMenu.razor's own internal <AuthorizeView> blocks mean every test
+        // in this file calls `this.AddAuthorization()` *inside* the test body, which itself
+        // registers services -- and SetRendererInfo locks the bUnit container against any further
+        // Services.Add* call the instant it runs. Calling it here in the constructor would make
+        // every single AddAuthorization() call below throw. See RenderNavMenu() instead, which calls
+        // SetRendererInfo right at the point of rendering -- always after AddAuthorization().
+    }
+
+    // Follow-up (post-064): replaces every direct Render<NavMenu>() call in this file (see the
+    // comment on the constructor above for why SetRendererInfo can't live there for this
+    // component). Defaults to non-interactive, matching every pre-existing test's original,
+    // unmodified expectation (raw-UTC-fallback build date, per Lot 064's own established
+    // convention) -- only the new interactive-conversion tests below pass isInteractive: true.
+    private IRenderedComponent<NavMenu> RenderNavMenu(bool isInteractive = false)
+    {
+        SetRendererInfo(new RendererInfo(isInteractive ? "Server" : "Static", isInteractive));
+        return Render<NavMenu>();
     }
 
     private static void WithCulture(string cultureName, Action action)
@@ -42,7 +71,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#nav-login-link").TextContent.Should().Contain("Login");
     });
@@ -52,7 +81,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#nav-login-link").TextContent.Should().Contain("Connexion");
     });
@@ -66,7 +95,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-register-link").Should().BeEmpty();
     });
@@ -76,7 +105,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-register-link").Should().BeEmpty();
     });
@@ -86,7 +115,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Markup.Should().Contain("Logout");
         cut.Markup.Should().Contain("admin@example.com");
@@ -97,7 +126,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Markup.Should().Contain("My Profile");
         cut.Find("a[href='profile']").Should().NotBeNull();
@@ -108,7 +137,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("jdupont");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var profileLabel = Services.GetRequiredService<IStringLocalizer<BlazorAdminMessages>>()["NavMenu_Profile"];
 
@@ -123,7 +152,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("jdupont");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-profile-link").Should().HaveCount(1);
         cut.FindAll("span.nav-link").Should().BeEmpty();
@@ -134,7 +163,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-profile-link").Should().BeEmpty();
     });
@@ -160,7 +189,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         foreach (var id in AllProtectedLinkIds)
         {
@@ -176,7 +205,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         foreach (var id in AllProtectedLinkIds)
         {
@@ -193,7 +222,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("someone@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         foreach (var id in AuthenticatedBusinessLinkIds)
         {
@@ -209,7 +238,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("someone@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-users-link").Should().BeEmpty();
     });
@@ -219,7 +248,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var apiTestLink = cut.Find("#nav-api-test-link");
         apiTestLink.GetAttribute("href").Should().Be("api-test");
@@ -230,7 +259,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-login-link").Should().HaveCount(1);
     });
@@ -240,7 +269,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-logs-link").Should().BeEmpty();
     });
@@ -253,7 +282,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("someone@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-logs-link").Should().BeEmpty();
     });
@@ -263,7 +292,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#nav-import-profiles-test-link").Should().BeEmpty();
         cut.FindAll("#nav-export-profiles-test-link").Should().BeEmpty();
@@ -274,7 +303,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com").SetRoles(IdentitySeeder.AdminRoleName);
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var orderedIds = new[]
         {
@@ -304,7 +333,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Markup.Should().Contain("Alpha - MAD / REL OXO");
         cut.Markup.Should().NotContain("ExcelETL.BlazorAdmin");
@@ -322,7 +351,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var brand = cut.Find(".navbar-brand");
         brand.ClassList.Should().Contain("text-truncate");
@@ -334,7 +363,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var toggler = cut.Find(".navbar-toggler");
         toggler.ClassList.Should().Contain("flex-shrink-0");
@@ -349,7 +378,7 @@ public class NavMenuTests : BunitContext
         {
             this.AddAuthorization().SetNotAuthorized();
 
-            var cut = Render<NavMenu>();
+            var cut = RenderNavMenu();
 
             var containerFluid = cut.Find(".top-row .container-fluid");
             containerFluid.QuerySelector(".navbar-brand").Should().NotBeNull();
@@ -381,6 +410,7 @@ public class NavMenuTests : BunitContext
         WithCulture("en-US", () =>
         {
             this.AddAuthorization().SetNotAuthorized();
+            SetRendererInfo(new RendererInfo("Static", isInteractive: false));
 
             var cut = Render<NavMenuWithBackLink>();
 
@@ -406,7 +436,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var toggler = cut.Find("#nav-menu-toggler");
         toggler.GetAttribute("aria-label").Should().NotBeNullOrWhiteSpace();
@@ -417,7 +447,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var toggler = cut.Find("#nav-menu-toggler");
         var navScrollable = cut.Find(".nav-scrollable");
@@ -430,7 +460,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#nav-menu-toggler").GetAttribute("aria-expanded").Should().Be("false");
     });
@@ -440,7 +470,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#nav-menu-toggler").Change(true);
 
@@ -452,7 +482,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var toggler = cut.Find("#nav-menu-toggler");
         toggler.ClassList.Should().Contain("navbar-toggler");
@@ -483,7 +513,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var navScrollable = cut.Find(".nav-scrollable");
         navScrollable.GetAttribute("onclick").Should().Be("document.querySelector('.navbar-toggler').click()");
@@ -508,7 +538,7 @@ public class NavMenuTests : BunitContext
         {
             this.AddAuthorization().SetAuthorized("admin@example.com");
 
-            var cut = Render<NavMenu>();
+            var cut = RenderNavMenu();
 
             var logo = cut.Find("#sidebar-client-logo");
             logo.GetAttribute("src").Should().Be("images/client-logo.png");
@@ -525,7 +555,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#sidebar-client-logo").GetAttribute("alt").Should().Contain("Client logo");
     });
@@ -535,7 +565,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#sidebar-client-logo").GetAttribute("alt").Should().Contain("Logo client");
     });
@@ -544,7 +574,7 @@ public class NavMenuTests : BunitContext
     public void NavMenu_ClientLogo_VisibleRegardlessOfAuthorizationState() => WithCulture("en-US", () =>
     {
         this.AddAuthorization().SetNotAuthorized();
-        var notAuthorizedCut = Render<NavMenu>();
+        var notAuthorizedCut = RenderNavMenu();
         notAuthorizedCut.FindAll("#sidebar-client-logo").Should().HaveCount(1);
     });
 
@@ -578,7 +608,7 @@ public class NavMenuTests : BunitContext
         this.AddAuthorization().SetAuthorized("admin@example.com");
         Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var versionInfo = cut.Find("#sidebar-version-info");
         versionInfo.TextContent.Should().Contain("v1.0.0.0");
@@ -592,7 +622,7 @@ public class NavMenuTests : BunitContext
         // Default ctor-registered ApplicationBuildInfo (the test assembly itself) has no BuildDate
         // metadata -- the real "absent" case, not a fabricated one.
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var versionInfo = cut.Find("#sidebar-version-info");
         versionInfo.TextContent.Should().Contain("v");
@@ -605,7 +635,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var logoIndex = cut.Markup.IndexOf("sidebar-client-logo", StringComparison.Ordinal);
         var versionIndex = cut.Markup.IndexOf("sidebar-version-info", StringComparison.Ordinal);
@@ -617,7 +647,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#sidebar-version-info").Should().HaveCount(1);
     });
@@ -633,7 +663,7 @@ public class NavMenuTests : BunitContext
         this.AddAuthorization().SetAuthorized("admin@example.com");
         Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var title = cut.Find("#sidebar-version-info").GetAttribute("title");
         title.Should().NotBeNullOrWhiteSpace();
@@ -649,7 +679,7 @@ public class NavMenuTests : BunitContext
         this.AddAuthorization().SetAuthorized("admin@example.com");
         Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T16:49:02.0716047Z"));
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var title = cut.Find("#sidebar-version-info").GetAttribute("title");
         title.Should().Contain("2026");
@@ -664,10 +694,42 @@ public class NavMenuTests : BunitContext
         this.AddAuthorization().SetAuthorized("admin@example.com");
         // Default ctor-registered ApplicationBuildInfo (the test assembly itself) has no BuildDate.
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#sidebar-version-info").GetAttribute("title").Should().BeNullOrEmpty();
     });
+
+    // Follow-up (post-064): reopens Lot 064's own explicit exclusion of the build date -- Simon
+    // compared a real publish against the displayed "Publié le..." value and hit the exact same
+    // UTC-vs-local confusion Lot 064 had already fixed for the log table. Stubs a browser-local
+    // conversion that crosses a day boundary (23:49 UTC -> 01:49 local, next day) specifically so
+    // both the compact label (dd/MM/yyyy) and the detailed tooltip prove they used the *converted*
+    // value, not merely re-rendered the same UTC one under a different label.
+    [Fact]
+    public void NavMenu_VersionInfo_UpdatesLabelAndTooltip_ToLocalTimeFormatterResult_OnceInteractive() =>
+        WithCulture("en-US", () =>
+        {
+            this.AddAuthorization().SetAuthorized("admin@example.com");
+            Services.AddSingleton(BuildInfoWithBuildDate("2026-07-30T23:49:02.0000000Z"));
+            _localTimeFormatterMock
+                .Setup(f => f.FormatAsync(It.IsAny<DateTime>(), "yyyy-MM-dd HH:mm"))
+                .ReturnsAsync("2026-07-31 01:49");
+
+            var cut = RenderNavMenu(isInteractive: true);
+            cut.WaitForState(() => cut.Find("#sidebar-version-info").TextContent.Contains("31/07/2026"));
+
+            cut.Find("#sidebar-version-info").TextContent.Should().Contain("31/07/2026");
+            cut.Find("#sidebar-version-info").TextContent.Should().NotContain("30/07/2026");
+
+            var title = cut.Find("#sidebar-version-info").GetAttribute("title");
+            title.Should().Contain("01:49");
+            title.Should().Contain("Friday");
+            title.Should().Contain("July");
+            title.Should().NotContain("Thursday");
+
+            _localTimeFormatterMock.Verify(
+                f => f.FormatAsync(It.IsAny<DateTime>(), "yyyy-MM-dd HH:mm"), Times.Once);
+        });
 
     // --- Dark/light theme toggle. The button is a plain HTML onclick calling straight into
     // window.amOxoTheme.toggle() (wwwroot/js/theme.js) -- no @onclick/IJSRuntime interop, so bUnit
@@ -679,7 +741,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var button = cut.Find("#theme-toggle-button");
         button.GetAttribute("onclick").Should().Be("window.amOxoTheme.toggle()");
@@ -691,7 +753,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var button = cut.Find("#theme-toggle-button");
         var title = button.GetAttribute("title");
@@ -704,7 +766,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#theme-toggle-button").GetAttribute("title").Should().Contain("light and dark");
     });
@@ -714,7 +776,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#theme-toggle-button").GetAttribute("title").Should().Contain("clair et sombre");
     });
@@ -724,7 +786,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         var button = cut.Find("#theme-toggle-button");
         button.QuerySelector(".theme-toggle-icon-sun svg").Should().NotBeNull();
@@ -736,7 +798,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetAuthorized("admin@example.com");
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.Find("#sidebar-footer").QuerySelector("#theme-toggle-button").Should().NotBeNull();
     });
@@ -746,7 +808,7 @@ public class NavMenuTests : BunitContext
     {
         this.AddAuthorization().SetNotAuthorized();
 
-        var cut = Render<NavMenu>();
+        var cut = RenderNavMenu();
 
         cut.FindAll("#theme-toggle-button").Should().HaveCount(1);
     });
