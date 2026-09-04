@@ -64,6 +64,9 @@
   <data name="ConditionalPointRule_EmptyColonneName" xml:space="preserve">
     <value>Le nom de la colonne ne doit pas être vide.</value>
   </data>
+  <data name="FieldPresencePointRule_EmptyColonneName" xml:space="preserve">
+    <value>Le nom de la colonne ne doit pas être vide.</value>
+  </data>
   <data name="ImportProfile_EmptyName" xml:space="preserve">
     <value>Le nom ne doit pas être vide.</value>
   </data>

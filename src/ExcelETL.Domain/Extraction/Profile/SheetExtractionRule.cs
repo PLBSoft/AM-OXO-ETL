@@ -21,11 +21,13 @@ public sealed class SheetExtractionRule
     // auto-property: EF Core cannot constructor-bind an entity-collection navigation.
     // UnconditionalColonneNames doesn't need this treatment -- it's a primitive (string) collection,
     // not a navigation to an owned entity type, so EF Core binds it via the constructor like any
-    // other scalar-ish property. HeaderFields/HeaderComposites (Lot 047) need the same backing-field
-    // treatment as PointRules -- both are navigations to owned entity types.
+    // other scalar-ish property. HeaderFields/HeaderComposites (Lot 047) and FieldPresencePointRules
+    // (PLATINES client feedback, 2026-09) need the same backing-field treatment as PointRules -- all
+    // are navigations to owned entity types.
     private readonly List<ConditionalPointRule> _pointRules = [];
     private readonly List<HeaderFieldRule> _headerFields = [];
     private readonly List<HeaderCompositeRule> _headerComposites = [];
+    private readonly List<FieldPresencePointRule> _fieldPresencePointRules = [];
 
     public string SheetName { get; }
     public RepeatingBlockLocator Locator { get; }
@@ -33,6 +35,13 @@ public sealed class SheetExtractionRule
     public IReadOnlyList<string> UnconditionalColonneNames { get; }
     public IReadOnlyList<HeaderFieldRule> HeaderFields => _headerFields;
     public IReadOnlyList<HeaderCompositeRule> HeaderComposites => _headerComposites;
+
+    // A Point is created for FieldPresencePointRule.ColonneName only when its Cell is non-blank for
+    // the current block -- unlike PointRules/UnconditionalColonneNames, which never look at whether a
+    // specific cell (beyond the sheet's own declared, required fields) has a value. An empty list
+    // (default) means "no field-presence rule for this sheet" -- every sheet other than PLATINES
+    // today, and any PLATINES profile predating this feature.
+    public IReadOnlyList<FieldPresencePointRule> FieldPresencePointRules => _fieldPresencePointRules;
 
     // Lot 063: the text a bloc's dedicated "zero energie" column must equal for ISOLEMENT's PS941
     // rule to consider it matched -- a field dedicated to this one sheet's own rule, not a generic
@@ -47,7 +56,8 @@ public sealed class SheetExtractionRule
         IReadOnlyList<string> unconditionalColonneNames,
         IReadOnlyList<HeaderFieldRule> headerFields,
         IReadOnlyList<HeaderCompositeRule> headerComposites,
-        string? zeroEnergieExpectedValue = null)
+        string? zeroEnergieExpectedValue = null,
+        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -98,6 +108,7 @@ public sealed class SheetExtractionRule
         UnconditionalColonneNames = unconditionalColonneNames;
         _headerFields = [.. headerFields];
         _headerComposites = [.. headerComposites];
+        _fieldPresencePointRules = fieldPresencePointRules is null ? [] : [.. fieldPresencePointRules];
         ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
     }
 

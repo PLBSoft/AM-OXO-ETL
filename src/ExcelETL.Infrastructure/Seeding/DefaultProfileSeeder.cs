@@ -162,11 +162,26 @@ public class DefaultProfileSeeder(
                     PoseEtiquettesColonneName,
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS",
-                    "RECEPTION DEBUT MAD",
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
-                    "RECEPTION DEBUT REL",
                     "PLATINES / TAMPONS PLEINS"
-                ], [], []),
+                ], [], [],
+                // Client feedback (2026-09): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" are no longer
+                // created unconditionally -- they now reflect whether the source block's own "POSÉE
+                // LE"/"DÉPOSÉE LE" cells were actually filled in (H, block offsets +2/+3, same H:N
+                // merge width as every other value cell in this form -- confirmed against all 4 real
+                // client fixtures on disk, incl. G4010A, the file behind the client's screenshot).
+                // Deliberately not folded into UnconditionalColonneNames/PointRules -- neither can
+                // express "Point only if this specific cell has a value at all" (PointRules always
+                // compares against a fixed ComparisonValue). Presence, not the label text itself, is
+                // read -- known unreliable in the DEBUT/FIN block-split anomaly (spec §3, "jugé non
+                // fiable"), accepted as-is, no special handling.
+                fieldPresencePointRules:
+                [
+                    new FieldPresencePointRule(
+                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                    new FieldPresencePointRule(
+                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
+                ]),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,

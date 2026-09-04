@@ -55,11 +55,11 @@ public sealed class DiversExtractionService(
 
         foreach (var block in blockResult.Blocks)
         {
-            var repere = ComposeRepere(equipementRepere, block[IsolementFieldNames.Identification]);
-            var typeElement = block[IsolementFieldNames.TypeElement];
+            var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
+            var typeElement = block.Fields[IsolementFieldNames.TypeElement];
 
             isolements.Add(new IsolementPivot(
-                repere, block[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: ""));
+                repere, block.Fields[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: ""));
 
             var extractedFields = new Dictionary<string, string> { [IsolementFieldNames.TypeElement] = typeElement };
             var (colonneNames, warning) = ConditionalPointGroupEvaluator.Evaluate(

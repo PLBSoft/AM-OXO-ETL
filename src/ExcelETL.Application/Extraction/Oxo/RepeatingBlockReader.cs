@@ -14,7 +14,7 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
         var stopField = locator.Fields.First(f => f.Name == locator.StopFieldName);
         var otherFields = locator.Fields.Where(f => f.Name != locator.StopFieldName).ToList();
 
-        var blocks = new List<IReadOnlyDictionary<string, string>>();
+        var blocks = new List<RepeatingBlock>();
         var errors = new List<ExtractionError>();
         var blockIndex = 0;
 
@@ -55,7 +55,7 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
             }
             else
             {
-                blocks.Add(rawValues);
+                blocks.Add(new RepeatingBlock(blockStartRow, rawValues));
             }
 
             blockIndex++;

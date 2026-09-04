@@ -70,6 +70,27 @@ public class SheetExtractionRuleTests
         rule.UnconditionalColonneNames.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Constructor_WithNoFieldPresencePointRulesArgument_DefaultsToEmptyList()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
+
+        rule.FieldPresencePointRules.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithFieldPresencePointRules_PassesThemThrough()
+    {
+        var fieldPresenceRule = new FieldPresencePointRule(
+            new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD");
+
+        var rule = new SheetExtractionRule(
+            "PLATINES", Locator("PLATINES"), [], [], [], [],
+            fieldPresencePointRules: [fieldPresenceRule]);
+
+        rule.FieldPresencePointRules.Should().ContainSingle().Which.Should().Be(fieldPresenceRule);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]

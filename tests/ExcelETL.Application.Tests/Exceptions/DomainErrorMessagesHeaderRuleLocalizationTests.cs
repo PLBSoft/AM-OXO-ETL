@@ -67,6 +67,11 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             "DirectCell_InvalidRange",
             () => new DirectCell("PROCEDURE", "not-a-range"),
         ];
+        yield return
+        [
+            "FieldPresencePointRule_EmptyColonneName",
+            () => new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), string.Empty),
+        ];
     }
 
     [Theory]

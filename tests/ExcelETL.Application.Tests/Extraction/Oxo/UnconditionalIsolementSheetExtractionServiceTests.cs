@@ -32,7 +32,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         new RepeatingBlockReader(), new TextTransformEvaluator(),
         NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
 
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(
+        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -41,7 +42,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
-        UnconditionalColonneNames, [], []);
+        UnconditionalColonneNames, [], [],
+        fieldPresencePointRules: fieldPresencePointRules);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -155,5 +157,89 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         result.Isolements.Should().BeEmpty();
         result.Points.Should().BeEmpty();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
+    }
+
+    // PLATINES client feedback (2026-09): a Point is created only when the block's own optional cell
+    // is non-blank -- exercised here with colonne names distinct from UnconditionalColonneNames above
+    // (which this generic-service test file keeps unrelated to any particular sheet's real
+    // configuration) so the two mechanisms' Points are never ambiguous in an assertion.
+    private static readonly FieldPresencePointRule PoseeLeRule = new(
+        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+    private static readonly FieldPresencePointRule DeposeeLeRule = new(
+        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL (FIELD PRESENCE)");
+
+    private static Dictionary<string, string?> CreateOneBlockCells() => new()
+    {
+        ["K6:U6"] = "C7401",
+        ["B17:E18"] = "PT1",
+        ["H16:V17"] = "Aspiration",
+        ["B20:E22"] = "PLATINE",
+        ["B25:E26"] = null
+    };
+
+    [Fact]
+    public void Extract_WithFieldPresencePointRuleAndNonBlankCell_CreatesThePoint()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = "12/03/2026";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule([PoseeLeRule]);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Points.Should().Contain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)" && p.ParentRepere == "C7401-PT1");
+    }
+
+    [Fact]
+    public void Extract_WithFieldPresencePointRuleAndBlankCell_DoesNotCreateThePoint()
+    {
+        var cells = CreateOneBlockCells();
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule([PoseeLeRule]);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+    }
+
+    [Fact]
+    public void Extract_WithFieldPresencePointRuleAndWhitespaceOnlyCell_DoesNotCreateThePoint()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = "   ";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule([PoseeLeRule]);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+    }
+
+    [Fact]
+    public void Extract_WithMultipleFieldPresencePointRules_EvaluatesEachIndependently()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = "12/03/2026";
+        // H20:N20 (DeposeeLe) left blank/absent from the dictionary on purpose.
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule([PoseeLeRule, DeposeeLeRule]);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Points.Should().Contain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+        result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT REL (FIELD PRESENCE)");
+    }
+
+    [Fact]
+    public void Extract_WithNoFieldPresencePointRules_NeverReadsAnyExtraCellsBeyondTheDeclaredFields()
+    {
+        var cells = CreateOneBlockCells();
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule();
+
+        _sut.Extract(workbookReader.Object, sheetRule);
+
+        workbookReader.Verify(r => r.ReadCellValue(Sheet, "H19:N19"), Times.Never);
+        workbookReader.Verify(r => r.ReadCellValue(Sheet, "H20:N20"), Times.Never);
     }
 }

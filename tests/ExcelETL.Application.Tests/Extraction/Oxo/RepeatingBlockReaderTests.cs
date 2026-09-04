@@ -41,12 +41,14 @@ public class RepeatingBlockReaderTests
 
         result.Errors.Should().BeEmpty();
         result.Blocks.Should().HaveCount(2);
-        result.Blocks[0].Should().BeEquivalentTo(new Dictionary<string, string>
+        result.Blocks[0].StartRow.Should().Be(19);
+        result.Blocks[0].Fields.Should().BeEquivalentTo(new Dictionary<string, string>
         {
             ["Identification"] = "ISO1",
             ["Designation"] = "Vanne 1"
         });
-        result.Blocks[1].Should().BeEquivalentTo(new Dictionary<string, string>
+        result.Blocks[1].StartRow.Should().Be(26);
+        result.Blocks[1].Fields.Should().BeEquivalentTo(new Dictionary<string, string>
         {
             ["Identification"] = "ISO2",
             ["Designation"] = "Vanne 2"
@@ -99,8 +101,8 @@ public class RepeatingBlockReaderTests
 
         result.Errors.Should().BeEmpty();
         result.Blocks.Should().HaveCount(3);
-        result.Blocks[0]["Action"].Should().Be("Action 1");
-        result.Blocks[2]["Action"].Should().Be("Action 3");
+        result.Blocks[0].Fields["Action"].Should().Be("Action 1");
+        result.Blocks[2].Fields["Action"].Should().Be("Action 3");
     }
 
     [Fact]
@@ -124,7 +126,11 @@ public class RepeatingBlockReaderTests
         var result = _sut.Read(locator, workbookReader.Object);
 
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
-        result.Blocks.Should().ContainSingle().Which.Should().BeEquivalentTo(new Dictionary<string, string>
+        var block = result.Blocks.Should().ContainSingle().Subject;
+        // The one dropped block (ISO1, row 19) still consumed a row -- the surviving block's StartRow
+        // must reflect its real position (26), not its index (0) within the (now shorter) Blocks list.
+        block.StartRow.Should().Be(26);
+        block.Fields.Should().BeEquivalentTo(new Dictionary<string, string>
         {
             ["Identification"] = "ISO2",
             ["Designation"] = "Vanne 2"

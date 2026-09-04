@@ -213,6 +213,47 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                     .HasMaxLength(500);
             });
 
+            // FieldPresencePointRules (PLATINES client feedback, 2026-09): each rule reuses
+            // BlockFieldDefinition purely as "where to read this cell" (see the Domain type's own
+            // comment), table-split (OwnsOne) into the same row exactly like HeaderFieldRule.Cell
+            // above -- except this Cell is a BlockFieldDefinition, not a DirectCell, so it has the
+            // same 4 columns as ImportProfileSheetRuleBlockFields above (Name/ColumnRange/
+            // RowOffsetStart/RowOffsetEnd), not Sheet/Range.
+            rules.OwnsMany(r => r.FieldPresencePointRules, fieldPresenceRules =>
+            {
+                fieldPresenceRules.ToTable("ImportProfileSheetRuleFieldPresencePointRules");
+                fieldPresenceRules.WithOwner().HasForeignKey("SheetExtractionRuleId");
+                fieldPresenceRules.Property<int>("Id");
+                fieldPresenceRules.HasKey("Id");
+
+                fieldPresenceRules.Property(r => r.ColonneName)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                fieldPresenceRules.OwnsOne(r => r.Cell, cell =>
+                {
+                    cell.Property(c => c.Name)
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnName("CellName");
+
+                    cell.Property(c => c.ColumnRange)
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnName("CellColumnRange");
+
+                    cell.Property(c => c.RowOffsetStart)
+                        .IsRequired()
+                        .HasColumnName("CellRowOffsetStart");
+
+                    cell.Property(c => c.RowOffsetEnd)
+                        .IsRequired()
+                        .HasColumnName("CellRowOffsetEnd");
+                });
+
+                fieldPresenceRules.Navigation(r => r.Cell).IsRequired();
+            });
+
             rules.Navigation(r => r.Locator).IsRequired();
         });
     }

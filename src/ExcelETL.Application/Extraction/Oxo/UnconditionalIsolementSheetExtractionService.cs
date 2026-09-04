@@ -14,6 +14,13 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // before ORIFICES CAPACITES confirmed the same shape; renamed rather than duplicated. Not reused
 // for AUTRES JOINTS TOUCHES (Lot C5, one conditional Colonne) or DIVERS (Lot C6, several) --
 // those need IConditionalPointRuleEvaluator, which this class deliberately has no dependency on.
+//
+// PLATINES client feedback (2026-09): FieldPresencePointRules is the one exception to "every Colonne
+// is unconditional" -- it stays fully config-driven (an empty list, ORIFICES CAPACITES' case today,
+// is a true no-op) so this service still needs no ConditionalPointRuleEvaluator/warning-aggregation
+// dependency: presence-vs-blank isn't a "recognized value" question, so a blank cell (the overwhelming
+// majority in every real fixture) is not reported as a warning, unlike ConditionalPointRule's own
+// NoConditionalPointCreated path.
 public sealed class UnconditionalIsolementSheetExtractionService(
     IRepeatingBlockReader repeatingBlockReader,
     ITextTransformEvaluator textTransformEvaluator,
@@ -39,14 +46,24 @@ public sealed class UnconditionalIsolementSheetExtractionService(
 
         foreach (var block in blockResult.Blocks)
         {
-            var repere = ComposeRepere(equipementRepere, block[IsolementFieldNames.Identification]);
+            var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
             isolements.Add(new IsolementPivot(
-                repere, block[IsolementFieldNames.Designation], block[IsolementFieldNames.TypeElement],
+                repere, block.Fields[IsolementFieldNames.Designation], block.Fields[IsolementFieldNames.TypeElement],
                 positionALaPose: "", localisation: ""));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {
                 points.Add(new PointPivot(colonneName, repere));
+            }
+
+            foreach (var rule in sheetRule.FieldPresencePointRules)
+            {
+                var cellValue = workbookReader.ReadCellValue(
+                    sheet, BlockFieldRangeCalculator.BuildRange(rule.Cell, block.StartRow));
+                if (!string.IsNullOrWhiteSpace(cellValue))
+                {
+                    points.Add(new PointPivot(rule.ColonneName, repere));
+                }
             }
         }
 

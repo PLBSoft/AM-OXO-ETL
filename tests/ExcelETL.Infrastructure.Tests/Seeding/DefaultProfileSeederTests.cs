@@ -119,9 +119,25 @@ public class DefaultProfileSeederTests
 
         var platines = profile.SheetRules.Single(r => r.SheetName == "PLATINES");
         platines.Locator.Step.Should().Be(8);
-        platines.UnconditionalColonneNames.Should().HaveCount(7);
+        // Client feedback (2026-09): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" moved out of the
+        // unconditional list (7 -> 5) into FieldPresencePointRules -- see below.
+        platines.UnconditionalColonneNames.Should().HaveCount(5);
         platines.UnconditionalColonneNames.Should().NotContain(name => name.Contains("FIN"));
+        platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT MAD");
+        platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT REL");
         platines.PointRules.Should().BeEmpty();
+
+        platines.FieldPresencePointRules.Should().HaveCount(2);
+        var poseeLeRule = platines.FieldPresencePointRules.Should()
+            .ContainSingle(r => r.ColonneName == "RECEPTION DEBUT MAD").Which;
+        poseeLeRule.Cell.ColumnRange.Should().Be("H:N");
+        poseeLeRule.Cell.RowOffsetStart.Should().Be(2);
+        poseeLeRule.Cell.RowOffsetEnd.Should().Be(2);
+        var deposeeLeRule = platines.FieldPresencePointRules.Should()
+            .ContainSingle(r => r.ColonneName == "RECEPTION DEBUT REL").Which;
+        deposeeLeRule.Cell.ColumnRange.Should().Be("H:N");
+        deposeeLeRule.Cell.RowOffsetStart.Should().Be(3);
+        deposeeLeRule.Cell.RowOffsetEnd.Should().Be(3);
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
@@ -324,7 +340,9 @@ public class DefaultProfileSeederTests
 
         var isolementStyleSheets = importProfile!.SheetRules.Where(r => r.SheetName != "PROCEDURE");
         var producedColonneNames = isolementStyleSheets
-            .SelectMany(r => r.UnconditionalColonneNames.Concat(r.PointRules.Select(p => p.ColonneName)))
+            .SelectMany(r => r.UnconditionalColonneNames
+                .Concat(r.PointRules.Select(p => p.ColonneName))
+                .Concat(r.FieldPresencePointRules.Select(f => f.ColonneName)))
             .ToHashSet();
 
         var enfants = exportProfile!.SheetRules.Single(r => r.SheetName == "Enfants");

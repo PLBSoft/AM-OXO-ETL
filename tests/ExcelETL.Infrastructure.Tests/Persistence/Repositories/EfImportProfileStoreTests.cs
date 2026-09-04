@@ -241,6 +241,54 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithFieldPresencePointRules_RoundTripsIdentically()
+    {
+        // PLATINES client feedback (2026-09): FieldPresencePointRule.Cell (a BlockFieldDefinition, not
+        // a DirectCell -- unlike HeaderFieldRule.Cell above) must round-trip through EF Core intact.
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+        var sheetRule = new SheetExtractionRule(
+            "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
+            fieldPresencePointRules:
+            [
+                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
+            ]);
+        var profile = new ImportProfile("Profil field presence", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        var reloadedRule = reloaded!.SheetRules.Single();
+        reloadedRule.FieldPresencePointRules.Should().HaveCount(2);
+
+        var poseeLe = reloadedRule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT MAD");
+        poseeLe.Cell.Name.Should().Be("PoseeLe");
+        poseeLe.Cell.ColumnRange.Should().Be("H:N");
+        poseeLe.Cell.RowOffsetStart.Should().Be(2);
+        poseeLe.Cell.RowOffsetEnd.Should().Be(2);
+
+        var deposeeLe = reloadedRule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT REL");
+        deposeeLe.Cell.RowOffsetStart.Should().Be(3);
+        deposeeLe.Cell.RowOffsetEnd.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNoFieldPresencePointRules_PersistsAndReloadsAsEmptyList()
+    {
+        // CreateSampleProfile's ISOLEMENT rule never sets FieldPresencePointRules -- the pre-existing
+        // shape for every sheet other than PLATINES today.
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().FieldPresencePointRules.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task SaveAsync_WithZeroEnergieExpectedValue_RoundTripsIdentically()
     {
         // Lot 063.
