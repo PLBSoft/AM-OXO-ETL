@@ -117,6 +117,66 @@ existant, sans repasser par l'assistant complet.*
 Rappel : secret manquant (clé API, chaîne de connexion) → l'app refuse de démarrer (fail-fast
 voulu). Mot de passe admin manquant → `LogWarning` seulement, compte simplement ignoré.
 
+### Où sont physiquement ces variables (confirmé sur le serveur de prod, 2026-09-04)
+
+**« Niveau pool IIS » signifie précisément les variables d'environnement du pool d'applications
+dans `applicationHost.config`** (fonctionnalité native IIS/Windows Server 2022, indépendante du
+`web.config` du site) — **pas** une variable d'environnement Windows classique (Machine/User/
+Process, `[System.Environment]::...`), et **pas** la section `system.webServer/aspNetCore/
+environmentVariables` du `web.config` du site (celle-ci a été vérifiée vide sur ce déploiement).
+Ces trois emplacements existent tous les trois dans Windows/IIS et ne se comportent pas de la même
+façon — voir l'incident ci-dessous.
+
+**Lire les variables d'un pool** :
+```powershell
+Import-Module WebAdministration
+Get-WebConfiguration -Filter "/system.applicationHost/applicationPools/add[@name='<NomDuPool>']/environmentVariables/*"
+```
+
+**Modifier la valeur d'une variable existante** :
+```powershell
+Set-WebConfigurationProperty `
+    -PSPath 'MACHINE/WEBROOT/APPHOST' `
+    -Filter "/system.applicationHost/applicationPools/add[@name='<NomDuPool>']/environmentVariables/add[@name='<NomVariable>']" `
+    -Name "value" `
+    -Value "<NouvelleValeur>"
+```
+Puis redémarrer le pool (`Restart-WebAppPool -Name '<NomDuPool>'`) pour que le processus w3wp la
+relise.
+
+**Ajouter une variable qui n'existe pas encore** : passer par IIS Manager → **Application Pools**
+→ sélectionner le pool → volet Actions → **Environment Variables** (ou l'équivalent GUI côté
+Configuration Editor), plutôt que via PowerShell (pas de cmdlet native pour l'ajout, seule la
+modification d'une entrée déjà présente a été testée ci-dessus).
+
+### Incident du 2026-09-04 : trois emplacements possibles, ne pas confondre
+
+En voulant vérifier/modifier le mot de passe seedé de `J2M`, deux fausses pistes ont été
+explorées avant de trouver la bonne :
+1. `[System.Environment]::GetEnvironmentVariables('Machine'|'User'|'Process')` — ne montre **que**
+   ce qui a été posé explicitement à ce niveau système ; ne reflète jamais ce que le pool IIS
+   injecte réellement dans son propre processus.
+2. `system.webServer/aspNetCore/environmentVariables` du `web.config` du site (via IIS Manager →
+   site → **Configuration Editor**) — confirmé vide (`Count=0`) sur ce déploiement, alors que les
+   3 mots de passe existaient bel et bien, au 3ᵉ emplacement.
+3. **Le bon emplacement** : les variables d'environnement du **pool** (`applicationHost.config`,
+   commande de lecture ci-dessus) — c'est là que `AdminSeedPasswords__SLB`/`__JPN`/`__J2M`
+   étaient réellement définies pour ce déploiement, avec des valeurs de prod déjà générées et
+   jamais documentées ailleurs.
+
+Une variable posée en scope **Machine** en parallèle de celle du pool crée un **doublon** — dans
+le cas vécu ici, c'est la valeur du **pool** qui semble prévaloir au démarrage du processus IIS
+(confirmé empiriquement, pas garanti par la doc Microsoft). **Ne jamais définir la même variable
+`AdminSeedPasswords__*` aux deux endroits** — le pool IIS est la source de vérité unique pour ce
+déploiement, s'y tenir strictement pour toute variable de ce projet.
+
+**Autre piège vécu** : modifier la valeur d'une variable de pool existante puis redémarrer le pool
+**ne change pas le mot de passe d'un compte déjà seedé** — `IdentitySeeder` ne recrée/ne modifie
+jamais un compte `AspNetUsers` déjà existant (voir §0 et `IdentitySeeder.cs`). Une modification de
+mot de passe seedé n'a d'effet que sur un compte qui n'existe pas encore en base (base neuve, ou
+compte supprimé au préalable) — sinon, passer par **Utilisateurs → Réinitialiser le mot de
+passe** dans l'admin, qui génère un mot de passe temporaire distinct (pas celui de la variable).
+
 ---
 
 ## 6. Premier démarrage — vérifications
