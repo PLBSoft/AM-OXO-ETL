@@ -103,6 +103,22 @@ public class ImportProfileTestTests : BunitContext
         return profile;
     }
 
+    private async Task SeedSecondMinimalProfileAsync()
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT",
+            firstBlockStartRow: 9,
+            step: 7,
+            stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
+        var profile = new ImportProfile("Second profile", EquipementTypeElementNom, [], [], [sheetRule]);
+
+        var store = Services.GetRequiredService<IImportProfileStore>();
+        await store.SaveAsync(profile);
+    }
+
     private void SelectProfile(IRenderedComponent<ImportProfileTest> cut, Guid profileId)
     {
         cut.WaitForState(() => cut.FindAll("#test-profile-select option").Count > 1);
@@ -381,6 +397,9 @@ public class ImportProfileTestTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             await SeedRealProfileAsync();
+            // A single profile would be auto-selected on load -- seed a second one so this scenario
+            // (no selection made) is still reachable.
+            await SeedSecondMinimalProfileAsync();
             var cut = Render<ImportProfileTest>();
 
             var inputFileComponent = cut.FindComponent<InputFile>();

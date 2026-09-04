@@ -408,6 +408,11 @@ else
     protected override async Task OnInitializedAsync()
     {
         _profiles = (await ImportProfileStore.GetAllAsync()).ToList();
+
+        if (_profiles.Count == 1)
+        {
+            _selectedProfileId = _profiles[0].Id;
+        }
     }
 
     private async Task OnInputFileChangeAsync(InputFileChangeEventArgs e)
