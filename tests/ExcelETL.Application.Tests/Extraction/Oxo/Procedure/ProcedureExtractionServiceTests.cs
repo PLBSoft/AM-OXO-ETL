@@ -231,7 +231,8 @@ public class ProcedureExtractionServiceTests
         var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
 
         result.TachesMultiples.Should().ContainSingle().Which.Should().BeEquivalentTo(new TacheMultiplePivot(
-            1, "Some action", "Acteur1", "RisqueX", "TM_PROC_MAD", new DateOnly(2026, 7, 16), estFactice: false));
+            1, "Some action", "Acteur1", "RisqueX", "TM_PROC_MAD", new DateOnly(2026, 7, 16), estFactice: false,
+            ligneSource: 9));
     }
 
     [Fact]
@@ -245,7 +246,7 @@ public class ProcedureExtractionServiceTests
         var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
 
         result.TachesMultiples.Should().ContainSingle().Which.Should().BeEquivalentTo(new TacheMultiplePivot(
-            null, "1-SECTION TITLE", "", "", "", null, estFactice: true));
+            null, "1-SECTION TITLE", "", "", "", null, estFactice: true, ligneSource: 9));
     }
 
     [Theory]
@@ -316,6 +317,12 @@ public class ProcedureExtractionServiceTests
         result.TachesMultiples[0].Ordre.Should().Be(1);
         result.TachesMultiples[1].EstFactice.Should().BeTrue();
         result.TachesMultiples[2].Ordre.Should().Be(2);
+
+        // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+        // LigneSource must be the real source row, not the 0-based index in the returned list.
+        result.TachesMultiples[0].LigneSource.Should().Be(9);
+        result.TachesMultiples[1].LigneSource.Should().Be(10);
+        result.TachesMultiples[2].LigneSource.Should().Be(11);
     }
 
     [Fact]

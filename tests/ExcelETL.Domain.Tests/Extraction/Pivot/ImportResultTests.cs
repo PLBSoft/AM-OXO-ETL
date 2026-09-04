@@ -12,7 +12,7 @@ public class ImportResultTests
         var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD");
         var isolements = new List<IsolementPivot> { new("C7401-ISO1", "Vanne", "ZERO ENERGIE", "FERMÉE", "Zone A") };
         var points = new List<PointPivot> { new("PROLOCK VANNES", "C7401-ISO1") };
-        var taches = new List<TacheMultiplePivot> { new(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false) };
+        var taches = new List<TacheMultiplePivot> { new(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false, 52) };
 
         var result = new ImportResult(equipement, isolements, points, taches, []);
 

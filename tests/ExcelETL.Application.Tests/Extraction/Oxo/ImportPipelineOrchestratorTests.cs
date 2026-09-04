@@ -60,7 +60,7 @@ public class ImportPipelineOrchestratorTests
         new EquipementPivot("38-C7401", "Rév 2 du 12/12/2025", EquipementTypeElementNom),
         [],
         [new PointPivot("TRAVAUX COMPLET", "38-C7401"), new PointPivot("TRAVAUX DETAIL", "38-C7401")],
-        [new TacheMultiplePivot(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false)],
+        [new TacheMultiplePivot(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false, 52)],
         []);
 
     [Fact]
@@ -300,8 +300,8 @@ public class ImportPipelineOrchestratorTests
     public void Run_BroadcastsEquipementRepereAndTypeElementNomOntoEveryTacheMultiple()
     {
         SetupMinimalSuccessfulRun([
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
-            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false)
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false, 53)
         ]);
         var workbookReader = Mock.Of<IWorkbookReader>();
 
@@ -312,12 +312,47 @@ public class ImportPipelineOrchestratorTests
         result.TachesMultiples.Should().OnlyContain(t => t.TypeElementNom == EquipementTypeElementNom);
     }
 
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // Localisation follows the exact same broadcast mechanism as Repere/TypeElementNom above, from the
+    // Equipement's own already-diffused Localisation (loc1), not from DIVERS directly.
+    [Fact]
+    public void Run_BroadcastsEquipementLocalisationOntoEveryTacheMultiple()
+    {
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns(new ImportResult(
+                new EquipementPivot("38-C7401", "Rév 2 du 12/12/2025", EquipementTypeElementNom), [], [],
+                [
+                    new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+                    new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false, 53)
+                ],
+                []));
+        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _autresJointsTouchesService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
+            .Returns(new IsolementSheetExtractionResult([], [], []));
+        _diversService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
+            .Returns(new DiversSheetExtractionResult("ZONE 4", [], [], []));
+        var workbookReader = Mock.Of<IWorkbookReader>();
+
+        var result = _sut.Run(workbookReader, CreateProfile());
+
+        result.TachesMultiples.Should().HaveCount(2);
+        result.TachesMultiples.Should().OnlyContain(t => t.Localisation == "ZONE 4");
+    }
+
     [Fact]
     public void Run_ResolvesColonneTravaux_FromMatchingTacheMultipleTypeLabel_TrimmedAndCaseInsensitive()
     {
         SetupMinimalSuccessfulRun([
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
-            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", " tm_proc_rel ", null, false)
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", " tm_proc_rel ", null, false, 53)
         ]);
         var workbookReader = Mock.Of<IWorkbookReader>();
         var profile = CreateProfile(tacheMultipleTypeLabels:
@@ -335,7 +370,7 @@ public class ImportPipelineOrchestratorTests
     [Fact]
     public void Run_WhenNoTacheMultipleTypeLabelMatches_LeavesColonneTravauxBlank()
     {
-        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false)]);
+        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52)]);
         var workbookReader = Mock.Of<IWorkbookReader>();
         var profile = CreateProfile(tacheMultipleTypeLabels: [new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")]);
 
@@ -347,7 +382,7 @@ public class ImportPipelineOrchestratorTests
     [Fact]
     public void Run_WithEmptyTacheMultipleTypeLabels_LeavesColonneTravauxBlankForEveryTache()
     {
-        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false)]);
+        SetupMinimalSuccessfulRun([new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52)]);
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());

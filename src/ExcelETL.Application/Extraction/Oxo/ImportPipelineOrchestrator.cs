@@ -157,6 +157,10 @@ public sealed class ImportPipelineOrchestrator(
     // tache's own TypeTacheMultipleCode in the profile's configured mapping -- trim + insensitive to
     // case, consistent with every other Colonne-name comparison in this pipeline (spec §7) -- and stays
     // "" when no configured entry matches, never an error.
+    //
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // Localisation joins the same broadcast, from equipement.Localisation -- already the final,
+    // DIVERS-broadcast value by the time this runs (equipement is built just above, in Run).
     private static List<TacheMultiplePivot> BroadcastTachesMultiplesContext(
         IReadOnlyList<TacheMultiplePivot> tachesMultiples, EquipementPivot equipement,
         IReadOnlyList<TacheMultipleTypeLabel> tacheMultipleTypeLabels) =>
@@ -164,7 +168,8 @@ public sealed class ImportPipelineOrchestrator(
         {
             Repere = equipement.Repere,
             TypeElementNom = equipement.TypeElementNom,
-            ColonneTravaux = ResolveColonneTravaux(tache.TypeTacheMultipleCode, tacheMultipleTypeLabels)
+            ColonneTravaux = ResolveColonneTravaux(tache.TypeTacheMultipleCode, tacheMultipleTypeLabels),
+            Localisation = equipement.Localisation
         })];
 
     private static string ResolveColonneTravaux(

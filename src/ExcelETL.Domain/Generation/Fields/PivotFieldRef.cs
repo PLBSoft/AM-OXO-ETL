@@ -26,5 +26,8 @@ public enum PivotFieldRef
     TacheMultipleDateValidation,
     TacheMultipleRepere,
     TacheMultipleTypeElementNom,
-    TacheMultipleColonneTravaux
+    TacheMultipleColonneTravaux,
+    TacheMultipleTypeTacheMultipleCode,
+    TacheMultipleLocalisation,
+    TacheMultipleLigneSource
 }

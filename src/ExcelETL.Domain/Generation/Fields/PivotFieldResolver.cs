@@ -33,7 +33,10 @@ public static class PivotFieldResolver
             or PivotFieldRef.TacheMultipleDateValidation
             or PivotFieldRef.TacheMultipleRepere
             or PivotFieldRef.TacheMultipleTypeElementNom
-            or PivotFieldRef.TacheMultipleColonneTravaux => PivotSource.TacheMultiple,
+            or PivotFieldRef.TacheMultipleColonneTravaux
+            or PivotFieldRef.TacheMultipleTypeTacheMultipleCode
+            or PivotFieldRef.TacheMultipleLocalisation
+            or PivotFieldRef.TacheMultipleLigneSource => PivotSource.TacheMultiple,
         _ => throw new ArgumentOutOfRangeException(nameof(fieldRef), fieldRef, "Unknown pivot field reference.")
     };
 
@@ -78,6 +81,9 @@ public static class PivotFieldResolver
         PivotFieldRef.TacheMultipleRepere => tacheMultiple.Repere,
         PivotFieldRef.TacheMultipleTypeElementNom => tacheMultiple.TypeElementNom,
         PivotFieldRef.TacheMultipleColonneTravaux => tacheMultiple.ColonneTravaux,
+        PivotFieldRef.TacheMultipleTypeTacheMultipleCode => tacheMultiple.TypeTacheMultipleCode,
+        PivotFieldRef.TacheMultipleLocalisation => tacheMultiple.Localisation,
+        PivotFieldRef.TacheMultipleLigneSource => tacheMultiple.LigneSource.ToString(CultureInfo.InvariantCulture),
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for a TacheMultiple row. This should have been rejected at profile construction.")
     };

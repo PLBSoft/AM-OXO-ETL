@@ -11,10 +11,10 @@ namespace ExcelETL.Application.Tests.Extraction.Oxo.Procedure;
 public class TacheMultipleSectionGrouperTests
 {
     private static TacheMultiplePivot Factice(string title) =>
-        new(null, title, "", "", "", null, estFactice: true);
+        new(null, title, "", "", "", null, estFactice: true, ligneSource: 9);
 
     private static TacheMultiplePivot Tache(int ordre, string type) =>
-        new(ordre, "Some action", "", "", type, null, estFactice: false);
+        new(ordre, "Some action", "", "", type, null, estFactice: false, ligneSource: 9);
 
     [Fact]
     public void GroupBySection_WithEmptyList_ReturnsNoSections()
@@ -99,7 +99,8 @@ public class TacheMultipleSectionGrouperTests
         // Pre-existing edge case in ProcedureExtractionService.ReadTachesMultiples: a non-blank but
         // unparsable Ordre cell means EstFactice = false yet Ordre stays null. Out of this ticket's
         // scope to fix -- just must not crash the new section grouping.
-        var tacheWithUnparsableOrdre = new TacheMultiplePivot(null, "Some action", "", "", "TM_PROC_MAD", null, estFactice: false);
+        var tacheWithUnparsableOrdre = new TacheMultiplePivot(
+            null, "Some action", "", "", "TM_PROC_MAD", null, estFactice: false, ligneSource: 9);
         var tachesMultiples = new List<TacheMultiplePivot>
         {
             Factice("1-SECTION"),

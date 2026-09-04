@@ -18,8 +18,13 @@ public class PivotFieldResolverTests
 
     private static TacheMultiplePivot TacheMultiple() => new TacheMultiplePivot(
         ordre: 3, action: "Consigner", acteur: "ADF", risques: "Aucun",
-        typeTacheMultipleCode: "TM_PROC_MAD", dateValidation: new DateOnly(2026, 7, 22), estFactice: false)
-        with { Repere = "38-C7401", TypeElementNom = "MAD TRAVAUX", ColonneTravaux = "Procédure MAD" };
+        typeTacheMultipleCode: "TM_PROC_MAD", dateValidation: new DateOnly(2026, 7, 22), estFactice: false,
+        ligneSource: 52)
+        with
+        {
+            Repere = "38-C7401", TypeElementNom = "MAD TRAVAUX", ColonneTravaux = "Procédure MAD",
+            Localisation = "ZONE 4"
+        };
 
     [Fact]
     public void Resolve_EquipementRepere_ReturnsRepere()
@@ -155,6 +160,9 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.TacheMultipleRepere, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleTypeElementNom, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleColonneTravaux, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleTypeTacheMultipleCode, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleLocalisation, PivotSource.TacheMultiple)]
+    [InlineData(PivotFieldRef.TacheMultipleLigneSource, PivotSource.TacheMultiple)]
     public void GetPivotSource_ForEveryField_ReturnsExpectedSource(PivotFieldRef fieldRef, PivotSource expected)
     {
         PivotFieldResolver.GetPivotSource(fieldRef).Should().Be(expected);
@@ -169,7 +177,7 @@ public class PivotFieldResolverTests
     [Fact]
     public void Resolve_TacheMultipleOrdreWhenNull_ReturnsEmptyString()
     {
-        var tacheMultiple = new TacheMultiplePivot(null, "Consigner", "", "", "TM_PROC_MAD", null, true);
+        var tacheMultiple = new TacheMultiplePivot(null, "Consigner", "", "", "TM_PROC_MAD", null, true, 9);
 
         PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleOrdre).Should().Be(string.Empty);
     }
@@ -201,7 +209,7 @@ public class PivotFieldResolverTests
     [Fact]
     public void Resolve_TacheMultipleDateValidationWhenNull_ReturnsEmptyString()
     {
-        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false);
+        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52);
 
         PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleDateValidation).Should().Be(string.Empty);
     }
@@ -227,9 +235,35 @@ public class PivotFieldResolverTests
     [Fact]
     public void Resolve_TacheMultipleColonneTravauxWhenBlank_ReturnsEmptyString()
     {
-        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_UNKNOWN", null, false);
+        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_UNKNOWN", null, false, 52);
 
         PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleColonneTravaux).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleTypeTacheMultipleCode_ReturnsTypeTacheMultipleCode()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleTypeTacheMultipleCode).Should().Be("TM_PROC_MAD");
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleLocalisation_ReturnsLocalisation()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleLocalisation).Should().Be("ZONE 4");
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleLocalisationWhenBlank_ReturnsEmptyString()
+    {
+        var tacheMultiple = new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52);
+
+        PivotFieldResolver.Resolve(tacheMultiple, PivotFieldRef.TacheMultipleLocalisation).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Resolve_TacheMultipleLigneSource_ReturnsLigneSourceAsString()
+    {
+        PivotFieldResolver.Resolve(TacheMultiple(), PivotFieldRef.TacheMultipleLigneSource).Should().Be("52");
     }
 
     [Fact]

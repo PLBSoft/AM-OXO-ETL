@@ -150,8 +150,8 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false),
-            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", new DateOnly(2026, 7, 21), false));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false, 52),
+            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", new DateOnly(2026, 7, 21), false, 53));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -164,8 +164,8 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false),
-            new TacheMultiplePivot(null, "--- Section suivante ---", "", "", "TM_PROC_MAD", null, true));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false, 52),
+            new TacheMultiplePivot(null, "--- Section suivante ---", "", "", "TM_PROC_MAD", null, true, 53));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -181,9 +181,9 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Première", "ADF", "Aucun", "TM_PROC_MAD", null, false),
-            new TacheMultiplePivot(null, "Factice intercalée", "", "", "TM_PROC_MAD", null, true),
-            new TacheMultiplePivot(2, "Deuxième", "ADF", "Aucun", "TM_PROC_MAD", null, false));
+            new TacheMultiplePivot(1, "Première", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+            new TacheMultiplePivot(null, "Factice intercalée", "", "", "TM_PROC_MAD", null, true, 53),
+            new TacheMultiplePivot(2, "Deuxième", "ADF", "Aucun", "TM_PROC_MAD", null, false, 54));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -196,9 +196,9 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Z action", "ADF", "", "TM_PROC_Z", null, false),
-            new TacheMultiplePivot(1, "A action", "ADF", "", "TM_PROC_A", null, false),
-            new TacheMultiplePivot(1, "M action", "ADF", "", "TM_PROC_M", null, false));
+            new TacheMultiplePivot(1, "Z action", "ADF", "", "TM_PROC_Z", null, false, 52),
+            new TacheMultiplePivot(1, "A action", "ADF", "", "TM_PROC_A", null, false, 53),
+            new TacheMultiplePivot(1, "M action", "ADF", "", "TM_PROC_M", null, false, 54));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -223,7 +223,7 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [ParentsRule(), EnfantsRule(), TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -238,7 +238,7 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM/PROC:MAD", null, false));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM/PROC:MAD", null, false, 52));
 
         var act = () => _sut.Generate(importResult, profile);
 
@@ -252,7 +252,7 @@ public class SheetGenerationEngineTests
         var longCode = new string('A', 40);
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", longCode, null, false));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", longCode, null, false, 52));
 
         var workbook = _sut.Generate(importResult, profile);
 
@@ -265,8 +265,8 @@ public class SheetGenerationEngineTests
     {
         var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
         var importResult = ImportResultWith(
-            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false),
-            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false));
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false, 53));
 
         var workbook = _sut.Generate(importResult, profile);
 

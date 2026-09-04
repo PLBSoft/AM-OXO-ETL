@@ -182,7 +182,7 @@ public sealed class ProcedureExtractionService(
             var dateValidation = TryParseDate(dateValidationRaw, out var parsedDate) ? parsedDate : (DateOnly?)null;
 
             tachesMultiples.Add(new TacheMultiplePivot(
-                ordre, action, acteur, risques, typeTacheMultipleCode, dateValidation, estFactice));
+                ordre, action, acteur, risques, typeTacheMultipleCode, dateValidation, estFactice, blockStartRow));
 
             blockIndex++;
         }
