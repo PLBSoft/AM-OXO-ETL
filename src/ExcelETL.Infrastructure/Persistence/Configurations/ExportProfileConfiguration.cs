@@ -98,6 +98,24 @@ public class ExportProfileConfiguration : IEntityTypeConfiguration<ExportProfile
                     .IsRequired()
                     .HasMaxLength(50);
             });
+
+            // Lot 069: a column whose Value is written verbatim on every row, independently of any
+            // pivot data (e.g. "CRITERE"/"AVANCEMENT"/"SUPPRESSION" on the "Tâches multiples" rule).
+            rules.OwnsMany(r => r.ConstantColumnDefinitions, constants =>
+            {
+                constants.ToTable("ExportProfileSheetRuleConstantColumnDefinitions");
+                constants.WithOwner().HasForeignKey("SheetGenerationRuleId");
+                constants.Property<int>("Id");
+                constants.HasKey("Id");
+
+                constants.Property(c => c.Header)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                constants.Property(c => c.Value)
+                    .IsRequired()
+                    .HasMaxLength(200);
+            });
         });
     }
 }

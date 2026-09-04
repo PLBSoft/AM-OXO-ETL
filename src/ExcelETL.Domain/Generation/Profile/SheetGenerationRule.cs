@@ -24,19 +24,26 @@ public sealed record SheetGenerationRule
     private readonly List<ColumnDefinition> _columnDefinitions = [];
     private readonly List<PointColumnDefinition> _pointColumnDefinitions = [];
     private readonly List<ApplicationColumnDefinition> _applicationColumnDefinitions = [];
+    private readonly List<ConstantColumnDefinition> _constantColumnDefinitions = [];
 
     public string SheetName { get; }
     public PivotSource PivotSource { get; }
     public IReadOnlyList<ColumnDefinition> ColumnDefinitions => _columnDefinitions;
     public IReadOnlyList<PointColumnDefinition> PointColumnDefinitions => _pointColumnDefinitions;
     public IReadOnlyList<ApplicationColumnDefinition> ApplicationColumnDefinitions => _applicationColumnDefinitions;
+    public IReadOnlyList<ConstantColumnDefinition> ConstantColumnDefinitions => _constantColumnDefinitions;
 
+    // constantColumnDefinitions is a last, optional parameter (Lot 069) -- unlike the 3 collections
+    // above, most sheets (Parents/Enfants) never need a constant column, so making it required would
+    // force a mechanical update of every one of the ~20 existing `new SheetGenerationRule(...)` call
+    // sites for no benefit. Normalized to [] rather than left null.
     public SheetGenerationRule(
         string sheetName,
         PivotSource pivotSource,
         IReadOnlyList<ColumnDefinition> columnDefinitions,
         IReadOnlyList<PointColumnDefinition> pointColumnDefinitions,
-        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
+        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions,
+        IReadOnlyList<ConstantColumnDefinition>? constantColumnDefinitions = null)
     {
         ValidateSheetNameNotEmpty(sheetName);
 
@@ -44,10 +51,13 @@ public sealed record SheetGenerationRule
         ArgumentNullException.ThrowIfNull(pointColumnDefinitions);
         ArgumentNullException.ThrowIfNull(applicationColumnDefinitions);
 
+        constantColumnDefinitions ??= [];
+
         ValidateColumnPivotSourceCompatibility(columnDefinitions, pivotSource);
         ValidateNoPointColumnsForTacheMultiple(sheetName, pivotSource, pointColumnDefinitions);
         ValidateNoApplicationColumnsForTacheMultiple(sheetName, pivotSource, applicationColumnDefinitions);
-        ValidateNoDuplicateHeaders(sheetName, columnDefinitions, pointColumnDefinitions, applicationColumnDefinitions);
+        ValidateNoDuplicateHeaders(
+            sheetName, columnDefinitions, pointColumnDefinitions, applicationColumnDefinitions, constantColumnDefinitions);
         ValidateNoDuplicateColonneNom(sheetName, pointColumnDefinitions);
         ValidateNoDuplicateApplicationNom(sheetName, applicationColumnDefinitions);
 
@@ -56,6 +66,7 @@ public sealed record SheetGenerationRule
         _columnDefinitions = [.. columnDefinitions];
         _pointColumnDefinitions = [.. pointColumnDefinitions];
         _applicationColumnDefinitions = [.. applicationColumnDefinitions];
+        _constantColumnDefinitions = [.. constantColumnDefinitions];
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately
@@ -119,11 +130,13 @@ public sealed record SheetGenerationRule
         string sheetName,
         IReadOnlyList<ColumnDefinition> columnDefinitions,
         IReadOnlyList<PointColumnDefinition> pointColumnDefinitions,
-        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
+        IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions,
+        IReadOnlyList<ConstantColumnDefinition> constantColumnDefinitions)
     {
         var duplicateHeader = columnDefinitions.Select(c => c.Header)
             .Concat(pointColumnDefinitions.Select(p => p.Header))
             .Concat(applicationColumnDefinitions.Select(a => a.Header))
+            .Concat(constantColumnDefinitions.Select(c => c.Header))
             .GroupBy(header => header)
             .FirstOrDefault(group => group.Count() > 1);
 
@@ -172,7 +185,8 @@ public sealed record SheetGenerationRule
         && PivotSource == other.PivotSource
         && ColumnDefinitions.SequenceEqual(other.ColumnDefinitions)
         && PointColumnDefinitions.SequenceEqual(other.PointColumnDefinitions)
-        && ApplicationColumnDefinitions.SequenceEqual(other.ApplicationColumnDefinitions);
+        && ApplicationColumnDefinitions.SequenceEqual(other.ApplicationColumnDefinitions)
+        && ConstantColumnDefinitions.SequenceEqual(other.ConstantColumnDefinitions);
 
     public override int GetHashCode()
     {
@@ -192,6 +206,11 @@ public sealed record SheetGenerationRule
         foreach (var application in ApplicationColumnDefinitions)
         {
             hash.Add(application);
+        }
+
+        foreach (var constant in ConstantColumnDefinitions)
+        {
+            hash.Add(constant);
         }
 
         return hash.ToHashCode();

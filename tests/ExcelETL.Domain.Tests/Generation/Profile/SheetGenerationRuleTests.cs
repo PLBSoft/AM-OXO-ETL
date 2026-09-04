@@ -263,4 +263,72 @@ public class SheetGenerationRuleTests
 
         first.Should().Be(second);
     }
+
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // ConstantColumnDefinitions is the 4th, optional collection -- omitted by every test above, which
+    // must all still pass unmodified (confirmed by the full non-regression run before adding these).
+    [Fact]
+    public void Constructor_WithConstantColumnDefinitionsOmitted_DefaultsToEmpty()
+    {
+        var rule = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), []);
+
+        rule.ConstantColumnDefinitions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithConstantColumnDefinitions_CreatesSheetGenerationRule()
+    {
+        IReadOnlyList<ConstantColumnDefinition> constants = [new ConstantColumnDefinition("CRITERE", "A faire")];
+
+        var rule = new SheetGenerationRule(
+            "Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), [], constants);
+
+        rule.ConstantColumnDefinitions.Should().BeEquivalentTo(constants);
+    }
+
+    [Fact]
+    public void Constructor_WithHeaderCollisionBetweenColumnAndConstantDefinitions_ThrowsDomainValidationException()
+    {
+        IReadOnlyList<ColumnDefinition> columns = [new ColumnDefinition("CRITERE", null)];
+        IReadOnlyList<ConstantColumnDefinition> constants = [new ConstantColumnDefinition("CRITERE", "A faire")];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, [], [], constants);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateHeader);
+    }
+
+    [Fact]
+    public void Constructor_WithTacheMultiplePivotSourceAndConstantColumnDefinitions_CreatesSheetGenerationRule()
+    {
+        // Unlike Point/Application columns, a constant column references no pivot field at all -- it is
+        // explicitly allowed for PivotSource.TacheMultiple.
+        IReadOnlyList<ConstantColumnDefinition> constants = [new ConstantColumnDefinition("CRITERE", "A faire")];
+
+        var rule = new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple, [], [], [], constants);
+
+        rule.ConstantColumnDefinitions.Should().BeEquivalentTo(constants);
+    }
+
+    [Fact]
+    public void Equality_WithSameConstantColumnDefinitions_AreEqual()
+    {
+        IReadOnlyList<ConstantColumnDefinition> constants = [new ConstantColumnDefinition("CRITERE", "A faire")];
+
+        var first = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), [], constants);
+        var second = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), [], constants);
+
+        first.Should().Be(second);
+    }
+
+    [Fact]
+    public void Equality_WithDifferentConstantColumnDefinitions_AreNotEqual()
+    {
+        var first = new SheetGenerationRule(
+            "Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), [],
+            [new ConstantColumnDefinition("CRITERE", "A faire")]);
+        var second = new SheetGenerationRule("Parents", PivotSource.Equipement, ValidColumns(), ValidPoints(), []);
+
+        first.Should().NotBe(second);
+    }
 }

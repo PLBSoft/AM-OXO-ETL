@@ -196,4 +196,10 @@
   <data name="ApplicationColumnDefinition_EmptyMarkValue" xml:space="preserve">
     <value>Mark value must not be empty.</value>
   </data>
+  <data name="ConstantColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>Header must not be empty.</value>
+  </data>
+  <data name="ConstantColumnDefinition_EmptyValue" xml:space="preserve">
+    <value>Value must not be empty.</value>
+  </data>
 </root>

@@ -196,4 +196,10 @@
   <data name="ApplicationColumnDefinition_EmptyMarkValue" xml:space="preserve">
     <value>La valeur de marquage ne doit pas être vide.</value>
   </data>
+  <data name="ConstantColumnDefinition_EmptyHeader" xml:space="preserve">
+    <value>L'en-tête ne doit pas être vide.</value>
+  </data>
+  <data name="ConstantColumnDefinition_EmptyValue" xml:space="preserve">
+    <value>La valeur ne doit pas être vide.</value>
+  </data>
 </root>

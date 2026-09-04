@@ -73,5 +73,7 @@ public enum DomainErrorCode
     PointColumnDefinition_EmptyMarkValue,
     ApplicationColumnDefinition_EmptyApplicationNom,
     ApplicationColumnDefinition_EmptyHeader,
-    ApplicationColumnDefinition_EmptyMarkValue
+    ApplicationColumnDefinition_EmptyMarkValue,
+    ConstantColumnDefinition_EmptyHeader,
+    ConstantColumnDefinition_EmptyValue
 }

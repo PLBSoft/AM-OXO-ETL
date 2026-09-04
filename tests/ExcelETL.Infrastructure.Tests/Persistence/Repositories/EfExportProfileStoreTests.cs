@@ -247,4 +247,50 @@ public class EfExportProfileStoreTests
         var all = await store.GetAllAsync();
         all.Should().HaveCount(2);
     }
+
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // ConstantColumnDefinitions round-trip, including a PivotSource.TacheMultiple rule (allowed there,
+    // unlike PointColumnDefinitions/ApplicationColumnDefinitions) and an empty list.
+    [Fact]
+    public async Task SaveAsync_WithConstantColumnDefinitions_PersistsAndReloadsThem()
+    {
+        var profile = new ExportProfile(
+            "Export with constants",
+            [
+                new SheetGenerationRule(
+                    "Tâches multiples",
+                    PivotSource.TacheMultiple,
+                    [new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction)],
+                    [],
+                    [],
+                    [
+                        new ConstantColumnDefinition("CRITERE", "A faire"),
+                        new ConstantColumnDefinition("AVANCEMENT", "0"),
+                        new ConstantColumnDefinition("SUPPRESSION", "N")
+                    ])
+            ]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        var rule = reloaded!.SheetRules.Single();
+        rule.PivotSource.Should().Be(PivotSource.TacheMultiple);
+        rule.ConstantColumnDefinitions.Should().HaveCount(3);
+        rule.ConstantColumnDefinitions.Should().Contain(c => c.Header == "CRITERE" && c.Value == "A faire");
+        rule.ConstantColumnDefinitions.Should().Contain(c => c.Header == "AVANCEMENT" && c.Value == "0");
+        rule.ConstantColumnDefinitions.Should().Contain(c => c.Header == "SUPPRESSION" && c.Value == "N");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNoConstantColumnDefinitions_RoundTripsAsEmptyList()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().ConstantColumnDefinitions.Should().BeEmpty();
+    }
 }
