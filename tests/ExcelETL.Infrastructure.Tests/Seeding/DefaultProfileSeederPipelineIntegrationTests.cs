@@ -226,6 +226,14 @@ public class DefaultProfileSeederPipelineIntegrationTests
         _writer.Write(generatedWorkbook, destination);
         using var reread = new XLWorkbook(destination);
 
+        // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+        // header resolved dynamically from the profile itself (not fixed positions), same "figer par le
+        // test, pas par un décompte manuel" convention as Parents/Enfants below.
+        var tacheMultipleRule = exportProfile.SheetRules.Single(r => r.PivotSource == PivotSource.TacheMultiple);
+        var expectedTacheMultipleHeaders = tacheMultipleRule.ColumnDefinitions.Select(c => c.Header)
+            .Concat(tacheMultipleRule.ConstantColumnDefinitions.Select(c => c.Header))
+            .ToList();
+
         var expectedCounts = importResult.TachesMultiples
             .GroupBy(t => t.TypeTacheMultipleCode)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -235,10 +243,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
         foreach (var (code, count) in expectedCounts)
         {
             var sheet = reread.Worksheet(code);
-            sheet.Cell(1, 1).GetString().Should().Be("Repère TM");
-            sheet.Cell(1, 2).GetString().Should().Be("TYPE ELEMENT CODE");
-            sheet.Cell(1, 3).GetString().Should().Be("Ordre");
-            sheet.Cell(1, 4).GetString().Should().Be("Action");
+            sheet.Row(1).CellsUsed().Select(c => c.GetString()).Should().Equal(expectedTacheMultipleHeaders);
             sheet.RowsUsed().Should().HaveCount(1 + count);
         }
     }
@@ -246,6 +251,11 @@ public class DefaultProfileSeederPipelineIntegrationTests
     // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.4:
     // against the profile as seeded and fetched back -- every row of both dynamic sheets carries the
     // right Repère TM/TYPE ELEMENT CODE/Colonne Travaux value.
+    //
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // extended to cover the 8 new columns per row, column indices resolved dynamically from the
+    // profile (headers can shift order across an EF round trip, same caveat noted in
+    // DefaultProfileSeederTests.cs for this owned collection).
     [Fact]
     public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesRepereTypeAndColonneTravauxOnBothTacheMultipleSheets()
     {
@@ -263,23 +273,39 @@ public class DefaultProfileSeederPipelineIntegrationTests
         _writer.Write(generatedWorkbook, destination);
         using var reread = new XLWorkbook(destination);
 
+        var tacheMultipleRule = exportProfile.SheetRules.Single(r => r.PivotSource == PivotSource.TacheMultiple);
+        var expectedHeaders = tacheMultipleRule.ColumnDefinitions.Select(c => c.Header)
+            .Concat(tacheMultipleRule.ConstantColumnDefinitions.Select(c => c.Header))
+            .ToList();
+        int Col(string header) => expectedHeaders.IndexOf(header) + 1;
+
         var expectedRepere = importResult.Equipement!.Repere;
+        var expectedZone = importResult.Equipement.Localisation;
 
-        var mad = reread.Worksheet("TM_PROC_MAD");
-        foreach (var row in mad.RowsUsed().Skip(1))
+        void AssertSheet(string sheetName, string expectedColonneTravaux)
         {
-            row.Cell(1).GetString().Should().Be(expectedRepere);
-            row.Cell(2).GetString().Should().Be("MAD TRAVAUX");
-            row.Cell(8).GetString().Should().Be("Procédure MAD");
+            var sheet = reread.Worksheet(sheetName);
+            foreach (var row in sheet.RowsUsed().Skip(1))
+            {
+                row.Cell(Col("GUID")).GetString().Should().BeEmpty();
+                row.Cell(Col("TYPE TACHE")).GetString().Should().Be(sheetName);
+                row.Cell(Col("Repère TM")).GetString().Should().Be(expectedRepere);
+                row.Cell(Col("ZONE")).GetString().Should().Be(expectedZone);
+                row.Cell(Col("LOC2")).GetString().Should().BeEmpty();
+                row.Cell(Col("LOC3")).GetString().Should().BeEmpty();
+                row.Cell(Col("TYPE ELEMENT CODE")).GetString().Should().Be("MAD TRAVAUX");
+                row.Cell(Col("LOT")).GetString().Should().BeEmpty();
+                row.Cell(Col("Ressource")).GetString().Should().BeEmpty();
+                row.Cell(Col("Ligne")).GetValue<int>().Should().BePositive();
+                row.Cell(Col("Colonne Travaux")).GetString().Should().Be(expectedColonneTravaux);
+                row.Cell(Col("CRITERE")).GetString().Should().Be("A faire");
+                row.Cell(Col("AVANCEMENT")).GetString().Should().Be("0");
+                row.Cell(Col("SUPPRESSION")).GetString().Should().Be("N");
+            }
         }
 
-        var rel = reread.Worksheet("TM_PROC_REL");
-        foreach (var row in rel.RowsUsed().Skip(1))
-        {
-            row.Cell(1).GetString().Should().Be(expectedRepere);
-            row.Cell(2).GetString().Should().Be("MAD TRAVAUX");
-            row.Cell(8).GetString().Should().Be("Procédure REL");
-        }
+        AssertSheet("TM_PROC_MAD", "Procédure MAD");
+        AssertSheet("TM_PROC_REL", "Procédure REL");
     }
 
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U6: header order (and content)

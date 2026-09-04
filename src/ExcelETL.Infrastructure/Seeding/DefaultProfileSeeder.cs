@@ -395,12 +395,30 @@ public class DefaultProfileSeeder(
     // "Repère TM"/"TYPE ELEMENT CODE" (identity columns, same lead position as Repère/Type Elément on
     // Parents/Enfants) and "Colonne Travaux" (the legacy app's own linking column, positioned last --
     // resolved per-row from ImportProfile.TacheMultipleTypeLabels, see ImportPipelineOrchestrator).
+    //
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // completes the sheet toward the client's real target trame (OXO.TRAME.IMPORT.MAD.xlsx). Order
+    // follows the reference trame's own groupings, without reordering the 8 columns already above --
+    // "GUID" (unmapped, no correspondence)/"TYPE TACHE" (the sheet's own code)/"ZONE" (Equipement's
+    // zone, broadcast) lead alongside "Repère TM"; "LOC2"/"LOC3"/"LOT"/"Ressource" are unmapped, same
+    // treatment as their Parents/Enfants counterparts (always blank for now); "Ligne" is the real source
+    // row number; "CRITERE"/"AVANCEMENT"/"SUPPRESSION" are constant per client instruction. "Type"/
+    // "AVANCEMENT POINT"/"SIGNATURE"/"DERNIERE MODIF"/"UTILISATEUR" are deliberately not reported at
+    // all (client: "on ignore"/"on ne reporte pas cette colonne").
     private static SheetGenerationRule BuildTacheMultipleSheetRule() => new(
         "Tâches multiples",
         PivotSource.TacheMultiple,
         [
+            new ColumnDefinition("GUID", null),
+            new ColumnDefinition("TYPE TACHE", PivotFieldRef.TacheMultipleTypeTacheMultipleCode),
             new ColumnDefinition("Repère TM", PivotFieldRef.TacheMultipleRepere),
+            new ColumnDefinition("ZONE", PivotFieldRef.TacheMultipleLocalisation),
+            new ColumnDefinition("LOC2", null),
+            new ColumnDefinition("LOC3", null),
             new ColumnDefinition("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
+            new ColumnDefinition("LOT", null),
+            new ColumnDefinition("Ressource", null),
+            new ColumnDefinition("Ligne", PivotFieldRef.TacheMultipleLigneSource),
             new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre),
             new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction),
             new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
@@ -409,5 +427,10 @@ public class DefaultProfileSeeder(
             new ColumnDefinition("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
         ],
         [],
-        []);
+        [],
+        [
+            new ConstantColumnDefinition("CRITERE", "A faire"),
+            new ConstantColumnDefinition("AVANCEMENT", "0"),
+            new ConstantColumnDefinition("SUPPRESSION", "N")
+        ]);
 }

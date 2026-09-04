@@ -284,17 +284,36 @@ public class DefaultProfileSeederTests
         var tachesMultiples = profile.SheetRules.Single(r => r.SheetName == "Tâches multiples");
         tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
-        tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
-        [
-            PivotFieldRef.TacheMultipleRepere,
-            PivotFieldRef.TacheMultipleTypeElementNom,
-            PivotFieldRef.TacheMultipleOrdre,
-            PivotFieldRef.TacheMultipleAction,
-            PivotFieldRef.TacheMultipleActeur,
-            PivotFieldRef.TacheMultipleRisques,
-            PivotFieldRef.TacheMultipleDateValidation,
-            PivotFieldRef.TacheMultipleColonneTravaux
-        ]);
+        tachesMultiples.ApplicationColumnDefinitions.Should().BeEmpty();
+        // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+        // 8 columns became 16, completing toward the client's real target trame. Order among owned
+        // ColumnDefinitions isn't guaranteed by the EF Core InMemory provider (same caveat as the
+        // top-level SheetRules ordering noted elsewhere in this file), so this asserts the exact
+        // Header<->Source correspondence and count, not sequence.
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(16);
+        tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
+        {
+            ("GUID", null),
+            ("TYPE TACHE", PivotFieldRef.TacheMultipleTypeTacheMultipleCode),
+            ("Repère TM", PivotFieldRef.TacheMultipleRepere),
+            ("ZONE", PivotFieldRef.TacheMultipleLocalisation),
+            ("LOC2", null),
+            ("LOC3", null),
+            ("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
+            ("LOT", null),
+            ("Ressource", null),
+            ("Ligne", PivotFieldRef.TacheMultipleLigneSource),
+            ("Ordre", PivotFieldRef.TacheMultipleOrdre),
+            ("Action", PivotFieldRef.TacheMultipleAction),
+            ("Acteur", PivotFieldRef.TacheMultipleActeur),
+            ("Risques", PivotFieldRef.TacheMultipleRisques),
+            ("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
+            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
+        });
+        tachesMultiples.ConstantColumnDefinitions.Should().HaveCount(3);
+        tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "CRITERE" && c.Value == "A faire");
+        tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "AVANCEMENT" && c.Value == "0");
+        tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "SUPPRESSION" && c.Value == "N");
     }
 
     // Lot 066, 66.2: unmapped identity ColumnDefinitions (decision 6) -- Source = null, a legitimately
@@ -439,17 +458,28 @@ public class DefaultProfileSeederTests
         var tachesMultiples = migrated.SheetRules.Single(r => r.SheetName == "Tâches multiples");
         tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
-        tachesMultiples.ColumnDefinitions.Select(c => c.Source).Should().BeEquivalentTo(
-        [
-            PivotFieldRef.TacheMultipleRepere,
-            PivotFieldRef.TacheMultipleTypeElementNom,
-            PivotFieldRef.TacheMultipleOrdre,
-            PivotFieldRef.TacheMultipleAction,
-            PivotFieldRef.TacheMultipleActeur,
-            PivotFieldRef.TacheMultipleRisques,
-            PivotFieldRef.TacheMultipleDateValidation,
-            PivotFieldRef.TacheMultipleColonneTravaux
-        ]);
+        // Lot 069: the migration path shares BuildTacheMultipleSheetRule with the nominal seed path, so
+        // it gains the same 16 columns automatically. Order-independent, same caveat as above.
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(16);
+        tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
+        {
+            ("GUID", null),
+            ("TYPE TACHE", PivotFieldRef.TacheMultipleTypeTacheMultipleCode),
+            ("Repère TM", PivotFieldRef.TacheMultipleRepere),
+            ("ZONE", PivotFieldRef.TacheMultipleLocalisation),
+            ("LOC2", null),
+            ("LOC3", null),
+            ("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
+            ("LOT", null),
+            ("Ressource", null),
+            ("Ligne", PivotFieldRef.TacheMultipleLigneSource),
+            ("Ordre", PivotFieldRef.TacheMultipleOrdre),
+            ("Action", PivotFieldRef.TacheMultipleAction),
+            ("Acteur", PivotFieldRef.TacheMultipleActeur),
+            ("Risques", PivotFieldRef.TacheMultipleRisques),
+            ("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
+            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
+        });
     }
 
     [Fact]
