@@ -18,7 +18,7 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 public class ProcedureExtractionServiceIntegrationTests
 {
     private const string Sheet = "PROCEDURE";
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
 

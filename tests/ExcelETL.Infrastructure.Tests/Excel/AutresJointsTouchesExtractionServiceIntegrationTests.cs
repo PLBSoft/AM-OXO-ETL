@@ -17,7 +17,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 {
     private const string Sheet = "AUTRES JOINTS TOUCHES";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
 
     private static readonly string[] UnconditionalColonneNames =
     [

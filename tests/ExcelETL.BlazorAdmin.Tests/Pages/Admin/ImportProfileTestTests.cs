@@ -33,7 +33,7 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 // second file, since both need the identical DI wiring and fixture-path helper below.
 public class ImportProfileTestTests : BunitContext
 {
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";

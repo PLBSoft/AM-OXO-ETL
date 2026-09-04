@@ -19,7 +19,7 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 // from the same cell ranges already validated individually by each sheet's own integration tests.
 public class ImportPipelineOrchestratorIntegrationTests
 {
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";

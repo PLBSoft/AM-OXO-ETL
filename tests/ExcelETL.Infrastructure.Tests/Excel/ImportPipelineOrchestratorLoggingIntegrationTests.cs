@@ -22,7 +22,7 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 // established no-shared-test-helper convention, see CLAUDE.md).
 public class ImportPipelineOrchestratorLoggingIntegrationTests
 {
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";

@@ -605,7 +605,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     private static ImportProfile CreateImportProfile() => new(
-        "Profil OXO standard", "MAD-OXO-", "MAD TRAVAUX",
+        "Profil OXO standard", "OXO-", "MAD TRAVAUX",
         ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], ["PROGRESS"],
         [
             new SheetExtractionRule(

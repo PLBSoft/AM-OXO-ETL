@@ -37,12 +37,12 @@ public class ImportProfileTests
     }
 
     [Fact]
-    public void Constructor_WithoutReperePrefix_DefaultsToMadOxo()
+    public void Constructor_WithoutReperePrefix_DefaultsToOxo()
     {
         var profile = new ImportProfile(
             "Profil OXO standard", EquipementTypeElementNom, [], [], sheetRules: [ValidRule()]);
 
-        profile.ReperePrefix.Should().Be("MAD-OXO-");
+        profile.ReperePrefix.Should().Be("OXO-");
     }
 
     [Fact]

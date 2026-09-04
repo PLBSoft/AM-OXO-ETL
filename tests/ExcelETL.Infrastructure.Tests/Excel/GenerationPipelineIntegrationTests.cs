@@ -25,7 +25,7 @@ namespace ExcelETL.Infrastructure.Tests.Excel;
 // fidelity, per this lot's ticket ("approximation de travail").
 public class GenerationPipelineIntegrationTests
 {
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";

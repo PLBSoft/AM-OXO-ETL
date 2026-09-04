@@ -9,7 +9,7 @@ namespace ExcelETL.Domain.Extraction.Profile;
 // docs/tickets-tdd-extraction-2026-07-16.md's proposed sequencing.
 public sealed class ImportProfile : Entity
 {
-    public const string DefaultReperePrefix = "MAD-OXO-";
+    public const string DefaultReperePrefix = "OXO-";
     public const int MaxNameLength = ProfileNaming.MaxNameLength;
 
     // Distinct from MaxNameLength (the profile's own Name, 60 chars) -- this bounds one element of

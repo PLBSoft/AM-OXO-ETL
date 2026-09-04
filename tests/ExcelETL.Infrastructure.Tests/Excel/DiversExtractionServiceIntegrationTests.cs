@@ -24,7 +24,7 @@ public class DiversExtractionServiceIntegrationTests
     private const string PfSignatureColonne = "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES";
     private const string PfValidationColonne = "PF : VALIDATION CONSTAT ENCRASSEMENT";
     private const string PfAccordColonne = "PF : ACCORD TRAVAUX FEU";
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
 
     private readonly DiversExtractionService _sut =
         new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),

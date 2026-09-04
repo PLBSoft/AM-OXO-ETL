@@ -39,7 +39,7 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 // already exercise.
 public class ExportProfileTestTests : BunitContext
 {
-    private const string ReperePrefix = "MAD-OXO-";
+    private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
