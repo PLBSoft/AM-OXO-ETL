@@ -47,9 +47,10 @@ public sealed class UnconditionalIsolementSheetExtractionService(
         foreach (var block in blockResult.Blocks)
         {
             var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
+            var couleurEtiquette = ReadCouleurEtiquette(workbookReader, sheet, sheetRule, block.StartRow);
             isolements.Add(new IsolementPivot(
                 repere, block.Fields[IsolementFieldNames.Designation], block.Fields[IsolementFieldNames.TypeElement],
-                positionALaPose: "", localisation: ""));
+                positionALaPose: "", localisation: "", couleurEtiquette: couleurEtiquette));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {
@@ -68,6 +69,23 @@ public sealed class UnconditionalIsolementSheetExtractionService(
         }
 
         return new IsolementSheetExtractionResult(isolements, points, blockResult.Errors);
+    }
+
+    // Lot 068: PLATINES-only "couleur d'étiquette" cell, optional and unconstrained free text (no
+    // "expected value" comparison, unlike FieldPresencePointRule's own presence-only semantics or
+    // ISOLEMENT's ZeroEnergieExpectedValue) -- a blank cell simply means "". CouleurEtiquetteCell is
+    // null for ORIFICES CAPACITES (no equivalent cell in any real fixture) and for any PLATINES
+    // profile predating this lot, in which case this never reads the workbook at all.
+    private static string ReadCouleurEtiquette(
+        IWorkbookReader workbookReader, string sheet, SheetExtractionRule sheetRule, int blockStartRow)
+    {
+        if (sheetRule.CouleurEtiquetteCell is null)
+        {
+            return "";
+        }
+
+        var range = BlockFieldRangeCalculator.BuildRange(sheetRule.CouleurEtiquetteCell, blockStartRow);
+        return workbookReader.ReadCellValue(sheet, range) ?? "";
     }
 
     private string ComposeRepere(string equipementRepere, string identification)

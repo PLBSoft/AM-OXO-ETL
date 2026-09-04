@@ -350,6 +350,21 @@ public class DefaultProfileSeederPipelineIntegrationTests
             row.Cell(EnfantsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
             row.Cell(EnfantsCol("PROGRESS")).GetString().Should().Be("O");
         }
+
+        // Lot 068 (couleur d'étiquette, client remark): "ETIQUETTE" is populated only for the 15
+        // PLATINES rows (all ROUGE on the real C7401 fixture, confirmed in
+        // PlatinesExtractionServiceIntegrationTests) -- every other Enfants row (ISOLEMENT, AUTRES
+        // JOINTS TOUCHES, DIVERS -- C7401's ORIFICES CAPACITES is empty) stays blank.
+        var typeElementCol = EnfantsCol("Type Elément");
+        var etiquetteCol = EnfantsCol("ETIQUETTE");
+        var platinesRows = enfants.RowsUsed().Skip(1)
+            .Where(row => row.Cell(typeElementCol).GetString() == "PLATINE").ToList();
+        platinesRows.Should().HaveCount(15);
+        platinesRows.Should().OnlyContain(row => row.Cell(etiquetteCol).GetString() == "ROUGE");
+
+        var nonPlatinesRows = enfants.RowsUsed().Skip(1)
+            .Where(row => row.Cell(typeElementCol).GetString() != "PLATINE");
+        nonPlatinesRows.Should().OnlyContain(row => row.Cell(etiquetteCol).GetString() == "");
     }
 
     // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md), 66.5:

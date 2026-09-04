@@ -33,7 +33,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
 
     private static SheetExtractionRule CreateSheetRule(
-        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null) => new(
+        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
+        BlockFieldDefinition? couleurEtiquetteCell = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -43,7 +44,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         ]),
         [],
         UnconditionalColonneNames, [], [],
-        fieldPresencePointRules: fieldPresencePointRules);
+        fieldPresencePointRules: fieldPresencePointRules,
+        couleurEtiquetteCell: couleurEtiquetteCell);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -241,5 +243,69 @@ public class UnconditionalIsolementSheetExtractionServiceTests
 
         workbookReader.Verify(r => r.ReadCellValue(Sheet, "H19:N19"), Times.Never);
         workbookReader.Verify(r => r.ReadCellValue(Sheet, "H20:N20"), Times.Never);
+    }
+
+    // Lot 068: PLATINES "couleur d'étiquette" -- H:N, block offset +1 (H18:N18 for the first block,
+    // FirstBlockStartRow=17), read straight into IsolementPivot.CouleurEtiquette, unrelated to any
+    // Point/Colonne.
+    private static readonly BlockFieldDefinition CouleurEtiquetteCell = new("CouleurEtiquette", "H:N", 1, 1);
+
+    [Fact]
+    public void Extract_WithCouleurEtiquetteCellConfiguredAndNonBlankValue_SetsCouleurEtiquetteOnPivot()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = "ROUGE";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
+    }
+
+    [Fact]
+    public void Extract_WithCouleurEtiquetteCellConfiguredAndBlankValue_SetsCouleurEtiquetteToEmptyString()
+    {
+        var cells = CreateOneBlockCells();
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_WithNoCouleurEtiquetteCellConfigured_SetsCouleurEtiquetteToEmptyString_AndNeverReadsThatCell()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = "ROUGE";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule();
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().BeEmpty();
+        workbookReader.Verify(r => r.ReadCellValue(Sheet, "H18:N18"), Times.Never);
+    }
+
+    [Fact]
+    public void Extract_WithDifferentCouleurEtiquetteCellsAcrossTwoProfiles_EachRestitutesItsOwnValue()
+    {
+        var firstProfileCells = CreateOneBlockCells();
+        firstProfileCells["H18:N18"] = "ROUGE";
+        var firstResult = _sut.Extract(
+            CreateWorkbookReader(firstProfileCells).Object,
+            CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell));
+
+        var otherCell = new BlockFieldDefinition("CouleurEtiquette", "B:E", 5, 5);
+        var secondProfileCells = CreateOneBlockCells();
+        secondProfileCells["B22:E22"] = "BLEUE";
+        var secondResult = _sut.Extract(
+            CreateWorkbookReader(secondProfileCells).Object,
+            CreateSheetRule(couleurEtiquetteCell: otherCell));
+
+        firstResult.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
+        secondResult.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("BLEUE");
     }
 }

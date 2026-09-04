@@ -24,7 +24,8 @@ public static class PivotFieldResolver
             or PivotFieldRef.IsolementPositionALaPose
             or PivotFieldRef.IsolementLocalisation
             or PivotFieldRef.IsolementTableaux
-            or PivotFieldRef.IsolementRepereParent => PivotSource.Isolement,
+            or PivotFieldRef.IsolementRepereParent
+            or PivotFieldRef.IsolementCouleurEtiquette => PivotSource.Isolement,
         PivotFieldRef.TacheMultipleOrdre
             or PivotFieldRef.TacheMultipleAction
             or PivotFieldRef.TacheMultipleActeur
@@ -60,6 +61,7 @@ public static class PivotFieldResolver
         PivotFieldRef.IsolementLocalisation => isolement.Localisation,
         PivotFieldRef.IsolementTableaux => string.Join(", ", isolement.Tableaux),
         PivotFieldRef.IsolementRepereParent => isolement.RepereParent,
+        PivotFieldRef.IsolementCouleurEtiquette => isolement.CouleurEtiquette,
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Isolement row. This should have been rejected at profile construction.")
     };

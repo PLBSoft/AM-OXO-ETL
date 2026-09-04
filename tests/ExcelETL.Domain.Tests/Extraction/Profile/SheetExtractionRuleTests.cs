@@ -91,6 +91,26 @@ public class SheetExtractionRuleTests
         rule.FieldPresencePointRules.Should().ContainSingle().Which.Should().Be(fieldPresenceRule);
     }
 
+    [Fact]
+    public void Constructor_WithNoCouleurEtiquetteCellArgument_DefaultsToNull()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
+
+        rule.CouleurEtiquetteCell.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithCouleurEtiquetteCell_AssignsProperty()
+    {
+        var couleurEtiquetteCell = new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1);
+
+        var rule = new SheetExtractionRule(
+            "PLATINES", Locator("PLATINES"), [], [], [], [],
+            couleurEtiquetteCell: couleurEtiquetteCell);
+
+        rule.CouleurEtiquetteCell.Should().Be(couleurEtiquetteCell);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]

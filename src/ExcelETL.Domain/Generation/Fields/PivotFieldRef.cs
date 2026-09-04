@@ -18,6 +18,7 @@ public enum PivotFieldRef
     IsolementLocalisation,
     IsolementTableaux,
     IsolementRepereParent,
+    IsolementCouleurEtiquette,
     TacheMultipleOrdre,
     TacheMultipleAction,
     TacheMultipleActeur,

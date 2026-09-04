@@ -139,9 +139,16 @@ public class DefaultProfileSeederTests
         deposeeLeRule.Cell.RowOffsetStart.Should().Be(3);
         deposeeLeRule.Cell.RowOffsetEnd.Should().Be(3);
 
+        // Lot 068 (couleur d'étiquette, client remark) -- PLATINES-only.
+        platines.CouleurEtiquetteCell.Should().NotBeNull();
+        platines.CouleurEtiquetteCell!.ColumnRange.Should().Be("H:N");
+        platines.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
+        platines.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
+
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
         orificesCapacites.UnconditionalColonneNames.Should().HaveCount(4);
+        orificesCapacites.CouleurEtiquetteCell.Should().BeNull();
 
         var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
         autresJointsTouches.Locator.Step.Should().Be(7);
@@ -261,6 +268,8 @@ public class DefaultProfileSeederTests
             PivotFieldRef.IsolementRepereParent,
             PivotFieldRef.IsolementDesignation,
             PivotFieldRef.IsolementPositionALaPose,
+            // Lot 068: "ETIQUETTE" moved from unmapped to IsolementCouleurEtiquette.
+            PivotFieldRef.IsolementCouleurEtiquette,
             PivotFieldRef.IsolementTableaux
         ]);
         enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Type Elément" && c.Source == PivotFieldRef.IsolementTypeElementNom);
@@ -304,13 +313,29 @@ public class DefaultProfileSeederTests
             .Should().HaveCount(expectedParentsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
 
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
+        // "ETIQUETTE" removed from this list at Lot 068 -- now mapped, see the dedicated test below.
         string[] expectedEnfantsUnmappedHeaders =
         [
-            "LOC2", "LOC3", "PHASE PROCESS", "REMARQUES", "ETIQUETTE", "DIAMETRE INCH", "SERIE LBS",
+            "LOC2", "LOC3", "PHASE PROCESS", "REMARQUES", "DIAMETRE INCH", "SERIE LBS",
             "NATURE JOINT", "BESOIN ECHAF", "SUPPRESSION", "POSITION A LA DEPOSE"
         ];
         enfants.ColumnDefinitions.Where(c => expectedEnfantsUnmappedHeaders.Contains(c.Header))
             .Should().HaveCount(expectedEnfantsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
+    }
+
+    // Lot 068 (couleur d'étiquette, client remark): the "ETIQUETTE" column -- unmapped since Lot 066 --
+    // is now sourced from PLATINES' own new pivot field.
+    [Fact]
+    public async Task SeedAsync_CreatesExportProfile_WithEtiquetteColumn_MappedToIsolementCouleurEtiquette()
+    {
+        var seeder = CreateSeeder(out _, out var exportProfileStore);
+        await seeder.SeedAsync();
+
+        var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        var enfants = profile!.SheetRules.Single(r => r.SheetName == "Enfants");
+        enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "ETIQUETTE")
+            .Which.Source.Should().Be(PivotFieldRef.IsolementCouleurEtiquette);
     }
 
     // Lot 066, 66.4: the same 24 Point columns (16 after 66.1's dedup) now live on Parents too, in the

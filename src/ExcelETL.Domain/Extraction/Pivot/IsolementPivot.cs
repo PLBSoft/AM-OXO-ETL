@@ -42,9 +42,15 @@ public sealed record IsolementPivot
     // this at all -- PLATINES/ORIFICES CAPACITES/AUTRES JOINTS TOUCHES/DIVERS) are unaffected.
     public bool HasZeroEnergie { get; }
 
+    // Lot 068: known at construction time, like HasZeroEnergie -- read from the same PLATINES block
+    // as Identification/Designation/TypeElement, not diffused after the fact. Defaults to "" so the 4
+    // other isolement-style services (ISOLEMENT, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS --
+    // none of which have this notion, confirmed against all 4 real client fixtures) are unaffected.
+    public string CouleurEtiquette { get; }
+
     public IsolementPivot(
         string repere, string designation, string typeElementNom, string positionALaPose, string localisation,
-        bool hasZeroEnergie = false)
+        bool hasZeroEnergie = false, string couleurEtiquette = "")
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -68,6 +74,7 @@ public sealed record IsolementPivot
         Applications = [];
         RepereParent = "";
         HasZeroEnergie = hasZeroEnergie;
+        CouleurEtiquette = couleurEtiquette;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
@@ -83,7 +90,8 @@ public sealed record IsolementPivot
         && Tableaux.SequenceEqual(other.Tableaux)
         && Applications.SequenceEqual(other.Applications)
         && RepereParent == other.RepereParent
-        && HasZeroEnergie == other.HasZeroEnergie;
+        && HasZeroEnergie == other.HasZeroEnergie
+        && CouleurEtiquette == other.CouleurEtiquette;
 
     public override int GetHashCode()
     {
@@ -95,6 +103,7 @@ public sealed record IsolementPivot
         hash.Add(Localisation);
         hash.Add(RepereParent);
         hash.Add(HasZeroEnergie);
+        hash.Add(CouleurEtiquette);
         foreach (var tableau in Tableaux)
         {
             hash.Add(tableau);

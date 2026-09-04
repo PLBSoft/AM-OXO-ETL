@@ -146,6 +146,67 @@ public class PlatinesExtractionServiceIntegrationTests
         result.Points.Should().HaveCount(expectedIsolementCount * 5);
     }
 
+    // Lot 068 (couleur d'étiquette, client remark) -- verified against the real fixtures, not
+    // hand-built cells, per the ticket's own explicit requirement (68.7).
+    private static SheetExtractionRule CreateSheetRuleWithCouleurEtiquetteCell() => new(
+        Sheet,
+        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
+        [
+            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
+            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+        ]),
+        [], UnconditionalColonneNames, [], [],
+        couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+
+    [Fact]
+    public void Extract_C7401Fixture_WithCouleurEtiquetteCell_EveryPlatineIsRouge()
+    {
+        var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.C7401.xlsx");
+
+        result.Isolements.Should().HaveCount(15);
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+    }
+
+    [Fact]
+    public void Extract_D8570Fixture_WithCouleurEtiquetteCell_MatchesRealFixtureColorsPerBlock()
+    {
+        var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+
+        result.Isolements.Should().HaveCount(21);
+        // Confirmed by direct inspection of the real fixture (PLATINES, column H, rows 18..178):
+        // the first 13 blocks are ROUGE, the next 8 are BLEUE -- no block is blank on this fixture.
+        result.Isolements.Take(13).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+        result.Isolements.Skip(13).Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
+    }
+
+    [Fact]
+    public void Extract_G6306BFixture_WithCouleurEtiquetteCell_FourthBlockIsJaune()
+    {
+        var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
+
+        result.Isolements.Should().HaveCount(5);
+        // Confirmed by direct inspection: real free text, not a closed ROUGE/BLEUE set -- block 5
+        // (0-indexed 4, row 50) is JAUNE, every other block is ROUGE.
+        result.Isolements.Where((_, index) => index != 4).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+        result.Isolements[4].CouleurEtiquette.Should().Be("JAUNE");
+    }
+
+    [Fact]
+    public void Extract_WithoutCouleurEtiquetteCellConfigured_LeavesCouleurEtiquetteEmpty()
+    {
+        var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
+
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
+    }
+
+    private IsolementSheetExtractionResult ExtractFromFixtureWithCouleurEtiquetteCell(string fileName)
+    {
+        using var stream = File.OpenRead(FixturePath(fileName));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+        return _sut.Extract(workbookReader, CreateSheetRuleWithCouleurEtiquetteCell());
+    }
+
     private IsolementSheetExtractionResult ExtractFromFixtureWithFieldPresenceRules(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));

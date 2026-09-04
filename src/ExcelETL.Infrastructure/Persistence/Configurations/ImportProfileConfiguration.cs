@@ -254,6 +254,27 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                 fieldPresenceRules.Navigation(r => r.Cell).IsRequired();
             });
 
+            // CouleurEtiquetteCell (Lot 068, PLATINES "couleur d'étiquette"): table-split (OwnsOne)
+            // directly onto the ImportProfileSheetRules row, like Locator above -- optional (no
+            // .Navigation(...).IsRequired()), null for every sheet other than PLATINES. Column names
+            // prefixed to avoid any collision with Locator's own LocatorXxx columns on the same row.
+            rules.OwnsOne(r => r.CouleurEtiquetteCell, cell =>
+            {
+                cell.Property(c => c.Name)
+                    .HasMaxLength(200)
+                    .HasColumnName("CouleurEtiquetteCellName");
+
+                cell.Property(c => c.ColumnRange)
+                    .HasMaxLength(20)
+                    .HasColumnName("CouleurEtiquetteCellColumnRange");
+
+                cell.Property(c => c.RowOffsetStart)
+                    .HasColumnName("CouleurEtiquetteCellRowOffsetStart");
+
+                cell.Property(c => c.RowOffsetEnd)
+                    .HasColumnName("CouleurEtiquetteCellRowOffsetEnd");
+            });
+
             rules.Navigation(r => r.Locator).IsRequired();
         });
     }

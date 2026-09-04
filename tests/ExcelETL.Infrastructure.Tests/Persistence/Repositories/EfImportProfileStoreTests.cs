@@ -323,6 +323,44 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithCouleurEtiquetteCell_RoundTripsIdentically()
+    {
+        // Lot 068 (PLATINES "couleur d'étiquette", client remark) -- a single optional owned-type
+        // reference directly on SheetExtractionRule (not a collection like FieldPresencePointRules).
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+        var sheetRule = new SheetExtractionRule(
+            "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
+            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+        var profile = new ImportProfile("Profil couleur etiquette", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        var cell = reloaded!.SheetRules.Single().CouleurEtiquetteCell;
+        cell.Should().NotBeNull();
+        cell!.Name.Should().Be("CouleurEtiquette");
+        cell.ColumnRange.Should().Be("H:N");
+        cell.RowOffsetStart.Should().Be(1);
+        cell.RowOffsetEnd.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNullCouleurEtiquetteCell_PersistsAndReloadsAsNull()
+    {
+        // Not a BlockFieldDefinition with default/empty columns -- same requirement as
+        // ZeroEnergieExpectedValue above (a genuine null, not a default value).
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().CouleurEtiquetteCell.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetByIdAsync_WithUnknownId_ReturnsNull()
     {
         var store = CreateStore();

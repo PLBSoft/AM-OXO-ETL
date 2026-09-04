@@ -49,6 +49,13 @@ public sealed class SheetExtractionRule
     // sheet (every sheet other than ISOLEMENT, and any ISOLEMENT profile predating this lot).
     public string? ZeroEnergieExpectedValue { get; }
 
+    // Lot 068: where to read PLATINES' "couleur d'étiquette" cell for each block (H:N, offset +1) --
+    // a field dedicated to this one sheet's own optional data, not a generic reusable mechanism (no
+    // other sheet has this notion, confirmed against all 4 real client fixtures). null = not
+    // configured for this sheet (every sheet other than PLATINES today, including ORIFICES CAPACITES
+    // which shares the same extraction service but has no such cell in any real fixture).
+    public BlockFieldDefinition? CouleurEtiquetteCell { get; }
+
     public SheetExtractionRule(
         string sheetName,
         RepeatingBlockLocator locator,
@@ -57,7 +64,8 @@ public sealed class SheetExtractionRule
         IReadOnlyList<HeaderFieldRule> headerFields,
         IReadOnlyList<HeaderCompositeRule> headerComposites,
         string? zeroEnergieExpectedValue = null,
-        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null)
+        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
+        BlockFieldDefinition? couleurEtiquetteCell = null)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -110,6 +118,7 @@ public sealed class SheetExtractionRule
         _headerComposites = [.. headerComposites];
         _fieldPresencePointRules = fieldPresencePointRules is null ? [] : [.. fieldPresencePointRules];
         ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
+        CouleurEtiquetteCell = couleurEtiquetteCell;
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

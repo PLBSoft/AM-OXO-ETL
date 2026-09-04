@@ -110,6 +110,22 @@ public class PivotFieldResolverTests
     }
 
     [Fact]
+    public void Resolve_IsolementCouleurEtiquette_ReturnsCouleurEtiquette()
+    {
+        var isolement = new IsolementPivot("PT1", "Platine", "PLATINE", "", "", couleurEtiquette: "ROUGE");
+
+        PivotFieldResolver.Resolve(isolement, PivotFieldRef.IsolementCouleurEtiquette).Should().Be("ROUGE");
+    }
+
+    [Fact]
+    public void Resolve_IsolementCouleurEtiquette_WhenEmpty_ReturnsEmptyString()
+    {
+        var isolement = new IsolementPivot("PT1", "Platine", "PLATINE", "", "");
+
+        PivotFieldResolver.Resolve(isolement, PivotFieldRef.IsolementCouleurEtiquette).Should().BeEmpty();
+    }
+
+    [Fact]
     public void Resolve_IsolementPivotWithEquipementFieldRef_ThrowsInvalidOperationException()
     {
         var act = () => PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.EquipementRepere);
@@ -130,6 +146,7 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.IsolementLocalisation, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementTableaux, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementRepereParent, PivotSource.Isolement)]
+    [InlineData(PivotFieldRef.IsolementCouleurEtiquette, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.TacheMultipleOrdre, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleAction, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleActeur, PivotSource.TacheMultiple)]

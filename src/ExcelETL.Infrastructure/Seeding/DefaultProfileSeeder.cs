@@ -181,7 +181,13 @@ public class DefaultProfileSeeder(
                         new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
                     new FieldPresencePointRule(
                         new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
-                ]),
+                ],
+                // Lot 068: "couleur d'étiquette" (client remark, no written spec) -- PLATINES-only,
+                // read directly into IsolementPivot.CouleurEtiquette (not a Point/Colonne). H:N,
+                // block offset +1 -- same row as the form's own "ÉTIQUETTE" label in column F
+                // (ignored, it's just the paper form's field name), confirmed against all 4 real
+                // client fixtures on disk (ROUGE/BLEUE/JAUNE observed, free text, no closed value set).
+                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
@@ -365,7 +371,10 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("POSITION A LA DEPOSE", null),
                     new ColumnDefinition("PHASE PROCESS", null),
                     new ColumnDefinition("REMARQUES", null),
-                    new ColumnDefinition("ETIQUETTE", null),
+                    // Lot 068: was Source: null (Lot 066, "unmapped identity column") -- now mapped to
+                    // PLATINES' "couleur d'étiquette" cell (only sheet that populates it; every other
+                    // isolement-style row leaves this "").
+                    new ColumnDefinition("ETIQUETTE", PivotFieldRef.IsolementCouleurEtiquette),
                     new ColumnDefinition("DIAMETRE INCH", null),
                     new ColumnDefinition("SERIE LBS", null),
                     new ColumnDefinition("NATURE JOINT", null),

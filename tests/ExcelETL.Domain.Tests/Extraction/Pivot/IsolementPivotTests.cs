@@ -21,6 +21,7 @@ public class IsolementPivotTests
         isolement.Applications.Should().BeEmpty();
         isolement.RepereParent.Should().BeEmpty();
         isolement.HasZeroEnergie.Should().BeFalse();
+        isolement.CouleurEtiquette.Should().BeEmpty();
     }
 
     [Fact]
@@ -37,6 +38,25 @@ public class IsolementPivotTests
     {
         var first = new IsolementPivot("C7401-V4", "Vanne principale", "PROLOCK", "FERMÉE", "Zone A", hasZeroEnergie: false);
         var second = new IsolementPivot("C7401-V4", "Vanne principale", "PROLOCK", "FERMÉE", "Zone A", hasZeroEnergie: true);
+
+        first.Should().NotBe(second);
+        first.GetHashCode().Should().NotBe(second.GetHashCode());
+    }
+
+    [Fact]
+    public void Constructor_WithCouleurEtiquette_AssignsProperty()
+    {
+        var isolement = new IsolementPivot(
+            "PT1", "Platine", "PLATINE", "", "", couleurEtiquette: "ROUGE");
+
+        isolement.CouleurEtiquette.Should().Be("ROUGE");
+    }
+
+    [Fact]
+    public void Equals_WithDifferentCouleurEtiquette_AreNotStructurallyEqual()
+    {
+        var first = new IsolementPivot("PT1", "Platine", "PLATINE", "", "", couleurEtiquette: "ROUGE");
+        var second = new IsolementPivot("PT1", "Platine", "PLATINE", "", "", couleurEtiquette: "BLEUE");
 
         first.Should().NotBe(second);
         first.GetHashCode().Should().NotBe(second.GetHashCode());
