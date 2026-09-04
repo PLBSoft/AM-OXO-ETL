@@ -163,6 +163,16 @@ else
     {
         _importProfiles = (await ImportProfileStore.GetAllAsync()).ToList();
         _exportProfiles = (await ExportProfileStore.GetAllAsync()).ToList();
+
+        if (_importProfiles.Count == 1)
+        {
+            _selectedImportProfileId = _importProfiles[0].Id;
+        }
+
+        if (_exportProfiles.Count == 1)
+        {
+            _selectedExportProfileId = _exportProfiles[0].Id;
+        }
     }
 
     private void OnInputFileChangeAsync(InputFileChangeEventArgs e)

@@ -116,6 +116,10 @@ public class ApiTestTests : BunitContext
     public void ProcessButton_DisabledUntilProfilesAndFileSelected_ThenEnabled() => WithCulture("en-US", () => RunAsync(async () =>
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
+        // A single import/export profile would be auto-selected on load -- seed a second one of
+        // each so the "nothing selected yet" starting state this test exercises is still reachable.
+        await ImportProfileStore.SaveAsync(BuildImportProfile("Second import profile"));
+        await ExportProfileStore.SaveAsync(BuildExportProfile("Second export profile"));
 
         var cut = Render<ApiTest>();
 
