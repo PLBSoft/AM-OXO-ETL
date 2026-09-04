@@ -374,6 +374,9 @@ public class ExportProfileTestTests : BunitContext
         {
             var importProfile = await SeedRealImportProfileAsync();
             await SeedRealExportProfileAsync();
+            // A single export profile would be auto-selected on load -- seed a second one so this
+            // scenario (no selection made) is still reachable.
+            await Services.GetRequiredService<IExportProfileStore>().SaveAsync(new ExportProfile("Second export profile", []));
             var cut = Render<ExportProfileTest>();
 
             SelectImportProfile(cut, importProfile.Id);
@@ -1051,8 +1054,11 @@ public class ExportProfileTestTests : BunitContext
 
             foreach (var name in fixtureNames)
             {
-                var expectedDownloadName = $"{Path.GetFileNameWithoutExtension(name)}_export.xlsx";
-                cut.Markup.Should().Contain($"download=\"{expectedDownloadName}\"");
+                // Lot: a generation timestamp suffix keeps repeated test runs' downloads unique --
+                // match the prefix/extension only, not the exact (now time-dependent) file name.
+                var expectedDownloadNamePrefix = $"{Path.GetFileNameWithoutExtension(name)}_export_";
+                cut.Markup.Should().MatchRegex(
+                    $@"download=""{System.Text.RegularExpressions.Regex.Escape(expectedDownloadNamePrefix)}\d{{8}}-\d{{6}}\.xlsx""");
             }
         });
 

@@ -393,6 +393,16 @@ else
     {
         _importProfiles = (await ImportProfileStore.GetAllAsync()).ToList();
         _exportProfiles = (await ExportProfileStore.GetAllAsync()).ToList();
+
+        if (_importProfiles.Count == 1)
+        {
+            _selectedImportProfileId = _importProfiles[0].Id;
+        }
+
+        if (_exportProfiles.Count == 1)
+        {
+            _selectedExportProfileId = _exportProfiles[0].Id;
+        }
     }
 
     private async Task OnInputFileChangeAsync(InputFileChangeEventArgs e)
@@ -497,7 +507,7 @@ else
                 WorkbookWriter.Write(generatedWorkbook, stream);
 
                 fileResult.GeneratedWorkbook = generatedWorkbook;
-                fileResult.DownloadFileName = $"{Path.GetFileNameWithoutExtension(fileResult.FileName)}_export.xlsx";
+                fileResult.DownloadFileName = $"{Path.GetFileNameWithoutExtension(fileResult.FileName)}_export_{DateTime.Now:yyyyMMdd-HHmmss}.xlsx";
                 fileResult.DownloadDataUrl =
                     $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(stream.ToArray())}";
                 fileResult.GenerationErrorMessage = null;
