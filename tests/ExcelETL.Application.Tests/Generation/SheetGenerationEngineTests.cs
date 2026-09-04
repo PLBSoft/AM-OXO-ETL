@@ -510,4 +510,113 @@ public class SheetGenerationEngineTests
 
         workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[1].Should().Be("O");
     }
+
+    // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
+    // ConstantColumnDefinitions write the same literal on every row, regardless of PivotSource.
+    [Fact]
+    public void Generate_ForEquipementSheet_WritesConstantColumnValueOnTheRow()
+    {
+        var rule = new SheetGenerationRule(
+            "Parents", PivotSource.Equipement,
+            [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+            [], [], [new ConstantColumnDefinition("CRITERE", "A faire")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Headers.Should().Equal("Repère", "CRITERE");
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells.Should().Equal("38-C7401", "A faire");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_WithRejectedFile_ProducesNoRowsEvenWithConstantColumns()
+    {
+        var rule = new SheetGenerationRule(
+            "Parents", PivotSource.Equipement,
+            [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+            [], [], [new ConstantColumnDefinition("CRITERE", "A faire")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(null, [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Should().ContainSingle().Which.Rows.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Generate_ForIsolementSheet_WritesConstantColumnValueOnEveryRow()
+    {
+        var rule = new SheetGenerationRule(
+            "Enfants", PivotSource.Isolement,
+            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)],
+            [], [], [new ConstantColumnDefinition("SUPPRESSION", "N")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [
+                new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", ""),
+                new IsolementPivot("C7401-V2", "Vanne 2", "VANNE", "MAD", "")
+            ],
+            [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Headers.Should().Equal("Repère", "SUPPRESSION");
+        workbook.Sheets[0].Rows.Should().HaveCount(2);
+        workbook.Sheets[0].Rows.Should().OnlyContain(row => row.Cells[1] == "N");
+    }
+
+    [Fact]
+    public void Generate_ForEquipementSheet_HeaderOrder_IsDescriptiveThenConstantThenApplicationThenPoint()
+    {
+        var rule = new SheetGenerationRule(
+            "Parents", PivotSource.Equipement,
+            [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+            [new PointColumnDefinition("TRAVAUX COMPLET", "Travaux complet")],
+            [new ApplicationColumnDefinition("PROGRESS", "PROGRESS", "O")],
+            [new ConstantColumnDefinition("CRITERE", "A faire")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Headers.Should().Equal("Repère", "CRITERE", "PROGRESS", "Travaux complet");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_WritesConstantColumnValueOnEveryRow_IncludingFactice()
+    {
+        var rule = new SheetGenerationRule(
+            "Tâches multiples", PivotSource.TacheMultiple,
+            [new ColumnDefinition("Action", PivotFieldRef.TacheMultipleAction)],
+            [], [], [new ConstantColumnDefinition("AVANCEMENT", "0")]);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52),
+            new TacheMultiplePivot(null, "--- Section ---", "", "", "TM_PROC_MAD", null, true, 53));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        var sheet = workbook.Sheets.Should().ContainSingle().Which;
+        sheet.Headers.Should().Equal("Action", "AVANCEMENT");
+        sheet.Rows.Should().HaveCount(2);
+        sheet.Rows.Should().OnlyContain(row => row.Cells[1] == "0");
+    }
+
+    [Fact]
+    public void Generate_ForTacheMultipleRule_WithNoConstantColumns_ProducesUnchangedHeaderAndRows()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", new DateOnly(2026, 7, 20), false, 52));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        var sheet = workbook.Sheets.Should().ContainSingle().Which;
+        sheet.Headers.Should().Equal("Ordre", "Action", "Acteur", "Risques", "Date de validation");
+        sheet.Rows.Should().ContainSingle().Which.Cells.Should().Equal("1", "Consigner", "ADF", "Aucun", "20/07/2026");
+    }
 }

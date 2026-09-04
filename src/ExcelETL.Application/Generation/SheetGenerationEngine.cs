@@ -67,7 +67,9 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
     // by Ordre (which is null for factice rows and would misplace them).
     private static IEnumerable<GeneratedSheet> GenerateTacheMultipleSheets(SheetGenerationRule rule, ImportResult importResult)
     {
-        var headers = rule.ColumnDefinitions.Select(column => column.Header).ToList();
+        var headers = rule.ColumnDefinitions.Select(column => column.Header)
+            .Concat(rule.ConstantColumnDefinitions.Select(constant => constant.Header))
+            .ToList();
 
         return importResult.TachesMultiples
             .GroupBy(tache => tache.TypeTacheMultipleCode)
@@ -75,8 +77,11 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
             .Select(group =>
             {
                 var rows = group.Select(tache => new GeneratedRow(
-                    [.. rule.ColumnDefinitions.Select(column =>
-                        column.Source is null ? string.Empty : PivotFieldResolver.Resolve(tache, column.Source.Value))]))
+                    [
+                        .. rule.ColumnDefinitions.Select(column =>
+                            column.Source is null ? string.Empty : PivotFieldResolver.Resolve(tache, column.Source.Value)),
+                        .. rule.ConstantColumnDefinitions.Select(constant => constant.Value)
+                    ]))
                     .ToList();
 
                 return new GeneratedSheet(ExcelSheetNameSanitizer.Sanitize(group.Key), headers, rows);
@@ -86,6 +91,7 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
     private static GeneratedSheet GenerateSheet(SheetGenerationRule rule, ImportResult importResult)
     {
         var headers = rule.ColumnDefinitions.Select(column => column.Header)
+            .Concat(rule.ConstantColumnDefinitions.Select(constant => constant.Header))
             .Concat(rule.ApplicationColumnDefinitions.Select(application => application.Header))
             .Concat(rule.PointColumnDefinitions.Select(point => point.Header))
             .ToList();
@@ -110,12 +116,13 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         var equipement = importResult.Equipement;
         var descriptiveCells = rule.ColumnDefinitions.Select(
             column => column.Source is null ? string.Empty : PivotFieldResolver.Resolve(equipement, column.Source.Value));
+        var constantCells = rule.ConstantColumnDefinitions.Select(constant => constant.Value);
         var applicationCells = rule.ApplicationColumnDefinitions.Select(
             application => HasApplication(equipement.Applications, application.ApplicationNom) ? application.MarkValue : string.Empty);
         var pointCells = rule.PointColumnDefinitions.Select(
             point => HasPointForEquipement(importResult, equipement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
 
-        return [new GeneratedRow([.. descriptiveCells, .. applicationCells, .. pointCells])];
+        return [new GeneratedRow([.. descriptiveCells, .. constantCells, .. applicationCells, .. pointCells])];
     }
 
     private static List<GeneratedRow> GenerateIsolementRows(SheetGenerationRule rule, ImportResult importResult) =>
@@ -123,12 +130,13 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         {
             var descriptiveCells = rule.ColumnDefinitions.Select(
                 column => column.Source is null ? string.Empty : PivotFieldResolver.Resolve(isolement, column.Source.Value));
+            var constantCells = rule.ConstantColumnDefinitions.Select(constant => constant.Value);
             var applicationCells = rule.ApplicationColumnDefinitions.Select(
                 application => HasApplication(isolement.Applications, application.ApplicationNom) ? application.MarkValue : string.Empty);
             var pointCells = rule.PointColumnDefinitions.Select(
                 point => HasPoint(importResult.Points, isolement.Repere, point.ColonneNom) ? point.MarkValue : string.Empty);
 
-            return new GeneratedRow([.. descriptiveCells, .. applicationCells, .. pointCells]);
+            return new GeneratedRow([.. descriptiveCells, .. constantCells, .. applicationCells, .. pointCells]);
         }).ToList();
 
     private static bool HasPoint(IReadOnlyList<PointPivot> points, string parentRepere, string colonneNom) =>
