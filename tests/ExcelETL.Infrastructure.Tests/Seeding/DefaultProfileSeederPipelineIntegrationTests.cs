@@ -159,16 +159,20 @@ public class DefaultProfileSeederPipelineIntegrationTests
     }
 
     [Fact]
-    public async Task Run_G6306BFixture_WithSeededProfile_ProducesExactlyThreeNoConditionalPointCreatedWarnings_OnePerSheet()
+    public async Task Run_G6306BFixture_WithSeededProfile_ProducesExactlyTwoNoConditionalPointCreatedWarnings()
     {
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
         var result = RunOnFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx", importProfile);
 
+        // Short task (2026-09-07): DIVERS' "POINT FEU" comparison value was renamed to "POINT DE FEU"
+        // to match the real client fixture's own spelling -- G6306B's one DIVERS "POINT DE FEU" row now
+        // matches the rule and produces its 3 PF Points normally, so DIVERS no longer contributes a
+        // NoConditionalPointCreated warning here (was 3 warnings, one per sheet, before this change).
         var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
-        warnings.Should().HaveCount(3);
+        warnings.Should().HaveCount(2);
         warnings.Should().Contain(e => e.Sheet == "ISOLEMENT" && e.ExtractedValue == "PROLOCK");
         warnings.Should().Contain(e => e.Sheet == "AUTRES JOINTS TOUCHES" && e.ExtractedValue == "TUBING");
-        warnings.Should().Contain(e => e.Sheet == "DIVERS" && e.ExtractedValue == "POINT DE FEU");
+        warnings.Should().NotContain(e => e.Sheet == "DIVERS");
 
         // PLATINES / ORIFICES CAPACITES never carry a ConditionalPointRule in this profile -- neither
         // can ever produce this code.
@@ -450,9 +454,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
         parents.Cell(2, ParentsCol("SYNCHRONISATION INSTRUMENTATION")).GetString().Should().Be("X");
         // ISOLEMENT's unconditional Points aggregate onto Parents too.
         parents.Cell(2, ParentsCol("PROLOCK VANNES")).GetString().Should().Be("X");
-        // DIVERS' one "POINT DE FEU" row never matches the confirmed base value "POINT FEU" --
-        // no PF Point is ever produced for this run, so every PF column stays empty on Parents.
-        parents.Cell(2, ParentsCol("PF : ACCORD TRAVAUX FEU")).GetString().Should().Be("");
+        // Short task (2026-09-07): DIVERS' rule now compares against "POINT DE FEU" (was "POINT FEU"),
+        // matching G6306B's one real DIVERS "POINT DE FEU" row -- its 3 PF Points are now created and
+        // aggregate onto Parents like any other matching Colonne.
+        parents.Cell(2, ParentsCol("PF : ACCORD TRAVAUX FEU")).GetString().Should().Be("X");
 
         var expectedEnfantsHeaders = ExpectedHeaders(enfantsRule);
         var enfants = reread.Worksheet("Enfants");

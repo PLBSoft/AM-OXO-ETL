@@ -245,13 +245,13 @@ public class DefaultProfileSeeder(
                         IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE",
                         "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU",
+                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
                         "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU",
+                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
                         "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : ACCORD TRAVAUX FEU")
+                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
                 [],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6"))],
