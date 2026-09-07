@@ -31,5 +31,6 @@ public enum PivotFieldRef
     TacheMultipleColonneTravaux,
     TacheMultipleTypeTacheMultipleCode,
     TacheMultipleLocalisation,
-    TacheMultipleLigneSource
+    TacheMultipleLigneSource,
+    TacheMultipleCritere
 }

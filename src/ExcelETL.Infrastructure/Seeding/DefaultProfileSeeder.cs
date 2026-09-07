@@ -409,9 +409,17 @@ public class DefaultProfileSeeder(
     // "GUID" (unmapped, no correspondence)/"TYPE TACHE" (the sheet's own code)/"ZONE" (Equipement's
     // zone, broadcast) lead alongside "Repère TM"; "LOC2"/"LOC3"/"LOT"/"Ressource" are unmapped, same
     // treatment as their Parents/Enfants counterparts (always blank for now); "Ligne" is the real source
-    // row number; "CRITERE"/"AVANCEMENT"/"SUPPRESSION" are constant per client instruction. "Type"/
-    // "AVANCEMENT POINT"/"SIGNATURE"/"DERNIERE MODIF"/"UTILISATEUR" are deliberately not reported at
-    // all (client: "on ignore"/"on ne reporte pas cette colonne").
+    // row number; "SUPPRESSION" is constant per client instruction. "Type"/"AVANCEMENT POINT"/
+    // "SIGNATURE"/"DERNIERE MODIF"/"UTILISATEUR" are deliberately not reported at all (client: "on
+    // ignore"/"on ne reporte pas cette colonne").
+    //
+    // Follow-up (2026-09-07): "CRITERE" is no longer a constant -- confirmed with the client that a
+    // factice/section-header row (no Ordre) must read "Pour info" rather than "A faire". Deliberately
+    // NOT made profile-configurable (a client-specific one-off, not a general mechanism) -- the two
+    // literal values are hardcoded directly in PivotFieldResolver, mirroring how PROCEDURE's own
+    // unconditional Points ("TRAVAUX COMPLET"/"TRAVAUX DETAIL") are hardcoded in
+    // ProcedureExtractionService rather than made configurable. "AVANCEMENT" is removed entirely from
+    // the default profile per the same client confirmation.
     private static SheetGenerationRule BuildTacheMultipleSheetRule() => new(
         "Tâches multiples",
         PivotSource.TacheMultiple,
@@ -431,13 +439,12 @@ public class DefaultProfileSeeder(
             new ColumnDefinition("Acteur", PivotFieldRef.TacheMultipleActeur),
             new ColumnDefinition("Risques", PivotFieldRef.TacheMultipleRisques),
             new ColumnDefinition("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
-            new ColumnDefinition("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
+            new ColumnDefinition("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux),
+            new ColumnDefinition("CRITERE", PivotFieldRef.TacheMultipleCritere)
         ],
         [],
         [],
         [
-            new ConstantColumnDefinition("CRITERE", "A faire"),
-            new ConstantColumnDefinition("AVANCEMENT", "0"),
             new ConstantColumnDefinition("SUPPRESSION", "N")
         ]);
 }

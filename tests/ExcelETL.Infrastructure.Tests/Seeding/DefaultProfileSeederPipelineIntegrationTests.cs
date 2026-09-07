@@ -265,6 +265,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
     // extended to cover the 8 new columns per row, column indices resolved dynamically from the
     // profile (headers can shift order across an EF round trip, same caveat noted in
     // DefaultProfileSeederTests.cs for this owned collection).
+    //
+    // Follow-up (2026-09-07): "CRITERE" is no longer a constant -- it reads "Pour info" for a factice
+    // row (no Ordre) and "A faire" otherwise (PivotFieldResolver). "AVANCEMENT" was removed from the
+    // default profile entirely.
     [Fact]
     public async Task Generate_C7401Fixture_WithSeededProfiles_ProducesRepereTypeAndColonneTravauxOnBothTacheMultipleSheets()
     {
@@ -307,14 +311,22 @@ public class DefaultProfileSeederPipelineIntegrationTests
                 row.Cell(Col("Ressource")).GetString().Should().BeEmpty();
                 row.Cell(Col("Ligne")).GetValue<int>().Should().BePositive();
                 row.Cell(Col("Colonne Travaux")).GetString().Should().Be(expectedColonneTravaux);
-                row.Cell(Col("CRITERE")).GetString().Should().Be("A faire");
-                row.Cell(Col("AVANCEMENT")).GetString().Should().Be("0");
+                var hasOrdre = !string.IsNullOrEmpty(row.Cell(Col("Ordre")).GetString());
+                row.Cell(Col("CRITERE")).GetString().Should().Be(hasOrdre ? "A faire" : "Pour info");
                 row.Cell(Col("SUPPRESSION")).GetString().Should().Be("N");
             }
         }
 
         AssertSheet("TM_PROC_MAD", "Procédure MAD");
         AssertSheet("TM_PROC_REL", "Procédure REL");
+
+        // Non-vacuous check: C7401's real PROCEDURE block genuinely mixes real tasks (Ordre populated)
+        // and factice/section-header rows (Ordre blank) -- both "A faire" and "Pour info" must actually
+        // appear, not just be an untested conditional branch.
+        var madSheet = reread.Worksheet("TM_PROC_MAD");
+        var madCritereValues = madSheet.RowsUsed().Skip(1).Select(row => row.Cell(Col("CRITERE")).GetString()).ToList();
+        madCritereValues.Should().Contain("A faire");
+        madCritereValues.Should().Contain("Pour info");
     }
 
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U6: header order (and content)

@@ -299,7 +299,11 @@ public class DefaultProfileSeederTests
         // ColumnDefinitions isn't guaranteed by the EF Core InMemory provider (same caveat as the
         // top-level SheetRules ordering noted elsewhere in this file), so this asserts the exact
         // Header<->Source correspondence and count, not sequence.
-        tachesMultiples.ColumnDefinitions.Should().HaveCount(16);
+        //
+        // Follow-up (2026-09-07): "CRITERE" moved from a constant to a real ColumnDefinition sourced
+        // from PivotFieldRef.TacheMultipleCritere (conditional on Ordre presence -- see
+        // PivotFieldResolver); "AVANCEMENT" was removed from the default profile entirely.
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(17);
         tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
         {
             ("GUID", null),
@@ -317,11 +321,10 @@ public class DefaultProfileSeederTests
             ("Acteur", PivotFieldRef.TacheMultipleActeur),
             ("Risques", PivotFieldRef.TacheMultipleRisques),
             ("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
-            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
+            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux),
+            ("CRITERE", PivotFieldRef.TacheMultipleCritere)
         });
-        tachesMultiples.ConstantColumnDefinitions.Should().HaveCount(3);
-        tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "CRITERE" && c.Value == "A faire");
-        tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "AVANCEMENT" && c.Value == "0");
+        tachesMultiples.ConstantColumnDefinitions.Should().ContainSingle();
         tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "SUPPRESSION" && c.Value == "N");
     }
 
@@ -468,8 +471,8 @@ public class DefaultProfileSeederTests
         tachesMultiples.PivotSource.Should().Be(PivotSource.TacheMultiple);
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
         // Lot 069: the migration path shares BuildTacheMultipleSheetRule with the nominal seed path, so
-        // it gains the same 16 columns automatically. Order-independent, same caveat as above.
-        tachesMultiples.ColumnDefinitions.Should().HaveCount(16);
+        // it gains the same columns automatically. Order-independent, same caveat as above.
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(17);
         tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
         {
             ("GUID", null),
@@ -487,7 +490,8 @@ public class DefaultProfileSeederTests
             ("Acteur", PivotFieldRef.TacheMultipleActeur),
             ("Risques", PivotFieldRef.TacheMultipleRisques),
             ("Date de validation", PivotFieldRef.TacheMultipleDateValidation),
-            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux)
+            ("Colonne Travaux", PivotFieldRef.TacheMultipleColonneTravaux),
+            ("CRITERE", PivotFieldRef.TacheMultipleCritere)
         });
     }
 

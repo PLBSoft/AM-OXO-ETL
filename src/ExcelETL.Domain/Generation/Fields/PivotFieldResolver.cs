@@ -38,7 +38,8 @@ public static class PivotFieldResolver
             or PivotFieldRef.TacheMultipleColonneTravaux
             or PivotFieldRef.TacheMultipleTypeTacheMultipleCode
             or PivotFieldRef.TacheMultipleLocalisation
-            or PivotFieldRef.TacheMultipleLigneSource => PivotSource.TacheMultiple,
+            or PivotFieldRef.TacheMultipleLigneSource
+            or PivotFieldRef.TacheMultipleCritere => PivotSource.TacheMultiple,
         _ => throw new ArgumentOutOfRangeException(nameof(fieldRef), fieldRef, "Unknown pivot field reference.")
     };
 
@@ -88,6 +89,10 @@ public static class PivotFieldResolver
         PivotFieldRef.TacheMultipleTypeTacheMultipleCode => tacheMultiple.TypeTacheMultipleCode,
         PivotFieldRef.TacheMultipleLocalisation => tacheMultiple.Localisation,
         PivotFieldRef.TacheMultipleLigneSource => tacheMultiple.LigneSource.ToString(CultureInfo.InvariantCulture),
+        // Client-specific business rule, deliberately hardcoded rather than made profile-configurable
+        // (confirmed with the client): a factice/section-header row (no Ordre) is informational only,
+        // "Pour info" -- a real task ("A faire") always carries an Ordre.
+        PivotFieldRef.TacheMultipleCritere => tacheMultiple.Ordre.HasValue ? "A faire" : "Pour info",
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for a TacheMultiple row. This should have been rejected at profile construction.")
     };
