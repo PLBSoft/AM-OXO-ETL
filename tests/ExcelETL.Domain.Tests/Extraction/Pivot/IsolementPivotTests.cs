@@ -22,6 +22,28 @@ public class IsolementPivotTests
         isolement.RepereParent.Should().BeEmpty();
         isolement.HasZeroEnergie.Should().BeFalse();
         isolement.CouleurEtiquette.Should().BeEmpty();
+        isolement.SourceSheetName.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithSourceSheetName_SetsItVerbatim()
+    {
+        var isolement = new IsolementPivot(
+            "C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", "Zone A", sourceSheetName: "ISOLEMENT");
+
+        isolement.SourceSheetName.Should().Be("ISOLEMENT");
+    }
+
+    [Fact]
+    public void Equals_WithDifferentSourceSheetName_AreNotStructurallyEqual()
+    {
+        var first = new IsolementPivot(
+            "C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", "Zone A", sourceSheetName: "ISOLEMENT");
+        var second = new IsolementPivot(
+            "C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", "Zone A", sourceSheetName: "PLATINES");
+
+        first.Should().NotBe(second);
+        first.GetHashCode().Should().NotBe(second.GetHashCode());
     }
 
     [Fact]

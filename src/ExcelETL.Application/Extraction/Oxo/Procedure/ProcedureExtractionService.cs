@@ -65,7 +65,7 @@ public sealed class ProcedureExtractionService(
 
         var designation = header.Composites[ProcedureHeaderFieldNames.Designation]!;
 
-        var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom);
+        var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom, sourceSheetName: sheet);
         var points = defaultTableaux.Select(tableauName => new PointPivot(tableauName, repere)).ToList();
         var tachesMultiples = ReadTachesMultiples(workbookReader, sheetRule.Locator);
         var typeCoherenceErrors = DetectTypeIncoherences(sheet, tachesMultiples);

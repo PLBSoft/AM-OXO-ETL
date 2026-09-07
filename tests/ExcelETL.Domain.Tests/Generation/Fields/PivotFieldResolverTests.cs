@@ -65,6 +65,20 @@ public class PivotFieldResolverTests
     }
 
     [Fact]
+    public void Resolve_EquipementSourceSheet_ReturnsSourceSheetName()
+    {
+        var equipement = new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX", sourceSheetName: "PROCEDURE");
+
+        PivotFieldResolver.Resolve(equipement, PivotFieldRef.EquipementSourceSheet).Should().Be("PROCEDURE");
+    }
+
+    [Fact]
+    public void Resolve_EquipementSourceSheetWhenEmpty_ReturnsEmptyString()
+    {
+        PivotFieldResolver.Resolve(Equipement(), PivotFieldRef.EquipementSourceSheet).Should().BeEmpty();
+    }
+
+    [Fact]
     public void Resolve_EquipementPivotWithIsolementFieldRef_ThrowsInvalidOperationException()
     {
         var act = () => PivotFieldResolver.Resolve(Equipement(), PivotFieldRef.IsolementRepere);
@@ -131,6 +145,20 @@ public class PivotFieldResolverTests
     }
 
     [Fact]
+    public void Resolve_IsolementSourceSheet_ReturnsSourceSheetName()
+    {
+        var isolement = new IsolementPivot("PT1", "Platine", "PLATINE", "", "", sourceSheetName: "PLATINES");
+
+        PivotFieldResolver.Resolve(isolement, PivotFieldRef.IsolementSourceSheet).Should().Be("PLATINES");
+    }
+
+    [Fact]
+    public void Resolve_IsolementSourceSheetWhenEmpty_ReturnsEmptyString()
+    {
+        PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.IsolementSourceSheet).Should().BeEmpty();
+    }
+
+    [Fact]
     public void Resolve_IsolementPivotWithEquipementFieldRef_ThrowsInvalidOperationException()
     {
         var act = () => PivotFieldResolver.Resolve(Isolement(), PivotFieldRef.EquipementRepere);
@@ -144,6 +172,7 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.EquipementTypeElementNom, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.EquipementLocalisation, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.EquipementTableaux, PivotSource.Equipement)]
+    [InlineData(PivotFieldRef.EquipementSourceSheet, PivotSource.Equipement)]
     [InlineData(PivotFieldRef.IsolementRepere, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementDesignation, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementTypeElementNom, PivotSource.Isolement)]
@@ -152,6 +181,7 @@ public class PivotFieldResolverTests
     [InlineData(PivotFieldRef.IsolementTableaux, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementRepereParent, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.IsolementCouleurEtiquette, PivotSource.Isolement)]
+    [InlineData(PivotFieldRef.IsolementSourceSheet, PivotSource.Isolement)]
     [InlineData(PivotFieldRef.TacheMultipleOrdre, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleAction, PivotSource.TacheMultiple)]
     [InlineData(PivotFieldRef.TacheMultipleActeur, PivotSource.TacheMultiple)]

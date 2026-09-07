@@ -342,6 +342,9 @@ public class DefaultProfileSeeder(
                 PivotSource.Equipement,
                 [
                     new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
+                    // Lot 070: source Excel tab name, as configured on the SheetExtractionRule that
+                    // produced this Equipement (ProcedureExtractionService always, in practice).
+                    new ColumnDefinition("Feuille", PivotFieldRef.EquipementSourceSheet),
                     new ColumnDefinition("Type Elément", PivotFieldRef.EquipementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.EquipementLocalisation),
                     new ColumnDefinition("LOC2", null),
@@ -361,6 +364,10 @@ public class DefaultProfileSeeder(
                 PivotSource.Isolement,
                 [
                     new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere),
+                    // Lot 070: source Excel tab name, as configured on the SheetExtractionRule that
+                    // produced this Isolement (ISOLEMENT/PLATINES/ORIFICES CAPACITES/AUTRES JOINTS
+                    // TOUCHES/DIVERS -- varies row by row).
+                    new ColumnDefinition("Feuille", PivotFieldRef.IsolementSourceSheet),
                     new ColumnDefinition("Type Elément", PivotFieldRef.IsolementTypeElementNom),
                     new ColumnDefinition("Zone", PivotFieldRef.IsolementLocalisation),
                     new ColumnDefinition("LOC2", null),

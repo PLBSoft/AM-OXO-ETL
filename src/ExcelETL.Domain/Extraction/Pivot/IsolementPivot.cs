@@ -48,9 +48,15 @@ public sealed record IsolementPivot
     // none of which have this notion, confirmed against all 4 real client fixtures) are unaffected.
     public string CouleurEtiquette { get; }
 
+    // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): known at
+    // construction time too -- every one of the 5 isolement-style services already has its own
+    // SheetExtractionRule.SheetName in hand. Optional, last parameter (never inserted earlier, e.g.
+    // before hasZeroEnergie) so the existing positional call in IsolementExtractionService stays valid.
+    public string SourceSheetName { get; }
+
     public IsolementPivot(
         string repere, string designation, string typeElementNom, string positionALaPose, string localisation,
-        bool hasZeroEnergie = false, string couleurEtiquette = "")
+        bool hasZeroEnergie = false, string couleurEtiquette = "", string sourceSheetName = "")
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -75,6 +81,7 @@ public sealed record IsolementPivot
         RepereParent = "";
         HasZeroEnergie = hasZeroEnergie;
         CouleurEtiquette = couleurEtiquette;
+        SourceSheetName = sourceSheetName;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
@@ -91,7 +98,8 @@ public sealed record IsolementPivot
         && Applications.SequenceEqual(other.Applications)
         && RepereParent == other.RepereParent
         && HasZeroEnergie == other.HasZeroEnergie
-        && CouleurEtiquette == other.CouleurEtiquette;
+        && CouleurEtiquette == other.CouleurEtiquette
+        && SourceSheetName == other.SourceSheetName;
 
     public override int GetHashCode()
     {
@@ -104,6 +112,7 @@ public sealed record IsolementPivot
         hash.Add(RepereParent);
         hash.Add(HasZeroEnergie);
         hash.Add(CouleurEtiquette);
+        hash.Add(SourceSheetName);
         foreach (var tableau in Tableaux)
         {
             hash.Add(tableau);

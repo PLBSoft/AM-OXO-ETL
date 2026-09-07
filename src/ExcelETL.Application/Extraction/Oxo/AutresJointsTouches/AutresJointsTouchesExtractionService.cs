@@ -53,7 +53,8 @@ public sealed class AutresJointsTouchesExtractionService(
             var typeElement = block.Fields[IsolementFieldNames.TypeElement];
 
             isolements.Add(new IsolementPivot(
-                repere, block.Fields[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: ""));
+                repere, block.Fields[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: "",
+                sourceSheetName: sheetRule.SheetName));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {

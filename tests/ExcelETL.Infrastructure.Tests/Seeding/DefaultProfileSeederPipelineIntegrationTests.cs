@@ -206,10 +206,15 @@ public class DefaultProfileSeederPipelineIntegrationTests
         var parents = reread.Worksheet("Parents");
         parents.Cell(1, 1).GetString().Should().Be("Repère");
         parents.Cell(2, 1).GetString().Should().Be("38-C7401");
-        parents.Cell(2, 3).GetString().Should().Be("ZONE 1");
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): "Feuille"
+        // is now column B, shifting every subsequent column (Zone was column 3, now column 4).
+        parents.Cell(1, 2).GetString().Should().Be("Feuille");
+        parents.Cell(2, 2).GetString().Should().Be("PROCEDURE");
+        parents.Cell(2, 4).GetString().Should().Be("ZONE 1");
 
         var enfants = reread.Worksheet("Enfants");
         enfants.Cell(1, 1).GetString().Should().Be("Numéro");
+        enfants.Cell(1, 2).GetString().Should().Be("Feuille");
         enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
     }
 
@@ -351,6 +356,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
         parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("38-C7401");
         parents.Cell(2, ParentsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
         parents.Cell(2, ParentsCol("PROGRESS")).GetString().Should().Be("O");
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): the
+        // Equipement is always read from PROCEDURE.
+        parents.Cell(1, ParentsCol("Feuille")).GetString().Should().Be("Feuille");
+        parents.Cell(2, ParentsCol("Feuille")).GetString().Should().Be("PROCEDURE");
 
         // 66.3's new aggregation exercised in real conditions: PROLOCK VANNES/PS941 are produced by
         // C7401's ISOLEMENT isolements (unconditional/HasZeroEnergie's "C7401-V4"), never directly by
@@ -395,6 +404,13 @@ public class DefaultProfileSeederPipelineIntegrationTests
         var nonPlatinesRows = enfants.RowsUsed().Skip(1)
             .Where(row => row.Cell(typeElementCol).GetString() != "PLATINE");
         nonPlatinesRows.Should().OnlyContain(row => row.Cell(etiquetteCol).GetString() == "");
+
+        // Lot 070: C7401's 23 Enfants rows split exactly between ISOLEMENT (8, not "PLATINE") and
+        // PLATINES (15, "PLATINE") -- AUTRES JOINTS TOUCHES/ORIFICES CAPACITES/DIVERS all produce zero
+        // isolements for this fixture (see CLAUDE.md's "23 (8+15+0+0+0)" note).
+        var feuilleCol = EnfantsCol("Feuille");
+        platinesRows.Should().OnlyContain(row => row.Cell(feuilleCol).GetString() == "PLATINES");
+        nonPlatinesRows.Should().OnlyContain(row => row.Cell(feuilleCol).GetString() == "ISOLEMENT");
     }
 
     // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md), 66.5:

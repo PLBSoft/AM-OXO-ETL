@@ -19,6 +19,13 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 // exact same broadcast mechanism as Localisation: both start empty and are filled in later by
 // ImportPipelineOrchestrator from ImportProfile.DefaultTableaux/DefaultApplicationNames (via a `with`
 // expression), never constructed positionally, never a hardcoded constant in an extraction service.
+//
+// SourceSheetName (Lot 070, docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+// unlike Localisation/Tableaux/Applications, known at construction time -- ProcedureExtractionService
+// always has its own SheetExtractionRule.SheetName in hand when it builds this pivot, so it's a plain
+// constructor parameter, not an init property diffused after the fact. Optional with an empty default
+// (not required) purely to avoid disturbing the existing call sites that don't care about it, same
+// rationale as IsolementPivot.HasZeroEnergie/CouleurEtiquette (Lots 063/068).
 public sealed record EquipementPivot
 {
     public string Repere { get; }
@@ -27,8 +34,9 @@ public sealed record EquipementPivot
     public string Localisation { get; init; }
     public IReadOnlyList<string> Tableaux { get; init; }
     public IReadOnlyList<string> Applications { get; init; }
+    public string SourceSheetName { get; }
 
-    public EquipementPivot(string repere, string designation, string typeElementNom)
+    public EquipementPivot(string repere, string designation, string typeElementNom, string sourceSheetName = "")
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -55,6 +63,7 @@ public sealed record EquipementPivot
         Localisation = "";
         Tableaux = [];
         Applications = [];
+        SourceSheetName = sourceSheetName;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
@@ -67,7 +76,8 @@ public sealed record EquipementPivot
         && TypeElementNom == other.TypeElementNom
         && Localisation == other.Localisation
         && Tableaux.SequenceEqual(other.Tableaux)
-        && Applications.SequenceEqual(other.Applications);
+        && Applications.SequenceEqual(other.Applications)
+        && SourceSheetName == other.SourceSheetName;
 
     public override int GetHashCode()
     {
@@ -76,6 +86,7 @@ public sealed record EquipementPivot
         hash.Add(Designation);
         hash.Add(TypeElementNom);
         hash.Add(Localisation);
+        hash.Add(SourceSheetName);
         foreach (var tableau in Tableaux)
         {
             hash.Add(tableau);

@@ -82,6 +82,41 @@ public class IsolementExtractionServiceTests
     }
 
     [Fact]
+    public void Extract_SetsIsolementSourceSheetNameFromTheSheetRule_NotAHardcodedConstant()
+    {
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+        // SourceSheetName must come from sheetRule.SheetName, never a literal "ISOLEMENT" baked into
+        // the service.
+        const string AlternateSheetName = "ISO_ALT";
+        var sheetRule = new SheetExtractionRule(
+            AlternateSheetName,
+            new RepeatingBlockLocator(AlternateSheetName, 19, 7, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+            ]),
+            [], ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:T6"] = "C7401",
+            ["B19:E20"] = "V1",
+            ["H18:U19"] = "Aspiration 1er étage",
+            ["H20:O21"] = "FERMÉE",
+            ["B22:E23"] = "PROLOCK",
+            ["B26:E27"] = null
+        };
+        var mock = new Mock<IWorkbookReader>();
+        mock.Setup(r => r.ReadCellValue(AlternateSheetName, It.IsAny<string>()))
+            .Returns((string _, string range) => cells.GetValueOrDefault(range));
+
+        var result = _sut.Extract(mock.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.SourceSheetName.Should().Be(AlternateSheetName);
+    }
+
+    [Fact]
     public void Extract_StopsAtFirstBlankIdentification_WithoutReadingBeyond()
     {
         var cells = new Dictionary<string, string?>

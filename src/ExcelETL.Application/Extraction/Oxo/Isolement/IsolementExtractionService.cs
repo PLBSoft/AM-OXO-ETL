@@ -123,7 +123,8 @@ public sealed class IsolementExtractionService(
                 }
             }
 
-            isolements.Add(new IsolementPivot(repere, designation, typeElement!, positionALaPose!, "", hasZeroEnergie));
+            isolements.Add(new IsolementPivot(
+                repere, designation, typeElement!, positionALaPose!, "", hasZeroEnergie, sourceSheetName: sheetRule.SheetName));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {

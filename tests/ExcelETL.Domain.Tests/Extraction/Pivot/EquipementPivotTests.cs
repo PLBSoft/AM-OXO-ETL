@@ -18,6 +18,24 @@ public class EquipementPivotTests
         equipement.Localisation.Should().BeEmpty();
         equipement.Tableaux.Should().BeEmpty();
         equipement.Applications.Should().BeEmpty();
+        equipement.SourceSheetName.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithSourceSheetName_SetsItVerbatim()
+    {
+        var equipement = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX", sourceSheetName: "PROCEDURE");
+
+        equipement.SourceSheetName.Should().Be("PROCEDURE");
+    }
+
+    [Fact]
+    public void Constructor_WithDifferentSourceSheetName_ProducesStructurallyDifferentInstances()
+    {
+        var first = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX", sourceSheetName: "PROCEDURE");
+        var second = new EquipementPivot("C7401", "Rév 1 du 01/01/2026", "MAD TRAVAUX", sourceSheetName: "AUTRE ONGLET");
+
+        first.Should().NotBe(second);
     }
 
     [Fact]

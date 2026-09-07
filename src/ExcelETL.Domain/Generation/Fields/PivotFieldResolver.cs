@@ -17,7 +17,8 @@ public static class PivotFieldResolver
             or PivotFieldRef.EquipementDesignation
             or PivotFieldRef.EquipementTypeElementNom
             or PivotFieldRef.EquipementLocalisation
-            or PivotFieldRef.EquipementTableaux => PivotSource.Equipement,
+            or PivotFieldRef.EquipementTableaux
+            or PivotFieldRef.EquipementSourceSheet => PivotSource.Equipement,
         PivotFieldRef.IsolementRepere
             or PivotFieldRef.IsolementDesignation
             or PivotFieldRef.IsolementTypeElementNom
@@ -25,7 +26,8 @@ public static class PivotFieldResolver
             or PivotFieldRef.IsolementLocalisation
             or PivotFieldRef.IsolementTableaux
             or PivotFieldRef.IsolementRepereParent
-            or PivotFieldRef.IsolementCouleurEtiquette => PivotSource.Isolement,
+            or PivotFieldRef.IsolementCouleurEtiquette
+            or PivotFieldRef.IsolementSourceSheet => PivotSource.Isolement,
         PivotFieldRef.TacheMultipleOrdre
             or PivotFieldRef.TacheMultipleAction
             or PivotFieldRef.TacheMultipleActeur
@@ -51,6 +53,7 @@ public static class PivotFieldResolver
         PivotFieldRef.EquipementTypeElementNom => equipement.TypeElementNom,
         PivotFieldRef.EquipementLocalisation => equipement.Localisation,
         PivotFieldRef.EquipementTableaux => string.Join(", ", equipement.Tableaux),
+        PivotFieldRef.EquipementSourceSheet => equipement.SourceSheetName,
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Equipement row. This should have been rejected at profile construction.")
     };
@@ -65,6 +68,7 @@ public static class PivotFieldResolver
         PivotFieldRef.IsolementTableaux => string.Join(", ", isolement.Tableaux),
         PivotFieldRef.IsolementRepereParent => isolement.RepereParent,
         PivotFieldRef.IsolementCouleurEtiquette => isolement.CouleurEtiquette,
+        PivotFieldRef.IsolementSourceSheet => isolement.SourceSheetName,
         _ => throw new InvalidOperationException(
             $"Pivot field '{fieldRef}' is not valid for an Isolement row. This should have been rejected at profile construction.")
     };

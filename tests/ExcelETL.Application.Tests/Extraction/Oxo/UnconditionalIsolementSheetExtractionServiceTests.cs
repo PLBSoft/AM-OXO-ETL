@@ -80,6 +80,40 @@ public class UnconditionalIsolementSheetExtractionServiceTests
     }
 
     [Fact]
+    public void Extract_SetsIsolementSourceSheetNameFromTheSheetRule_NotAHardcodedConstant()
+    {
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+        // SourceSheetName must come from sheetRule.SheetName, never a literal "PLATINES" baked into
+        // the service -- this same service is also reused for ORIFICES CAPACITES with its own
+        // SheetExtractionRule.
+        const string AlternateSheetName = "PLATINES_ALT";
+        var sheetRule = new SheetExtractionRule(
+            AlternateSheetName,
+            new RepeatingBlockLocator(AlternateSheetName, 17, 8, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+            ]),
+            [], UnconditionalColonneNames, [], []);
+        var cells = new Dictionary<string, string?>
+        {
+            ["K6:U6"] = "C7401",
+            ["B17:E18"] = "PT1",
+            ["H16:V17"] = "Aspiration 1er étage",
+            ["B20:E22"] = "PLATINE",
+            ["B25:E26"] = null
+        };
+        var mock = new Mock<IWorkbookReader>();
+        mock.Setup(r => r.ReadCellValue(AlternateSheetName, It.IsAny<string>()))
+            .Returns((string _, string range) => cells.GetValueOrDefault(range));
+
+        var result = _sut.Extract(mock.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.SourceSheetName.Should().Be(AlternateSheetName);
+    }
+
+    [Fact]
     public void Extract_CreatesAllSevenUnconditionalPointsForEveryIsolement()
     {
         var cells = new Dictionary<string, string?>

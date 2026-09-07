@@ -82,6 +82,35 @@ public class DiversExtractionServiceTests
     }
 
     [Fact]
+    public void Extract_SetsIsolementSourceSheetNameFromTheSheetRule_NotAHardcodedConstant()
+    {
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+        // SourceSheetName must come from sheetRule.SheetName, never a literal "DIVERS" baked into
+        // the service.
+        const string AlternateSheetName = "DIVERS_ALT";
+        var sheetRule = new SheetExtractionRule(
+            AlternateSheetName,
+            new RepeatingBlockLocator(AlternateSheetName, 9, 3, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:G", 0, 2),
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "H:K", 0, 2),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "L:V", 0, 2)
+            ]),
+            [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", InstrumentationColonne)],
+            [],
+            [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(AlternateSheetName, "N6"))],
+            []);
+        var cells = BaseCells("INSTRUMENTATION");
+        var mock = new Mock<IWorkbookReader>();
+        mock.Setup(r => r.ReadCellValue(AlternateSheetName, It.IsAny<string>()))
+            .Returns((string _, string range) => cells.GetValueOrDefault(range));
+
+        var result = _sut.Extract(mock.Object, sheetRule, ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.SourceSheetName.Should().Be(AlternateSheetName);
+    }
+
+    [Fact]
     public void Extract_WithInstrumentationType_CreatesOnlySynchronisationPoint()
     {
         var cells = BaseCells("INSTRUMENTATION");

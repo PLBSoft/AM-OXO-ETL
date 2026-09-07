@@ -78,6 +78,35 @@ public class AutresJointsTouchesExtractionServiceTests
     }
 
     [Fact]
+    public void Extract_SetsIsolementSourceSheetNameFromTheSheetRule_NotAHardcodedConstant()
+    {
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+        // SourceSheetName must come from sheetRule.SheetName, never a literal "AUTRES JOINTS TOUCHES"
+        // baked into the service.
+        const string AlternateSheetName = "AJT_ALT";
+        var sheetRule = new SheetExtractionRule(
+            AlternateSheetName,
+            new RepeatingBlockLocator(AlternateSheetName, 17, 7, IsolementFieldNames.Identification,
+            [
+                new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
+                new BlockFieldDefinition(IsolementFieldNames.Designation, "F:Y", -1, 0),
+                new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+            ]),
+            [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
+            UnconditionalColonneNames,
+            [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(AlternateSheetName, "N6"))],
+            []);
+        var cells = BaseBlockCells("TUYAUTERIE");
+        var mock = new Mock<IWorkbookReader>();
+        mock.Setup(r => r.ReadCellValue(AlternateSheetName, It.IsAny<string>()))
+            .Returns((string _, string range) => cells.GetValueOrDefault(range));
+
+        var result = _sut.Extract(mock.Object, sheetRule, ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.SourceSheetName.Should().Be(AlternateSheetName);
+    }
+
+    [Fact]
     public void Extract_CreatesUnconditionalPointsForEveryIsolement()
     {
         var cells = BaseBlockCells("TUYAUTERIE");

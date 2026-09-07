@@ -248,11 +248,16 @@ public class DefaultProfileSeederTests
         parents.ColumnDefinitions.Where(c => c.Source != null).Select(c => c.Source).Should().BeEquivalentTo(
         [
             PivotFieldRef.EquipementRepere,
+            PivotFieldRef.EquipementSourceSheet,
             PivotFieldRef.EquipementTypeElementNom,
             PivotFieldRef.EquipementLocalisation,
             PivotFieldRef.EquipementDesignation,
             PivotFieldRef.EquipementTableaux
         ]);
+        // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
+        // "Feuille" sits at index 1 -- column B, right after "Repère" at index 0/column A.
+        parents.ColumnDefinitions.ElementAt(1).Should().BeEquivalentTo(
+            new { Header = "Feuille", Source = PivotFieldRef.EquipementSourceSheet });
         // Lot 066, 66.1: "TRAVAUX COMPLET"/"TRAVAUX DETAIL" are gone (redundant with "Tableaux") --
         // 66.2/66.4 additions covered by their own dedicated tests below.
         parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotContain(["TRAVAUX COMPLET", "TRAVAUX DETAIL"]);
@@ -263,6 +268,7 @@ public class DefaultProfileSeederTests
         enfants.ColumnDefinitions.Where(c => c.Source != null).Select(c => c.Source).Should().BeEquivalentTo(
         [
             PivotFieldRef.IsolementRepere,
+            PivotFieldRef.IsolementSourceSheet,
             PivotFieldRef.IsolementTypeElementNom,
             PivotFieldRef.IsolementLocalisation,
             PivotFieldRef.IsolementRepereParent,
@@ -272,6 +278,9 @@ public class DefaultProfileSeederTests
             PivotFieldRef.IsolementCouleurEtiquette,
             PivotFieldRef.IsolementTableaux
         ]);
+        // Lot 070: "Feuille" sits at index 1 -- column B, right after "Numéro" at index 0/column A.
+        enfants.ColumnDefinitions.ElementAt(1).Should().BeEquivalentTo(
+            new { Header = "Feuille", Source = PivotFieldRef.IsolementSourceSheet });
         enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "Type Elément" && c.Source == PivotFieldRef.IsolementTypeElementNom);
         enfants.ColumnDefinitions.Should().ContainSingle(c => c.Header == "ELEMENT PARENT" && c.Source == PivotFieldRef.IsolementRepereParent);
         // Lot 066, 66.1: the bare "ZÉRO ENERGIE EN PRESENCE EE" PointColumnDefinition is gone -- DIVERS

@@ -50,7 +50,7 @@ public sealed class UnconditionalIsolementSheetExtractionService(
             var couleurEtiquette = ReadCouleurEtiquette(workbookReader, sheet, sheetRule, block.StartRow);
             isolements.Add(new IsolementPivot(
                 repere, block.Fields[IsolementFieldNames.Designation], block.Fields[IsolementFieldNames.TypeElement],
-                positionALaPose: "", localisation: "", couleurEtiquette: couleurEtiquette));
+                positionALaPose: "", localisation: "", couleurEtiquette: couleurEtiquette, sourceSheetName: sheetRule.SheetName));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {
