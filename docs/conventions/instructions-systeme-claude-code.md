@@ -89,10 +89,17 @@ closed — ask before assuming, never silently redecide.
   exists — fully removed at Lot K4. All new work targets the OXO pipeline only.
 - **Real legacy integration confirmed working end-to-end (2026-09-10)**: the legacy ASP.NET
   MVC 5 app's `OXOController` calls `GET /api/import-profiles`/`GET /api/export-profiles` to
-  populate two dropdowns, `POST /api/oxo/process` to process an upload, and both health
-  endpoints in parallel (`ping` for the main indicator, `GET /api/health` as a non-blocking
-  diagnostic line underneath) — verified against the real deployed environment, not just
-  described. See `CLAUDE.md`'s "Web API surface" section for full per-endpoint detail.
+  populate two dropdowns, `POST /api/oxo/process` to process an upload, both health endpoints in
+  parallel (`ping` for the main indicator, `GET /api/health` as a non-blocking diagnostic line
+  underneath), and `GET /api/generated-files` for a new `/OXO/History` screen (sortable-by-date
+  table, partial repère filter, status badge, source/target download) — verified against the
+  real deployed environment, not just described. **Notable security pattern on the legacy
+  side**: it never exposes the raw `sourceDownloadUrl`/`targetDownloadUrl` strings the API
+  returns straight to the browser — downloads go through a legacy controller action that
+  reconstructs the path itself server-side (`Guid` id, `kind` restricted to `"source"`/`"target"`),
+  avoiding an SSRF-shaped risk where an arbitrary URL parameter could make the legacy server
+  relay an outbound request (carrying `X-Api-Key`) to an uncontrolled host. See `CLAUDE.md`'s
+  "Web API surface" section for full per-endpoint detail.
 
 ## BLAZOR ADMIN
 
