@@ -57,6 +57,27 @@ sur le serveur cible — jamais dans un fichier versionné du dépôt. Ce point 
 vs service Windows autonome) reste à confirmer au moment du déploiement réel ; cette convention
 s'applique identiquement dans les deux cas, seul l'écran de configuration change.
 
+## Incident réel (2026-09-10) — la décision violée, puis corrigée
+
+Malgré cette convention, `src/ExcelETL.WebAPI/appsettings.Production.json` et
+`src/ExcelETL.BlazorAdmin/appsettings.Production.json` ont été forcés au suivi Git
+(`git add -f`, commit `7716dc4`, 28/07) et committaient en clair la vraie
+`ApiKeyAuthentication:ApiKey`/`OxoApiTestClient:ApiKey` de production. Poussé sur `origin/main`,
+exposé ~6 semaines avant d'être découvert (en vérifiant où vivait réellement la clé pour câbler
+l'intégration M2M avec l'app legacy — la variable de pool IIS attendue n'existait pas, seule
+`ASPNETCORE_ENVIRONMENT` y était posée).
+
+**Remédiation** : rotation de la clé sur les deux pools IIS, puis `git rm --cached` sur les deux
+fichiers (conservés en local, non committables). Historique Git non réécrit — une fois la clé
+tournée, l'ancienne valeur committée est inerte. Détail complet dans `CLAUDE.md` (section dédiée)
+et `guide-deploiement-am-oxo-etl-windows-server.md` §5 (incident du même jour).
+
+**Ce que ça change concrètement à cette convention** : rien sur le fond — la décision actée plus
+haut reste la bonne, l'incident est une violation de la convention, pas une preuve qu'elle était
+mal conçue. Seul ajout pratique : vérifier systématiquement `git ls-files | grep -i
+appsettings.Production` (doit toujours renvoyer une liste vide) lors de tout futur déploiement ou
+dépannage — un résultat non vide est cette même classe d'incident qui se reproduit.
+
 ## Hors périmètre de ce document
 
 - Le choix définitif entre hébergement IIS et service Windows autonome — non tranché ici, sans

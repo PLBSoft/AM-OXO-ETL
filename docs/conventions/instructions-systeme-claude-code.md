@@ -54,14 +54,45 @@ closed — ask before assuming, never silently redecide.
 ## WEB API SURFACE
 
 - `POST /api/oxo/process` (definitive route name) — `ImportProfileId` and `ExportProfileId`
-  are required, explicit request parameters. No implicit/single deduced profile, ever.
+  are `Guid?` request parameters (since Lot 036.1), explicit and required (a structurally
+  missing field is a `400`, distinct from a syntactically-valid `Guid` matching no profile,
+  `404`). No implicit/single deduced profile, ever.
 - File is streamed in synchronously; the generated workbook is both returned synchronously in
-  the HTTP response body and archived on the server filesystem via `IFileStorageService`
-  (since Lot K2) — filesystem persistence is real, not something to add speculatively.
-- Guarded by `ApiKeyAuthenticationHandler` (existing, reused, not reinvented per route).
+  the HTTP response body and archived server-side via `IGeneratedFileWriter`/
+  `IGeneratedFileArchiveStore` (Lot 034) — **not** `IFileStorageService`, which was removed at
+  Lot 046 (this file previously referenced it; corrected here since a future session reading
+  this doc would otherwise chase a type that no longer exists).
+- `GET /api/import-profiles` / `GET /api/export-profiles` (`ProfilesController`, added
+  2026-09-10) — metadata-only profile pickers (`{ id, name }[]`, sorted by name) for an M2M
+  caller that needs to let its own user choose a profile rather than hardcoding one. `200 + []`
+  on an empty store, never `404`.
+- `GET /api/generated-files` (optional `?equipementRepere=` filter) / `GET
+  /api/generated-files/{id}` (`GeneratedFilesController`, added 2026-09-10) — read-only history
+  of archived files (Lot 034 records), metadata only. `SourceFilePath`/`TargetFilePath`
+  (server-local filesystem paths) are deliberately never returned; `SourceDownloadUrl`/
+  `TargetDownloadUrl` (relative, `TargetDownloadUrl` null for a `Rejected` record) are the
+  caller-facing indirection instead. `GET /api/generated-files/{id}/source`/`/target` (added the
+  same day) stream the archived bytes back — `404` (not a server error) for a missing target on
+  a `Rejected` record or a file no longer present on disk.
+- `GET /api/health/ping` — minimal, dependency-free liveness check (`{ status: "Pong",
+  timestampUtc }`), the endpoint the legacy app actually polls for its main available/
+  unavailable indicator; its contract has never changed.
+- `GET /api/health` (enriched 2026-09-10) — richer diagnostic endpoint: `{ status:
+  "Healthy"|"Degraded", version, database: "Healthy"|"Unhealthy" }`. `version` comes from its
+  own independent version counter (`ExcelETL.WebAPI/version.txt`, auto-incremented on Publish
+  only — not shared with BlazorAdmin's own counter, Lot 062). `database` is a bounded (5s)
+  connectivity check; always returns `200`, `"Degraded"` reflects a DB failure rather than a
+  non-200 HTTP status.
+- Guarded by `ApiKeyAuthenticationHandler` (existing, reused, not reinvented per route) — every
+  route above, no exceptions, no anonymous route exists anywhere in this host.
 - The legacy Excel POC pipeline (`ExcelController` / `ClosedXmlExtractionService`) no longer
-  exists — fully removed at Lot K4. `/api/oxo/process` is the sole HTTP entry point; all new
-  work targets the OXO pipeline only.
+  exists — fully removed at Lot K4. All new work targets the OXO pipeline only.
+- **Real legacy integration confirmed working end-to-end (2026-09-10)**: the legacy ASP.NET
+  MVC 5 app's `OXOController` calls `GET /api/import-profiles`/`GET /api/export-profiles` to
+  populate two dropdowns, `POST /api/oxo/process` to process an upload, and both health
+  endpoints in parallel (`ping` for the main indicator, `GET /api/health` as a non-blocking
+  diagnostic line underneath) — verified against the real deployed environment, not just
+  described. See `CLAUDE.md`'s "Web API surface" section for full per-endpoint detail.
 
 ## BLAZOR ADMIN
 

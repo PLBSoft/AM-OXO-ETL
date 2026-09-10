@@ -15,14 +15,17 @@ using Xunit;
 
 namespace ExcelETL.WebAPI.Tests.GeneratedFiles;
 
-public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<Program>>, IDisposable
 {
     private const string ValidApiKey = "test-api-key-12345";
 
+    private readonly string _archiveRoot =
+        Path.Combine(Path.GetTempPath(), "GeneratedFilesEndpointTests_" + Guid.NewGuid());
     private readonly WebApplicationFactory<Program> _factory;
 
     public GeneratedFilesEndpointTests(WebApplicationFactory<Program> factory)
     {
+        Directory.CreateDirectory(_archiveRoot);
         var databaseName = "GeneratedFilesEndpointTests_" + Guid.NewGuid();
 
         _factory = factory.WithWebHostBuilder(builder =>
@@ -38,6 +41,14 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
                 services.AddDbContextFactory<ExcelEtlDbContext>(options => options.UseInMemoryDatabase(databaseName));
             });
         });
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_archiveRoot))
+        {
+            Directory.Delete(_archiveRoot, recursive: true);
+        }
     }
 
     [Fact]
@@ -60,6 +71,18 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
+    [Theory]
+    [InlineData("source")]
+    [InlineData("target")]
+    public async Task Download_WithoutApiKey_ReturnsUnauthorized(string segment)
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"/api/generated-files/{Guid.NewGuid()}/{segment}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     [Fact]
     public async Task Search_WithNoRecords_ReturnsEmptyArray()
     {
@@ -76,10 +99,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
     public async Task Search_WithSeededRecords_ReturnsMetadataOnly_SortedByGeneratedAtDescending()
     {
         var client = CreateAuthenticatedClient();
-        var older = BuildRecord(equipementRepere: "38-C7401", generatedAtUtc: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
-        var newer = BuildRecord(equipementRepere: "38-D8570", generatedAtUtc: new DateTime(2026, 9, 5, 0, 0, 0, DateTimeKind.Utc));
-        await SeedAsync(older);
-        await SeedAsync(newer);
+        var older = await SeedRecordAsync(equipementRepere: "38-C7401", generatedAtUtc: new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+        var newer = await SeedRecordAsync(equipementRepere: "38-D8570", generatedAtUtc: new DateTime(2026, 9, 5, 0, 0, 0, DateTimeKind.Utc));
 
         var response = await client.GetAsync("/api/generated-files");
 
@@ -99,10 +120,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
     public async Task Search_WithEquipementRepereFilter_ReturnsOnlyMatchingRecords()
     {
         var client = CreateAuthenticatedClient();
-        var matching = BuildRecord(equipementRepere: "38-C7401");
-        var nonMatching = BuildRecord(equipementRepere: "38-D8570");
-        await SeedAsync(matching);
-        await SeedAsync(nonMatching);
+        var matching = await SeedRecordAsync(equipementRepere: "38-C7401");
+        await SeedRecordAsync(equipementRepere: "38-D8570");
 
         var response = await client.GetAsync("/api/generated-files?equipementRepere=C7401");
 
@@ -112,11 +131,10 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task GetById_WithExistingRecord_ReturnsItsMetadata()
+    public async Task GetById_WithExistingRecord_ReturnsMetadataAndDownloadUrls()
     {
         var client = CreateAuthenticatedClient();
-        var record = BuildRecord(equipementRepere: "38-C7401", status: GeneratedFileArchiveStatus.NonBlockingWarning);
-        await SeedAsync(record);
+        var record = await SeedRecordAsync(equipementRepere: "38-C7401", status: GeneratedFileArchiveStatus.NonBlockingWarning);
 
         var response = await client.GetAsync($"/api/generated-files/{record.Id}");
 
@@ -129,6 +147,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body.ImportProfileId.Should().Be(record.ImportProfileId);
         body.ExportProfileId.Should().Be(record.ExportProfileId);
         body.Status.Should().Be("NonBlockingWarning");
+        body.SourceDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/source");
+        body.TargetDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/target");
     }
 
     [Fact]
@@ -142,12 +162,12 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
     }
 
     [Fact]
-    public async Task GetById_WithRejectedRecordCarryingNullTargetFields_ReturnsNullTargetFileName()
+    public async Task GetById_WithRejectedRecordCarryingNullTargetFields_ReturnsNullTargetFileNameAndUrl()
     {
         var client = CreateAuthenticatedClient();
         var record = new GeneratedFileRecord(
             Guid.NewGuid(), DateTime.UtcNow, equipementRepere: null,
-            sourceFileName: "rejected-source.xlsx", sourceFilePath: @"C:\archive\rejected-source.xlsx",
+            sourceFileName: "rejected-source.xlsx", sourceFilePath: WriteFile("rejected-source.xlsx"),
             targetFileName: null, targetFilePath: null,
             importProfileId: Guid.NewGuid(), exportProfileId: Guid.NewGuid(),
             status: GeneratedFileArchiveStatus.Rejected);
@@ -160,6 +180,79 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body!.TargetFileName.Should().BeNull();
         body.EquipementRepere.Should().BeNull();
         body.Status.Should().Be("Rejected");
+        body.SourceDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/source");
+        body.TargetDownloadUrl.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DownloadSource_WithExistingRecord_ReturnsFileBytesWithNameAndContentType()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(sourceContent: "source-bytes"u8.ToArray());
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}/source");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType!.MediaType.Should()
+            .Be("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.Content.Headers.ContentDisposition!.FileName.Should().Be(record.SourceFileName);
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        bytes.Should().Equal("source-bytes"u8.ToArray());
+    }
+
+    [Fact]
+    public async Task DownloadTarget_WithExistingRecord_ReturnsFileBytesWithNameAndContentType()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(targetContent: "target-bytes"u8.ToArray());
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}/target");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentDisposition!.FileName.Should().Be(record.TargetFileName);
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        bytes.Should().Equal("target-bytes"u8.ToArray());
+    }
+
+    [Theory]
+    [InlineData("source")]
+    [InlineData("target")]
+    public async Task Download_WithUnknownId_ReturnsNotFound(string segment)
+    {
+        var client = CreateAuthenticatedClient();
+
+        var response = await client.GetAsync($"/api/generated-files/{Guid.NewGuid()}/{segment}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DownloadTarget_WithRejectedRecord_ReturnsNotFound()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, equipementRepere: null,
+            sourceFileName: "rejected-source.xlsx", sourceFilePath: WriteFile("rejected-source.xlsx"),
+            targetFileName: null, targetFilePath: null,
+            importProfileId: Guid.NewGuid(), exportProfileId: Guid.NewGuid(),
+            status: GeneratedFileArchiveStatus.Rejected);
+        await SeedAsync(record);
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}/target");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DownloadTarget_WhenFileMissingFromDisk_ReturnsNotFound_NotAServerError()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync();
+        File.Delete(Path.Combine(_archiveRoot, record.TargetFileName!));
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}/target");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     private HttpClient CreateAuthenticatedClient()
@@ -176,18 +269,33 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         await store.SaveAsync(record);
     }
 
-    private static GeneratedFileRecord BuildRecord(
+    private string WriteFile(string fileName, byte[]? content = null)
+    {
+        var path = Path.Combine(_archiveRoot, fileName);
+        File.WriteAllBytes(path, content ?? [1, 2, 3]);
+        return path;
+    }
+
+    private async Task<GeneratedFileRecord> SeedRecordAsync(
         string? equipementRepere = "38-C7401",
         DateTime? generatedAtUtc = null,
-        GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success) => new(
-        Guid.NewGuid(),
-        generatedAtUtc ?? DateTime.UtcNow,
-        equipementRepere,
-        sourceFileName: "source.xlsx",
-        sourceFilePath: @"C:\archive\source.xlsx",
-        targetFileName: "MAD_38-C7401_20260910120000.xlsx",
-        targetFilePath: @"C:\archive\MAD_38-C7401_20260910120000.xlsx",
-        importProfileId: Guid.NewGuid(),
-        exportProfileId: Guid.NewGuid(),
-        status: status);
+        GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success,
+        byte[]? sourceContent = null,
+        byte[]? targetContent = null)
+    {
+        var id = Guid.NewGuid();
+        var record = new GeneratedFileRecord(
+            id,
+            generatedAtUtc ?? DateTime.UtcNow,
+            equipementRepere,
+            sourceFileName: $"{id}-source.xlsx",
+            sourceFilePath: WriteFile($"{id}-source.xlsx", sourceContent),
+            targetFileName: $"{id}-target.xlsx",
+            targetFilePath: WriteFile($"{id}-target.xlsx", targetContent),
+            importProfileId: Guid.NewGuid(),
+            exportProfileId: Guid.NewGuid(),
+            status: status);
+        await SeedAsync(record);
+        return record;
+    }
 }
