@@ -33,12 +33,12 @@
     else if (_health.IsReachable && _health.Status == "Degraded")
     {
         <span id="api-health-badge" class="badge bg-warning text-dark">@Loc["ApiTest_HealthDegraded"]</span>
-        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version, DatabaseStatusLabel(_health.Database)]</span>
+        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version ?? string.Empty, DatabaseStatusLabel(_health.Database)]</span>
     }
     else if (_health.IsReachable)
     {
         <span id="api-health-badge" class="badge bg-success">@Loc["ApiTest_HealthAvailable"]</span>
-        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version, DatabaseStatusLabel(_health.Database)]</span>
+        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version ?? string.Empty, DatabaseStatusLabel(_health.Database)]</span>
     }
     else
     {
@@ -152,7 +152,7 @@ else
                 <div id="api-test-result" class="alert alert-secondary mt-3">
                     @if (_result.ExceptionType is not null)
                     {
-                        <p id="api-test-technical-error-detail">@Loc["ApiTest_TechnicalErrorDetail", _result.ExceptionType, _result.ExceptionMessage]</p>
+                        <p id="api-test-technical-error-detail">@Loc["ApiTest_TechnicalErrorDetail", _result.ExceptionType, _result.ExceptionMessage ?? string.Empty]</p>
                     }
                     else
                     {

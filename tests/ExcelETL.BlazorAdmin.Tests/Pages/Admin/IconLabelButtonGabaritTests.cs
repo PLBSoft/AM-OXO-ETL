@@ -245,6 +245,8 @@ public class IconLabelButtonGabaritTests : BunitContext
         button.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
     });
 
+    private static readonly object EmptyCallbackTarget = new();
+
     private static readonly Microsoft.AspNetCore.Components.RenderFragment BackLinkFragment = builder =>
     {
         builder.OpenComponent<PageBackNavLink>(0);
@@ -256,6 +258,4 @@ public class IconLabelButtonGabaritTests : BunitContext
             Microsoft.AspNetCore.Components.EventCallback.Factory.Create(EmptyCallbackTarget, () => { }));
         builder.CloseComponent();
     };
-
-    private static readonly object EmptyCallbackTarget = new();
 }
