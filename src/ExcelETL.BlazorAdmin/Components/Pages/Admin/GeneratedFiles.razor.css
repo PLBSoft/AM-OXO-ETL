@@ -1,0 +1,14 @@
+/* QuickGrid pads the visible page out to Pagination.ItemsPerPage (25) with empty filler <tr>s --
+   no cell content, no aria-rowindex -- so the table's height never shrinks on a partial last page
+   (confirmed by decompiling the installed Microsoft.AspNetCore.Components.QuickGrid package,
+   RenderNonVirtualizedRows). With most real pages far under 25 rows, this rendered as a long band
+   of near-invisible empty striped rows below the real data. Hidden here rather than lowering
+   ItemsPerPage, since 25/page is still the right page size once the archive grows.
+
+   ::deep is required: <table>/<tbody>/<tr> are rendered by QuickGrid, a child component, not by
+   this component's own markup, so Blazor's CSS isolation scope attribute never reaches them
+   without it. Only #generated-files-grid's own real data rows (the ones carrying aria-rowindex)
+   stay visible; nothing about QuickGrid's own pagination/sorting behavior is touched. */
+::deep #generated-files-grid tbody tr:not([aria-rowindex]) {
+    display: none;
+}
