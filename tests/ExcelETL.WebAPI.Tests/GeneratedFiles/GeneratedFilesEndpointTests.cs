@@ -33,6 +33,7 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
             builder.UseSetting("ApiKeyAuthentication:ApiKey", ValidApiKey);
             builder.UseSetting("Serilog:EnableMsSqlServerSink", "false");
             builder.UseSetting("Database:AutoMigrate", "false");
+            builder.UseSetting("GeneratedFilesArchive:RootPath", _archiveRoot);
 
             builder.ConfigureServices(services =>
             {
@@ -269,6 +270,33 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    // Regression test for the real production defect this lot fixed: a nested relative path (the
+    // exact {yyyy}\{MM}\{file} shape FileSystemGeneratedFileWriter actually produces, not just a
+    // bare filename) must still resolve correctly once joined with GeneratedFilesArchive:RootPath.
+    [Fact]
+    public async Task DownloadSource_WithNestedRelativePath_JoinsArchiveRootAndSucceeds()
+    {
+        var client = CreateAuthenticatedClient();
+        var relativeDirectory = Path.Combine("2026", "09");
+        Directory.CreateDirectory(Path.Combine(_archiveRoot, relativeDirectory));
+        var relativePath = Path.Combine(relativeDirectory, "20260910-120000-000_source_source.xlsx");
+        File.WriteAllBytes(Path.Combine(_archiveRoot, relativePath), "nested-source-bytes"u8.ToArray());
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, "38-C7401",
+            sourceFileName: "source.xlsx", sourceFilePath: relativePath,
+            targetFileName: null, targetFilePath: null,
+            importProfileId: Guid.NewGuid(), exportProfileId: Guid.NewGuid(),
+            status: GeneratedFileArchiveStatus.Rejected);
+        await SeedAsync(record);
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}/source");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        bytes.Should().Equal("nested-source-bytes"u8.ToArray());
+    }
+
     private HttpClient CreateAuthenticatedClient()
     {
         var client = _factory.CreateClient();
@@ -283,11 +311,16 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         await store.SaveAsync(record);
     }
 
+    // Writes to _archiveRoot but returns the relative path only -- mirrors exactly what
+    // IGeneratedFileWriter/FileSystemGeneratedFileWriter actually returns (relative to the
+    // configured root, never absolute), so GeneratedFileRecord.SourceFilePath/TargetFilePath in
+    // these tests carries the same shape the controller must handle in real production, not the
+    // absolute path a naive test double would be tempted to use instead.
     private string WriteFile(string fileName, byte[]? content = null)
     {
         var path = Path.Combine(_archiveRoot, fileName);
         File.WriteAllBytes(path, content ?? [1, 2, 3]);
-        return path;
+        return fileName;
     }
 
     private async Task<GeneratedFileRecord> SeedRecordAsync(

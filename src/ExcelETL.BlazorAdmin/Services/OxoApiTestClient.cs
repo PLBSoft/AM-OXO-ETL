@@ -146,12 +146,20 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
             return OxoApiHealthResult.Unreachable();
         }
 
+        // Bound by timeoutCts.Token, not the plain cancellationToken -- ResponseHeadersRead above
+        // means the body isn't downloaded yet at this point, so a server that sends headers
+        // promptly but stalls trickling the body must still be caught by the same 5s bound, not
+        // left free to hang past it.
         HealthResponseBody? body;
         try
         {
-            body = await response.Content.ReadFromJsonAsync<HealthResponseBody>(JsonOptions, cancellationToken);
+            body = await response.Content.ReadFromJsonAsync<HealthResponseBody>(JsonOptions, timeoutCts.Token);
         }
         catch (JsonException)
+        {
+            return OxoApiHealthResult.Unreachable();
+        }
+        catch (OperationCanceledException)
         {
             return OxoApiHealthResult.Unreachable();
         }

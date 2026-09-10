@@ -38,8 +38,18 @@ public sealed class GeneratedFileRecord
     // is a best-effort traceability field, not a business invariant of the record, and making it
     // required would have forced every existing construction site (and every M2M caller not yet
     // updated to send it) to change at once. Null means "not supplied", not "unknown user" as a
-    // literal string -- callers decide how to render that.
+    // literal string -- callers decide how to render that. Truncated (never rejected) at
+    // MaxUsernameLength in the constructor -- this field is best-effort metadata, not a business
+    // fact worth losing the WHOLE archive record over (source/target file writes included) if a
+    // caller sends something oversized; the alternative (an unvalidated value reaching
+    // EfGeneratedFileArchiveStore.SaveAsync against the nvarchar(200) column) throws deep inside a
+    // catch-and-log-only block in ProcessOxoFileService.TryArchiveAsync, silently dropping the
+    // entire record with no signal to the caller or an admin.
     public string? Username { get; }
+
+    // Matches GeneratedFileRecordConfiguration's HasMaxLength(MaxUsernameLength) column mapping --
+    // one source of truth for the two places (Domain, EF configuration) that must agree on it.
+    public const int MaxUsernameLength = 200;
 
     public GeneratedFileRecord(
         Guid id,
@@ -67,6 +77,6 @@ public sealed class GeneratedFileRecord
         ImportProfileId = importProfileId;
         ExportProfileId = exportProfileId;
         Status = status;
-        Username = username;
+        Username = username is { Length: > MaxUsernameLength } ? username[..MaxUsernameLength] : username;
     }
 }

@@ -1,7 +1,9 @@
 using ExcelETL.Application.Archiving;
 using ExcelETL.Domain.Archiving;
+using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.WebAPI.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace ExcelETL.WebAPI.Controllers;
 
@@ -10,7 +12,9 @@ namespace ExcelETL.WebAPI.Controllers;
 // source/target bytes, without going through BlazorAdmin's own /generated-files admin page.
 [ApiController]
 [Route("api/generated-files")]
-public class GeneratedFilesController(IGeneratedFileArchiveStore archiveStore) : ControllerBase
+public class GeneratedFilesController(
+    IGeneratedFileArchiveStore archiveStore, IOptions<GeneratedFilesArchiveOptions> archiveOptions)
+    : ControllerBase
 {
     private const string WorkbookContentType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -58,14 +62,22 @@ public class GeneratedFilesController(IGeneratedFileArchiveStore archiveStore) :
     // The archive has no purge policy today, but a file could still be missing on disk (manual
     // cleanup, moved storage, etc.) -- treated as a plain 404 rather than an unqualified 500, same
     // "expected absence, not a server error" reasoning as the Rejected-record case above.
-    private static IActionResult DownloadFile(string path, string fileName)
+    //
+    // relativePath is exactly what IGeneratedFileWriter returns and GeneratedFileRecord stores --
+    // relative to the configured archive root, never an absolute path (see IGeneratedFileWriter's
+    // own doc comment). Must be joined with GeneratedFilesArchive:RootPath before touching the
+    // filesystem, same as BlazorAdmin's GeneratedFiles.razor already does -- File.Exists/OpenRead
+    // on the bare relative path resolves against the process's working directory, not the archive
+    // root, and would silently 404 every real download.
+    private IActionResult DownloadFile(string relativePath, string fileName)
     {
-        if (!System.IO.File.Exists(path))
+        var fullPath = Path.Combine(archiveOptions.Value.RootPath, relativePath);
+        if (!System.IO.File.Exists(fullPath))
         {
             return new NotFoundResult();
         }
 
-        var stream = System.IO.File.OpenRead(path);
+        var stream = System.IO.File.OpenRead(fullPath);
         return new FileStreamResult(stream, WorkbookContentType) { FileDownloadName = fileName };
     }
 

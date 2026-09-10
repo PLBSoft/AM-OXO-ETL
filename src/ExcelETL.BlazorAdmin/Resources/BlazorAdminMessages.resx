@@ -1315,6 +1315,9 @@
   <data name="ApiTest_HealthAvailable" xml:space="preserve">
     <value>API available</value>
   </data>
+  <data name="ApiTest_HealthDegraded" xml:space="preserve">
+    <value>API degraded</value>
+  </data>
   <data name="ApiTest_HealthUnavailable" xml:space="preserve">
     <value>API unavailable</value>
   </data>

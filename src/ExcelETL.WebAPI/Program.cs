@@ -16,7 +16,6 @@ using ExcelETL.WebAPI.Authentication;
 using ExcelETL.WebAPI.Correlation;
 using ExcelETL.WebAPI.ExceptionHandling;
 using ExcelETL.WebAPI.Services;
-using Serilog.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -134,35 +133,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-// Correlation ID: registered before UseExceptionHandler for the same execution-context-capture
-// reason documented on UseRequestLocalization just below -- Serilog's LogContext.PushProperty
-// relies on AsyncLocal, and ExceptionHandlerMiddleware captures/restores an ExecutionContext
-// snapshot taken at the point it itself first runs; a push registered after it would be invisible
-// to GlobalExceptionHandler's own logging. Client-supplied (X-Correlation-Id request header) if
-// present, generated otherwise -- so no request is ever untraceable. Echoed back via
-// Response.OnStarting rather than set directly, since ExceptionHandlerMiddleware clears the
-// response (headers included) before invoking its handler on an unhandled exception; OnStarting
-// callbacks fire only once the response is actually about to be written, after that clearing has
-// already happened, so the header survives regardless of which path (success or error) produces
-// the eventual response.
-app.Use(async (context, next) =>
-{
-    var correlationId = context.Request.Headers.TryGetValue(CorrelationIdDefaults.HeaderName, out var provided)
-        && !string.IsNullOrWhiteSpace(provided)
-        ? provided.ToString()
-        : Guid.NewGuid().ToString();
-
-    context.Response.OnStarting(() =>
-    {
-        context.Response.Headers[CorrelationIdDefaults.HeaderName] = correlationId;
-        return Task.CompletedTask;
-    });
-
-    using (LogContext.PushProperty(CorrelationIdDefaults.LogPropertyName, correlationId))
-    {
-        await next();
-    }
-});
+// CorrelationIdMiddleware registered before UseExceptionHandler for the same execution-context-
+// capture reason documented on UseRequestLocalization just below -- see the middleware's own
+// class-level comment for the full rationale (AsyncLocal/LogContext, Response.OnStarting).
+app.UseMiddleware<CorrelationIdMiddleware>();
 
 // UseRequestLocalization runs before UseExceptionHandler so the resolved culture is set in the
 // execution context ExceptionHandlerMiddleware captures at pipeline start. ExceptionHandler

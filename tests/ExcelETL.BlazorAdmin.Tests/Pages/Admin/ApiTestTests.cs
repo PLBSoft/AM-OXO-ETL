@@ -132,7 +132,7 @@ public class ApiTestTests : BunitContext
     });
 
     [Fact]
-    public void HealthStatus_WhenApiReachableButDatabaseUnhealthy_ShowsUnreachableDatabaseLabel() => WithCulture("en-US", () =>
+    public void HealthStatus_WhenApiReachableButDatabaseUnhealthy_ShowsDegradedBadgeAndUnreachableDatabaseLabel() => WithCulture("en-US", () =>
     {
         _oxoApiTestClientMock
             .Setup(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
@@ -140,6 +140,9 @@ public class ApiTestTests : BunitContext
 
         var cut = Render<ApiTest>();
 
+        var badge = cut.Find("#api-health-badge");
+        badge.TextContent.Should().Contain("API degraded");
+        badge.ClassList.Should().Contain("bg-warning").And.NotContain("bg-success");
         cut.Find("#api-health-status").TextContent.Should().Contain("unreachable");
     });
 

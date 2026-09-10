@@ -105,14 +105,22 @@ existant, sans repasser par l'assistant complet.*
 |---|---|---|
 | WebAPI | `ApiKeyAuthentication__ApiKey` | clé API de prod (nouvelle, pas celle de dev) |
 | WebAPI | `ConnectionStrings__DefaultConnection` | `Server=.\MSSQLSERVER2019;Database=AM-OXO-ETL-MAD-REL;Trusted_Connection=True;TrustServerCertificate=True;` |
+| WebAPI | `GeneratedFilesArchive__RootPath` | même chemin que la ligne BlazorAdmin ci-dessous — **les deux hôtes doivent pointer sur le même dossier** |
 | BlazorAdmin | `OxoApiTestClient__ApiKey` | **même clé** que `ApiKeyAuthentication__ApiKey` |
 | BlazorAdmin | `OxoApiTestClient__BaseUrl` | URL HTTPS réelle du site WebAPI (jamais `localhost`) |
 | BlazorAdmin | `ConnectionStrings__DefaultConnection` | même chaîne de connexion que WebAPI |
+| BlazorAdmin | `GeneratedFilesArchive__RootPath` | même chemin que la ligne WebAPI ci-dessus |
 | BlazorAdmin | `AdminSeedPasswords__SLB` / `__J2M` / `__JPN` | mots de passe admin de prod |
 
-- [ ] Dossier `GeneratedFilesArchive:RootPath` (ex. `D:\AM-OXO-ETL\generated-files`) créé, droits
-  d'écriture pour l'identité du pool BlazorAdmin (archivage best-effort — échoue
-  silencieusement si le dossier est inaccessible)
+- [ ] Dossier `GeneratedFilesArchive:RootPath` (chemin réel de production, ex.
+  `c:\inetpub\Alpha\AM-OXO-ETL\GeneratedFiles\` — **ne pas se fier à l'exemple `D:\AM-OXO-ETL\generated-files`
+  ci-dessus, qui n'a jamais été la valeur réelle de ce serveur**, voir l'incident du 10/09 dans
+  `convention-secrets-production.md`) créé, droits d'écriture pour les identités des deux pools
+  (archivage best-effort — échoue silencieusement si le dossier est inaccessible). **Depuis le
+  10/09, cette valeur n'existe plus dans aucun fichier committé** — la variable d'environnement
+  ci-dessus est la seule source, sur les deux pools, sans quoi chaque hôte retombe silencieusement
+  sur le chemin de repli de son propre `appsettings.json` (deux chemins différents entre les deux
+  hôtes, aucun n'étant le vrai chemin de production).
 
 Rappel : secret manquant (clé API, chaîne de connexion) → l'app refuse de démarrer (fail-fast
 voulu). Mot de passe admin manquant → `LogWarning` seulement, compte simplement ignoré.

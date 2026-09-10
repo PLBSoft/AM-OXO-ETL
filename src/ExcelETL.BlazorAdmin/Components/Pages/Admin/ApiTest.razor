@@ -30,6 +30,11 @@
     {
         <span class="text-muted small">@Loc["ApiTest_HealthChecking"]</span>
     }
+    else if (_health.IsReachable && _health.Status == "Degraded")
+    {
+        <span id="api-health-badge" class="badge bg-warning text-dark">@Loc["ApiTest_HealthDegraded"]</span>
+        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version, DatabaseStatusLabel(_health.Database)]</span>
+    }
     else if (_health.IsReachable)
     {
         <span id="api-health-badge" class="badge bg-success">@Loc["ApiTest_HealthAvailable"]</span>
@@ -90,7 +95,7 @@ else
 
     <div class="mb-3">
         <label class="form-label" for="username-input">@Loc["ApiTest_UsernameLabel"]</label>
-        <input id="username-input" type="text" class="form-control form-control-lg" @bind="_username" disabled="@_processing" />
+        <input id="username-input" type="text" class="form-control form-control-lg" maxlength="200" @bind="_username" disabled="@_processing" />
         <div class="form-text">@Loc["ApiTest_UsernameHelp"]</div>
     </div>
 

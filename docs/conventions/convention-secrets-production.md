@@ -32,6 +32,18 @@ Mapping standard ASP.NET Core : le séparateur hiérarchique `:` d'une clé de c
 | `ApiKeyAuthentication:ApiKey` (WebAPI) | `ApiKeyAuthentication__ApiKey` |
 | `OxoApiTestClient:ApiKey` (BlazorAdmin) | `OxoApiTestClient__ApiKey` |
 | `OxoApiTestClient:BaseUrl` (BlazorAdmin) | `OxoApiTestClient__BaseUrl` |
+| `GeneratedFilesArchive:RootPath` (WebAPI **et** BlazorAdmin) | `GeneratedFilesArchive__RootPath` |
+
+`GeneratedFilesArchive:RootPath` n'est pas un secret au sens strict (pas de credential), mais
+c'est une valeur spécifique à l'environnement/au serveur (chemin disque local) — elle suit la même
+convention pour la même raison que les autres : ne jamais dépendre d'un `appsettings.Production.json`
+committé pour la porter. **Trouvé manquant de cette table le 10/09** (incident du même jour, voir
+plus bas) — la valeur réelle de production (`c:\inetpub\Alpha\AM-OXO-ETL\GeneratedFiles\`) vivait
+uniquement dans les fichiers `appsettings.Production.json` supprimés du suivi Git ; sans variable
+d'environnement posée sur les deux pools IIS pour remplacer ça, les deux hôtes retombent
+silencieusement sur les valeurs de repli de leur `appsettings.json` respectif (deux chemins
+différents entre WebAPI et BlazorAdmin, aucun des deux n'étant le chemin réel de production) — à
+vérifier/corriger sur le serveur avant le prochain déploiement.
 
 Toute future section de configuration contenant un secret ou une valeur spécifique à
 l'environnement de production suit le même mapping — pas de nouvelle convention à inventer.

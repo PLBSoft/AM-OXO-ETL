@@ -65,15 +65,11 @@ public class ApplicationBuildInfoTests
         buildInfo.BuildDateUtc.Should().BeNull();
     }
 
-    [Fact]
-    public void Constructor_WithoutInformationalVersionAttribute_FallsBackToAssemblyNameVersion()
-    {
-        var assembly = BuildFixtureAssembly(informationalVersion: null, buildDateUtcIso8601: null);
-
-        var buildInfo = new ApplicationBuildInfo(assembly);
-
-        buildInfo.Version.Should().Be(assembly.GetName().Version!.ToString());
-    }
+    // Version-parsing edge cases (informational-version +suffix trimming, fallback to
+    // AssemblyName.Version) are shared logic -- see AssemblyVersionResolverTests in
+    // ExcelETL.Hosting.Tests. The cases kept here (above/below) test what's still
+    // ApplicationBuildInfo's own responsibility: BuildDate resolution and wiring both fields
+    // together correctly.
 
     [Fact]
     public void Constructor_UsingTheRealTestAssembly_HasNoBuildDateMetadata()

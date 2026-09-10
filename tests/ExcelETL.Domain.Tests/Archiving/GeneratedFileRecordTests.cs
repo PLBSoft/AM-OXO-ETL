@@ -85,4 +85,44 @@ public class GeneratedFileRecordTests
 
         act.Should().Throw<ArgumentException>();
     }
+
+    [Fact]
+    public void Constructor_WithUsernameAtOrBelowMaxLength_AssignsItUnchanged()
+    {
+        var username = new string('u', GeneratedFileRecord.MaxUsernameLength);
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected, username);
+
+        record.Username.Should().Be(username);
+    }
+
+    // Truncated, never rejected -- Username is best-effort traceability metadata, not worth
+    // failing (or silently losing) the whole archive record over. See EfGeneratedFileArchiveStore/
+    // GeneratedFileRecordConfiguration: the DB column is capped at the same MaxUsernameLength, so
+    // an unvalidated oversized value would otherwise throw deep inside ProcessOxoFileService's
+    // best-effort archiving try/catch, silently dropping the entire record.
+    [Fact]
+    public void Constructor_WithUsernameLongerThanMaxLength_TruncatesIt()
+    {
+        var oversizedUsername = new string('u', GeneratedFileRecord.MaxUsernameLength + 50);
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected, oversizedUsername);
+
+        record.Username.Should().HaveLength(GeneratedFileRecord.MaxUsernameLength);
+        record.Username.Should().Be(oversizedUsername[..GeneratedFileRecord.MaxUsernameLength]);
+    }
+
+    [Fact]
+    public void Constructor_WithoutUsername_LeavesItNull()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected);
+
+        record.Username.Should().BeNull();
+    }
 }
