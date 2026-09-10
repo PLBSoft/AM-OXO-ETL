@@ -18,6 +18,10 @@
     <InternalsVisibleTo Include="ExcelETL.BlazorAdmin.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.12" />
+  </ItemGroup>
+
   <!-- Lot 062 (62.1): version counter incremented on Publish only (never on a plain dotnet
        build/F5), plus the UTC build date, both baked into the published assembly's metadata so
        the sidebar can display which version is actually deployed without any manual bump.

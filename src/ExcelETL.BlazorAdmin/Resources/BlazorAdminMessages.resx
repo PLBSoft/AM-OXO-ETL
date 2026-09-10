@@ -1249,6 +1249,9 @@
   <data name="GeneratedFiles_EquipementRepereColumn" xml:space="preserve">
     <value>Equipment reference</value>
   </data>
+  <data name="GeneratedFiles_UsernameColumn" xml:space="preserve">
+    <value>User</value>
+  </data>
   <data name="GeneratedFiles_StatusColumn" xml:space="preserve">
     <value>Status</value>
   </data>

@@ -6,6 +6,7 @@
 @using ExcelETL.Domain.Archiving
 @using ExcelETL.Infrastructure.Archiving
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.Extensions.Options
 
 @inject IGeneratedFileArchiveStore GeneratedFileArchiveStore
@@ -45,65 +46,63 @@ else if (_records.Count == 0)
 }
 else
 {
-    <table class="table d-none d-md-table">
-        <thead>
-            <tr>
-                <th>@Loc["GeneratedFiles_DateColumn"]</th>
-                <th>@Loc["GeneratedFiles_EquipementRepereColumn"]</th>
-                <th>@Loc["GeneratedFiles_StatusColumn"]</th>
-                <th>@Loc["GeneratedFiles_SourceFileColumn"]</th>
-                <th>@Loc["GeneratedFiles_TargetFileColumn"]</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var record in _records)
-            {
-                <tr>
-                    <td id="generated-file-date-@record.Id">@LocalTimestampOrFallback(record)</td>
-                    <td>@(record.EquipementRepere ?? "—")</td>
-                    <td><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></td>
-                    <td>
-                        @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHref))
-                        {
-                            <a id="@($"download-source-link-{record.Id}")" class="btn btn-outline-secondary btn-sm"
-                               href="@sourceHref" download="@record.SourceFileName">
-                                @Loc["GeneratedFiles_DownloadSourceButton"]
-                            </a>
-                        }
-                        else
-                        {
-                            <button id="@($"prepare-download-source-button-{record.Id}")" type="button"
-                                    class="btn btn-outline-secondary btn-sm"
-                                    @onclick="() => PrepareSourceDownloadAsync(record)">
-                                @Loc["GeneratedFiles_DownloadSourceButton"]
-                            </button>
-                        }
-                    </td>
-                    <td>
-                        @if (record.TargetFilePath is null)
-                        {
-                            <span class="text-muted">—</span>
-                        }
-                        else if (_targetDownloadHrefs.TryGetValue(record.Id, out var targetHref))
-                        {
-                            <a id="@($"download-target-link-{record.Id}")" class="btn btn-outline-secondary btn-sm"
-                               href="@targetHref" download="@record.TargetFileName">
-                                @Loc["GeneratedFiles_DownloadTargetButton"]
-                            </a>
-                        }
-                        else
-                        {
-                            <button id="@($"prepare-download-target-button-{record.Id}")" type="button"
-                                    class="btn btn-outline-secondary btn-sm"
-                                    @onclick="() => PrepareTargetDownloadAsync(record)">
-                                @Loc["GeneratedFiles_DownloadTargetButton"]
-                            </button>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="d-none d-md-block" id="generated-files-grid">
+        <QuickGrid Items="@_records.AsQueryable()" Pagination="@_pagination" Class="table">
+            <TemplateColumn Title="@Loc["GeneratedFiles_DateColumn"]" Sortable="true" SortBy="@DateSort">
+                <span id="@($"generated-file-date-{context.Id}")">@LocalTimestampOrFallback(context)</span>
+            </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_EquipementRepereColumn"]" Sortable="true" SortBy="@RepereSort">
+                @(context.EquipementRepere ?? "—")
+            </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_UsernameColumn"]" Sortable="true" SortBy="@UsernameSort">
+                @(context.Username ?? "—")
+            </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_StatusColumn"]" Sortable="true" SortBy="@StatusSort">
+                <span class="badge @GetStatusBadgeClass(context.Status)">@GetStatusLabel(context.Status)</span>
+            </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_SourceFileColumn"]">
+                @if (_sourceDownloadHrefs.TryGetValue(context.Id, out var sourceHref))
+                {
+                    <a id="@($"download-source-link-{context.Id}")" class="btn btn-outline-secondary btn-sm"
+                       href="@sourceHref" download="@context.SourceFileName">
+                        @Loc["GeneratedFiles_DownloadSourceButton"]
+                    </a>
+                }
+                else
+                {
+                    <button id="@($"prepare-download-source-button-{context.Id}")" type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            @onclick="() => PrepareSourceDownloadAsync(context)">
+                        @Loc["GeneratedFiles_DownloadSourceButton"]
+                    </button>
+                }
+            </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_TargetFileColumn"]">
+                @if (context.TargetFilePath is null)
+                {
+                    <span class="text-muted">—</span>
+                }
+                else if (_targetDownloadHrefs.TryGetValue(context.Id, out var targetHref))
+                {
+                    <a id="@($"download-target-link-{context.Id}")" class="btn btn-outline-secondary btn-sm"
+                       href="@targetHref" download="@context.TargetFileName">
+                        @Loc["GeneratedFiles_DownloadTargetButton"]
+                    </a>
+                }
+                else
+                {
+                    <button id="@($"prepare-download-target-button-{context.Id}")" type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            @onclick="() => PrepareTargetDownloadAsync(context)">
+                        @Loc["GeneratedFiles_DownloadTargetButton"]
+                    </button>
+                }
+            </TemplateColumn>
+        </QuickGrid>
+        <div id="generated-files-paginator">
+            <Paginator State="@_pagination" />
+        </div>
+    </div>
 
     <div class="d-md-none">
         @foreach (var record in _records)
@@ -112,6 +111,7 @@ else
                 <div class="card-body">
                     <h2 class="card-title h5">@(record.EquipementRepere ?? "—")</h2>
                     <p class="card-text mb-1" id="generated-file-date-card-@record.Id">@LocalTimestampOrFallback(record)</p>
+                    <p class="card-text mb-1">@Loc["GeneratedFiles_UsernameColumn"]: @(record.Username ?? "—")</p>
                     <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
                     <div class="d-flex gap-2">
                         @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
@@ -157,6 +157,27 @@ else
 }
 
 @code {
+    // QuickGrid (Microsoft.AspNetCore.Components.QuickGrid): official, MIT-licensed, no CSS
+    // framework of its own -- renders a plain <table> styled via the existing Bootstrap `table`
+    // class, unlike a full component-library option (e.g. MudBlazor) which would bring its own
+    // Material Design styling alongside the app's existing Bootstrap/M3 theme. Client-side
+    // pagination/sorting (an IQueryable over the already-loaded _records list) was chosen over a
+    // GridItemsProvider/server-side page-by-page load: simpler, and the archive's expected volume
+    // doesn't yet justify the extra IGeneratedFileArchiveStore surface a server-side approach would
+    // need. Desktop only -- the mobile card list below stays a plain, unpaginated foreach (matching
+    // this project's established d-none d-md-table / d-md-none split), since QuickGrid's own layout
+    // is table-shaped and admin use of this archive is expected to be primarily desktop.
+    private static readonly GridSort<GeneratedFileRecord> DateSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.GeneratedAtUtc);
+    private static readonly GridSort<GeneratedFileRecord> RepereSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.EquipementRepere);
+    private static readonly GridSort<GeneratedFileRecord> UsernameSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.Username);
+    private static readonly GridSort<GeneratedFileRecord> StatusSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.Status);
+
+    private PaginationState _pagination = new() { ItemsPerPage = 25 };
+
     private IReadOnlyList<GeneratedFileRecord>? _records;
     private string _searchTerm = "";
     private readonly Dictionary<Guid, string> _sourceDownloadHrefs = new();
@@ -200,9 +221,17 @@ else
             ? localTimestamp
             : record.GeneratedAtUtc.ToString(TimestampPattern);
 
-    private async Task LoadRecordsAsync() => _records = await GeneratedFileArchiveStore.SearchAsync(null);
+    private async Task LoadRecordsAsync()
+    {
+        _records = await GeneratedFileArchiveStore.SearchAsync(null);
+        await _pagination.SetCurrentPageIndexAsync(0);
+    }
 
-    private async Task SearchAsync() => _records = await GeneratedFileArchiveStore.SearchAsync(_searchTerm);
+    private async Task SearchAsync()
+    {
+        _records = await GeneratedFileArchiveStore.SearchAsync(_searchTerm);
+        await _pagination.SetCurrentPageIndexAsync(0);
+    }
 
     private async Task ClearSearchAsync()
     {

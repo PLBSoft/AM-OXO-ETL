@@ -31,6 +31,12 @@ public class GeneratedFilesTests : BunitContext
             Options.Create(new GeneratedFilesArchiveOptions { RootPath = _archiveRoot }));
         Services.AddLocalization();
 
+        // QuickGrid's OnAfterRenderAsync imports its own JS module (keyboard/scroll wiring, not
+        // exercised by any of this page's behavior under test) -- bUnit's JSInterop is strict by
+        // default and throws on an unconfigured call, so it's set to Loose here rather than a real
+        // page-specific interaction to mock.
+        JSInterop.Mode = JSRuntimeMode.Loose;
+
         // Lot 064: see LogsTests.cs's own constructor comment -- same RendererInfo requirement.
         SetRendererInfo(new RendererInfo("Static", isInteractive: false));
     }
@@ -55,7 +61,9 @@ public class GeneratedFilesTests : BunitContext
         GeneratedFileArchiveStatus status,
         bool withTarget,
         byte[]? sourceBytes = null,
-        byte[]? targetBytes = null)
+        byte[]? targetBytes = null,
+        string? username = null,
+        DateTime? generatedAtUtc = null)
     {
         Directory.CreateDirectory(_archiveRoot);
         var sourceRelativePath = $"{Guid.NewGuid()}_source.xlsx";
@@ -72,7 +80,7 @@ public class GeneratedFilesTests : BunitContext
 
         return new GeneratedFileRecord(
             Guid.NewGuid(),
-            DateTime.UtcNow,
+            generatedAtUtc ?? DateTime.UtcNow,
             equipementRepere,
             "source.xlsx",
             sourceRelativePath,
@@ -80,7 +88,8 @@ public class GeneratedFilesTests : BunitContext
             targetRelativePath,
             Guid.NewGuid(),
             Guid.NewGuid(),
-            status);
+            status,
+            username);
     }
 
     [Fact]
@@ -120,7 +129,10 @@ public class GeneratedFilesTests : BunitContext
         var cut = Render<GeneratedFiles>();
 
         var table = cut.Find("table.table");
-        table.QuerySelectorAll("tbody tr").Should().HaveCount(3);
+        // QuickGrid pads the visible page out to Pagination.ItemsPerPage with empty filler <tr>s
+        // (confirmed by decompiling RenderNonVirtualizedRows) so the last page never shrinks the
+        // table's height -- only real data rows carry aria-rowindex, filler rows don't.
+        table.QuerySelectorAll("tbody tr[aria-rowindex]").Should().HaveCount(3);
 
         var badges = table.QuerySelectorAll(".badge");
         badges.Should().Contain(b => b.ClassList.Contains("bg-success"));
@@ -216,8 +228,11 @@ public class GeneratedFilesTests : BunitContext
     });
 
     // V2: mobile-first table -> card fallback at the md breakpoint, same idiom as ImportProfiles/Users.
+    // The QuickGrid itself carries no responsive classes of its own -- its wrapping div does, since
+    // QuickGrid's Class parameter feeds into its own "quickgrid <Class>" string (confirmed by
+    // decompiling the installed package rather than assumed), not additive Bootstrap display utilities.
     [Fact]
-    public void GeneratedFiles_RendersBothTableAndCardTemplates_WithResponsiveClasses() => WithCulture("en-US", () =>
+    public void GeneratedFiles_RendersBothGridAndCardTemplates_WithResponsiveClasses() => WithCulture("en-US", () =>
     {
         var record = WriteRecordWithRealFiles("C7401", GeneratedFileArchiveStatus.Success, withTarget: true);
         _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
@@ -225,12 +240,87 @@ public class GeneratedFilesTests : BunitContext
 
         var cut = Render<GeneratedFiles>();
 
-        var table = cut.Find("table.table");
-        table.ClassList.Should().Contain("d-none");
-        table.ClassList.Should().Contain("d-md-table");
+        var gridContainer = cut.Find("#generated-files-grid");
+        gridContainer.ClassList.Should().Contain("d-none");
+        gridContainer.ClassList.Should().Contain("d-md-block");
+        gridContainer.QuerySelector("table.table").Should().NotBeNull();
 
         var cardContainer = cut.Find("div.d-md-none");
         cardContainer.QuerySelectorAll(".card").Should().HaveCount(1);
+    });
+
+    [Fact]
+    public void GeneratedFiles_UsernameColumn_DisplaysValueInTableAndCard() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "C7401", GeneratedFileArchiveStatus.Success, withTarget: true, username: "J.DUPONT");
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        cut.Find("table.table tbody").TextContent.Should().Contain("J.DUPONT");
+        cut.Find("div.d-md-none .card").TextContent.Should().Contain("J.DUPONT");
+    });
+
+    [Fact]
+    public void GeneratedFiles_UsernameColumn_ShowsPlaceholder_WhenNull() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "C7401", GeneratedFileArchiveStatus.Success, withTarget: true, username: null);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        cut.Find("table.table tbody tr").TextContent.Should().Contain("—");
+        cut.Find("div.d-md-none .card").TextContent.Should().Contain("—");
+    });
+
+    // QuickGrid's own header markup (button.col-title, decompiled from the installed package) is
+    // trusted as-is -- this asserts our column wiring (SortBy) actually reorders the rows, not
+    // QuickGrid's own already-tested sorting mechanism.
+    [Fact]
+    public void GeneratedFiles_Grid_SortsByEquipementRepereColumn_OnHeaderClick() => WithCulture("en-US", () =>
+    {
+        var b = WriteRecordWithRealFiles("B-Site", GeneratedFileArchiveStatus.Success, withTarget: true);
+        var a = WriteRecordWithRealFiles("A-Site", GeneratedFileArchiveStatus.Success, withTarget: true);
+        var c = WriteRecordWithRealFiles("C-Site", GeneratedFileArchiveStatus.Success, withTarget: true);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[b, a, c]);
+
+        var cut = Render<GeneratedFiles>();
+
+        // Column order: Date, Equipment reference, User, Status -- the only 4 sortable headers.
+        var repereHeaderButton = cut.FindAll("button.col-title")[1];
+        repereHeaderButton.Click();
+
+        var rows = cut.FindAll("table.table tbody tr[aria-rowindex]");
+        rows[0].TextContent.Should().Contain("A-Site");
+        rows[1].TextContent.Should().Contain("B-Site");
+        rows[2].TextContent.Should().Contain("C-Site");
+    });
+
+    [Fact]
+    public void GeneratedFiles_Grid_PaginatesAtTwentyFiveItemsPerPage_WithWorkingNextButton() => WithCulture("en-US", () =>
+    {
+        var records = Enumerable.Range(1, 30)
+            .Select(i => WriteRecordWithRealFiles(
+                $"Site-{i:00}", GeneratedFileArchiveStatus.Success, withTarget: true,
+                generatedAtUtc: DateTime.UtcNow.AddMinutes(-i)))
+            .ToList();
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)records);
+
+        var cut = Render<GeneratedFiles>();
+
+        // Real data rows only -- QuickGrid pads the rest of the page out to ItemsPerPage with
+        // empty filler <tr>s (no aria-rowindex), confirmed by decompiling RenderNonVirtualizedRows.
+        cut.FindAll("table.table tbody tr[aria-rowindex]").Should().HaveCount(25);
+
+        cut.Find("#generated-files-paginator button.go-next").Click();
+
+        cut.FindAll("table.table tbody tr[aria-rowindex]").Should().HaveCount(5);
     });
 
     [Fact]

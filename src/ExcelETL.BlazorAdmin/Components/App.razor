@@ -17,6 +17,9 @@
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["css/theme-m3.css"]" />
+    <!-- QuickGrid ships only sort-indicator/pagination styling, no component framework of its own
+         -- see GeneratedFiles.razor for why it was chosen over a full library like MudBlazor. -->
+    <link rel="stylesheet" href="_content/Microsoft.AspNetCore.Components.QuickGrid/QuickGrid.css" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["ExcelETL.BlazorAdmin.styles.css"]" />
     <ImportMap />
