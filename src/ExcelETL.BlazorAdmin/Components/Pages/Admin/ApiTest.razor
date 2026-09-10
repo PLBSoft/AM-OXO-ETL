@@ -8,6 +8,7 @@
 @using ExcelETL.Domain.Extraction.Profile
 @using ExcelETL.Domain.Generation.Profile
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 
 @inject IImportProfileStore ImportProfileStore
@@ -85,6 +86,12 @@ else
             <span class="input-group-text">@((MarkupString)FileUploadIconMarkup)</span>
             <InputFile id="source-file-input" class="form-control form-control-lg" accept=".xlsx" OnChange="OnInputFileChangeAsync" disabled="@_processing" />
         </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="username-input">@Loc["ApiTest_UsernameLabel"]</label>
+        <input id="username-input" type="text" class="form-control form-control-lg" @bind="_username" disabled="@_processing" />
+        <div class="form-text">@Loc["ApiTest_UsernameHelp"]</div>
     </div>
 
     <div class="right-aligned-actions">
@@ -169,6 +176,11 @@ else
     private List<ImportProfile>? _importProfiles;
     private List<ExportProfile>? _exportProfiles;
     private OxoApiHealthResult? _health;
+    private string? _username;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
     private Guid? _selectedImportProfileId;
     private Guid? _selectedExportProfileId;
     private IBrowserFile? _selectedFile;
@@ -193,6 +205,12 @@ else
         {
             _selectedExportProfileId = _exportProfiles[0].Id;
         }
+
+        // Pre-filled, freely editable -- the signed-in admin is the common case, but the field
+        // exists to represent whoever actually triggered the call (e.g. testing on behalf of a
+        // legacy-side user), not necessarily whoever is logged into BlazorAdmin.
+        var authState = await AuthState;
+        _username = authState.User.Identity?.Name;
 
         await CheckHealthAsync();
     }
@@ -232,7 +250,8 @@ else
 
         await using var stream = _selectedFile!.OpenReadStream(MaxFileSizeBytes);
         var result = await OxoApiTestClient.ProcessAsync(
-            _selectedImportProfileId!.Value, _selectedExportProfileId!.Value, stream, _selectedFile.Name, CancellationToken.None);
+            _selectedImportProfileId!.Value, _selectedExportProfileId!.Value, stream, _selectedFile.Name,
+            CancellationToken.None, _username);
 
         if (result.Status == OxoApiTestResultStatus.Success)
         {

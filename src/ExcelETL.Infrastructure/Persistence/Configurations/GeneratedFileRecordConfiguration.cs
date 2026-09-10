@@ -17,6 +17,7 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
         builder.Property(r => r.SourceFilePath).IsRequired().HasMaxLength(1024);
         builder.Property(r => r.TargetFileName).HasMaxLength(260);
         builder.Property(r => r.TargetFilePath).HasMaxLength(1024);
+        builder.Property(r => r.Username).HasMaxLength(200);
 
         builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(32);
 

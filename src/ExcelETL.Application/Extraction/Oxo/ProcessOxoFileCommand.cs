@@ -13,9 +13,12 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // controller buffers IFormFile.OpenReadStream() once into this byte[] and builds WorkbookReader from
 // a fresh MemoryStream over the same bytes, rather than trying to re-read/rewind a single shared
 // stream across both concerns.
+// Username (optional, last): the M2M caller's own end-user, when supplied -- see
+// GeneratedFileRecord.Username for the full rationale (best-effort traceability, not a business
+// invariant).
 public sealed record ProcessOxoFileCommand(
     Guid ImportProfileId, Guid ExportProfileId, IWorkbookReader WorkbookReader, string SourceFileName,
-    byte[] SourceFileContent);
+    byte[] SourceFileContent, string? Username = null);
 
 // GeneratedFileStream/GeneratedFileName are null exactly when ImportResult.Equipement is null --
 // the whole-file-rejection case (model doc §3.1). No generation is attempted in that case.

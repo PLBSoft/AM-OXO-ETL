@@ -7,7 +7,8 @@ public interface IOxoApiTestClient
         Guid exportProfileId,
         Stream fileContent,
         string fileName,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? username = null);
 
     Task<OxoApiHealthResult> GetHealthAsync(CancellationToken cancellationToken);
 }

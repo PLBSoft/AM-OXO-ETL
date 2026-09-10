@@ -271,6 +271,23 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
 
         File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.SourceFilePath)).Should().BeTrue();
         File.Exists(Path.Combine(_generatedFilesArchiveRoot, record.TargetFilePath!)).Should().BeTrue();
+        record.Username.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Process_WithUsernameField_PersistsItOnTheArchiveRecord()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(
+            importProfileId, exportProfileId, sourceStream, "C7401.xlsx", username: "jdupont");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Username.Should().Be("jdupont");
     }
 
     [Fact]
@@ -752,17 +769,25 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     private static MultipartFormDataContent BuildMultipartContent(
-        Guid importProfileId, Guid exportProfileId, Stream fileStream, string fileName = "source.xlsx")
+        Guid importProfileId, Guid exportProfileId, Stream fileStream, string fileName = "source.xlsx",
+        string? username = null)
     {
         var fileContent = new StreamContent(fileStream);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
-        return new MultipartFormDataContent
+        var content = new MultipartFormDataContent
         {
             { new StringContent(importProfileId.ToString()), "ImportProfileId" },
             { new StringContent(exportProfileId.ToString()), "ExportProfileId" },
             { fileContent, "File", fileName }
         };
+
+        if (username is not null)
+        {
+            content.Add(new StringContent(username), "Username");
+        }
+
+        return content;
     }
 
     private static string FixturePath(string fileName)

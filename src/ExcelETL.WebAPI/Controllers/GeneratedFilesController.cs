@@ -79,5 +79,6 @@ public class GeneratedFilesController(IGeneratedFileArchiveStore archiveStore) :
         record.ExportProfileId,
         record.Status.ToString(),
         $"/api/generated-files/{record.Id}/source",
-        record.TargetFileName is null ? null : $"/api/generated-files/{record.Id}/target");
+        record.TargetFileName is null ? null : $"/api/generated-files/{record.Id}/target",
+        record.Username);
 }

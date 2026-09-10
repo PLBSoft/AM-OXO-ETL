@@ -1330,6 +1330,12 @@
   <data name="ApiTest_RefreshHealthButton" xml:space="preserve">
     <value>Refresh</value>
   </data>
+  <data name="ApiTest_UsernameLabel" xml:space="preserve">
+    <value>Username (optional)</value>
+  </data>
+  <data name="ApiTest_UsernameHelp" xml:space="preserve">
+    <value>Recorded for traceability alongside the archived file -- pre-filled with your own username, freely editable.</value>
+  </data>
   <data name="ApiTest_Processing" xml:space="preserve">
     <value>Calling the Web API -- this can take a while for large files...</value>
   </data>

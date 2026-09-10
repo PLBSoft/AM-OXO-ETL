@@ -188,6 +188,7 @@ public class IconLabelButtonGabaritTests : BunitContext
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
         Services.AddSingleton(new Mock<IOxoApiTestClient>().Object);
         Services.AddLocalization();
+        this.AddAuthorization().SetAuthorized("test-admin");
 
         var cut = Render<ApiTest>();
 

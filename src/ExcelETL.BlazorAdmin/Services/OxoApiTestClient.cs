@@ -22,6 +22,7 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
     private const string ImportProfileIdFieldName = "ImportProfileId";
     private const string ExportProfileIdFieldName = "ExportProfileId";
     private const string FileFieldName = "File";
+    private const string UsernameFieldName = "Username";
 
     // GET api/health is a lightweight diagnostic, not the several-minute extraction call
     // ProcessAsync makes -- bounded well below the HttpClient's own 6-minute Timeout (Program.cs)
@@ -35,13 +36,20 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
 
     public async Task<OxoApiTestResult> ProcessAsync(
         Guid importProfileId, Guid exportProfileId, Stream fileContent, string fileName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string? username = null)
     {
         using var content = new MultipartFormDataContent
         {
             { new StringContent(importProfileId.ToString()), ImportProfileIdFieldName },
             { new StringContent(exportProfileId.ToString()), ExportProfileIdFieldName }
         };
+
+        // Optional, best-effort -- omitted entirely rather than sent empty when blank, matching the
+        // field's own "absence, not an empty string" contract on the WebAPI side.
+        if (!string.IsNullOrWhiteSpace(username))
+        {
+            content.Add(new StringContent(username), UsernameFieldName);
+        }
 
         var fileStreamContent = new StreamContent(fileContent);
         fileStreamContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");

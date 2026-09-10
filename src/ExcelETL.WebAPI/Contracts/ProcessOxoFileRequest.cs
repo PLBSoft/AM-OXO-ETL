@@ -12,4 +12,9 @@ public sealed class ProcessOxoFileRequest
     public Guid? ExportProfileId { get; set; }
 
     public IFormFile File { get; set; } = null!;
+
+    // Optional, best-effort traceability of the M2M caller's own end-user (e.g. the legacy app's
+    // authenticated username) -- never validated/required, absence is not an error. See
+    // GeneratedFileRecord.Username for the full rationale.
+    public string? Username { get; set; }
 }

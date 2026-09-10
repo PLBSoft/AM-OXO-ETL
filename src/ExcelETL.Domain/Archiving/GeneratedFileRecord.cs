@@ -33,6 +33,14 @@ public sealed class GeneratedFileRecord
     public Guid? ExportProfileId { get; }
     public GeneratedFileArchiveStatus Status { get; }
 
+    // The M2M caller's own end-user, when it chooses to supply one (e.g. the legacy app's own
+    // authenticated username) -- optional and last, not a required constructor parameter: this
+    // is a best-effort traceability field, not a business invariant of the record, and making it
+    // required would have forced every existing construction site (and every M2M caller not yet
+    // updated to send it) to change at once. Null means "not supplied", not "unknown user" as a
+    // literal string -- callers decide how to render that.
+    public string? Username { get; }
+
     public GeneratedFileRecord(
         Guid id,
         DateTime generatedAtUtc,
@@ -43,7 +51,8 @@ public sealed class GeneratedFileRecord
         string? targetFilePath,
         Guid importProfileId,
         Guid? exportProfileId,
-        GeneratedFileArchiveStatus status)
+        GeneratedFileArchiveStatus status,
+        string? username = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
@@ -58,5 +67,6 @@ public sealed class GeneratedFileRecord
         ImportProfileId = importProfileId;
         ExportProfileId = exportProfileId;
         Status = status;
+        Username = username;
     }
 }

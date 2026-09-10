@@ -1330,6 +1330,12 @@
   <data name="ApiTest_RefreshHealthButton" xml:space="preserve">
     <value>Actualiser</value>
   </data>
+  <data name="ApiTest_UsernameLabel" xml:space="preserve">
+    <value>Nom d'utilisateur (optionnel)</value>
+  </data>
+  <data name="ApiTest_UsernameHelp" xml:space="preserve">
+    <value>Enregistré à titre de traçabilité avec le fichier archivé -- pré-rempli avec votre propre nom d'utilisateur, librement modifiable.</value>
+  </data>
   <data name="ApiTest_Processing" xml:space="preserve">
     <value>Appel du Web API en cours -- cela peut prendre du temps pour les fichiers volumineux...</value>
   </data>

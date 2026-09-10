@@ -20,7 +20,8 @@ public class EfGeneratedFileArchiveStoreTests
         string? equipementRepere = "C7401",
         GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success,
         string? targetFileName = "MAD_C7401_20260725143000.xlsx",
-        string? targetFilePath = @"2026\07\20260725-143000-000_target_source.xlsx") => new(
+        string? targetFilePath = @"2026\07\20260725-143000-000_target_source.xlsx",
+        string? username = null) => new(
         Guid.NewGuid(),
         generatedAtUtc,
         equipementRepere,
@@ -30,7 +31,8 @@ public class EfGeneratedFileArchiveStoreTests
         targetFilePath,
         Guid.NewGuid(),
         Guid.NewGuid(),
-        status);
+        status,
+        username);
 
     [Fact]
     public async Task SaveAsync_ThenGetByIdAsync_RoundTripsAllPropertiesIdentically()
@@ -52,6 +54,31 @@ public class EfGeneratedFileArchiveStoreTests
         reloaded.ImportProfileId.Should().Be(record.ImportProfileId);
         reloaded.ExportProfileId.Should().Be(record.ExportProfileId);
         reloaded.Status.Should().Be(record.Status);
+        reloaded.Username.Should().Be(record.Username);
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithUsernameSupplied_RoundTripsItIdentically()
+    {
+        var record = CreateRecord(DateTime.UtcNow, username: "jdupont");
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Username.Should().Be("jdupont");
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithoutUsername_RoundTripsAsNull_NotAPlaceholderString()
+    {
+        var record = CreateRecord(DateTime.UtcNow, username: null);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Username.Should().BeNull();
     }
 
     [Fact]

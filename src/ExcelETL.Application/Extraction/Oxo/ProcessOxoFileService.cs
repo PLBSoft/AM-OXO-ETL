@@ -131,7 +131,8 @@ public sealed class ProcessOxoFileService(
                 targetFilePath,
                 importProfileId,
                 exportProfileId,
-                status);
+                status,
+                command.Username);
 
             await generatedFileArchiveStore.SaveAsync(record, cancellationToken);
         }

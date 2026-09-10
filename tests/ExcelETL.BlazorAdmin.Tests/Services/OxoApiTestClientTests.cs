@@ -323,6 +323,30 @@ public class OxoApiTestClientTests
     }
 
     [Fact]
+    public async Task ProcessAsync_WithUsername_IncludesItInTheMultipartRequest()
+    {
+        var (client, handler) = CreateClient(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        await client.ProcessAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new MemoryStream([1, 2, 3]), "source.xlsx", CancellationToken.None, "jdupont");
+
+        handler.LastRequestBody.Should().Contain("name=Username").And.Contain("jdupont");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WithoutUsername_OmitsTheFieldEntirely_RatherThanSendingEmpty()
+    {
+        var (client, handler) = CreateClient(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        await client.ProcessAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new MemoryStream([1, 2, 3]), "source.xlsx", CancellationToken.None);
+
+        handler.LastRequestBody.Should().NotContain("name=Username");
+    }
+
+    [Fact]
     public async Task ProcessAsync_BuildsMultipartRequestWithExpectedFieldNames()
     {
         var (client, handler) = CreateClient(_ =>

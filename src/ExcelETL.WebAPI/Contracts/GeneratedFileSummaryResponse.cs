@@ -5,7 +5,9 @@ namespace ExcelETL.WebAPI.Contracts;
 // TargetDownloadUrl are the caller-facing indirection instead -- relative URLs onto
 // GeneratedFilesController's own download routes, so the caller never has to construct the path
 // itself. TargetDownloadUrl is null exactly when TargetFileName is (a Rejected record has no
-// target to download).
+// target to download). Username is optional, best-effort traceability of the M2M caller's own
+// end-user -- null when not supplied at processing time, never defaulted to a literal placeholder
+// here (the caller decides how to render an absent value).
 public sealed record GeneratedFileSummaryResponse(
     Guid Id,
     DateTime GeneratedAtUtc,
@@ -16,4 +18,5 @@ public sealed record GeneratedFileSummaryResponse(
     Guid? ExportProfileId,
     string Status,
     string SourceDownloadUrl,
-    string? TargetDownloadUrl);
+    string? TargetDownloadUrl,
+    string? Username);

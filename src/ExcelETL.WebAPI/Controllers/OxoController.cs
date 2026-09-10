@@ -94,7 +94,7 @@ public class OxoController(
         using var _ = workbookReader;
         var command = new ProcessOxoFileCommand(
             request.ImportProfileId.Value, request.ExportProfileId.Value, workbookReader, request.File.FileName,
-            sourceFileContent);
+            sourceFileContent, request.Username);
 
         // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
         // exception are not caught here: GlobalExceptionHandler translates them into a localized

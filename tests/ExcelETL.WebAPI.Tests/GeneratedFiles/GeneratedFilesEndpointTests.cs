@@ -149,6 +149,20 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body.Status.Should().Be("NonBlockingWarning");
         body.SourceDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/source");
         body.TargetDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/target");
+        body.Username.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetById_WithUsernameSupplied_ReturnsIt()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(username: "jdupont");
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.Username.Should().Be("jdupont");
     }
 
     [Fact]
@@ -281,7 +295,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         DateTime? generatedAtUtc = null,
         GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success,
         byte[]? sourceContent = null,
-        byte[]? targetContent = null)
+        byte[]? targetContent = null,
+        string? username = null)
     {
         var id = Guid.NewGuid();
         var record = new GeneratedFileRecord(
@@ -294,7 +309,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
             targetFilePath: WriteFile($"{id}-target.xlsx", targetContent),
             importProfileId: Guid.NewGuid(),
             exportProfileId: Guid.NewGuid(),
-            status: status);
+            status: status,
+            username: username);
         await SeedAsync(record);
         return record;
     }
