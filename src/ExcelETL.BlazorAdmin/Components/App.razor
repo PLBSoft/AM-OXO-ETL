@@ -18,8 +18,18 @@
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["css/theme-m3.css"]" />
     <!-- QuickGrid ships only sort-indicator/pagination styling, no component framework of its own
-         -- see GeneratedFiles.razor for why it was chosen over a full library like MudBlazor. -->
-    <link rel="stylesheet" href="_content/Microsoft.AspNetCore.Components.QuickGrid/QuickGrid.css" />
+         -- see GeneratedFiles.razor for why it was chosen over a full library like MudBlazor.
+         There is no standalone "QuickGrid.css" in this package version (10.0.12) -- confirmed by
+         inspecting the installed nupkg's own staticwebassets folder, which contains only
+         QuickGrid.razor.js and Microsoft.AspNetCore.Components.QuickGrid.bundle.scp.css (the
+         package's own Blazor CSS-isolation bundle, i.e. its components' .razor.css files rolled
+         into one file -- that first, wrong link 404'd on the real deployed site, client-reported).
+         Routed through @Assets[...] like every other stylesheet here, not a hardcoded href -- this
+         app serves static assets exclusively via app.MapStaticAssets() (Program.cs, no
+         UseStaticFiles()), which serves a published/fingerprinted build at the URL recorded in its
+         own asset manifest, confirmed via the generated staticwebassets.publish.endpoints.json. -->
+    <link rel="stylesheet"
+          href="@Assets["_content/Microsoft.AspNetCore.Components.QuickGrid/Microsoft.AspNetCore.Components.QuickGrid.bundle.scp.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["ExcelETL.BlazorAdmin.styles.css"]" />
     <ImportMap />
