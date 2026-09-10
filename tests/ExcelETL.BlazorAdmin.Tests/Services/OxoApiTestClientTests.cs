@@ -213,6 +213,116 @@ public class OxoApiTestClientTests
     }
 
     [Fact]
+    public async Task GetHealthAsync_WithOkResponse_ReturnsReachableWithStatusVersionAndDatabase()
+    {
+        var (client, _) = CreateClient(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"status":"Healthy","version":"1.0.12","database":"Healthy"}""",
+                    Encoding.UTF8, "application/json")
+            };
+            return Task.FromResult(response);
+        });
+
+        var result = await client.GetHealthAsync(CancellationToken.None);
+
+        result.IsReachable.Should().BeTrue();
+        result.Status.Should().Be("Healthy");
+        result.Version.Should().Be("1.0.12");
+        result.Database.Should().Be("Healthy");
+    }
+
+    [Fact]
+    public async Task GetHealthAsync_WithDegradedResponse_ReturnsReachableWithUnhealthyDatabase()
+    {
+        var (client, _) = CreateClient(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"status":"Degraded","version":"1.0.12","database":"Unhealthy"}""",
+                    Encoding.UTF8, "application/json")
+            };
+            return Task.FromResult(response);
+        });
+
+        var result = await client.GetHealthAsync(CancellationToken.None);
+
+        result.IsReachable.Should().BeTrue();
+        result.Status.Should().Be("Degraded");
+        result.Database.Should().Be("Unhealthy");
+    }
+
+    [Fact]
+    public async Task GetHealthAsync_WhenNoConnectionCanBeEstablished_ReturnsUnreachableInsteadOfThrowing()
+    {
+        var (client, _) = CreateClient(_ => throw new HttpRequestException(
+            "No connection could be made because the target machine actively refused it."));
+
+        var result = await client.GetHealthAsync(CancellationToken.None);
+
+        result.IsReachable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetHealthAsync_WhenRequestTimesOut_ReturnsUnreachableInsteadOfThrowing()
+    {
+        var (client, _) = CreateClient(_ => throw new TaskCanceledException("The request timed out."));
+
+        var result = await client.GetHealthAsync(CancellationToken.None);
+
+        result.IsReachable.Should().BeFalse();
+    }
+
+    // Deliberately different from ProcessAsync's own behavior: GetHealthAsync's contract is "always
+    // answer quickly, never hang, never throw" -- even a caller-supplied already-cancelled token
+    // must still resolve to Unreachable, not propagate.
+    [Fact]
+    public async Task GetHealthAsync_WhenCallerCancels_ReturnsUnreachableInsteadOfThrowing()
+    {
+        var (client, _) = CreateClient(_ => throw new TaskCanceledException("Cancelled."));
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        var result = await client.GetHealthAsync(cts.Token);
+
+        result.IsReachable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetHealthAsync_WithNonOkStatus_ReturnsUnreachable()
+    {
+        var (client, _) = CreateClient(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        var result = await client.GetHealthAsync(CancellationToken.None);
+
+        result.IsReachable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetHealthAsync_SendsApiKeyHeaderAndTargetsHealthRoute()
+    {
+        var (client, handler) = CreateClient(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"status":"Healthy","version":"1.0.12","database":"Healthy"}""",
+                    Encoding.UTF8, "application/json")
+            };
+            return Task.FromResult(response);
+        });
+
+        await client.GetHealthAsync(CancellationToken.None);
+
+        handler.LastRequest!.RequestUri!.AbsolutePath.Should().Be("/api/health");
+        handler.LastRequest.Headers.TryGetValues("X-Api-Key", out var values).Should().BeTrue();
+        values!.Should().ContainSingle().Which.Should().Be(ApiKey);
+    }
+
+    [Fact]
     public async Task ProcessAsync_BuildsMultipartRequestWithExpectedFieldNames()
     {
         var (client, handler) = CreateClient(_ =>

@@ -17,10 +17,16 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
     : IOxoApiTestClient
 {
     private const string ProcessRelativeUrl = "api/oxo/process";
+    private const string HealthRelativeUrl = "api/health";
     private const string ApiKeyHeaderName = "X-Api-Key";
     private const string ImportProfileIdFieldName = "ImportProfileId";
     private const string ExportProfileIdFieldName = "ExportProfileId";
     private const string FileFieldName = "File";
+
+    // GET api/health is a lightweight diagnostic, not the several-minute extraction call
+    // ProcessAsync makes -- bounded well below the HttpClient's own 6-minute Timeout (Program.cs)
+    // so a down/unreachable API never makes the page hang waiting for this one status line.
+    private static readonly TimeSpan HealthCheckTimeout = TimeSpan.FromSeconds(5);
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
@@ -100,6 +106,53 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
         }
     }
 
+    public async Task<OxoApiHealthResult> GetHealthAsync(CancellationToken cancellationToken)
+    {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(HealthCheckTimeout);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, HealthRelativeUrl);
+        request.Headers.Add(ApiKeyHeaderName, options.Value.ApiKey);
+
+        HttpResponseMessage response;
+        try
+        {
+            response = await httpClient.SendAsync(
+                request, HttpCompletionOption.ResponseHeadersRead, timeoutCts.Token);
+        }
+        catch (HttpRequestException)
+        {
+            return OxoApiHealthResult.Unreachable();
+        }
+        catch (TaskCanceledException)
+        {
+            // Unlike ProcessAsync, this method's whole contract is "always answer quickly, never
+            // hang" -- a caller-cancel and the internal 5s timeout are treated identically here
+            // (both surfaced as Unreachable), rather than distinguished/rethrown.
+            return OxoApiHealthResult.Unreachable();
+        }
+
+        using var _ = response;
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            return OxoApiHealthResult.Unreachable();
+        }
+
+        HealthResponseBody? body;
+        try
+        {
+            body = await response.Content.ReadFromJsonAsync<HealthResponseBody>(JsonOptions, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            return OxoApiHealthResult.Unreachable();
+        }
+
+        return body is null
+            ? OxoApiHealthResult.Unreachable()
+            : OxoApiHealthResult.Reachable(body.Status ?? "", body.Version ?? "", body.Database ?? "");
+    }
+
     private static string Unquote(string fileName) => fileName.Trim('"');
 
     private static async Task<ProblemDetailsBody?> TryReadProblemDetailsAsync(
@@ -124,5 +177,14 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
         public string? ExceptionType { get; set; }
 
         public string? ExceptionMessage { get; set; }
+    }
+
+    private sealed class HealthResponseBody
+    {
+        public string? Status { get; set; }
+
+        public string? Version { get; set; }
+
+        public string? Database { get; set; }
     }
 }

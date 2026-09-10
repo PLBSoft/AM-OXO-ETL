@@ -1309,6 +1309,27 @@
   <data name="ApiTest_ProcessButton" xml:space="preserve">
     <value>Send to Web API</value>
   </data>
+  <data name="ApiTest_HealthChecking" xml:space="preserve">
+    <value>Checking API status...</value>
+  </data>
+  <data name="ApiTest_HealthAvailable" xml:space="preserve">
+    <value>API available</value>
+  </data>
+  <data name="ApiTest_HealthUnavailable" xml:space="preserve">
+    <value>API unavailable</value>
+  </data>
+  <data name="ApiTest_HealthSummary" xml:space="preserve">
+    <value>Version {0} · Database: {1}</value>
+  </data>
+  <data name="ApiTest_HealthDatabaseHealthy" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="ApiTest_HealthDatabaseUnhealthy" xml:space="preserve">
+    <value>unreachable</value>
+  </data>
+  <data name="ApiTest_RefreshHealthButton" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
   <data name="ApiTest_Processing" xml:space="preserve">
     <value>Calling the Web API -- this can take a while for large files...</value>
   </data>

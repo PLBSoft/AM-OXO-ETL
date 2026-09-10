@@ -112,6 +112,79 @@ public class ApiTestTests : BunitContext
         cut.Find("#process-button").QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
     });
 
+    // GET api/health status + version display, added 2026-09-10 alongside GeneratedFilesController.
+    [Fact]
+    public void HealthStatus_WhenApiReachable_ShowsAvailableBadgeWithVersionAndHealthyDatabase() => WithCulture("en-US", () =>
+    {
+        _oxoApiTestClientMock
+            .Setup(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiHealthResult.Reachable("Healthy", "1.0.12", "Healthy"));
+
+        var cut = Render<ApiTest>();
+
+        var badge = cut.Find("#api-health-badge");
+        badge.TextContent.Should().Contain("API available");
+        badge.ClassList.Should().Contain("bg-success");
+        cut.Find("#api-health-status").TextContent.Should().Contain("1.0.12").And.Contain("OK");
+    });
+
+    [Fact]
+    public void HealthStatus_WhenApiReachableButDatabaseUnhealthy_ShowsUnreachableDatabaseLabel() => WithCulture("en-US", () =>
+    {
+        _oxoApiTestClientMock
+            .Setup(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiHealthResult.Reachable("Degraded", "1.0.12", "Unhealthy"));
+
+        var cut = Render<ApiTest>();
+
+        cut.Find("#api-health-status").TextContent.Should().Contain("unreachable");
+    });
+
+    [Fact]
+    public void HealthStatus_WhenApiUnreachable_ShowsUnavailableBadge_NoVersionOrDatabaseText() => WithCulture("en-US", () =>
+    {
+        _oxoApiTestClientMock
+            .Setup(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiHealthResult.Unreachable());
+
+        var cut = Render<ApiTest>();
+
+        var badge = cut.Find("#api-health-badge");
+        badge.TextContent.Should().Contain("API unavailable");
+        badge.ClassList.Should().Contain("bg-danger");
+    });
+
+    [Fact]
+    public void HealthStatus_InFrench_ShowsLocalizedBadgeAndSummary() => WithCulture("fr-FR", () =>
+    {
+        _oxoApiTestClientMock
+            .Setup(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiHealthResult.Reachable("Healthy", "1.0.12", "Healthy"));
+
+        var cut = Render<ApiTest>();
+
+        cut.Find("#api-health-badge").TextContent.Should().Contain("API disponible");
+        cut.Find("#api-health-status").TextContent.Should().Contain("Version 1.0.12").And.Contain("OK");
+    });
+
+    [Fact]
+    public void RefreshHealthButton_Click_CallsGetHealthAsyncAgainAndUpdatesDisplay() => WithCulture("en-US", () =>
+    {
+        _oxoApiTestClientMock
+            .SetupSequence(c => c.GetHealthAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(OxoApiHealthResult.Unreachable())
+            .ReturnsAsync(OxoApiHealthResult.Reachable("Healthy", "1.0.13", "Healthy"));
+
+        var cut = Render<ApiTest>();
+        cut.Find("#api-health-badge").ClassList.Should().Contain("bg-danger");
+
+        cut.Find("#refresh-health-button").Click();
+
+        cut.Find("#api-health-badge").ClassList.Should().Contain("bg-success");
+        cut.Find("#api-health-status").TextContent.Should().Contain("1.0.13");
+        _oxoApiTestClientMock.Verify(c => c.GetHealthAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+    });
+
     [Fact]
     public void ProcessButton_DisabledUntilProfilesAndFileSelected_ThenEnabled() => WithCulture("en-US", () => RunAsync(async () =>
     {

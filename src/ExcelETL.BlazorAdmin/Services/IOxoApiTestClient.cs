@@ -8,4 +8,6 @@ public interface IOxoApiTestClient
         Stream fileContent,
         string fileName,
         CancellationToken cancellationToken);
+
+    Task<OxoApiHealthResult> GetHealthAsync(CancellationToken cancellationToken);
 }

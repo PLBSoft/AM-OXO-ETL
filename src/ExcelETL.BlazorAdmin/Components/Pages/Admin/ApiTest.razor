@@ -24,6 +24,25 @@
      ExportProfileTest.razor which run the pipeline in process. -->
 <p class="text-muted small">@Loc["ApiTest_Instructions"]</p>
 
+<div id="api-health-status" class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+    @if (_health is null)
+    {
+        <span class="text-muted small">@Loc["ApiTest_HealthChecking"]</span>
+    }
+    else if (_health.IsReachable)
+    {
+        <span id="api-health-badge" class="badge bg-success">@Loc["ApiTest_HealthAvailable"]</span>
+        <span class="text-muted small">@Loc["ApiTest_HealthSummary", _health.Version, DatabaseStatusLabel(_health.Database)]</span>
+    }
+    else
+    {
+        <span id="api-health-badge" class="badge bg-danger">@Loc["ApiTest_HealthUnavailable"]</span>
+    }
+    <button id="refresh-health-button" type="button" class="btn btn-sm btn-outline-secondary" @onclick="CheckHealthAsync">
+        @Loc["ApiTest_RefreshHealthButton"]
+    </button>
+</div>
+
 @if (_importProfiles is null || _exportProfiles is null)
 {
     <p>@Loc["ApiTest_Loading"]</p>
@@ -149,6 +168,7 @@ else
 
     private List<ImportProfile>? _importProfiles;
     private List<ExportProfile>? _exportProfiles;
+    private OxoApiHealthResult? _health;
     private Guid? _selectedImportProfileId;
     private Guid? _selectedExportProfileId;
     private IBrowserFile? _selectedFile;
@@ -173,7 +193,23 @@ else
         {
             _selectedExportProfileId = _exportProfiles[0].Id;
         }
+
+        await CheckHealthAsync();
     }
+
+    private async Task CheckHealthAsync()
+    {
+        _health = null;
+        StateHasChanged();
+        _health = await OxoApiTestClient.GetHealthAsync(CancellationToken.None);
+    }
+
+    private string DatabaseStatusLabel(string? database) => database switch
+    {
+        "Healthy" => Loc["ApiTest_HealthDatabaseHealthy"],
+        "Unhealthy" => Loc["ApiTest_HealthDatabaseUnhealthy"],
+        _ => database ?? ""
+    };
 
     private void OnInputFileChangeAsync(InputFileChangeEventArgs e)
     {
