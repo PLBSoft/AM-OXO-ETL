@@ -14,6 +14,7 @@ using ExcelETL.Infrastructure.Persistence.Repositories;
 using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
 using ExcelETL.WebAPI.ExceptionHandling;
+using ExcelETL.WebAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -82,6 +83,7 @@ builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveSto
 // DbContext per operation via IDbContextFactory).
 builder.Services.AddScoped<IImportProfileStore, EfImportProfileStore>();
 builder.Services.AddScoped<IExportProfileStore, EfExportProfileStore>();
+builder.Services.AddSingleton<ApiBuildInfo>();
 builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
 builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
 builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
