@@ -99,6 +99,8 @@ Running every test project (`Domain`/`Application`/`Infrastructure`/`WebAPI`/`Ho
 - **Full-solution test run (all projects)**: reserve this for changes that are genuinely cross-cutting (a shared migration, a `Domain`/`Application` type consumed across multiple layers) or as a final check right before a commit that closes a substantial lot — not as a default step after every edit.
 - When in doubt about whether a change reached a given project, a quick `git diff --stat`/dependency check settles it faster than just running that project's tests "to be safe".
 
+**Incident réel (2026-09-10)**: this rule was already written above and simply not followed — a one-file CSS/asset-path fix in `ExcelETL.BlazorAdmin` got the full `ExcelETL.BlazorAdmin.Tests` project re-run several times "by prudence" instead of a `--filter`-scoped run of the one touched test class, each full run costing 30-55s for no added confidence. The rule itself wasn't unclear; habitual over-caution overrode it. For a small, scoped change, run only the directly relevant test class/file first — reserve a full-project or full-solution run for the actual closing check of a substantial lot, not every intermediate step.
+
 ---
 
 ## I18N (ENGLISH/FRENCH) STRATEGY
@@ -157,6 +159,53 @@ unitaires/bUnit existants plutôt que le navigateur :
 
 En cas de doute, demander avant de lancer le navigateur plutôt que
 de l'utiliser par défaut.
+
+**Vérification en direct : par défaut, c'est Simon qui s'en charge.** Ne pas ouvrir
+le navigateur de prévisualisation (`preview_start`/`navigate`) de sa propre initiative
+pour "vérifier avant de rendre la main" — Simon vérifie lui-même dans son propre
+navigateur, notamment sur le site réellement déployé, ce qu'une prévisualisation locale
+ne peut de toute façon pas reproduire. Ouvrir le navigateur seulement si la tâche n'a
+réellement aucun autre moyen d'être vérifiée (build + tests ne suffisent pas) **et**
+que rien n'indique que Simon va vérifier lui-même — sinon, terminer sur le build/les
+tests puis lui laisser la vérification finale.
+
+---
+
+## Sessions Claude Code concurrentes sur ce dépôt
+
+Simon fait parfois tourner plusieurs sessions Claude Code en parallèle sur ce même
+dépôt local, sans isolation de working tree entre elles — n'importe quelle session
+peut committer ce qui se trouve alors sur disque, y compris le travail en cours d'une
+autre session. **Incident réel (2026-09-10)** : un commit a absorbé par erreur les
+fichiers stagés d'une autre session en cours d'exécution en parallèle (le message de
+commit ne correspondait qu'à une partie du contenu réellement inclus). Tenter de
+corriger via `git reset --soft HEAD^` a coïncidé avec un nouveau commit de l'autre
+session au même instant, ce qui a fait reculer la branche de deux commits de plus que
+prévu. Rien n'a été perdu — chaque commit concerné existait toujours comme objet git
+récupérable (`git cat-file -e <hash>`) — mais démêler la situation a pris bien plus de
+temps que le correctif lui-même.
+
+**Comment limiter le risque** :
+- Réduire l'écart entre "le correctif est prêt" et "il est committé/poussé" — ne pas
+  enchaîner plusieurs tours de vérification avec une modification déjà stagée en
+  attente ; committer et pousser dès que c'est prêt.
+- `git fetch origin main --quiet` juste avant de stager, pas seulement avant de
+  pousser — détecte une divergence avant de construire un commit sur une base déjà
+  périmée.
+- Stager toujours par chemin explicite (`git add <fichier>`), jamais `git add -A`/
+  `git commit -a`, pour ne jamais embarquer les changements d'une autre session.
+
+**Si un `git push` est rejeté (non-fast-forward) et que les commits locaux n'ont
+jamais été poussés** : `git fetch` puis `git rebase origin/main` — jamais
+`git push --force`, jamais `git reset --hard` sans avoir d'abord confirmé (via
+`git cat-file -e <hash>`) que tout ce qu'il supprimerait est bien récupérable.
+
+**Si un commit vient d'absorber par erreur les fichiers stagés d'une autre session** :
+`git reset --soft HEAD^` (ou `HEAD~N`) remet tout en état stagé, sans perte — mais
+s'attendre à ce que l'autre session réagisse en parallèle pendant le nettoyage (elle
+peut re-stager/re-committer son propre travail en plein milieu). Aller vite, revérifier
+`git log --oneline` après chaque étape plutôt que de supposer que l'état observé tient
+toujours, et ne stager/committer que ses propres fichiers explicites à chaque fois.
 
 ---
 
