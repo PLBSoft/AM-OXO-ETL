@@ -177,6 +177,27 @@ mot de passe seedé n'a d'effet que sur un compte qui n'existe pas encore en bas
 compte supprimé au préalable) — sinon, passer par **Utilisateurs → Réinitialiser le mot de
 passe** dans l'admin, qui génère un mot de passe temporaire distinct (pas celui de la variable).
 
+### Incident du 2026-09-10 : `appsettings.Production.json` committé avec la vraie clé API
+
+En cherchant la variable `ApiKeyAuthentication__ApiKey` sur le pool `oxo-etl-api.alphamaintenance.fr`
+via `Get-WebConfiguration` (commande ci-dessus), seule `ASPNETCORE_ENVIRONMENT` y était définie —
+la variable attendue n'existait pas du tout. La vraie valeur se trouvait en réalité **committée en
+clair** dans `src/ExcelETL.WebAPI/appsettings.Production.json` (et son pendant côté BlazorAdmin,
+`OxoApiTestClient:ApiKey`) — un fichier forcé au suivi Git (`git add -f`) malgré le `.gitignore` du
+dépôt qui l'exclut explicitement, poussé sur `origin/main` le 28/07 et resté exposé ~6 semaines
+avant d'être découvert par cette même vérification de variable de pool.
+
+**Remédiation** : rotation de la clé sur les deux pools IIS (`oxo-etl-api.alphamaintenance.fr` et
+`oxo-etl-admin.alphamaintenance.fr`, même valeur des deux côtés), puis retrait des deux fichiers du
+suivi Git (`git rm --cached`, conservés en local). Vérifié fonctionnel de bout en bout via
+`/api-test` après rotation. Détail complet côté convention applicative : voir la section dédiée
+dans `CLAUDE.md` ("`appsettings.Production.json` ne doit JAMAIS être committé").
+
+**À vérifier systématiquement lors d'un futur déploiement/dépannage** : `git ls-files | grep -i
+appsettings.Production` doit toujours renvoyer une liste vide. Si ce n'est pas le cas, c'est cette
+même classe d'incident qui se reproduit — rotation de la clé en premier, puis nettoyage du dépôt,
+jamais l'inverse (nettoyer sans roter laisse la valeur déjà exposée toujours valide).
+
 ---
 
 ## 6. Premier démarrage — vérifications

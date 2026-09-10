@@ -176,6 +176,18 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\
 
 ---
 
+## `appsettings.Production.json` ne doit JAMAIS être committé (secrets de production)
+
+**Ne jamais ajouter `src/ExcelETL.WebAPI/appsettings.Production.json` ni `src/ExcelETL.BlazorAdmin/appsettings.Production.json` au suivi Git, même avec `git add -f`.** Le `.gitignore` du dépôt exclut déjà `appsettings.*.json` à l'exception explicite de `appsettings.json`/`appsettings.Development.json` — `appsettings.Production.json` est donc *délibérément* exclu par ce pattern : les secrets de production (clé API, chaîne de connexion, mots de passe seedés) n'ont vocation à exister que dans les variables d'environnement du pool d'applications IIS (voir `docs/conventions/guide-deploiement-am-oxo-etl-windows-server.md` §5), jamais dans un fichier versionné.
+
+**Incident réel (commit `7716dc4`, 28/07, découvert et corrigé le 10/09)** : Johnny PAIN a forcé l'ajout des deux fichiers `appsettings.Production.json`, committant en clair la vraie `ApiKeyAuthentication:ApiKey`/`OxoApiTestClient:ApiKey` de production (un GUID) ainsi que la chaîne de connexion SQL Server (`Trusted_Connection=True`, donc sans mot de passe littéral — moins critique). Poussé sur `origin/main` (GitHub, `PLBSoft/AM-OXO-ETL`), exposé pendant ~6 semaines avant d'être découvert en cherchant où vivait la clé API de prod pour câbler l'intégration M2M avec l'app legacy — la variable de pool IIS attendue (`ApiKeyAuthentication__ApiKey`) n'existait pas du tout, seule `ASPNETCORE_ENVIRONMENT` y était posée ; la vraie valeur était en réalité dans ce fichier committé.
+
+**Remédiation actée (10/09)** : rotation de la clé API sur le serveur (variables de pool IIS des deux hôtes, `oxo-etl-api.alphamaintenance.fr` et `oxo-etl-admin.alphamaintenance.fr`, même valeur des deux côtés), ce qui neutralise l'ancienne valeur committée. Puis `git rm --cached` sur les deux fichiers (commit `7469e7a`) — conservés sur disque en local, mais retirés du suivi et désormais réellement couverts par le `.gitignore` existant. **L'historique Git n'a délibérément pas été réécrit** : une fois la clé tournée, l'ancienne valeur committée est inerte, et une purge d'historique (force-push, re-clone obligatoire pour tout le monde) n'apporte plus de bénéfice réel pour un secret déjà neutralisé.
+
+**Si `git ls-files | grep -i appsettings.Production` renvoie de nouveau un résultat un jour**, traiter ça comme une récidive du même incident (rotation + `git rm --cached`), pas comme un cas isolé à laisser filer.
+
+---
+
 ## CURRENT SOLUTION STATE (living reference — read this before exploring the codebase; update it at the end of each milestone)
 
 ### Projects
