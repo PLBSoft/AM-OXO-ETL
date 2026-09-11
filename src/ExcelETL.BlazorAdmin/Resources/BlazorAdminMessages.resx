@@ -568,6 +568,15 @@
   <data name="ImportProfileEditor_CouleurEtiquetteCellSummary" xml:space="preserve">
     <value>Couleur etiquette cell: {0}</value>
   </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquettePlaceholder" xml:space="preserve">
+    <value>Allowed couleurs etiquette, comma-separated, e.g. ROUGE, BLEUE, JAUNE (leave empty for no restriction)</value>
+  </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquetteLabel" xml:space="preserve">
+    <value>Allowed couleurs etiquette, comma-separated, e.g. ROUGE, BLEUE, JAUNE (leave empty for no restriction)</value>
+  </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquetteSummary" xml:space="preserve">
+    <value>Allowed couleurs etiquette: {0}</value>
+  </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Block fields</value>
   </data>

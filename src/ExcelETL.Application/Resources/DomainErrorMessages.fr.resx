@@ -130,6 +130,9 @@
   <data name="SheetExtractionRule_BlankDefaultCouleurEtiquette" xml:space="preserve">
     <value>La couleur d'étiquette par défaut ne doit pas être vide si elle est renseignée.</value>
   </data>
+  <data name="SheetExtractionRule_BlankAllowedCouleurEtiquette" xml:space="preserve">
+    <value>La liste des couleurs d'étiquette autorisées ne doit pas contenir d'entrée vide.</value>
+  </data>
   <data name="HeaderFieldRule_EmptyName" xml:space="preserve">
     <value>Le nom ne doit pas être vide.</value>
   </data>

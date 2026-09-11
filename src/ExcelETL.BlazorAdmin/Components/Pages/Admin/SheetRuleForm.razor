@@ -66,6 +66,13 @@
         <label for="@($"{IdPrefix}sheet-rule-couleur-etiquette-cell-input")">@Loc["ImportProfileEditor_CouleurEtiquetteCellLabel"]</label>
     </div>
 </div>
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")" class="form-control" @bind="_allowedCouleursEtiquette" @bind:after="MarkDirty"
+               placeholder="@Loc["ImportProfileEditor_AllowedCouleursEtiquettePlaceholder"]" />
+        <label for="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteLabel"]</label>
+    </div>
+</div>
 
 <div class="card bg-light mb-3">
 <div class="card-body">
@@ -545,6 +552,7 @@
     private string _zeroEnergieExpectedValue = string.Empty;
     private string _defaultCouleurEtiquette = string.Empty;
     private string _couleurEtiquetteCellRange = string.Empty;
+    private string _allowedCouleursEtiquette = string.Empty;
     private readonly List<BlockFieldDefinition> _fields = [];
     private readonly List<string> _unconditionalColonneNames = [];
     private readonly List<ConditionalPointRule> _pointRules = [];
@@ -603,6 +611,9 @@
             : BlockFieldRangeFormatter.ToAbsoluteRange(
                 _firstBlockStartRow, InitialRule.CouleurEtiquetteCell.ColumnRange,
                 InitialRule.CouleurEtiquetteCell.RowOffsetStart, InitialRule.CouleurEtiquetteCell.RowOffsetEnd);
+        _allowedCouleursEtiquette = InitialRule.AllowedCouleursEtiquette is null
+            ? string.Empty
+            : string.Join(", ", InitialRule.AllowedCouleursEtiquette);
         _fields.AddRange(InitialRule.Locator.Fields);
         _unconditionalColonneNames.AddRange(InitialRule.UnconditionalColonneNames);
         _pointRules.AddRange(InitialRule.PointRules);
@@ -866,6 +877,7 @@
         string.IsNullOrEmpty(_sheetName) && _firstBlockStartRow == 0 && _step == 0 &&
         string.IsNullOrEmpty(_stopFieldName) && string.IsNullOrEmpty(_zeroEnergieExpectedValue) &&
         string.IsNullOrEmpty(_defaultCouleurEtiquette) && string.IsNullOrEmpty(_couleurEtiquetteCellRange) &&
+        string.IsNullOrEmpty(_allowedCouleursEtiquette) &&
         _fields.Count == 0 &&
         _unconditionalColonneNames.Count == 0 && _pointRules.Count == 0 &&
         _headerFields.Count == 0 && _headerComposites.Count == 0;
@@ -915,11 +927,20 @@
 
             // SheetExtractionRule stores these lists by reference (unlike PointRules, which it copies) --
             // pass snapshots so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
+            // Client feedback (2026-09-11): a comma-separated single field, not a full add/edit/delete
+            // sub-list like UnconditionalColonneNames -- this list is short (3 real colors) and rarely
+            // changed, so the lighter UI is proportionate; each entry's own blank/duplicate validation
+            // still runs in the Domain constructor below, same as every other list on this form.
+            IReadOnlyList<string>? allowedCouleursEtiquette = string.IsNullOrWhiteSpace(_allowedCouleursEtiquette)
+                ? null
+                : _allowedCouleursEtiquette.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
+
             var rule = new SheetExtractionRule(
                 _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites],
                 string.IsNullOrWhiteSpace(_zeroEnergieExpectedValue) ? null : _zeroEnergieExpectedValue,
                 couleurEtiquetteCell: couleurEtiquetteCell,
-                defaultCouleurEtiquette: string.IsNullOrWhiteSpace(_defaultCouleurEtiquette) ? null : _defaultCouleurEtiquette);
+                defaultCouleurEtiquette: string.IsNullOrWhiteSpace(_defaultCouleurEtiquette) ? null : _defaultCouleurEtiquette,
+                allowedCouleursEtiquette: allowedCouleursEtiquette);
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -946,6 +967,7 @@
         _zeroEnergieExpectedValue = string.Empty;
         _defaultCouleurEtiquette = string.Empty;
         _couleurEtiquetteCellRange = string.Empty;
+        _allowedCouleursEtiquette = string.Empty;
         _fields.Clear();
         _unconditionalColonneNames.Clear();
         _pointRules.Clear();

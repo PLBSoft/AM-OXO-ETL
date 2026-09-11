@@ -11,18 +11,20 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // If a profile somehow configures both, the cell wins -- a real per-block reading is always more
 // specific/trustworthy than a blanket default. Neither configured means "" (ISOLEMENT/DIVERS today).
 //
-// Client feedback (2026-09-11), a real ORIFICES CAPACITES screenshot: H18:N18 (and every other
-// block's own offset) genuinely *is* the couleur d'étiquette input cell (confirmed by 2 filled-in
-// "ROUGE" blocks sitting right next to an unfilled 3rd one) -- but the form's own template leaves
-// the literal text "DATE" in that cell until a color is actually typed over it (an Excel default
-// cell value, not a real color -- ROUGE/BLEUE/JAUNE are the only ones ever observed for real).
-// Treated as equivalent to "not filled in" here, trimmed + case-insensitive (spec §7 convention),
-// so an un-filled block never silently imports "DATE" as its couleur d'étiquette.
+// Client feedback (2026-09-11): a real ORIFICES CAPACITES screenshot confirmed CouleurEtiquetteCell
+// genuinely is the right cell -- but its form template leaves stray non-color text behind (e.g.
+// "DATE") until someone actually types a color over it. Rather than blacklisting that one literal
+// (the earlier fix), SheetExtractionRule.AllowedCouleursEtiquette is an opt-in whitelist: when
+// configured, a cell value matching none of it (trim + case-insensitive, spec §7) is reported as a
+// non-blocking warning via UnexpectedRawValue instead of being imported as-is -- the caller owns
+// building/deduplicating the actual ExtractionError (see UnexpectedCouleurEtiquetteValueWarningTracker),
+// this resolver stays free of any ILogger/errors-list dependency, same "evaluators return a tuple,
+// the sheet service owns the warning tracker" convention as ConditionalPointRuleEvaluator/
+// TextTransformEvaluator. No allowlist configured (null, the default) means "accept the cell's raw
+// content as-is" -- backward compatible with any profile predating this feature.
 public static class CouleurEtiquetteResolver
 {
-    private const string UnfilledCellTemplateArtifact = "DATE";
-
-    public static string Resolve(
+    public static (string Value, string? UnexpectedRawValue) Resolve(
         IWorkbookReader workbookReader, string sheet, SheetExtractionRule sheetRule, int blockStartRow)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
@@ -31,10 +33,23 @@ public static class CouleurEtiquetteResolver
         if (sheetRule.CouleurEtiquetteCell is not null)
         {
             var range = BlockFieldRangeCalculator.BuildRange(sheetRule.CouleurEtiquetteCell, blockStartRow);
-            var value = workbookReader.ReadCellValue(sheet, range) ?? "";
-            return value.Trim().Equals(UnfilledCellTemplateArtifact, StringComparison.OrdinalIgnoreCase) ? "" : value;
+            var rawValue = workbookReader.ReadCellValue(sheet, range) ?? "";
+            if (string.IsNullOrWhiteSpace(rawValue))
+            {
+                return ("", null);
+            }
+
+            var trimmedValue = rawValue.Trim();
+            if (sheetRule.AllowedCouleursEtiquette is null)
+            {
+                return (trimmedValue, null);
+            }
+
+            var match = sheetRule.AllowedCouleursEtiquette.FirstOrDefault(
+                allowed => string.Equals(allowed.Trim(), trimmedValue, StringComparison.OrdinalIgnoreCase));
+            return match is not null ? (match, null) : ("", trimmedValue);
         }
 
-        return sheetRule.DefaultCouleurEtiquette ?? "";
+        return (sheetRule.DefaultCouleurEtiquette ?? "", null);
     }
 }

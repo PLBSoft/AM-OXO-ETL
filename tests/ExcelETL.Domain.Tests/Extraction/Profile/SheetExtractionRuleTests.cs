@@ -143,6 +143,48 @@ public class SheetExtractionRuleTests
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_BlankDefaultCouleurEtiquette);
     }
 
+    [Fact]
+    public void Constructor_WithNoAllowedCouleursEtiquetteArgument_DefaultsToNull()
+    {
+        var rule = new SheetExtractionRule("PLATINES", Locator("PLATINES"), [], [], [], []);
+
+        rule.AllowedCouleursEtiquette.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithAllowedCouleursEtiquette_AssignsProperty()
+    {
+        var rule = new SheetExtractionRule(
+            "PLATINES", Locator("PLATINES"), [], [], [], [],
+            allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
+
+        rule.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyAllowedCouleursEtiquette_CreatesSheetExtractionRule()
+    {
+        var rule = new SheetExtractionRule(
+            "PLATINES", Locator("PLATINES"), [], [], [], [],
+            allowedCouleursEtiquette: []);
+
+        rule.AllowedCouleursEtiquette.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Constructor_WithBlankEntryInAllowedCouleursEtiquette_ThrowsDomainValidationException(string blankEntry)
+    {
+        var act = () => new SheetExtractionRule(
+            "PLATINES", Locator("PLATINES"), [], [], [], [],
+            allowedCouleursEtiquette: ["ROUGE", blankEntry]);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("allowedCouleursEtiquette")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_BlankAllowedCouleurEtiquette);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]

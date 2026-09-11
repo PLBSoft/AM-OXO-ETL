@@ -46,12 +46,18 @@ public sealed class AutresJointsTouchesExtractionService(
         var points = new List<PointPivot>();
         var errors = new List<ExtractionError>(blockResult.Errors);
         var warningTracker = new NoConditionalPointCreatedWarningTracker(sheet);
+        var couleurEtiquetteWarningTracker = new UnexpectedCouleurEtiquetteValueWarningTracker(sheet);
 
         foreach (var block in blockResult.Blocks)
         {
             var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
             var typeElement = block.Fields[IsolementFieldNames.TypeElement];
-            var couleurEtiquette = CouleurEtiquetteResolver.Resolve(workbookReader, sheet, sheetRule, block.StartRow);
+            var (couleurEtiquette, unexpectedCouleurEtiquetteValue) =
+                CouleurEtiquetteResolver.Resolve(workbookReader, sheet, sheetRule, block.StartRow);
+            if (unexpectedCouleurEtiquetteValue is not null)
+            {
+                couleurEtiquetteWarningTracker.RecordIfNew(repere, unexpectedCouleurEtiquetteValue, logger, errors);
+            }
 
             isolements.Add(new IsolementPivot(
                 repere, block.Fields[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: "",

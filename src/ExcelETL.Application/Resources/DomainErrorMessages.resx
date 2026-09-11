@@ -130,6 +130,9 @@
   <data name="SheetExtractionRule_BlankDefaultCouleurEtiquette" xml:space="preserve">
     <value>Default couleur etiquette must not be blank when provided.</value>
   </data>
+  <data name="SheetExtractionRule_BlankAllowedCouleurEtiquette" xml:space="preserve">
+    <value>Allowed couleurs etiquette must not contain a blank entry.</value>
+  </data>
   <data name="HeaderFieldRule_EmptyName" xml:space="preserve">
     <value>Name must not be empty.</value>
   </data>

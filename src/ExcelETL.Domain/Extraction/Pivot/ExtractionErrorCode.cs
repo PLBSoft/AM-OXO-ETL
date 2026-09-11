@@ -9,5 +9,6 @@ public enum ExtractionErrorCode
     UnparsableValue,
     NoConditionalPointCreated,
     TacheMultipleTypeMismatch,
-    UnexpectedZeroEnergieValue
+    UnexpectedZeroEnergieValue,
+    UnexpectedCouleurEtiquetteValue
 }

@@ -47,6 +47,14 @@ public class DefaultProfileSeeder(
     // this deployment cares about today -- an admin can add more via the profile editor.
     private const string ProgressApplicationName = "PROGRESS";
 
+    // Client feedback (2026-09-11): the closed set of couleur d'étiquette values ever observed across
+    // every real client fixture on disk -- shared by PLATINES/ORIFICES CAPACITES (both read via
+    // CouleurEtiquetteCell) so a garbage/template-artifact cell value (e.g. ORIFICES CAPACITES' own
+    // unfilled-cell "DATE" placeholder) is reported as a warning instead of silently imported. Not a
+    // hardcoded engine assumption -- lives on SheetExtractionRule.AllowedCouleursEtiquette, editable
+    // per profile, exactly so a future, genuinely new color doesn't need a code change.
+    private static readonly string[] AllowedCouleursEtiquette = ["ROUGE", "BLEUE", "JAUNE"];
+
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await SeedImportProfileAsync(cancellationToken);
@@ -187,7 +195,8 @@ public class DefaultProfileSeeder(
                 // block offset +1 -- same row as the form's own "ÉTIQUETTE" label in column F
                 // (ignored, it's just the paper form's field name), confirmed against all 4 real
                 // client fixtures on disk (ROUGE/BLEUE/JAUNE observed, free text, no closed value set).
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)),
+                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+                allowedCouleursEtiquette: AllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
@@ -204,12 +213,14 @@ public class DefaultProfileSeeder(
                     "CONTRÔLE ETANCHÉITÉS"
                 ], [], [],
                 // Client feedback (2026-09): shares PLATINES' exact "couleur d'étiquette" cell (same
-                // FirstBlockStartRow=17, so H18:N18 for the first block) -- client-confirmed as
-                // specified, even though every real fixture on disk today shows that cell holds only
-                // the static "DATE" sub-header text, not a real color (client's own source template
-                // for this sheet hasn't been updated yet) -- see
-                // OrificesCapacitesExtractionServiceIntegrationTests for the investigation.
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)),
+                // FirstBlockStartRow=17, so H18:N18 for the first block) -- a real client screenshot
+                // (2026-09-11) confirmed this genuinely is the right cell (2 filled-in "ROUGE" blocks
+                // right next to an unfilled 3rd one). AllowedCouleursEtiquette normalizes the unfilled
+                // one's own template placeholder ("DATE", never a real color) into a non-blocking
+                // warning instead of a silently-imported value -- see
+                // OrificesCapacitesExtractionServiceIntegrationTests.
+                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+                allowedCouleursEtiquette: AllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
                 new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,

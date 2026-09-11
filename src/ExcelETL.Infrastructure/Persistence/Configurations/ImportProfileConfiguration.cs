@@ -89,6 +89,12 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
             rules.Property(r => r.DefaultCouleurEtiquette)
                 .HasMaxLength(200);
 
+            // Client feedback (2026-09-11): a nullable primitive collection (unlike
+            // UnconditionalColonneNames below, which is required-but-possibly-empty) -- null and an
+            // empty list are two genuinely distinct states here (no restriction configured vs. "no
+            // color is ever valid"), so this deliberately has no .IsRequired() call.
+            rules.Property(r => r.AllowedCouleursEtiquette);
+
             // UnconditionalColonneNames is a plain list of strings, not a related entity -- mapped as
             // an EF Core primitive collection (JSON column on SqlServer) rather than a second owned
             // entity type, since there is nothing beyond the string itself to model.

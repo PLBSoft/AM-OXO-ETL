@@ -391,6 +391,39 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithAllowedCouleursEtiquette_RoundTripsIdentically()
+    {
+        // Client feedback (2026-09-11): a nullable primitive collection, distinct from a plain
+        // required-but-possibly-empty one (UnconditionalColonneNames) -- null and empty are two
+        // genuinely different states here.
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+        var sheetRule = new SheetExtractionRule(
+            "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
+            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+            allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
+        var profile = new ImportProfile("Profil couleurs autorisees", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNullAllowedCouleursEtiquette_PersistsAndReloadsAsNull_NotAnEmptyList()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().AllowedCouleursEtiquette.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetByIdAsync_WithUnknownId_ReturnsNull()
     {
         var store = CreateStore();

@@ -618,9 +618,11 @@ public class ProfileEditorParityTests : BunitContext
 
             importCut.FindAll("#sheet-rule-default-couleur-etiquette-input").Should().ContainSingle();
             importCut.FindAll("#sheet-rule-couleur-etiquette-cell-input").Should().ContainSingle();
+            importCut.FindAll("#sheet-rule-allowed-couleurs-etiquette-input").Should().ContainSingle();
 
             var exportCut = Render<ExportProfileEditor>();
             exportCut.FindAll("#sheet-rule-default-couleur-etiquette-input").Should().BeEmpty();
             exportCut.FindAll("#sheet-rule-couleur-etiquette-cell-input").Should().BeEmpty();
+            exportCut.FindAll("#sheet-rule-allowed-couleurs-etiquette-input").Should().BeEmpty();
         });
 }

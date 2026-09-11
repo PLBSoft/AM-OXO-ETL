@@ -568,6 +568,15 @@
   <data name="ImportProfileEditor_CouleurEtiquetteCellSummary" xml:space="preserve">
     <value>Cellule de la couleur d'étiquette : {0}</value>
   </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquettePlaceholder" xml:space="preserve">
+    <value>Couleurs d'étiquette autorisées, séparées par des virgules, ex. ROUGE, BLEUE, JAUNE (laisser vide pour aucune restriction)</value>
+  </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquetteLabel" xml:space="preserve">
+    <value>Couleurs d'étiquette autorisées, séparées par des virgules, ex. ROUGE, BLEUE, JAUNE (laisser vide pour aucune restriction)</value>
+  </data>
+  <data name="ImportProfileEditor_AllowedCouleursEtiquetteSummary" xml:space="preserve">
+    <value>Couleurs d'étiquette autorisées : {0}</value>
+  </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Champs du bloc</value>
   </data>

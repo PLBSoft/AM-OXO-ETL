@@ -36,6 +36,7 @@ public sealed class UnconditionalIsolementSheetExtractionService(
         var equipementRepere = workbookReader.ReadCellValue(sheet, "K6:U6") ?? "";
 
         var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);
+        var errors = new List<ExtractionError>(blockResult.Errors);
         foreach (var error in blockResult.Errors)
         {
             ExtractionErrorLogging.Log(logger, error);
@@ -43,11 +44,18 @@ public sealed class UnconditionalIsolementSheetExtractionService(
 
         var isolements = new List<IsolementPivot>();
         var points = new List<PointPivot>();
+        var couleurEtiquetteWarningTracker = new UnexpectedCouleurEtiquetteValueWarningTracker(sheet);
 
         foreach (var block in blockResult.Blocks)
         {
             var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
-            var couleurEtiquette = CouleurEtiquetteResolver.Resolve(workbookReader, sheet, sheetRule, block.StartRow);
+            var (couleurEtiquette, unexpectedCouleurEtiquetteValue) =
+                CouleurEtiquetteResolver.Resolve(workbookReader, sheet, sheetRule, block.StartRow);
+            if (unexpectedCouleurEtiquetteValue is not null)
+            {
+                couleurEtiquetteWarningTracker.RecordIfNew(repere, unexpectedCouleurEtiquetteValue, logger, errors);
+            }
+
             isolements.Add(new IsolementPivot(
                 repere, block.Fields[IsolementFieldNames.Designation], block.Fields[IsolementFieldNames.TypeElement],
                 positionALaPose: "", localisation: "", couleurEtiquette: couleurEtiquette, sourceSheetName: sheetRule.SheetName));
@@ -68,7 +76,7 @@ public sealed class UnconditionalIsolementSheetExtractionService(
             }
         }
 
-        return new IsolementSheetExtractionResult(isolements, points, blockResult.Errors);
+        return new IsolementSheetExtractionResult(isolements, points, errors);
     }
 
     private string ComposeRepere(string equipementRepere, string identification)

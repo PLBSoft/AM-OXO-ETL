@@ -484,6 +484,10 @@ else
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_CouleurEtiquetteCellSummary", BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, couleurEtiquetteCell.ColumnRange, couleurEtiquetteCell.RowOffsetStart, couleurEtiquetteCell.RowOffsetEnd)]</span>
                         }
+                        @if (rule.AllowedCouleursEtiquette is not null)
+                        {
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteSummary", string.Join(", ", rule.AllowedCouleursEtiquette)]</span>
+                        }
                     </div>
                     <ul class="block-field-list block-field-grid">
                         @foreach (var field in rule.Locator.Fields)

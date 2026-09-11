@@ -35,7 +35,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
         BlockFieldDefinition? couleurEtiquetteCell = null,
-        string? defaultCouleurEtiquette = null) => new(
+        string? defaultCouleurEtiquette = null,
+        IReadOnlyList<string>? allowedCouleursEtiquette = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -47,7 +48,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         UnconditionalColonneNames, [], [],
         fieldPresencePointRules: fieldPresencePointRules,
         couleurEtiquetteCell: couleurEtiquetteCell,
-        defaultCouleurEtiquette: defaultCouleurEtiquette);
+        defaultCouleurEtiquette: defaultCouleurEtiquette,
+        allowedCouleursEtiquette: allowedCouleursEtiquette);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -299,23 +301,73 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
     }
 
-    // Client feedback (2026-09-11), a real ORIFICES CAPACITES screenshot: the cell's own form
-    // template leaves the literal text "DATE" (never a real color) until someone types a color over
-    // it -- CouleurEtiquetteResolver normalizes it to "" rather than importing it as-is.
+    // Client feedback (2026-09-11): switched from a hardcoded "DATE" blacklist to a per-sheet
+    // AllowedCouleursEtiquette whitelist -- a real ORIFICES CAPACITES screenshot confirmed the cell's
+    // own form template leaves stray non-color text behind (e.g. "DATE") until someone types a color
+    // over it, but any other garbage/typo could just as easily appear there too.
+    private static readonly string[] AllowedCouleursEtiquette = ["ROUGE", "BLEUE", "JAUNE"];
+
+    [Fact]
+    public void Extract_WithCouleurEtiquetteCellValueMatchingAnAllowedColor_SetsItOnPivot_NoWarning()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = "ROUGE";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell, allowedCouleursEtiquette: AllowedCouleursEtiquette);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_WithCouleurEtiquetteCellValueMatchingAnAllowedColor_TrimmedAndCaseInsensitive_ReturnsTheCanonicalForm()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = " rouge ";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell, allowedCouleursEtiquette: AllowedCouleursEtiquette);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
+        result.Errors.Should().BeEmpty();
+    }
+
     [Theory]
     [InlineData("DATE")]
     [InlineData("date")]
     [InlineData(" Date ")]
-    public void Extract_WithCouleurEtiquetteCellHoldingTheUnfilledDateTemplateArtifact_NormalizesToEmptyString(string cellValue)
+    public void Extract_WithCouleurEtiquetteCellValueNotInTheAllowedList_SetsCouleurEtiquetteToEmptyString_AndWarns(string cellValue)
     {
         var cells = CreateOneBlockCells();
         cells["H18:N18"] = cellValue;
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell, allowedCouleursEtiquette: AllowedCouleursEtiquette);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("");
+        result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
+            e => e.Code == ExtractionErrorCode.UnexpectedCouleurEtiquetteValue && e.ExtractedValue == cellValue.Trim());
+    }
+
+    // No AllowedCouleursEtiquette configured -- backward compatible with any profile predating this
+    // feature (e.g. an ISOLEMENT-style profile that never opted in): the cell's raw content is
+    // accepted as-is, no validation at all, matching the resolver's pre-whitelist behavior.
+    [Fact]
+    public void Extract_WithCouleurEtiquetteCellAndNoAllowedListConfigured_AcceptsAnyNonBlankValueAsIs()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = "DATE";
         var workbookReader = CreateWorkbookReader(cells);
         var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell);
 
         var result = _sut.Extract(workbookReader.Object, sheetRule);
 
-        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("");
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("DATE");
+        result.Errors.Should().BeEmpty();
     }
 
     [Fact]

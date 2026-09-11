@@ -106,6 +106,28 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
         AssertLocalizedMessageDiffersFromKey(
             "SheetExtractionRule_BlankZeroEnergieExpectedValue", BuildRuleWithBlankZeroEnergieExpectedValue, "fr");
 
+    // Closes a gap this file itself had never covered -- DefaultCouleurEtiquette/AllowedCouleursEtiquette
+    // (client feedback, 2026-09-11) added their own DomainErrorCode members without a localization test.
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankDefaultCouleurEtiquette_ReturnsMessageDifferentFromTheRawKey_InEnglish() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankDefaultCouleurEtiquette", BuildRuleWithBlankDefaultCouleurEtiquette, "en");
+
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankDefaultCouleurEtiquette_ReturnsMessageDifferentFromTheRawKey_InFrench() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankDefaultCouleurEtiquette", BuildRuleWithBlankDefaultCouleurEtiquette, "fr");
+
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankEntryInAllowedCouleursEtiquette_ReturnsMessageDifferentFromTheRawKey_InEnglish() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankAllowedCouleurEtiquette", BuildRuleWithBlankEntryInAllowedCouleursEtiquette, "en");
+
+    [Fact]
+    public void TryLocalize_SheetExtractionRuleWithBlankEntryInAllowedCouleursEtiquette_ReturnsMessageDifferentFromTheRawKey_InFrench() =>
+        AssertLocalizedMessageDiffersFromKey(
+            "SheetExtractionRule_BlankAllowedCouleurEtiquette", BuildRuleWithBlankEntryInAllowedCouleursEtiquette, "fr");
+
     private static object BuildRuleWithUnknownPlaceholder()
     {
         var locator = new RepeatingBlockLocator(
@@ -127,6 +149,28 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
         return new SheetExtractionRule(
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [],
             headerFields: [], headerComposites: [], zeroEnergieExpectedValue: "   ");
+    }
+
+    private static object BuildRuleWithBlankDefaultCouleurEtiquette()
+    {
+        var locator = new RepeatingBlockLocator(
+            "AUTRES JOINTS TOUCHES", firstBlockStartRow: 17, step: 7, stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+
+        return new SheetExtractionRule(
+            "AUTRES JOINTS TOUCHES", locator, pointRules: [], unconditionalColonneNames: [],
+            headerFields: [], headerComposites: [], defaultCouleurEtiquette: "   ");
+    }
+
+    private static object BuildRuleWithBlankEntryInAllowedCouleursEtiquette()
+    {
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+
+        return new SheetExtractionRule(
+            "PLATINES", locator, pointRules: [], unconditionalColonneNames: [],
+            headerFields: [], headerComposites: [], allowedCouleursEtiquette: ["ROUGE", "   "]);
     }
 
     private static void AssertLocalizedMessageDiffersFromKey(string resourceKey, Func<object> triggeringAction, string cultureName)

@@ -64,6 +64,16 @@ public sealed class SheetExtractionRule
     // fixed value configured for this sheet.
     public string? DefaultCouleurEtiquette { get; }
 
+    // Client feedback (2026-09-11): a whitelist approach, replacing the earlier hardcoded "DATE"
+    // blacklist entry -- a value read from CouleurEtiquetteCell that matches none of these (trim +
+    // case-insensitive, same §7 convention) is a non-blocking UnexpectedCouleurEtiquetteValue warning
+    // rather than being silently imported or silently dropped. null = no restriction configured for
+    // this sheet (opt-in feature, backward compatible with any profile predating it -- the cell's raw
+    // content is then accepted as-is, exactly the pre-whitelist behavior). Deliberately never applied
+    // to DefaultCouleurEtiquette -- that value is admin-typed profile configuration, not read from an
+    // unreliable client cell, so it carries no equivalent data-quality risk to warn about.
+    public IReadOnlyList<string>? AllowedCouleursEtiquette { get; }
+
     public SheetExtractionRule(
         string sheetName,
         RepeatingBlockLocator locator,
@@ -74,7 +84,8 @@ public sealed class SheetExtractionRule
         string? zeroEnergieExpectedValue = null,
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
         BlockFieldDefinition? couleurEtiquetteCell = null,
-        string? defaultCouleurEtiquette = null)
+        string? defaultCouleurEtiquette = null,
+        IReadOnlyList<string>? allowedCouleursEtiquette = null)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -100,6 +111,13 @@ public sealed class SheetExtractionRule
             throw new DomainValidationException(
                 "Default couleur etiquette must not be blank when provided.", nameof(defaultCouleurEtiquette),
                 DomainErrorCode.SheetExtractionRule_BlankDefaultCouleurEtiquette);
+        }
+
+        if (allowedCouleursEtiquette is not null && allowedCouleursEtiquette.Any(string.IsNullOrWhiteSpace))
+        {
+            throw new DomainValidationException(
+                "Allowed couleurs etiquette must not contain a blank entry.", nameof(allowedCouleursEtiquette),
+                DomainErrorCode.SheetExtractionRule_BlankAllowedCouleurEtiquette);
         }
 
         if (sheetName != locator.Sheet)
@@ -136,6 +154,7 @@ public sealed class SheetExtractionRule
         ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
         CouleurEtiquetteCell = couleurEtiquetteCell;
         DefaultCouleurEtiquette = defaultCouleurEtiquette;
+        AllowedCouleursEtiquette = allowedCouleursEtiquette;
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

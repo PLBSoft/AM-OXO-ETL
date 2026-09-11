@@ -32,7 +32,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         new RepeatingBlockReader(), new TextTransformEvaluator(),
         NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
 
-    private static SheetExtractionRule CreateSheetRule(BlockFieldDefinition? couleurEtiquetteCell = null) => new(
+    private static SheetExtractionRule CreateSheetRule(
+        BlockFieldDefinition? couleurEtiquetteCell = null, IReadOnlyList<string>? allowedCouleursEtiquette = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -42,7 +43,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         ]),
         [],
         UnconditionalColonneNames, [], [],
-        couleurEtiquetteCell: couleurEtiquetteCell);
+        couleurEtiquetteCell: couleurEtiquetteCell,
+        allowedCouleursEtiquette: allowedCouleursEtiquette);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()
@@ -85,12 +87,34 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     // there, raising doubt about whether H:N offset+1 was genuinely the right cell. A follow-up client
     // screenshot of the real ORIFICES CAPACITES sheet settled it: it *is* the right cell (2 filled-in
     // blocks show "ROUGE" right next to an unfilled 3rd one) -- "DATE" is simply the form template's
-    // own default/unfilled cell content, not a real color, left over until someone types a color over
-    // it. CouleurEtiquetteResolver now normalizes it to "" (this test's own D8570 fixture happens to
-    // have every one of its 5 blocks left unfilled, so the resolver output here is "" for all of
-    // them) -- see PlatinesExtractionServiceIntegrationTests for real, non-"DATE" color coverage.
+    // own default/unfilled cell content, not a real color. Rather than a hardcoded "DATE" blacklist,
+    // SheetExtractionRule.AllowedCouleursEtiquette (client feedback 2026-09-11) is the real fix -- a
+    // whitelist reports any non-matching value as a non-blocking warning instead of importing it.
     [Fact]
-    public void Extract_D8570Fixture_WithCouleurEtiquetteCell_NormalizesTheUnfilledDateTemplateArtifactToEmptyString()
+    public void Extract_D8570Fixture_WithCouleurEtiquetteCellAndAllowedList_UnfilledDateArtifactBecomesEmptyStringWithWarnings()
+    {
+        var rule = CreateSheetRule(
+            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+            allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
+        using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+
+        var result = _sut.Extract(workbookReader, rule);
+
+        result.Isolements.Should().HaveCount(5);
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
+        // Every one of the 5 blocks holds "DATE" (deduplicated to a single warning entry, same
+        // aggregation convention as every other WarningTracker in this codebase).
+        result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
+            e => e.Code == ExtractionErrorCode.UnexpectedCouleurEtiquetteValue && e.ExtractedValue == "DATE");
+    }
+
+    // Without an allowlist configured, the cell's raw content is accepted as-is (backward compatible
+    // with the resolver's pre-whitelist behavior) -- confirming the "DATE" text is only ever treated
+    // specially once a profile actually opts into AllowedCouleursEtiquette, per the client's own
+    // decision to implement this as a per-profile whitelist rather than a hardcoded engine assumption.
+    [Fact]
+    public void Extract_D8570Fixture_WithCouleurEtiquetteCellAndNoAllowedList_ImportsTheRawDateTextAsIs()
     {
         var rule = CreateSheetRule(couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
         using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
@@ -99,7 +123,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         var result = _sut.Extract(workbookReader, rule);
 
         result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "DATE");
+        result.Errors.Should().BeEmpty();
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

@@ -145,6 +145,9 @@ public class DefaultProfileSeederTests
         platines.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
         platines.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
         platines.DefaultCouleurEtiquette.Should().BeNull();
+        // Client feedback (2026-09-11): the whitelist replacing the earlier hardcoded "DATE"
+        // blacklist -- so a garbage/template-artifact cell value warns instead of being imported.
+        platines.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
@@ -156,6 +159,7 @@ public class DefaultProfileSeederTests
         orificesCapacites.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
         orificesCapacites.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
         orificesCapacites.DefaultCouleurEtiquette.Should().BeNull();
+        orificesCapacites.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
 
         var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
         autresJointsTouches.Locator.Step.Should().Be(7);
@@ -165,6 +169,8 @@ public class DefaultProfileSeederTests
         // Client feedback (2026-09): no per-block cell -- every isolement it produces is "BLEUE".
         autresJointsTouches.CouleurEtiquetteCell.Should().BeNull();
         autresJointsTouches.DefaultCouleurEtiquette.Should().Be("BLEUE");
+        // No allowlist needed -- DefaultCouleurEtiquette is admin-typed config, not read from a cell.
+        autresJointsTouches.AllowedCouleursEtiquette.Should().BeNull();
 
         var divers = profile.SheetRules.Single(r => r.SheetName == "DIVERS");
         divers.Locator.FirstBlockStartRow.Should().Be(9);
