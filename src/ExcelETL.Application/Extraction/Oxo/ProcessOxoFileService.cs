@@ -132,7 +132,10 @@ public sealed class ProcessOxoFileService(
                 importProfileId,
                 exportProfileId,
                 status,
-                command.Username);
+                command.Username,
+                isolementCount: importResult.Isolements.Count,
+                pointCount: importResult.Points.Count,
+                tacheMultipleCount: importResult.TachesMultiples.Count);
 
             await generatedFileArchiveStore.SaveAsync(record, cancellationToken);
         }

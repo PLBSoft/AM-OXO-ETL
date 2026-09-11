@@ -166,6 +166,44 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body!.Username.Should().Be("jdupont");
     }
 
+    // -- Lot 071: element counts --
+
+    [Fact]
+    public async Task GetById_WithNonZeroElementCounts_ReturnsThemInTheBody()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(isolementCount: 23, pointCount: 47, tacheMultipleCount: 98);
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.IsolementCount.Should().Be(23);
+        body.PointCount.Should().Be(47);
+        body.TacheMultipleCount.Should().Be(98);
+    }
+
+    [Fact]
+    public async Task GetById_WithRejectedRecord_ReturnsZeroElementCounts_NeverNull()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, equipementRepere: null,
+            sourceFileName: "rejected-source.xlsx", sourceFilePath: WriteFile("rejected-source.xlsx"),
+            targetFileName: null, targetFilePath: null,
+            importProfileId: Guid.NewGuid(), exportProfileId: Guid.NewGuid(),
+            status: GeneratedFileArchiveStatus.Rejected);
+        await SeedAsync(record);
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.IsolementCount.Should().Be(0);
+        body.PointCount.Should().Be(0);
+        body.TacheMultipleCount.Should().Be(0);
+    }
+
     [Fact]
     public async Task GetById_WithUnknownId_ReturnsNotFound()
     {
@@ -329,7 +367,10 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success,
         byte[]? sourceContent = null,
         byte[]? targetContent = null,
-        string? username = null)
+        string? username = null,
+        int isolementCount = 0,
+        int pointCount = 0,
+        int tacheMultipleCount = 0)
     {
         var id = Guid.NewGuid();
         var record = new GeneratedFileRecord(
@@ -343,7 +384,10 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
             importProfileId: Guid.NewGuid(),
             exportProfileId: Guid.NewGuid(),
             status: status,
-            username: username);
+            username: username,
+            isolementCount: isolementCount,
+            pointCount: pointCount,
+            tacheMultipleCount: tacheMultipleCount);
         await SeedAsync(record);
         return record;
     }

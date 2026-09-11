@@ -21,7 +21,10 @@ public class EfGeneratedFileArchiveStoreTests
         GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.Success,
         string? targetFileName = "MAD_C7401_20260725143000.xlsx",
         string? targetFilePath = @"2026\07\20260725-143000-000_target_source.xlsx",
-        string? username = null) => new(
+        string? username = null,
+        int isolementCount = 0,
+        int pointCount = 0,
+        int tacheMultipleCount = 0) => new(
         Guid.NewGuid(),
         generatedAtUtc,
         equipementRepere,
@@ -32,7 +35,10 @@ public class EfGeneratedFileArchiveStoreTests
         Guid.NewGuid(),
         Guid.NewGuid(),
         status,
-        username);
+        username,
+        isolementCount,
+        pointCount,
+        tacheMultipleCount);
 
     [Fact]
     public async Task SaveAsync_ThenGetByIdAsync_RoundTripsAllPropertiesIdentically()
@@ -55,6 +61,35 @@ public class EfGeneratedFileArchiveStoreTests
         reloaded.ExportProfileId.Should().Be(record.ExportProfileId);
         reloaded.Status.Should().Be(record.Status);
         reloaded.Username.Should().Be(record.Username);
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithNonZeroElementCounts_RoundTripsThemIdentically()
+    {
+        var record = CreateRecord(
+            DateTime.UtcNow, isolementCount: 23, pointCount: 47, tacheMultipleCount: 98);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.IsolementCount.Should().Be(23);
+        reloaded.PointCount.Should().Be(47);
+        reloaded.TacheMultipleCount.Should().Be(98);
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithoutElementCounts_RoundTripsThemAsZero()
+    {
+        var record = CreateRecord(DateTime.UtcNow);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.IsolementCount.Should().Be(0);
+        reloaded.PointCount.Should().Be(0);
+        reloaded.TacheMultipleCount.Should().Be(0);
     }
 
     [Fact]

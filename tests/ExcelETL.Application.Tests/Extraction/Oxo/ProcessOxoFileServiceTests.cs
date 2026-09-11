@@ -64,6 +64,26 @@ public class ProcessOxoFileServiceTests
     private static ImportResult AcceptedImportResult() => new(
         new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []);
 
+    private static ImportResult AcceptedImportResultWithElements() => new(
+        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+        [
+            new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "", ""),
+            new IsolementPivot("C7401-V2", "Vanne 2", "VANNE", "", ""),
+            new IsolementPivot("C7401-V3", "Vanne 3", "VANNE", "", "")
+        ],
+        [
+            new PointPivot("TRAVAUX COMPLET", "38-C7401"),
+            new PointPivot("TRAVAUX DETAIL", "38-C7401"),
+            new PointPivot("PROLOCK VANNES", "C7401-V1"),
+            new PointPivot("PROLOCK VANNES", "C7401-V2"),
+            new PointPivot("PROLOCK VANNES", "C7401-V3")
+        ],
+        [
+            new TacheMultiplePivot(1, "Consigner", "ADF", "", "TM_PROC_MAD", null, false, 5),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "", "TM_PROC_MAD", null, false, 6)
+        ],
+        []);
+
     private static ImportResult WarningImportResult() => new(
         new EquipementPivot("38-D8570", "Compresseur D8570", "MAD TRAVAUX"), [], [], [],
         [new ExtractionError("ISOLEMENT", "D8570-V4", ExtractionErrorCode.NoConditionalPointCreated, "VANNE inconnu")]);
@@ -342,6 +362,96 @@ public class ProcessOxoFileServiceTests
         _generatedFileArchiveStore.Verify(
             s => s.SaveAsync(
                 It.Is<GeneratedFileRecord>(r => r.Status == GeneratedFileArchiveStatus.NonBlockingWarning),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    // -- Lot 071: element counts on the archived record --
+
+    [Fact]
+    public async Task ProcessAsync_WhenFileIsAccepted_ArchivesElementCountsFromTheImportResult()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var importResult = AcceptedImportResultWithElements();
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
+        _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(
+                It.Is<GeneratedFileRecord>(r =>
+                    r.IsolementCount == 3 && r.PointCount == 5 && r.TacheMultipleCount == 2),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenFileIsRejected_ArchivesZeroElementCounts()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(RejectedImportResult());
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(
+                It.Is<GeneratedFileRecord>(r =>
+                    r.IsolementCount == 0 && r.PointCount == 0 && r.TacheMultipleCount == 0),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    // Anti-hardcoding guard-rail (same principle as EquipementTypeElementNom, Lot C1): a rejected
+    // ImportResult with non-empty Isolements/Points/TachesMultiples (impossible in practice per
+    // ProcedureExtractionService's own Rejected(...) helper, but constructible here via the mocked
+    // orchestrator) must still archive the real counts -- proves TryArchiveAsync genuinely reads
+    // .Count rather than special-casing GeneratedFileArchiveStatus.Rejected to 0.
+    [Fact]
+    public async Task ProcessAsync_WhenRejectedResultCarriesNonEmptyCollections_ArchivesTheirRealCounts()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var artificiallyRejectedResult = new ImportResult(
+            null,
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "", "")],
+            [new PointPivot("PROLOCK VANNES", "C7401-V1")],
+            [new TacheMultiplePivot(1, "Consigner", "ADF", "", "TM_PROC_MAD", null, false, 5)],
+            [new ExtractionError("PROCEDURE", "M2:O2", ExtractionErrorCode.RequiredFieldMissing, "vide")]);
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(artificiallyRejectedResult);
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(
+                It.Is<GeneratedFileRecord>(r =>
+                    r.IsolementCount == 1 && r.PointCount == 1 && r.TacheMultipleCount == 1),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

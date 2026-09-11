@@ -92,5 +92,8 @@ public class GeneratedFilesController(
         record.Status.ToString(),
         $"/api/generated-files/{record.Id}/source",
         record.TargetFileName is null ? null : $"/api/generated-files/{record.Id}/target",
-        record.Username);
+        record.Username,
+        record.IsolementCount,
+        record.PointCount,
+        record.TacheMultipleCount);
 }

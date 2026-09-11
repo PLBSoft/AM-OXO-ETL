@@ -51,6 +51,19 @@ public sealed class GeneratedFileRecord
     // one source of truth for the two places (Domain, EF configuration) that must agree on it.
     public const int MaxUsernameLength = 200;
 
+    // How many Isolements/Points/TachesMultiples the run this record archives actually produced --
+    // read straight off ImportResult's own collections at archiving time (ProcessOxoFileService).
+    // Always known, never null: ImportResult's constructor guards Isolements/Points/TachesMultiples
+    // as non-null IReadOnlyList<T>s, so .Count is valid in every status, including Rejected (the
+    // whole-file-rejection case produces empty, not null, lists -- see
+    // docs/tickets/tickets-tdd-lot-071-compteurs-elements-historique-fichiers-generes.md, 071.0).
+    // Optional, last in the constructor and defaulting to 0, for the same reason as Username: the
+    // sole production call site always supplies real values, but making them required would have
+    // forced a mechanical update of every one of this constructor's other (test-only) call sites.
+    public int IsolementCount { get; }
+    public int PointCount { get; }
+    public int TacheMultipleCount { get; }
+
     public GeneratedFileRecord(
         Guid id,
         DateTime generatedAtUtc,
@@ -62,7 +75,10 @@ public sealed class GeneratedFileRecord
         Guid importProfileId,
         Guid? exportProfileId,
         GeneratedFileArchiveStatus status,
-        string? username = null)
+        string? username = null,
+        int isolementCount = 0,
+        int pointCount = 0,
+        int tacheMultipleCount = 0)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
@@ -78,5 +94,8 @@ public sealed class GeneratedFileRecord
         ExportProfileId = exportProfileId;
         Status = status;
         Username = username is { Length: > MaxUsernameLength } ? username[..MaxUsernameLength] : username;
+        IsolementCount = isolementCount;
+        PointCount = pointCount;
+        TacheMultipleCount = tacheMultipleCount;
     }
 }

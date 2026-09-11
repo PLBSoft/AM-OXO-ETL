@@ -125,4 +125,29 @@ public class GeneratedFileRecordTests
 
         record.Username.Should().BeNull();
     }
+
+    [Fact]
+    public void Constructor_WithoutElementCounts_LeavesThemAtZero()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected);
+
+        record.IsolementCount.Should().Be(0);
+        record.PointCount.Should().Be(0);
+        record.TacheMultipleCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void Constructor_WithExplicitElementCounts_AssignsThemUnchanged()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, "38-C7401", "source.xlsx", "path",
+            "target.xlsx", "path2", Guid.NewGuid(), Guid.NewGuid(), GeneratedFileArchiveStatus.Success,
+            username: null, isolementCount: 23, pointCount: 47, tacheMultipleCount: 98);
+
+        record.IsolementCount.Should().Be(23);
+        record.PointCount.Should().Be(47);
+        record.TacheMultipleCount.Should().Be(98);
+    }
 }

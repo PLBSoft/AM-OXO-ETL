@@ -19,6 +19,16 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
         builder.Property(r => r.TargetFilePath).HasMaxLength(1024);
         builder.Property(r => r.Username).HasMaxLength(GeneratedFileRecord.MaxUsernameLength);
 
+        // Plain non-nullable int scalars -- EF Core maps them NOT NULL by convention with no extra
+        // configuration needed for storage, but constructor-binding materialization (Id/GeneratedAtUtc/
+        // etc. all use the same read-only-property + constructor-parameter shape on this type) requires
+        // every bound property to be explicitly discovered/mapped first; an unreferenced property is
+        // otherwise never added to the model, and EF then refuses to bind the matching constructor
+        // parameter to it ("Cannot bind ... Note that only mapped properties can be bound").
+        builder.Property(r => r.IsolementCount).IsRequired();
+        builder.Property(r => r.PointCount).IsRequired();
+        builder.Property(r => r.TacheMultipleCount).IsRequired();
+
         builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(32);
 
         // ImportProfileId/ExportProfileId are plain denormalized Guid values (no EF relationship,
