@@ -476,6 +476,14 @@ else
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueSummary", rule.ZeroEnergieExpectedValue]</span>
                         }
+                        @if (rule.DefaultCouleurEtiquette is not null)
+                        {
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteSummary", rule.DefaultCouleurEtiquette]</span>
+                        }
+                        @if (rule.CouleurEtiquetteCell is { } couleurEtiquetteCell)
+                        {
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_CouleurEtiquetteCellSummary", BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, couleurEtiquetteCell.ColumnRange, couleurEtiquetteCell.RowOffsetStart, couleurEtiquetteCell.RowOffsetEnd)]</span>
+                        }
                     </div>
                     <ul class="block-field-list block-field-grid">
                         @foreach (var field in rule.Locator.Fields)

@@ -550,6 +550,24 @@
   <data name="ImportProfileEditor_ZeroEnergieExpectedValueSummary" xml:space="preserve">
     <value>Zero energie expected value: {0}</value>
   </data>
+  <data name="ImportProfileEditor_DefaultCouleurEtiquettePlaceholder" xml:space="preserve">
+    <value>Default couleur etiquette (leave empty if read per block)</value>
+  </data>
+  <data name="ImportProfileEditor_DefaultCouleurEtiquetteLabel" xml:space="preserve">
+    <value>Default couleur etiquette (leave empty if read per block)</value>
+  </data>
+  <data name="ImportProfileEditor_DefaultCouleurEtiquetteSummary" xml:space="preserve">
+    <value>Default couleur etiquette: {0}</value>
+  </data>
+  <data name="ImportProfileEditor_CouleurEtiquetteCellPlaceholder" xml:space="preserve">
+    <value>Couleur etiquette cell, e.g. B19:E20 (leave empty if fixed for the whole sheet)</value>
+  </data>
+  <data name="ImportProfileEditor_CouleurEtiquetteCellLabel" xml:space="preserve">
+    <value>Couleur etiquette cell, e.g. B19:E20 (leave empty if fixed for the whole sheet)</value>
+  </data>
+  <data name="ImportProfileEditor_CouleurEtiquetteCellSummary" xml:space="preserve">
+    <value>Couleur etiquette cell: {0}</value>
+  </data>
   <data name="ImportProfileEditor_FieldsHeading" xml:space="preserve">
     <value>Block fields</value>
   </data>
