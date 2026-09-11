@@ -141,6 +141,15 @@ Import-Module WebAdministration
 Get-WebConfiguration -Filter "/system.applicationHost/applicationPools/add[@name='<NomDuPool>']/environmentVariables/*"
 ```
 
+**Raccourci pratique — directement depuis le nom du site** (évite d'aller chercher le nom du pool
+dans l'UI IIS ; résout le pool associé au site puis liste ses variables) :
+```powershell
+Import-Module WebAdministration
+$pool = (Get-Website "oxo-etl-api.alphamaintenance.fr").applicationPool
+Get-WebConfiguration -Filter "system.applicationHost/applicationPools/add[@name='$pool']/environmentVariables/*" -PSPath "MACHINE/WEBROOT/APPHOST" | Select-Object name, value
+```
+Remplacer le nom de site pour l'hôte BlazorAdmin (`oxo-etl-admin.alphamaintenance.fr`).
+
 **Modifier la valeur d'une variable existante** :
 ```powershell
 Set-WebConfigurationProperty `
