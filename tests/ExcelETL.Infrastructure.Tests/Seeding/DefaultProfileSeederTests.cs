@@ -147,7 +147,10 @@ public class DefaultProfileSeederTests
         platines.DefaultCouleurEtiquette.Should().BeNull();
         // Client feedback (2026-09-11): the whitelist replacing the earlier hardcoded "DATE"
         // blacklist -- so a garbage/template-artifact cell value warns instead of being imported.
-        platines.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
+        // "BLEUE" is the client's own stated set (ROUGE/BLANC/JAUNE/VERT) plus "BLEUE" -- omitted by
+        // the client but confirmed as a genuine, already-extracted color for this sheet by the real
+        // D8570 fixture (8 of 21 blocks) -- kept, client-confirmed, rather than dropped.
+        platines.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLANC", "JAUNE", "VERT", "BLEUE"]);
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
@@ -159,7 +162,10 @@ public class DefaultProfileSeederTests
         orificesCapacites.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
         orificesCapacites.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
         orificesCapacites.DefaultCouleurEtiquette.Should().BeNull();
-        orificesCapacites.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLEUE", "JAUNE"]);
+        // Client feedback (2026-09-11): its own stated set -- distinct from PLATINES', client-confirmed
+        // as a genuine business difference. No real fixture has ever shown an actual color here (every
+        // block's cell holds only the "DATE" template artifact), so there's nothing to reconcile.
+        orificesCapacites.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLANC"]);
 
         var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
         autresJointsTouches.Locator.Step.Should().Be(7);

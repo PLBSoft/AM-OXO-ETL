@@ -47,13 +47,23 @@ public class DefaultProfileSeeder(
     // this deployment cares about today -- an admin can add more via the profile editor.
     private const string ProgressApplicationName = "PROGRESS";
 
-    // Client feedback (2026-09-11): the closed set of couleur d'étiquette values ever observed across
-    // every real client fixture on disk -- shared by PLATINES/ORIFICES CAPACITES (both read via
-    // CouleurEtiquetteCell) so a garbage/template-artifact cell value (e.g. ORIFICES CAPACITES' own
-    // unfilled-cell "DATE" placeholder) is reported as a warning instead of silently imported. Not a
-    // hardcoded engine assumption -- lives on SheetExtractionRule.AllowedCouleursEtiquette, editable
-    // per profile, exactly so a future, genuinely new color doesn't need a code change.
-    private static readonly string[] AllowedCouleursEtiquette = ["ROUGE", "BLEUE", "JAUNE"];
+    // Client feedback (2026-09-11): so a garbage/template-artifact cell value (e.g. ORIFICES
+    // CAPACITES' own unfilled-cell "DATE" placeholder) is reported as a warning instead of silently
+    // imported. Not a hardcoded engine assumption -- lives on
+    // SheetExtractionRule.AllowedCouleursEtiquette, editable per profile, exactly so a future,
+    // genuinely new color doesn't need a code change. The two sheets' sets deliberately differ --
+    // confirmed by the client (2026-09-11) as a genuine business distinction, not an oversight.
+    //
+    // PLATINES: the client's own stated set (ROUGE/BLANC/JAUNE/VERT) plus "BLEUE", which the client's
+    // list omitted but which real fixture data (D8570, 8 of 21 blocks) already confirms is a genuine,
+    // already-extracted color for this sheet -- kept rather than dropped (client-confirmed, 2026-09-11)
+    // so those 8 already-verified blocks don't regress into warnings.
+    private static readonly string[] PlatinesAllowedCouleursEtiquette = ["ROUGE", "BLANC", "JAUNE", "VERT", "BLEUE"];
+
+    // ORIFICES CAPACITES: the client's own stated set -- no real fixture on disk has ever shown an
+    // actual color here (every block's cell holds only the "DATE" template artifact), so there's no
+    // fixture-confirmed value to reconcile against, unlike PLATINES.
+    private static readonly string[] OrificesCapacitesAllowedCouleursEtiquette = ["ROUGE", "BLANC"];
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
@@ -196,7 +206,7 @@ public class DefaultProfileSeeder(
                 // (ignored, it's just the paper form's field name), confirmed against all 4 real
                 // client fixtures on disk (ROUGE/BLEUE/JAUNE observed, free text, no closed value set).
                 couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
-                allowedCouleursEtiquette: AllowedCouleursEtiquette),
+                allowedCouleursEtiquette: PlatinesAllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
@@ -220,7 +230,7 @@ public class DefaultProfileSeeder(
                 // warning instead of a silently-imported value -- see
                 // OrificesCapacitesExtractionServiceIntegrationTests.
                 couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
-                allowedCouleursEtiquette: AllowedCouleursEtiquette),
+                allowedCouleursEtiquette: OrificesCapacitesAllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
                 new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
