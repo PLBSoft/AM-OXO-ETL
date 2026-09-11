@@ -299,6 +299,25 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
     }
 
+    // Client feedback (2026-09-11), a real ORIFICES CAPACITES screenshot: the cell's own form
+    // template leaves the literal text "DATE" (never a real color) until someone types a color over
+    // it -- CouleurEtiquetteResolver normalizes it to "" rather than importing it as-is.
+    [Theory]
+    [InlineData("DATE")]
+    [InlineData("date")]
+    [InlineData(" Date ")]
+    public void Extract_WithCouleurEtiquetteCellHoldingTheUnfilledDateTemplateArtifact_NormalizesToEmptyString(string cellValue)
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = cellValue;
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell);
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("");
+    }
+
     [Fact]
     public void Extract_WithCouleurEtiquetteCellConfiguredAndBlankValue_SetsCouleurEtiquetteToEmptyString()
     {

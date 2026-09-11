@@ -80,19 +80,17 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     }
 
     // Client feedback (2026-09): ORIFICES CAPACITES shares PLATINES' exact "couleur d'étiquette" cell
-    // (H:N, block offset +1) -- client-confirmed to implement as specified, even though direct
-    // inspection of every real fixture on disk (C7401/D8570/G6306B/G4010A/C8503) shows that cell
-    // always holds the literal, static text "DATE" (the repeated sub-header of a per-block "ETAT et
-    // TEST / DATE / NOM / SIGNATURE" mini-table, not real user-entered color data) -- no
-    // "ÉTIQUETTE"/"COULEUR" label exists anywhere on this sheet in any fixture on disk today. The
-    // client's own source template for this sheet hasn't been updated to carry a real color yet; this
-    // wiring is accepted as forward-looking (a future client file may populate it for real), same
-    // "accepted as-is, no special handling" precedent as PLATINES' own DEBUT/FIN block-split anomaly.
-    // The mechanism itself (read whatever the configured cell holds) is already fully proven correct
-    // against real PLATINES data in PlatinesExtractionServiceIntegrationTests -- this test only
-    // documents the current, known-stale literal content for ORIFICES CAPACITES specifically.
+    // (H:N, block offset +1) -- initially found to hold the literal, static text "DATE" in every real
+    // fixture on disk (D8570 included, this test's own fixture) with no fixture showing a real color
+    // there, raising doubt about whether H:N offset+1 was genuinely the right cell. A follow-up client
+    // screenshot of the real ORIFICES CAPACITES sheet settled it: it *is* the right cell (2 filled-in
+    // blocks show "ROUGE" right next to an unfilled 3rd one) -- "DATE" is simply the form template's
+    // own default/unfilled cell content, not a real color, left over until someone types a color over
+    // it. CouleurEtiquetteResolver now normalizes it to "" (this test's own D8570 fixture happens to
+    // have every one of its 5 blocks left unfilled, so the resolver output here is "" for all of
+    // them) -- see PlatinesExtractionServiceIntegrationTests for real, non-"DATE" color coverage.
     [Fact]
-    public void Extract_D8570Fixture_WithCouleurEtiquetteCell_ReadsTheConfiguredCell_CurrentlyTheStaticDateHeader()
+    public void Extract_D8570Fixture_WithCouleurEtiquetteCell_NormalizesTheUnfilledDateTemplateArtifactToEmptyString()
     {
         var rule = CreateSheetRule(couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
         using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
@@ -101,7 +99,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         var result = _sut.Extract(workbookReader, rule);
 
         result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "DATE");
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

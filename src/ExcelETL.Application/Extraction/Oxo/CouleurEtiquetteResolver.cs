@@ -10,8 +10,18 @@ namespace ExcelETL.Application.Extraction.Oxo;
 //   read at all (AUTRES JOINTS TOUCHES today).
 // If a profile somehow configures both, the cell wins -- a real per-block reading is always more
 // specific/trustworthy than a blanket default. Neither configured means "" (ISOLEMENT/DIVERS today).
+//
+// Client feedback (2026-09-11), a real ORIFICES CAPACITES screenshot: H18:N18 (and every other
+// block's own offset) genuinely *is* the couleur d'étiquette input cell (confirmed by 2 filled-in
+// "ROUGE" blocks sitting right next to an unfilled 3rd one) -- but the form's own template leaves
+// the literal text "DATE" in that cell until a color is actually typed over it (an Excel default
+// cell value, not a real color -- ROUGE/BLEUE/JAUNE are the only ones ever observed for real).
+// Treated as equivalent to "not filled in" here, trimmed + case-insensitive (spec §7 convention),
+// so an un-filled block never silently imports "DATE" as its couleur d'étiquette.
 public static class CouleurEtiquetteResolver
 {
+    private const string UnfilledCellTemplateArtifact = "DATE";
+
     public static string Resolve(
         IWorkbookReader workbookReader, string sheet, SheetExtractionRule sheetRule, int blockStartRow)
     {
@@ -21,7 +31,8 @@ public static class CouleurEtiquetteResolver
         if (sheetRule.CouleurEtiquetteCell is not null)
         {
             var range = BlockFieldRangeCalculator.BuildRange(sheetRule.CouleurEtiquetteCell, blockStartRow);
-            return workbookReader.ReadCellValue(sheet, range) ?? "";
+            var value = workbookReader.ReadCellValue(sheet, range) ?? "";
+            return value.Trim().Equals(UnfilledCellTemplateArtifact, StringComparison.OrdinalIgnoreCase) ? "" : value;
         }
 
         return sheetRule.DefaultCouleurEtiquette ?? "";
