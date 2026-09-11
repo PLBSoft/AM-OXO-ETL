@@ -49,12 +49,20 @@ public sealed class SheetExtractionRule
     // sheet (every sheet other than ISOLEMENT, and any ISOLEMENT profile predating this lot).
     public string? ZeroEnergieExpectedValue { get; }
 
-    // Lot 068: where to read PLATINES' "couleur d'étiquette" cell for each block (H:N, offset +1) --
-    // a field dedicated to this one sheet's own optional data, not a generic reusable mechanism (no
-    // other sheet has this notion, confirmed against all 4 real client fixtures). null = not
-    // configured for this sheet (every sheet other than PLATINES today, including ORIFICES CAPACITES
-    // which shares the same extraction service but has no such cell in any real fixture).
+    // Lot 068: where to read a sheet's "couleur d'étiquette" cell for each block (PLATINES: H:N,
+    // offset +1; ORIFICES CAPACITES shares the exact same cell, confirmed against the client's own
+    // instructions -- both sheets share FirstBlockStartRow=17, so H18:N18 for the first block).
+    // null = not configured for this sheet (ISOLEMENT/DIVERS today, and any profile predating this
+    // feature).
     public BlockFieldDefinition? CouleurEtiquetteCell { get; }
+
+    // Client feedback (2026-09): some sheets never carry a per-block cell at all -- every isolement
+    // on that sheet gets the exact same fixed value (e.g. AUTRES JOINTS TOUCHES is always "BLEUE").
+    // Mutually exclusive with CouleurEtiquetteCell in practice, but not enforced as an invariant here
+    // -- if a profile somehow configures both, the cell wins (see CouleurEtiquetteResolver), since a
+    // real per-block reading is always more specific/trustworthy than a blanket default. null = no
+    // fixed value configured for this sheet.
+    public string? DefaultCouleurEtiquette { get; }
 
     public SheetExtractionRule(
         string sheetName,
@@ -65,7 +73,8 @@ public sealed class SheetExtractionRule
         IReadOnlyList<HeaderCompositeRule> headerComposites,
         string? zeroEnergieExpectedValue = null,
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
-        BlockFieldDefinition? couleurEtiquetteCell = null)
+        BlockFieldDefinition? couleurEtiquetteCell = null,
+        string? defaultCouleurEtiquette = null)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -84,6 +93,13 @@ public sealed class SheetExtractionRule
             throw new DomainValidationException(
                 "Zero energie expected value must not be blank when provided.", nameof(zeroEnergieExpectedValue),
                 DomainErrorCode.SheetExtractionRule_BlankZeroEnergieExpectedValue);
+        }
+
+        if (defaultCouleurEtiquette is not null && string.IsNullOrWhiteSpace(defaultCouleurEtiquette))
+        {
+            throw new DomainValidationException(
+                "Default couleur etiquette must not be blank when provided.", nameof(defaultCouleurEtiquette),
+                DomainErrorCode.SheetExtractionRule_BlankDefaultCouleurEtiquette);
         }
 
         if (sheetName != locator.Sheet)
@@ -119,6 +135,7 @@ public sealed class SheetExtractionRule
         _fieldPresencePointRules = fieldPresencePointRules is null ? [] : [.. fieldPresencePointRules];
         ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
         CouleurEtiquetteCell = couleurEtiquetteCell;
+        DefaultCouleurEtiquette = defaultCouleurEtiquette;
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

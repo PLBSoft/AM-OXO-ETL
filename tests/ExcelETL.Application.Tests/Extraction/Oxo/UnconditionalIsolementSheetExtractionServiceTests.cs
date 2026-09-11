@@ -34,7 +34,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
 
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
-        BlockFieldDefinition? couleurEtiquetteCell = null) => new(
+        BlockFieldDefinition? couleurEtiquetteCell = null,
+        string? defaultCouleurEtiquette = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -45,7 +46,8 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         [],
         UnconditionalColonneNames, [], [],
         fieldPresencePointRules: fieldPresencePointRules,
-        couleurEtiquetteCell: couleurEtiquetteCell);
+        couleurEtiquetteCell: couleurEtiquetteCell,
+        defaultCouleurEtiquette: defaultCouleurEtiquette);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -341,5 +343,46 @@ public class UnconditionalIsolementSheetExtractionServiceTests
 
         firstResult.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
         secondResult.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("BLEUE");
+    }
+
+    // Client feedback (2026-09): a sheet with no per-block cell can instead have every isolement
+    // share one fixed value -- ORIFICES CAPACITES shares PLATINES' cell today, so this generic-service
+    // test file exercises DefaultCouleurEtiquette on its own, unrelated sheet-agnostic scenarios.
+    [Fact]
+    public void Extract_WithDefaultCouleurEtiquetteAndNoCell_SetsItOnEveryIsolement_WithoutReadingTheWorkbook()
+    {
+        var cells = CreateOneBlockCells();
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(defaultCouleurEtiquette: "BLEUE");
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("BLEUE");
+        workbookReader.Verify(r => r.ReadCellValue(Sheet, "H18:N18"), Times.Never);
+    }
+
+    [Fact]
+    public void Extract_WithBothCouleurEtiquetteCellAndDefaultConfigured_TheCellWins()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H18:N18"] = "ROUGE";
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule(couleurEtiquetteCell: CouleurEtiquetteCell, defaultCouleurEtiquette: "BLEUE");
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("ROUGE");
+    }
+
+    [Fact]
+    public void Extract_WithNeitherCouleurEtiquetteCellNorDefaultConfigured_SetsCouleurEtiquetteToEmptyString()
+    {
+        var cells = CreateOneBlockCells();
+        var workbookReader = CreateWorkbookReader(cells);
+        var sheetRule = CreateSheetRule();
+
+        var result = _sut.Extract(workbookReader.Object, sheetRule);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().BeEmpty();
     }
 }

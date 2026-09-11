@@ -51,10 +51,11 @@ public sealed class AutresJointsTouchesExtractionService(
         {
             var repere = ComposeRepere(equipementRepere, block.Fields[IsolementFieldNames.Identification]);
             var typeElement = block.Fields[IsolementFieldNames.TypeElement];
+            var couleurEtiquette = CouleurEtiquetteResolver.Resolve(workbookReader, sheet, sheetRule, block.StartRow);
 
             isolements.Add(new IsolementPivot(
                 repere, block.Fields[IsolementFieldNames.Designation], typeElement, positionALaPose: "", localisation: "",
-                sourceSheetName: sheetRule.SheetName));
+                couleurEtiquette: couleurEtiquette, sourceSheetName: sheetRule.SheetName));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {

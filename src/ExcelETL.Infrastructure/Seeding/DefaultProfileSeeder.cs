@@ -202,7 +202,14 @@ public class DefaultProfileSeeder(
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS"
-                ], [], []),
+                ], [], [],
+                // Client feedback (2026-09): shares PLATINES' exact "couleur d'étiquette" cell (same
+                // FirstBlockStartRow=17, so H18:N18 for the first block) -- client-confirmed as
+                // specified, even though every real fixture on disk today shows that cell holds only
+                // the static "DATE" sub-header text, not a real color (client's own source template
+                // for this sheet hasn't been updated yet) -- see
+                // OrificesCapacitesExtractionServiceIntegrationTests for the investigation.
+                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
                 new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
@@ -217,7 +224,10 @@ public class DefaultProfileSeeder(
                 ],
                 ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
-                []),
+                [],
+                // Client feedback (2026-09): this sheet has no per-block "couleur d'étiquette" cell --
+                // every isolement it produces is always "BLEUE".
+                defaultCouleurEtiquette: "BLEUE"),
             new SheetExtractionRule(
                 "DIVERS",
                 new RepeatingBlockLocator("DIVERS", 9, 3, IsolementFieldNames.Identification,

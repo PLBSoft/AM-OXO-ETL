@@ -30,7 +30,7 @@ public class AutresJointsTouchesExtractionServiceTests
     // Lot 047: the "repereEcho" header rule (N6) -- transcribed from the coordinate previously
     // hardcoded in AutresJointsTouchesExtractionService -- so this test's Mock<IWorkbookReader> "N6"
     // cell key stays exactly as before the lot.
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(string? defaultCouleurEtiquette = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
         [
@@ -41,7 +41,8 @@ public class AutresJointsTouchesExtractionServiceTests
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
         UnconditionalColonneNames,
         [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
-        []);
+        [],
+        defaultCouleurEtiquette: defaultCouleurEtiquette);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -195,5 +196,31 @@ public class AutresJointsTouchesExtractionServiceTests
         result.Isolements.Should().BeEmpty();
         result.Points.Should().BeEmpty();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
+    }
+
+    // Client feedback (2026-09): this sheet has no per-block "couleur d'étiquette" cell -- every
+    // isolement it produces shares whatever fixed value the profile configures (real client value:
+    // "BLEUE"), via the shared CouleurEtiquetteResolver -- see also
+    // UnconditionalIsolementSheetExtractionServiceTests for the cell/default-priority coverage.
+    [Fact]
+    public void Extract_WithDefaultCouleurEtiquetteConfigured_SetsItOnEveryIsolement()
+    {
+        var cells = BaseBlockCells("TUYAUTERIE");
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(defaultCouleurEtiquette: "BLEUE"), ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().Be("BLEUE");
+    }
+
+    [Fact]
+    public void Extract_WithNoDefaultCouleurEtiquetteConfigured_SetsCouleurEtiquetteToEmptyString()
+    {
+        var cells = BaseBlockCells("TUYAUTERIE");
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix);
+
+        result.Isolements.Should().ContainSingle().Which.CouleurEtiquette.Should().BeEmpty();
     }
 }

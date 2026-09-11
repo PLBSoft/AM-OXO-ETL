@@ -32,7 +32,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         new RepeatingBlockReader(), new TextTransformEvaluator(),
         NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
 
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(BlockFieldDefinition? couleurEtiquetteCell = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
         [
@@ -41,7 +41,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
         ]),
         [],
-        UnconditionalColonneNames, [], []);
+        UnconditionalColonneNames, [], [],
+        couleurEtiquetteCell: couleurEtiquetteCell);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()
@@ -76,6 +77,31 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         result.Isolements.Should().HaveCount(2);
         result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "TROU D'HOMME");
         result.Points.Should().HaveCount(2 * 4);
+    }
+
+    // Client feedback (2026-09): ORIFICES CAPACITES shares PLATINES' exact "couleur d'étiquette" cell
+    // (H:N, block offset +1) -- client-confirmed to implement as specified, even though direct
+    // inspection of every real fixture on disk (C7401/D8570/G6306B/G4010A/C8503) shows that cell
+    // always holds the literal, static text "DATE" (the repeated sub-header of a per-block "ETAT et
+    // TEST / DATE / NOM / SIGNATURE" mini-table, not real user-entered color data) -- no
+    // "ÉTIQUETTE"/"COULEUR" label exists anywhere on this sheet in any fixture on disk today. The
+    // client's own source template for this sheet hasn't been updated to carry a real color yet; this
+    // wiring is accepted as forward-looking (a future client file may populate it for real), same
+    // "accepted as-is, no special handling" precedent as PLATINES' own DEBUT/FIN block-split anomaly.
+    // The mechanism itself (read whatever the configured cell holds) is already fully proven correct
+    // against real PLATINES data in PlatinesExtractionServiceIntegrationTests -- this test only
+    // documents the current, known-stale literal content for ORIFICES CAPACITES specifically.
+    [Fact]
+    public void Extract_D8570Fixture_WithCouleurEtiquetteCell_ReadsTheConfiguredCell_CurrentlyTheStaticDateHeader()
+    {
+        var rule = CreateSheetRule(couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+        using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+
+        var result = _sut.Extract(workbookReader, rule);
+
+        result.Isolements.Should().HaveCount(5);
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "DATE");
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

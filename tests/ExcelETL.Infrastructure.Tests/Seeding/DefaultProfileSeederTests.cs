@@ -144,17 +144,27 @@ public class DefaultProfileSeederTests
         platines.CouleurEtiquetteCell!.ColumnRange.Should().Be("H:N");
         platines.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
         platines.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
+        platines.DefaultCouleurEtiquette.Should().BeNull();
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
         orificesCapacites.UnconditionalColonneNames.Should().HaveCount(4);
-        orificesCapacites.CouleurEtiquetteCell.Should().BeNull();
+        // Client feedback (2026-09): shares PLATINES' exact "couleur d'étiquette" cell (both sheets
+        // share FirstBlockStartRow=17).
+        orificesCapacites.CouleurEtiquetteCell.Should().NotBeNull();
+        orificesCapacites.CouleurEtiquetteCell!.ColumnRange.Should().Be("H:N");
+        orificesCapacites.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
+        orificesCapacites.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
+        orificesCapacites.DefaultCouleurEtiquette.Should().BeNull();
 
         var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
         autresJointsTouches.Locator.Step.Should().Be(7);
         autresJointsTouches.PointRules.Should().ContainSingle();
         autresJointsTouches.PointRules.Single().ColonneName.Should().Be("POSE ÉTIQUETTES");
         autresJointsTouches.PointRules.Single().ComparisonValue.Should().Be("TUBING");
+        // Client feedback (2026-09): no per-block cell -- every isolement it produces is "BLEUE".
+        autresJointsTouches.CouleurEtiquetteCell.Should().BeNull();
+        autresJointsTouches.DefaultCouleurEtiquette.Should().Be("BLEUE");
 
         var divers = profile.SheetRules.Single(r => r.SheetName == "DIVERS");
         divers.Locator.FirstBlockStartRow.Should().Be(9);

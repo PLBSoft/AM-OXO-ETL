@@ -111,6 +111,38 @@ public class SheetExtractionRuleTests
         rule.CouleurEtiquetteCell.Should().Be(couleurEtiquetteCell);
     }
 
+    [Fact]
+    public void Constructor_WithNoDefaultCouleurEtiquetteArgument_DefaultsToNull()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
+
+        rule.DefaultCouleurEtiquette.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithDefaultCouleurEtiquette_AssignsProperty()
+    {
+        var rule = new SheetExtractionRule(
+            "AUTRES JOINTS TOUCHES", Locator("AUTRES JOINTS TOUCHES"), [], [], [], [],
+            defaultCouleurEtiquette: "BLEUE");
+
+        rule.DefaultCouleurEtiquette.Should().Be("BLEUE");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public void Constructor_WithBlankDefaultCouleurEtiquette_ThrowsDomainValidationException(string blankValue)
+    {
+        var act = () => new SheetExtractionRule(
+            "AUTRES JOINTS TOUCHES", Locator("AUTRES JOINTS TOUCHES"), [], [], [], [],
+            defaultCouleurEtiquette: blankValue);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("defaultCouleurEtiquette")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_BlankDefaultCouleurEtiquette);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]

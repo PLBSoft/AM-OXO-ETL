@@ -361,6 +361,36 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
+    public async Task SaveAsync_WithDefaultCouleurEtiquette_RoundTripsIdentically()
+    {
+        // Client feedback (2026-09): a plain nullable scalar, same treatment as
+        // ZeroEnergieExpectedValue -- not an owned-type reference like CouleurEtiquetteCell.
+        var locator = new RepeatingBlockLocator(
+            "AUTRES JOINTS TOUCHES", 17, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+        var sheetRule = new SheetExtractionRule(
+            "AUTRES JOINTS TOUCHES", locator, [], ["POSE ÉTIQUETTES"], [], [], defaultCouleurEtiquette: "BLEUE");
+        var profile = new ImportProfile("Profil couleur etiquette par defaut", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().DefaultCouleurEtiquette.Should().Be("BLEUE");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNullDefaultCouleurEtiquette_PersistsAndReloadsAsNull()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.SheetRules.Single().DefaultCouleurEtiquette.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetByIdAsync_WithUnknownId_ReturnsNull()
     {
         var store = CreateStore();

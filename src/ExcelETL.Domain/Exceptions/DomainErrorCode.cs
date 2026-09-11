@@ -53,6 +53,7 @@ public enum DomainErrorCode
     SheetExtractionRule_SheetNameLocatorMismatch,
     SheetExtractionRule_HeaderCompositeReferencesUnknownField,
     SheetExtractionRule_BlankZeroEnergieExpectedValue,
+    SheetExtractionRule_BlankDefaultCouleurEtiquette,
     HeaderFieldRule_EmptyName,
     HeaderFieldRule_BlankDateFormat,
     HeaderCompositeRule_EmptyName,

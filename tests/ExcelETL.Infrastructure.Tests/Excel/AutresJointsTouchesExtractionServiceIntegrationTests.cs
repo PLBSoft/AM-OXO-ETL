@@ -31,7 +31,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 
     // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
     // hardcoded in AutresJointsTouchesExtractionService.
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(string? defaultCouleurEtiquette = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
         [
@@ -42,7 +42,8 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
         UnconditionalColonneNames,
         [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
-        []);
+        [],
+        defaultCouleurEtiquette: defaultCouleurEtiquette);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()
@@ -87,6 +88,21 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         // entry; the 2 TUYAUTERIE ones produce none.
         result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
             e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "TUBING");
+    }
+
+    // Client feedback (2026-09): this sheet has no per-block "couleur d'étiquette" cell -- every
+    // isolement it produces shares the one fixed value the real client uses ("BLEUE").
+    [Fact]
+    public void Extract_D8570Fixture_WithDefaultCouleurEtiquetteConfigured_SetsItOnEveryIsolement()
+    {
+        var rule = CreateSheetRule(defaultCouleurEtiquette: "BLEUE");
+        using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+
+        var result = _sut.Extract(workbookReader, rule, ReperePrefix);
+
+        result.Isolements.Should().HaveCount(13);
+        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
     }
 
     private IsolementSheetExtractionResult ExtractFromFixture(string fileName)

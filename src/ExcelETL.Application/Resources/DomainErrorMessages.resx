@@ -127,6 +127,9 @@
   <data name="SheetExtractionRule_BlankZeroEnergieExpectedValue" xml:space="preserve">
     <value>Zero energie expected value must not be blank when provided.</value>
   </data>
+  <data name="SheetExtractionRule_BlankDefaultCouleurEtiquette" xml:space="preserve">
+    <value>Default couleur etiquette must not be blank when provided.</value>
+  </data>
   <data name="HeaderFieldRule_EmptyName" xml:space="preserve">
     <value>Name must not be empty.</value>
   </data>

@@ -84,6 +84,11 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
             rules.Property(r => r.ZeroEnergieExpectedValue)
                 .HasMaxLength(200);
 
+            // Client feedback (2026-09): optional -- null for every sheet with no fixed "couleur
+            // d'étiquette" (ISOLEMENT/DIVERS today, and any rule predating this feature).
+            rules.Property(r => r.DefaultCouleurEtiquette)
+                .HasMaxLength(200);
+
             // UnconditionalColonneNames is a plain list of strings, not a related entity -- mapped as
             // an EF Core primitive collection (JSON column on SqlServer) rather than a second owned
             // entity type, since there is nothing beyond the string itself to model.
