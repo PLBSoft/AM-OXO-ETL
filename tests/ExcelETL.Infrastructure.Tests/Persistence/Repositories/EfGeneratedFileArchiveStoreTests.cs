@@ -24,7 +24,8 @@ public class EfGeneratedFileArchiveStoreTests
         string? username = null,
         int isolementCount = 0,
         int pointCount = 0,
-        int tacheMultipleCount = 0) => new(
+        int tacheMultipleCount = 0,
+        IReadOnlyList<GeneratedFileWarning>? warnings = null) => new(
         Guid.NewGuid(),
         generatedAtUtc,
         equipementRepere,
@@ -38,7 +39,8 @@ public class EfGeneratedFileArchiveStoreTests
         username,
         isolementCount,
         pointCount,
-        tacheMultipleCount);
+        tacheMultipleCount,
+        warnings);
 
     [Fact]
     public async Task SaveAsync_ThenGetByIdAsync_RoundTripsAllPropertiesIdentically()
@@ -90,6 +92,57 @@ public class EfGeneratedFileArchiveStoreTests
         reloaded!.IsolementCount.Should().Be(0);
         reloaded.PointCount.Should().Be(0);
         reloaded.TacheMultipleCount.Should().Be(0);
+    }
+
+    // -- Lot 072: non-blocking warnings persisted alongside the archive record --
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithWarnings_RoundTripsThemIdentically()
+    {
+        var warnings = new List<GeneratedFileWarning>
+        {
+            new("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu", "VANNE"),
+            new("DIVERS", "loc1", "NoConditionalPointCreated", "autre valeur")
+        };
+        var record = CreateRecord(
+            DateTime.UtcNow, status: GeneratedFileArchiveStatus.NonBlockingWarning, warnings: warnings);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Warnings.Should().BeEquivalentTo(warnings);
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithoutWarnings_RoundTripsAsEmptyList()
+    {
+        var record = CreateRecord(DateTime.UtcNow);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Warnings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenSearchAsync_WithMultipleRecordsEachCarryingWarnings_DoesNotMixThem()
+    {
+        var recordA = CreateRecord(
+            new DateTime(2026, 7, 25, 10, 0, 0, DateTimeKind.Utc), equipementRepere: "C7401",
+            warnings: [new GeneratedFileWarning("ISOLEMENT", "A", "NoConditionalPointCreated", "msg A")]);
+        var recordB = CreateRecord(
+            new DateTime(2026, 7, 25, 11, 0, 0, DateTimeKind.Utc), equipementRepere: "D8570",
+            warnings: [new GeneratedFileWarning("DIVERS", "B", "NoConditionalPointCreated", "msg B")]);
+        var store = CreateStore();
+
+        await store.SaveAsync(recordA);
+        await store.SaveAsync(recordB);
+        var results = await store.SearchAsync(null);
+
+        results.Single(r => r.Id == recordA.Id).Warnings.Should().ContainSingle(w => w.Message == "msg A");
+        results.Single(r => r.Id == recordB.Id).Warnings.Should().ContainSingle(w => w.Message == "msg B");
     }
 
     [Fact]

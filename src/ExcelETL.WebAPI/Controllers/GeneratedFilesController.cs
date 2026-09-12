@@ -95,5 +95,9 @@ public class GeneratedFilesController(
         record.Username,
         record.IsolementCount,
         record.PointCount,
-        record.TacheMultipleCount);
+        record.TacheMultipleCount,
+        record.Warnings.Count,
+        record.Warnings
+            .Select(w => new GeneratedFileWarningResponse(w.Sheet, w.BlockIdentifier, w.Code, w.Message, w.ExtractedValue))
+            .ToList());
 }

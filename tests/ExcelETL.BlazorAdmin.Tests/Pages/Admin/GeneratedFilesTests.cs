@@ -63,7 +63,8 @@ public class GeneratedFilesTests : BunitContext
         byte[]? sourceBytes = null,
         byte[]? targetBytes = null,
         string? username = null,
-        DateTime? generatedAtUtc = null)
+        DateTime? generatedAtUtc = null,
+        IReadOnlyList<GeneratedFileWarning>? warnings = null)
     {
         Directory.CreateDirectory(_archiveRoot);
         var sourceRelativePath = $"{Guid.NewGuid()}_source.xlsx";
@@ -89,7 +90,8 @@ public class GeneratedFilesTests : BunitContext
             Guid.NewGuid(),
             Guid.NewGuid(),
             status,
-            username);
+            username,
+            warnings: warnings);
     }
 
     [Fact]
@@ -138,6 +140,72 @@ public class GeneratedFilesTests : BunitContext
         badges.Should().Contain(b => b.ClassList.Contains("bg-success"));
         badges.Should().Contain(b => b.ClassList.Contains("bg-warning"));
         badges.Should().Contain(b => b.ClassList.Contains("bg-danger"));
+    });
+
+    // -- Lot 072: non-blocking warnings column --
+
+    [Fact]
+    public void GeneratedFiles_RecordWithNoWarnings_ShowsNoneBadge_NoDisclosure() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles("C7401", GeneratedFileArchiveStatus.Success, withTarget: true);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        cut.Markup.Should().Contain("None");
+        cut.FindAll($"#warnings-details-{record.Id}").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void GeneratedFiles_RecordWithWarnings_ShowsCountBadge_DetailsCollapsedByDefault() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "D8570", GeneratedFileArchiveStatus.NonBlockingWarning, withTarget: true,
+            warnings: [new GeneratedFileWarning("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu")]);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        var badge = cut.Find($"#warnings-details-{record.Id} summary .badge");
+        badge.TextContent.Should().Be("1");
+        // Genuinely absent from the DOM while collapsed, not just visually hidden -- same rule as
+        // every other <details> disclosure in this project (R3, Lot 033).
+        cut.FindAll($"#warnings-list-{record.Id}").Should().BeEmpty();
+    });
+
+    [Fact]
+    public void GeneratedFiles_RecordWithWarnings_ClickingToggle_RevealsWarningDetail() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "D8570", GeneratedFileArchiveStatus.NonBlockingWarning, withTarget: true,
+            warnings: [new GeneratedFileWarning("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu")]);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+        var cut = Render<GeneratedFiles>();
+
+        cut.Find($"#warnings-toggle-{record.Id}").Click();
+
+        var list = cut.Find($"#warnings-list-{record.Id}");
+        list.TextContent.Should().Contain("ISOLEMENT").And.Contain("VANNE inconnu");
+    });
+
+    [Fact]
+    public void GeneratedFiles_MobileCard_RecordWithWarnings_ShowsCountBadgeAndDetailBehindToggle() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "D8570", GeneratedFileArchiveStatus.NonBlockingWarning, withTarget: true,
+            warnings: [new GeneratedFileWarning("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu")]);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+        var cut = Render<GeneratedFiles>();
+
+        cut.FindAll($"#warnings-list-card-{record.Id}").Should().BeEmpty();
+
+        cut.Find($"#warnings-toggle-card-{record.Id}").Click();
+
+        cut.Find($"#warnings-list-card-{record.Id}").TextContent.Should().Contain("VANNE inconnu");
     });
 
     [Fact]

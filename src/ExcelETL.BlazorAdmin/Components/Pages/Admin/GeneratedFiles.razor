@@ -60,6 +60,30 @@ else
             <TemplateColumn Title="@Loc["GeneratedFiles_StatusColumn"]" Sortable="true" SortBy="@StatusSort">
                 <span class="badge @GetStatusBadgeClass(context.Status)">@GetStatusLabel(context.Status)</span>
             </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_WarningsColumn"]" Sortable="true" SortBy="@WarningCountSort">
+                @if (context.Warnings.Count == 0)
+                {
+                    <span class="badge bg-secondary">@Loc["GeneratedFiles_NoWarnings"]</span>
+                }
+                else
+                {
+                    <details id="@($"warnings-details-{context.Id}")" open="@_expandedWarningIds.Contains(context.Id)">
+                        <summary id="@($"warnings-toggle-{context.Id}")"
+                                 @onclick="() => ToggleWarnings(context.Id)" @onclick:preventDefault="true">
+                            <span class="badge bg-warning text-dark">@context.Warnings.Count</span>
+                        </summary>
+                        @if (_expandedWarningIds.Contains(context.Id))
+                        {
+                            <ul class="mb-0 ps-3" id="@($"warnings-list-{context.Id}")">
+                                @foreach (var warning in context.Warnings)
+                                {
+                                    <li>@string.Format(Loc["GeneratedFiles_WarningsSummary"].Value, warning.Sheet, warning.Message)</li>
+                                }
+                            </ul>
+                        }
+                    </details>
+                }
+            </TemplateColumn>
             <TemplateColumn Title="@Loc["GeneratedFiles_SourceFileColumn"]">
                 @if (_sourceDownloadHrefs.TryGetValue(context.Id, out var sourceHref))
                 {
@@ -113,6 +137,31 @@ else
                     <p class="card-text mb-1" id="generated-file-date-card-@record.Id">@LocalTimestampOrFallback(record)</p>
                     <p class="card-text mb-1">@Loc["GeneratedFiles_UsernameColumn"]: @(record.Username ?? "—")</p>
                     <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
+                    <p class="card-text mb-2">
+                        @Loc["GeneratedFiles_WarningsColumn"]:
+                        @if (record.Warnings.Count == 0)
+                        {
+                            <span class="badge bg-secondary">@Loc["GeneratedFiles_NoWarnings"]</span>
+                        }
+                        else
+                        {
+                            <details id="@($"warnings-details-card-{record.Id}")" open="@_expandedWarningIds.Contains(record.Id)">
+                                <summary id="@($"warnings-toggle-card-{record.Id}")"
+                                         @onclick="() => ToggleWarnings(record.Id)" @onclick:preventDefault="true">
+                                    <span class="badge bg-warning text-dark">@record.Warnings.Count</span>
+                                </summary>
+                                @if (_expandedWarningIds.Contains(record.Id))
+                                {
+                                    <ul class="mb-0 ps-3" id="@($"warnings-list-card-{record.Id}")">
+                                        @foreach (var warning in record.Warnings)
+                                        {
+                                            <li>@string.Format(Loc["GeneratedFiles_WarningsSummary"].Value, warning.Sheet, warning.Message)</li>
+                                        }
+                                    </ul>
+                                }
+                            </details>
+                        }
+                    </p>
                     <div class="d-flex gap-2">
                         @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
                         {
@@ -175,8 +224,24 @@ else
         GridSort<GeneratedFileRecord>.ByAscending(r => r.Username);
     private static readonly GridSort<GeneratedFileRecord> StatusSort =
         GridSort<GeneratedFileRecord>.ByAscending(r => r.Status);
+    private static readonly GridSort<GeneratedFileRecord> WarningCountSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.Warnings.Count);
 
     private PaginationState _pagination = new() { ItemsPerPage = 25 };
+
+    // Lot 072: same "content genuinely absent from the DOM while collapsed" idiom as every other
+    // <details> disclosure in this project (R3, Lot 033) -- driven by this component-state set,
+    // not <details>'s own native open/closed CSS, which would leave the <li> elements in the DOM
+    // either way.
+    private readonly HashSet<Guid> _expandedWarningIds = [];
+
+    private void ToggleWarnings(Guid id)
+    {
+        if (!_expandedWarningIds.Add(id))
+        {
+            _expandedWarningIds.Remove(id);
+        }
+    }
 
     private IReadOnlyList<GeneratedFileRecord>? _records;
     private string _searchTerm = "";

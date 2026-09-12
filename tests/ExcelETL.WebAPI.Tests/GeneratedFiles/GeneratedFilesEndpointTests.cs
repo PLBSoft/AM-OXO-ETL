@@ -204,6 +204,60 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body.TacheMultipleCount.Should().Be(0);
     }
 
+    // -- Lot 072: non-blocking warnings surfaced via WarningCount/Warnings --
+
+    [Fact]
+    public async Task GetById_WithWarnings_ReturnsWarningCountAndWarnings()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(warnings:
+        [
+            new GeneratedFileWarning("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu", "VANNE")
+        ]);
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.WarningCount.Should().Be(1);
+        var warning = body.Warnings.Should().ContainSingle().Which;
+        warning.Sheet.Should().Be("ISOLEMENT");
+        warning.BlockIdentifier.Should().Be("D8570-V4");
+        warning.Code.Should().Be("NoConditionalPointCreated");
+        warning.Message.Should().Be("VANNE inconnu");
+        warning.ExtractedValue.Should().Be("VANNE");
+    }
+
+    [Fact]
+    public async Task GetById_WithoutWarnings_ReturnsZeroWarningCountAndEmptyWarnings_NeverNull()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync();
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.WarningCount.Should().Be(0);
+        body.Warnings.Should().NotBeNull();
+        body.Warnings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Search_WithMultipleRecordsEachCarryingWarnings_DoesNotMixThem()
+    {
+        var client = CreateAuthenticatedClient();
+        var recordA = await SeedRecordAsync(
+            warnings: [new GeneratedFileWarning("ISOLEMENT", "A", "NoConditionalPointCreated", "msg A")]);
+        var recordB = await SeedRecordAsync(
+            warnings: [new GeneratedFileWarning("DIVERS", "B", "NoConditionalPointCreated", "msg B")]);
+
+        var response = await client.GetAsync("/api/generated-files");
+
+        var body = (await response.Content.ReadFromJsonAsync<List<GeneratedFileSummaryResponse>>())!;
+        body.Single(r => r.Id == recordA.Id).Warnings.Should().ContainSingle(w => w.Message == "msg A");
+        body.Single(r => r.Id == recordB.Id).Warnings.Should().ContainSingle(w => w.Message == "msg B");
+    }
+
     [Fact]
     public async Task GetById_WithUnknownId_ReturnsNotFound()
     {
@@ -370,7 +424,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         string? username = null,
         int isolementCount = 0,
         int pointCount = 0,
-        int tacheMultipleCount = 0)
+        int tacheMultipleCount = 0,
+        IReadOnlyList<GeneratedFileWarning>? warnings = null)
     {
         var id = Guid.NewGuid();
         var record = new GeneratedFileRecord(
@@ -387,7 +442,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
             username: username,
             isolementCount: isolementCount,
             pointCount: pointCount,
-            tacheMultipleCount: tacheMultipleCount);
+            tacheMultipleCount: tacheMultipleCount,
+            warnings: warnings);
         await SeedAsync(record);
         return record;
     }

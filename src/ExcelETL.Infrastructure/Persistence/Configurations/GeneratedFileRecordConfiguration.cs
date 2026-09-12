@@ -46,5 +46,25 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
         // GeneratedAtUtc: SearchAsync's own sort key, always descending.
         builder.HasIndex(r => r.EquipementRepere);
         builder.HasIndex(r => r.GeneratedAtUtc);
+
+        // Lot 072: a plain owned table, same convention as every other owned collection in this
+        // project (ImportProfileSheetRules, etc.) -- not EF Core's .ToJson() mapping, which no
+        // other type in this codebase uses; consistency with the existing pattern beats novelty
+        // for a single new collection. Owned entities are loaded automatically with their owner
+        // (no explicit .Include() needed), so EfGeneratedFileArchiveStore's existing plain
+        // Add/ToListAsync/FirstOrDefaultAsync calls need no change to pick this up.
+        builder.OwnsMany(r => r.Warnings, warnings =>
+        {
+            warnings.ToTable("GeneratedFileRecordWarnings");
+            warnings.WithOwner().HasForeignKey("GeneratedFileRecordId");
+            warnings.Property<int>("Id");
+            warnings.HasKey("Id");
+
+            warnings.Property(w => w.Sheet).IsRequired().HasMaxLength(200);
+            warnings.Property(w => w.BlockIdentifier).IsRequired().HasMaxLength(500);
+            warnings.Property(w => w.Code).IsRequired().HasMaxLength(100);
+            warnings.Property(w => w.Message).IsRequired().HasMaxLength(1000);
+            warnings.Property(w => w.ExtractedValue).HasMaxLength(500);
+        });
     }
 }

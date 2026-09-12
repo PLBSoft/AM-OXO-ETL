@@ -1303,6 +1303,15 @@
   <data name="GeneratedFiles_StatusRejected" xml:space="preserve">
     <value>Rejeté</value>
   </data>
+  <data name="GeneratedFiles_WarningsColumn" xml:space="preserve">
+    <value>Avertissements</value>
+  </data>
+  <data name="GeneratedFiles_NoWarnings" xml:space="preserve">
+    <value>Aucun</value>
+  </data>
+  <data name="GeneratedFiles_WarningsSummary" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
   <data name="NavMenu_ApiTest" xml:space="preserve">
     <value>Test API Web</value>
   </data>

@@ -14,6 +14,13 @@ namespace ExcelETL.WebAPI.Contracts;
 // collections are always known (never null), including for a Rejected record, which legitimately
 // reports 0 for all three rather than an absent value (see
 // docs/tickets/tickets-tdd-lot-071-compteurs-elements-historique-fichiers-generes.md).
+//
+// WarningCount/Warnings (Lot 072): the same non-blocking warnings (or, for a Rejected record, the
+// blocking rejection reasons) already snapshotted on GeneratedFileRecord.Warnings at archiving
+// time -- same shape as the inline "errors" body OxoController already returns on a 422, so a
+// single client-side deserialization type covers both. Always populated identically on Search
+// and GetById -- one DTO shape, no separate "summary vs detail" version, since this archive's
+// volume doesn't justify the extra complexity (same reasoning as every other field here).
 public sealed record GeneratedFileSummaryResponse(
     Guid Id,
     DateTime GeneratedAtUtc,
@@ -28,4 +35,6 @@ public sealed record GeneratedFileSummaryResponse(
     string? Username,
     int IsolementCount,
     int PointCount,
-    int TacheMultipleCount);
+    int TacheMultipleCount,
+    int WarningCount,
+    IReadOnlyList<GeneratedFileWarningResponse> Warnings);

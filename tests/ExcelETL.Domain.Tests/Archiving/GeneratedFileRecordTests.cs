@@ -150,4 +150,52 @@ public class GeneratedFileRecordTests
         record.PointCount.Should().Be(47);
         record.TacheMultipleCount.Should().Be(98);
     }
+
+    // -- Lot 072: non-blocking warnings persisted alongside the archive record --
+
+    [Fact]
+    public void Constructor_WithoutWarnings_LeavesWarningsEmpty_NeverNull()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Success);
+
+        record.Warnings.Should().NotBeNull();
+        record.Warnings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithWarnings_AssignsThemUnchanged()
+    {
+        var warnings = new List<GeneratedFileWarning>
+        {
+            new("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu", "VANNE"),
+            new("PROCEDURE", "10-MISE EN SERVICE (tâches 49-88)", "TacheMultipleTypeMismatch", "Incohérence de TYPE")
+        };
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, "38-C7401", "source.xlsx", "path",
+            "target.xlsx", "path2", Guid.NewGuid(), Guid.NewGuid(), GeneratedFileArchiveStatus.NonBlockingWarning,
+            warnings: warnings);
+
+        record.Warnings.Should().BeEquivalentTo(warnings, options => options.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Constructor_WithWarnings_CopiesTheList_NotStoredByReference()
+    {
+        var warnings = new List<GeneratedFileWarning>
+        {
+            new("ISOLEMENT", "D8570-V4", "NoConditionalPointCreated", "VANNE inconnu")
+        };
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.NonBlockingWarning,
+            warnings: warnings);
+
+        warnings.Add(new GeneratedFileWarning("DIVERS", "loc1", "NoConditionalPointCreated", "autre"));
+
+        record.Warnings.Should().HaveCount(1);
+    }
 }

@@ -5,6 +5,7 @@ using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Archiving;
+using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Fields;
@@ -372,6 +373,125 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         using var scope = brokenArchiveFactory.Services.CreateScope();
         var archiveStore = scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>();
         (await archiveStore.SearchAsync(null)).Should().BeEmpty();
+    }
+
+    // -- Lot 072: non-blocking warnings exposed via X-Warning-Count/X-Generated-File-Id headers,
+    // on both the success and rejection paths, so a caller (legacy) has one systematic mechanism
+    // regardless of outcome. G6306B's DIVERS sheet carries a real, well-known non-blocking warning
+    // (the "POINT DE FEU"/"POINT FEU" spelling mismatch, Lot 055) -- used here instead of a
+    // synthetic ImportResult so this proves the real pipeline's own warning reaches the header.
+
+    [Fact]
+    public async Task Process_WithValidRequestProducingNoWarnings_ReturnsZeroWarningCountHeaderAndGeneratedFileIdHeader()
+    {
+        // A real fixture is deliberately not used here -- every one of the 3 real fixtures on disk
+        // carries at least one non-blocking warning by this point in the pipeline's life (Lot
+        // 032/055/069), so none of them can stand in for the "genuinely zero warnings" case. The
+        // orchestrator is substituted instead, same DI-override mechanism as
+        // Process_WhenArchivingFails_... below -- the real SheetGenerationEngine/ClosedXmlWorkbookWriter
+        // still run against this controlled, error-free ImportResult.
+        using var cleanRunFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var orchestrator = new Mock<IImportPipelineOrchestrator>();
+                orchestrator
+                    .Setup(o => o.Run(It.IsAny<IWorkbookReader>(), It.IsAny<ImportProfile>()))
+                    .Returns(new ImportResult(
+                        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [], [], []));
+                services.RemoveAll<IImportPipelineOrchestrator>();
+                services.AddSingleton(orchestrator.Object);
+            });
+        });
+        var client = cleanRunFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(cleanRunFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle("0");
+        response.Headers.TryGetValues("X-Generated-File-Id", out var idValues).Should().BeTrue();
+        var recordId = Guid.Parse(idValues!.Single());
+
+        using var scope = cleanRunFactory.Services.CreateScope();
+        var archiveStore = scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>();
+        var record = (await archiveStore.SearchAsync(null)).Should().ContainSingle().Which;
+        record.Id.Should().Be(recordId);
+        record.Warnings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Process_WithValidRequestProducingWarnings_ReturnsRealWarningCountHeader_MatchingTheArchivedRecord()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "G6306B.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Warnings.Should().NotBeEmpty();
+
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle(record.Warnings.Count.ToString());
+        response.Headers.GetValues("X-Generated-File-Id").Should().ContainSingle(record.Id.ToString());
+    }
+
+    [Fact]
+    public async Task Process_WithRejectedFile_ReturnsWarningCountAndGeneratedFileIdHeaders_AndExtractedValueInBody()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceWorkbook = BuildRejectedSourceWorkbook();
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceWorkbook, "corrompu.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
+        record.Warnings.Should().NotBeEmpty();
+
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle(record.Warnings.Count.ToString());
+        response.Headers.GetValues("X-Generated-File-Id").Should().ContainSingle(record.Id.ToString());
+
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain("\"extractedValue\"");
+    }
+
+    [Fact]
+    public async Task Process_WhenArchivingFails_StillReturnsWarningCountHeader_ButNoGeneratedFileIdHeader()
+    {
+        using var brokenArchiveFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var throwingWriter = new Mock<IGeneratedFileWriter>();
+                throwingWriter
+                    .Setup(w => w.WriteSourceAsync(
+                        It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                    .ThrowsAsync(new IOException("simulated disk failure"));
+                services.RemoveAll<IGeneratedFileWriter>();
+                services.AddSingleton<IGeneratedFileWriter>(throwingWriter.Object);
+            });
+        });
+        var client = brokenArchiveFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(brokenArchiveFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.Contains("X-Warning-Count").Should().BeTrue();
+        response.Headers.Contains("X-Generated-File-Id").Should().BeFalse();
     }
 
     private async Task<IReadOnlyList<GeneratedFileRecord>> SearchArchiveAsync()

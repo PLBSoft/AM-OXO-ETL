@@ -64,6 +64,20 @@ public sealed class GeneratedFileRecord
     public int PointCount { get; }
     public int TacheMultipleCount { get; }
 
+    // The run's own ImportResult.Errors, snapshotted at archiving time -- persisted for every
+    // status (Success/NonBlockingWarning/Rejected), not just the warning case: a Rejected
+    // record's rejection reasons are already shown inline in the 422 HTTP response, but
+    // persisting them here too makes them consultable after the fact via GET
+    // /api/generated-files/{id}, same traceability philosophy as the rest of the archive (Lot
+    // 072). Backed by a private mutable field, not a plain auto-property assigned straight from
+    // the constructor parameter -- Warnings becomes an owned-collection navigation once mapped by
+    // EF Core, and a constructor parameter cannot be bound to one (see CLAUDE.md's Lot E2/047
+    // note); GeneratedFileRecord needs a private parameterless constructor below for the same
+    // reason RepeatingBlockLocator.Fields/SheetExtractionRule.PointRules/ImportProfile.SheetRules
+    // already do.
+    private readonly List<GeneratedFileWarning> _warnings;
+    public IReadOnlyList<GeneratedFileWarning> Warnings => _warnings;
+
     public GeneratedFileRecord(
         Guid id,
         DateTime generatedAtUtc,
@@ -78,7 +92,8 @@ public sealed class GeneratedFileRecord
         string? username = null,
         int isolementCount = 0,
         int pointCount = 0,
-        int tacheMultipleCount = 0)
+        int tacheMultipleCount = 0,
+        IReadOnlyList<GeneratedFileWarning>? warnings = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
@@ -97,5 +112,17 @@ public sealed class GeneratedFileRecord
         IsolementCount = isolementCount;
         PointCount = pointCount;
         TacheMultipleCount = tacheMultipleCount;
+        _warnings = warnings is null ? [] : [.. warnings];
+    }
+
+    // EF Core materialization only -- see the Warnings property's own comment above. Scalar
+    // properties are still set by EF via reflection on their compiler-generated backing fields
+    // despite having no public setter (same trick Entity.Id already relies on); this constructor
+    // just needs to exist so EF picks it (zero unbindable parameters) instead of the public one.
+    private GeneratedFileRecord()
+    {
+        SourceFileName = string.Empty;
+        SourceFilePath = string.Empty;
+        _warnings = [];
     }
 }

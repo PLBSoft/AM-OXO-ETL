@@ -511,4 +511,120 @@ public class ProcessOxoFileServiceTests
         _generatedFileArchiveStore.Verify(
             s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    // -- Lot 072: warnings persisted on the archive record + ArchivedRecordId returned --
+
+    [Fact]
+    public async Task ProcessAsync_WhenFileIsAcceptedWithNoErrors_ArchivesEmptyWarningsAndReturnsRecordId()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var importResult = AcceptedImportResult();
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
+        _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
+
+        GeneratedFileRecord? savedRecord = null;
+        _generatedFileArchiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()))
+            .Callback<GeneratedFileRecord, CancellationToken>((r, _) => savedRecord = r)
+            .Returns(Task.CompletedTask);
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        var result = await _sut.ProcessAsync(command);
+
+        savedRecord.Should().NotBeNull();
+        savedRecord!.Warnings.Should().BeEmpty();
+        result.ArchivedRecordId.Should().Be(savedRecord.Id);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenFileHasNonBlockingWarnings_ArchivesThemAsGeneratedFileWarnings()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var importResult = WarningImportResult();
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
+        _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(
+                It.Is<GeneratedFileRecord>(r =>
+                    r.Warnings.Count == 1
+                    && r.Warnings[0].Sheet == "ISOLEMENT"
+                    && r.Warnings[0].BlockIdentifier == "D8570-V4"
+                    && r.Warnings[0].Code == "NoConditionalPointCreated"
+                    && r.Warnings[0].Message == "VANNE inconnu"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenFileIsRejected_StillArchivesTheRejectionReasonsAsWarnings()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(RejectedImportResult());
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        var result = await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(
+                It.Is<GeneratedFileRecord>(r =>
+                    r.Warnings.Count == 1
+                    && r.Warnings[0].Sheet == "PROCEDURE"
+                    && r.Warnings[0].Code == "RequiredFieldMissing"),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        result.ArchivedRecordId.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenArchiveStoreThrows_ReturnsNullArchivedRecordId()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var importResult = AcceptedImportResult();
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
+        _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
+        _generatedFileArchiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("database unavailable"));
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader);
+
+        var result = await _sut.ProcessAsync(command);
+
+        result.ArchivedRecordId.Should().BeNull();
+    }
 }

@@ -52,10 +52,10 @@ public sealed class ProcessOxoFileService(
                     "OXO processing rejected source file {SourceFileName}: {ErrorCount} blocking error(s)",
                     command.SourceFileName, importResult.Errors.Count);
 
-                await TryArchiveAsync(
+                var rejectedRecordId = await TryArchiveAsync(
                     command, importProfile.Id, exportProfile.Id, importResult, null, null, archivedAtUtc, cancellationToken);
 
-                return new ProcessOxoFileResult(importResult, null, null);
+                return new ProcessOxoFileResult(importResult, null, null, rejectedRecordId);
             }
 
             var generatedWorkbook = sheetGenerationEngine.Generate(importResult, exportProfile);
@@ -70,12 +70,12 @@ public sealed class ProcessOxoFileService(
                 "Completed OXO processing for source file {SourceFileName}: generated {GeneratedFileName}",
                 command.SourceFileName, generatedFileName);
 
-            await TryArchiveAsync(
+            var archivedRecordId = await TryArchiveAsync(
                 command, importProfile.Id, exportProfile.Id, importResult, generatedStream, generatedFileName,
                 archivedAtUtc, cancellationToken);
             generatedStream.Position = 0;
 
-            return new ProcessOxoFileResult(importResult, generatedStream, generatedFileName);
+            return new ProcessOxoFileResult(importResult, generatedStream, generatedFileName, archivedRecordId);
         }
         catch (Exception ex)
         {
@@ -87,7 +87,10 @@ public sealed class ProcessOxoFileService(
     // Best-effort, deliberately isolated from the main try/catch above: a disk-full or database-down
     // failure here must never fail the HTTP response that already has a valid result to return (see
     // the ticket's 34.4 -- archiving is a side effect, not a transactional guarantee of the main flow).
-    private async Task TryArchiveAsync(
+    // Returns the archived record's own Guid (Lot 072) so the caller can point an M2M client at
+    // GET /api/generated-files/{id} for the full warning detail -- null exactly when archiving
+    // itself failed, never a placeholder value.
+    private async Task<Guid?> TryArchiveAsync(
         ProcessOxoFileCommand command,
         Guid importProfileId,
         Guid exportProfileId,
@@ -121,6 +124,10 @@ public sealed class ProcessOxoFileService(
                     ? GeneratedFileArchiveStatus.NonBlockingWarning
                     : GeneratedFileArchiveStatus.Success;
 
+            var warnings = importResult.Errors
+                .Select(e => new GeneratedFileWarning(e.Sheet, e.BlockIdentifier, e.Code.ToString(), e.Message, e.ExtractedValue))
+                .ToList();
+
             var record = new GeneratedFileRecord(
                 Guid.NewGuid(),
                 timestampUtc,
@@ -135,15 +142,18 @@ public sealed class ProcessOxoFileService(
                 command.Username,
                 isolementCount: importResult.Isolements.Count,
                 pointCount: importResult.Points.Count,
-                tacheMultipleCount: importResult.TachesMultiples.Count);
+                tacheMultipleCount: importResult.TachesMultiples.Count,
+                warnings: warnings);
 
             await generatedFileArchiveStore.SaveAsync(record, cancellationToken);
+            return record.Id;
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex, "Failed to archive generated files for source file {SourceFileName} -- best-effort, HTTP " +
                 "response unaffected", command.SourceFileName);
+            return null;
         }
     }
 }

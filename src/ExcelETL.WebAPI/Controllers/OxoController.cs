@@ -1,3 +1,4 @@
+using System.Globalization;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Resources;
 using ExcelETL.Infrastructure.Excel;
@@ -101,6 +102,18 @@ public class OxoController(
         // ProblemDetails response.
         var result = await processOxoFileService.ProcessAsync(command, cancellationToken);
 
+        // Lot 072: posed on both outcomes below, regardless of status -- a caller (legacy) has one
+        // single, systematic mechanism to check for non-blocking warnings and, when it needs the
+        // full detail (Sheet/BlockIdentifier/Code/Message/ExtractedValue), to fetch it via the
+        // already-existing GET /api/generated-files/{id}. X-Generated-File-Id is only set when
+        // archiving actually produced a record -- best-effort (ProcessOxoFileService.TryArchiveAsync),
+        // so its absence is a real possibility, never a placeholder/empty value.
+        Response.Headers["X-Warning-Count"] = result.ImportResult.Errors.Count.ToString(CultureInfo.InvariantCulture);
+        if (result.ArchivedRecordId is not null)
+        {
+            Response.Headers["X-Generated-File-Id"] = result.ArchivedRecordId.Value.ToString();
+        }
+
         if (result.ImportResult.Equipement is null)
         {
             var problemDetails = new ProblemDetails
@@ -109,7 +122,11 @@ public class OxoController(
                 Detail = localizer["OxoFileRejected"]
             };
             problemDetails.Extensions["errors"] = result.ImportResult.Errors
-                .Select(error => new { error.Sheet, error.BlockIdentifier, Code = error.Code.ToString(), error.Message })
+                .Select(error => new
+                {
+                    error.Sheet, error.BlockIdentifier, Code = error.Code.ToString(), error.Message,
+                    error.ExtractedValue
+                })
                 .ToList();
 
             logger.LogInformation(
