@@ -136,9 +136,9 @@ chiffres ci-dessous sont néanmoins recomptés, le constat 074 ne donnait que le
 | :--- | :--- |
 | Emplacement | `src/ExcelETL.BlazorAdmin/Editing/Import/` ; tests en miroir sous `tests/ExcelETL.BlazorAdmin.Tests/Editing/Import/`. |
 | Classes brouillon | `ImportProfileDraft` (`Id`, `Name`, `ReperePrefix` = `ImportProfile.DefaultReperePrefix`, `EquipementTypeElementNom`, les 3 listes racine et une ligne en attente par liste, `SheetRules`, `PendingSheetRule`) ; `SheetExtractionRuleDraft` (les 8 scalaires du constat 3 en texte/entier, les 6 listes et une ligne en attente par liste) ; `BlockFieldDefinitionDraft` (`Name`, `AbsoluteRange`) ; `HeaderFieldRuleDraft` (`Name`, `Range`, `DateFormat`, `StripReperePrefix`) ; `HeaderCompositeRuleDraft` (`Name`, `Template`) ; `FieldPresencePointRuleDraft` (`ColonneName`, `AbsoluteRange`, `ExpectedValue`, `CellName`) ; `ConditionalPointRuleDraft` (`ColonneName`, `SourceFieldName`, `Operator` = `Equals`, `ComparisonValue`) ; `TacheMultipleTypeLabelDraft` (`Code`, `Label`). |
-| Listes de chaînes nues | **À trancher (Q2)**. Proposition : un seul type `StringItemDraft { Value }`, partagé par `DefaultTableaux`, `DefaultApplicationNames` et `UnconditionalColonneNames`. `DraftJson.IsPristine`/`Clone` (contrainte `new()`) à vérifier sur ce type en 075.1, pas à supposer. |
-| Listes éditées en ligne | **À trancher (Q1)**. Proposition : garder le balisage en ligne actuel (racine et lot W), simplement lié aux brouillons — pas de nouveau composant, pour ne pas mêler un changement de découpage d'interface à la migration. |
-| Plages absolues | **À trancher (Q3)**. Proposition : le brouillon stocke la **plage absolue en texte**, source de vérité ; `FromDomain` la calcule avec le `FirstBlockStartRow` chargé, `ToDomain` la convertit avec le `FirstBlockStartRow` courant du brouillon. Conséquence : modifier `FirstBlockStartRow` garde les plages affichées et déplace les décalages (aujourd'hui l'inverse, constat 4). Alternative : stocker les décalages et garder un tampon de texte par élément ouvert — réintroduit un état local par formulaire. |
+| Listes de chaînes nues (Q2) | **Tranché** : un seul type `StringItemDraft { Value }`, partagé par `DefaultTableaux`, `DefaultApplicationNames` et `UnconditionalColonneNames` — une classe au lieu de trois identiques. `DraftJson.IsPristine`/`Clone` (contrainte `new()`) vérifiés sur ce type en 075.1, pas supposés. |
+| Listes éditées en ligne (Q1) | **Tranché** : balisage en ligne conservé (racine et lot W), simplement lié aux brouillons. La dette de ces listes est leur état (tampons, index, erreurs, validations recopiées), que P3 supprime de toute façon ; les extraire en composants ajouterait 5 fichiers à une dizaine de paramètres chacun pour reproduire des identifiants et mises en page déjà divergents — plus de code, pas moins. |
+| Plages absolues (Q3) | **Tranché avec Simon** : le brouillon stocke la **plage absolue en texte**, source de vérité ; `FromDomain` la calcule avec le `FirstBlockStartRow` chargé, `ToDomain` la convertit avec le `FirstBlockStartRow` courant du brouillon. Modifier `FirstBlockStartRow` garde donc les plages affichées et déplace les décalages (aujourd'hui l'inverse, constat 4, non couvert par un test) — ce que l'administrateur voit correspond au fichier Excel. Seul changement de comportement assumé du lot, en plus du message global. |
 | Noms figés | `CellName` de `FieldPresencePointRuleDraft` et `CouleurEtiquetteCellName` de la règle sont portés par le brouillon (champs non affichés) : `null` pour un nouvel élément ⇒ nom par défaut actuel. Supprime deux cas latents de défaut B sans changement visible. |
 | Erreurs hors domaine | Nouveau type générique `Editing/DraftValidationException(string ResourceKey)` levé par les conversions pour les messages du constat 6. La page localise : `DraftValidationException` ⇒ `Loc[ResourceKey]`, sinon `BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message`. Aucune localisation dans le mapper. |
 | Colonne inconditionnelle vide | Conservé : une ligne d'ajout vide (ou blanche) est ignorée au clic « Ajouter » et à la sauvegarde ; une édition vidée échoue avec `ImportProfileEditor_EmptyColonneNameError`. |
@@ -179,7 +179,8 @@ Tests xUnit, sans bUnit :
 - les 10 lignes en attente : vierge ignorée, valide ajoutée en fin de liste, invalide en erreur ;
 - `HeaderFieldRule.Cell.Sheet` re-dérivé du nom de feuille ; `CellName`/`CouleurEtiquetteCellName`
   conservés ; `AllowedCouleursEtiquette` découpée ; vide ⇒ `null` sur les 4 optionnels ;
-- plages absolues selon la réponse à Q3.
+- plages absolues (Q3) : `FirstBlockStartRow` modifié dans le brouillon ⇒ même texte de plage,
+  décalages recalculés.
 
 ### 075.3 — Rouge : lignes en attente et éditions ouvertes (effort standard)
 
@@ -218,9 +219,9 @@ constat 1, assertions modifiées (et pourquoi), points à toucher pour ajouter u
 
 ## Hors périmètre explicite
 
-- Tout changement d'interface autre que le message global : pas de nouveau composant pour les listes
-  en ligne (sauf réponse contraire à Q1), pas de changement de libellé, classe, identifiant,
-  emplacement d'erreur.
+- Tout changement d'interface autre que le message global (et le comportement de Q3) : pas de nouveau
+  composant pour les listes en ligne, pas de changement de libellé, classe, identifiant, emplacement
+  d'erreur.
 - Le domaine, la persistance (`IImportProfileStore`, EF Core), le seeder.
 - Les pages de test d'import et la liste des profils d'import.
 - L'éditeur d'export, hors « Refactor à considérer ».
@@ -232,13 +233,11 @@ constat 1, assertions modifiées (et pourquoi), points à toucher pour ajouter u
   Clôture de 075.4 : `ExcelETL.BlazorAdmin.Tests` complet (seul projet touché).
 - Un commit par sous-ticket ; 075.4 est volontairement un seul commit.
 
-## Questions ouvertes (à trancher avec Simon avant 075.2)
+## Questions tranchées (16/09)
 
-- **Q1** — listes éditées en ligne (racine et lot W) : garder le balisage en ligne lié au brouillon, ou
-  extraire des composants feuilles comme les 4 autres ?
-- **Q2** — type des listes de chaînes nues : `StringItemDraft` partagé, ou un type par liste ?
-- **Q3** — plages absolues : texte source de vérité (les plages affichées restent quand
-  `FirstBlockStartRow` change), ou décalages source de vérité (comportement actuel) ?
+- **Q1** et **Q2** : Simon a demandé de retenir l'option la plus simple et qui réduit le plus la dette ;
+  réponses et raisons dans le tableau des décisions.
+- **Q3** : choix de Simon, « la plage saisie reste ».
 
 ## Résultat
 
