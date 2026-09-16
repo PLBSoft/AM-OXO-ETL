@@ -161,4 +161,30 @@ aller-retour).
 
 ## Résultat
 
-_À remplir en fin de lot._
+### 073.1–073.3 — tests livrés
+
+- `tests/ExcelETL.BlazorAdmin.Tests/Pages/Admin/ImportProfileEditorRoundTripTests.cs` : 72 cas —
+  `SheetRule_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile` (7 : les 6 règles du profil
+  par défaut + la règle PLATINES construite à la main), `NestedItem_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile`
+  (un cas par élément imbriqué, `MemberData` nommant `fixture`/`ruleIndex`/`subList`/`itemIndex` et un
+  libellé `FEUILLE/sous-liste[j]`), `TopLevelItem_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile`
+  (Tableaux, Applications, libellés de types de tâches multiples), plus un `[Fact]` qui vérifie que
+  les fixtures couvrent toujours les champs optionnels visés (y compris `ExpectedValue = null`).
+- `tests/ExcelETL.BlazorAdmin.Tests/Pages/Admin/ExportProfileEditorRoundTripTests.cs` : 93 cas, même
+  structure (règles, colonnes, colonnes Point, colonnes Application, `[Fact]` de couverture).
+- Tous verts dès l'écriture, comme prévu. **Aucun quatrième cas réel de B trouvé** : aucun code de
+  production modifié.
+- Comparaison : `BeEquivalentTo(original, o => o.ComparingByMembers<ImportProfile>().ComparingRecordsByMembers().WithStrictOrdering())`
+  (côté export, sans `ComparingByMembers<ImportProfile>`). Sans ces deux options, FluentAssertions
+  compare par `Equals` tout type qui le redéfinit : identité pour `ImportProfile` (`Entity`), et
+  égalité de référence sur les listes pour un `record` qui ne la redéfinit pas.
+
+### 073.4 — preuve de détection (bogues réintroduits sans commit, puis `git checkout`)
+
+| Bogue réintroduit | Tests en échec | Exemple |
+| :--- | :--- | :--- |
+| 1. `SheetRuleForm` passe `[], []` pour `HeaderFields`/`HeaderComposites` (lot 048.1) | 31 / 165 | `ImportProfileEditorRoundTripTests.SheetRule_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile(fixture: "default", ruleIndex: 0, sheetName: "PROCEDURE")` (aussi AUTRES JOINTS TOUCHES, DIVERS et tous leurs éléments imbriqués) |
+| 2. `SheetRuleForm` ne passe plus `fieldPresencePointRules` (commit `1736886`) | 17 / 165 | `ImportProfileEditorRoundTripTests.SheetRule_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile(fixture: "default", ruleIndex: 2, sheetName: "PLATINES")` et le même cas sur la fixture `field-presence-null-expected-value` |
+| 3. `SheetGenerationRuleForm` ne reporte plus `ConstantColumnDefinitions` (commit `0cbac22`) | 18 / 165 | `ExportProfileEditorRoundTripTests.SheetRule_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile(ruleIndex: 2, sheetName: "Tâches multiples")` et les 17 colonnes de cette règle |
+
+Après restauration : 165/165 verts, `git status` propre.
