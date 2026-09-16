@@ -230,4 +230,112 @@ Remplir la section « Résultat » avec des mesures, pas des impressions :
 
 ## Résultat
 
-_À remplir en 074.4._
+Mesures prises au commit `3c88420` (074.3), sur `git diff --stat 07425bc 3c88420` (07425bc =
+état juste après 074.2, avant toute migration).
+
+### Lignes de code
+
+| Fichier | Avant (constat 1) | Après | Delta |
+| :--- | ---: | ---: | ---: |
+| `ExportProfileEditor.razor` | 434 | 517 | +83 |
+| `SheetGenerationRuleForm.razor` | 510 | 552 | +42 |
+| `ColumnDefinitionForm.razor` | 151 | 100 | −51 |
+| `PointColumnDefinitionForm.razor` | 137 | 85 | −52 |
+| `ApplicationColumnDefinitionForm.razor` | 142 | 85 | −57 |
+| **Total, 5 composants migrés** | **1 374** | **1 339** | **−35** |
+
+Solde négatif sur l'ensemble des composants migrés, confirmé par `git diff --stat` sur le commit
+074.3 lui-même (`404 insertions(+), 439 deletions(-)`, soit −35). Les deux composants racines
+(éditeur, formulaire de règle) grossissent — la logique de conversion/promotion/annulation qui vivait
+implicitement dans le remontage de composant (React-like "unmount = reset") doit maintenant être
+écrite explicitement quelque part, et c'est le niveau qui possède la liste qui en hérite. Les 3
+formulaires de colonnes, devenus de purs lieurs de champs, perdent entre un tiers et 40 % de leurs
+lignes chacun.
+
+En plus de ces 5 fichiers : 413 lignes de nouvelle infrastructure générique (`Editing/`,
+`Editing/Export/` — DraftJson, ConversionResult, DraftConversionError, IDraftWithError, les 4 classes
+brouillon, ExportProfileDraftMapper), et 249 lignes de test rouge-d'abord
+(`ExportProfileEditorPendingRowTests.cs`) qui n'existaient pas avant.
+
+### Champs d'état et méthodes restants, contre le constat 1
+
+- **`ExportProfileEditor.razor`** : 11 champs (`_draft`, `_editingId`, `_notFound`,
+  `_profileErrorMessage`, `_pendingDeleteIndex`, `_expandedSheetRuleDetails`,
+  `_sheetRuleEditSnapshot`, `_openSheetRuleForm`, `_hasUnsavedChanges`,
+  `_showNavigationConfirmation`, `_pendingNavigationTarget`) contre 13 avant (`_name`+`_sheetRules`
+  fusionnés en `_draft` ; `_addSheetRuleFormRef`/`_editSheetRuleFormRef` disparus ;
+  `_sheetRuleEditSnapshot` apparu pour « Annuler »). **0 `@ref`** (2 avant).
+- **`SheetGenerationRuleForm.razor`** : 6 champs d'état propres (`_editingColumnIndex`,
+  `_editingPointColumnIndex`, `_editingApplicationColumnIndex`, `_columnEditSnapshot`,
+  `_pointColumnEditSnapshot`, `_applicationColumnEditSnapshot`) contre 13 avant (les 6 listes/valeurs
+  brouillon, les 3 index d'édition, les 3 `@ref`, `_errorMessage`). **0 `@ref`** (3 avant). Plus de
+  `InitialRule`/`OnInitialized`/`ResetForm`/`IsBlank`/`TryCommitAsync` publics.
+- **`ColumnDefinitionForm.razor`/`PointColumnDefinitionForm.razor`/`ApplicationColumnDefinitionForm.razor`** :
+  **0 champ d'état propre** chacun (contre 3 avant : les valeurs du formulaire + `_errorMessage`). Plus
+  de `InitialXxx`/`OnInitialized`/`ResetForm`/`TryCommitAsync` du tout — chacun se réduit à des
+  liaisons de champs + deux `@onclick` qui relaient `OnSubmit`/`OnCancel` sans validation locale.
+
+### Tests existants dont une assertion a dû changer
+
+**Aucun.** Les 252 tests exposés au constat 6 (`ExportProfileEditorTests.cs`,
+`ExportProfileEditorLot056Tests.cs`, `ExportProfileEditorLot057Tests.cs`,
+`ExportProfileEditorLot059Tests.cs`, `ExportProfileEditorNestedEditFlushTests.cs`, les tests export du
+lot 073, `ProfileEditorParityTests.cs`, `FormFloatingStructureAuditTests.cs`) sont passés sans qu'une
+seule ligne d'assertion soit modifiée. Un seul test a exigé une intervention —
+`ReopeningAfterPartialInput_FieldsAreEmpty_ProvingRemount` (`ExportProfileEditorLot057Tests.cs`) — et
+son **assertion elle-même n'a pas changé** : c'est le code de production
+(`ToggleAddSheetRuleFormAsync`) qui a été complété pour continuer à produire le même comportement
+observable. Sous l'ancienne architecture, fermer le formulaire d'ajout via le bouton bascule
+détruisait implicitement le composant enfant (et son état local) ; sous P3, l'état vit dans
+`_draft.PendingSheetRule`, qui ne disparaît plus tout seul — fermer sans avoir cliqué « Ajouter » doit
+donc désormais remettre explicitement `_draft.PendingSheetRule` à une instance neuve (le même geste
+que « Annuler » ailleurs dans ce composant). Un vrai comportement à préserver, pas un détail interne :
+sans ce correctif, rouvrir le formulaire d'ajout après une saisie abandonnée aurait fait réapparaître
+cette saisie.
+
+### Points à toucher pour ajouter un champ à `ColumnDefinition`
+
+**Avant** (5 catégories, ~7 points concrets) : le record Domain ; un champ local dans
+`ColumnDefinitionForm` ; son pré-remplissage dans `OnInitialized` ; sa construction dans
+`TryCommitAsync` ; sa remise à zéro dans `ResetForm` ; le balisage (`<input>`/label) ; et, si affiché
+dans le résumé, la lecture correspondante dans `ExportProfileEditor.razor`.
+
+**Après** (4 points concrets) : le record Domain (inchangé) ; une propriété sur
+`ColumnDefinitionDraft` ; deux lignes dans `ExportProfileDraftMapper`
+(`FromDomainColumn`/`ConvertColumn`) ; le balisage, lié directement à `Draft.LeChamp` (aucun
+pré-remplissage ni remise à zéro à écrire). Le résumé, si affiché, reste un point identique aux deux
+architectures. Un champ oublié dans le mapper se voit immédiatement au test d'aller-retour du lot
+073/074.2 (`RoundTrip_SeededDefaultProfile_...`), qui compare membre à membre — c'est exactement le
+filet qui aurait détecté le bogue du commit `0cbac22` avant qu'il ne parte en production.
+
+### Difficultés rencontrées
+
+- **Rafraîchissement** : aucune difficulté réelle. Remplacer `_draft.SheetRules[index]` par une copie
+  restaurée (« Annuler ») se reflète automatiquement au rendu suivant, puisque la boucle `@for` relit
+  `_draft.SheetRules[index]` à chaque rendu plutôt que de capturer une référence figée.
+- **Sérialisation** : aucun problème rencontré avec `System.Text.Json` par défaut, y compris pour
+  `ConstantColumnDefinition` (record Domain immuable à un seul constructeur paramétré, sans
+  `[JsonConstructor]`) — vérifié par un test dédié (074.1) plutôt que supposé.
+- **Lot 057** : la seule vraie surprise du pilote (voir ci-dessus, « Tests existants ») — fermer le
+  formulaire d'ajout sans soumettre doit désormais réinitialiser explicitement le brouillon en attente,
+  faute de quoi le remontage implicite qui faisait ce travail avant n'existe plus.
+- **Message global à la sauvegarde** : décider quel message afficher dans la bannière de tête de page
+  (`_profileErrorMessage`) a demandé une distinction explicite entre une erreur portée par le
+  brouillon racine (nom vide/trop long, aucune règle de feuille — message réel, inchangé depuis avant
+  ce lot) et une erreur portée par un brouillon imbriqué (ligne en attente invalide — nouveau message
+  générique `ExportProfileEditor_PendingRowInvalidError`), par comparaison de référence entre le
+  brouillon fautif et `_draft` lui-même.
+
+### Recommandation
+
+Les trois critères mesurables du 074.4 sont remplis : assertions de tests existants inchangées (0/252,
+hors le seul cas signalé et justifié ci-dessus) ; solde de lignes négatif sur les composants migrés
+(−35, avant la nouvelle infrastructure générique) ; aucun code spécifique à `ExportProfile`/
+`SheetGenerationRule`/etc. n'est apparu dans `DraftJson`/`ConversionResult`/`DraftConversionError`
+(vérifié par lecture directe de ces 3 fichiers, toujours génériques sur `T`/`TDraft`/`TDomain`). Le
+quatrième critère — relecture jugée plus simple — reste à trancher par Simon, non mesurable depuis
+cette session.
+
+Sur la base des trois critères mesurables, ce pilote justifie une poursuite vers l'éditeur d'import
+(`ImportProfileEditor`/`SheetRuleForm` et ses sous-formulaires), à confirmer avec Simon avant d'ouvrir
+les tickets correspondants (hors périmètre de ce document, par instruction explicite du 074.5).
