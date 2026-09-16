@@ -4,6 +4,8 @@
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.BlazorAdmin.Editing
+@using ExcelETL.BlazorAdmin.Editing.Import
 @using ExcelETL.BlazorAdmin.Formatting
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
@@ -30,9 +32,9 @@
      Lot 053 (53.1): profile-editor-container caps this route at 1140px on wide screens (see
      app.css) -- shared verbatim with ExportProfileEditor.razor's own root container. -->
 <!-- Lot 056 (56.5): Ctrl+Enter saves the profile from anywhere in the editor, through the same
-     implicit-flush path as the CTA click (56.2). Plain Enter is deliberately left alone -- no
-     preventDefault -- since there is no <form> element here to accidentally submit and every text
-     input must keep behaving normally. -->
+     save path as the CTA click. Plain Enter is deliberately left alone -- no preventDefault --
+     since there is no <form> element here to accidentally submit and every text input must keep
+     behaving normally. -->
 <div class="container-fluid px-3 profile-editor-container" @onkeydown="OnRootKeyDownAsync">
 
 <h1>@(_editingId.HasValue ? Loc["ImportProfileEditor_EditPageTitle"] : Loc["ImportProfileEditor_PageTitle"])</h1>
@@ -67,7 +69,7 @@ else
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="profile-name-input" class="form-control" @bind="_name" @bind:after="MarkAsChanged" maxlength="@ImportProfile.MaxNameLength"
+        <input id="profile-name-input" class="form-control" @bind="_draft.Name" @bind:after="MarkAsChanged" maxlength="@ImportProfile.MaxNameLength"
                placeholder="@Loc["ImportProfileEditor_NamePlaceholder"]" />
         <label for="profile-name-input">@Loc["ImportProfileEditor_NameLabel"]</label>
     </div>
@@ -78,14 +80,14 @@ else
 <div class="row g-3 mb-3">
     <div class="col-12 col-md-6">
         <div class="form-floating">
-            <input id="profile-repere-prefix-input" class="form-control" @bind="_reperePrefix" @bind:after="MarkAsChanged"
+            <input id="profile-repere-prefix-input" class="form-control" @bind="_draft.ReperePrefix" @bind:after="MarkAsChanged"
                    placeholder="@Loc["ImportProfileEditor_ReperePrefixPlaceholder"]" />
             <label for="profile-repere-prefix-input">@Loc["ImportProfileEditor_ReperePrefixLabel"]</label>
         </div>
     </div>
     <div class="col-12 col-md-6">
         <div class="form-floating">
-            <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_equipementTypeElementNom" @bind:after="MarkAsChanged"
+            <input id="profile-equipement-type-element-nom-input" class="form-control" @bind="_draft.EquipementTypeElementNom" @bind:after="MarkAsChanged"
                    placeholder="@Loc["ImportProfileEditor_EquipementTypeElementNomPlaceholder"]" />
             <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
         </div>
@@ -101,30 +103,31 @@ else
 <h2 class="h3">@Loc["ImportProfileEditor_DefaultTableauxHeading"]</h2>
 <div class="card bg-light mb-3">
     <div class="card-body">
-        @if (_defaultTableaux.Count > 0)
+        @if (_draft.DefaultTableaux.Count > 0)
         {
             <ul class="block-field-list">
-                @for (var j = 0; j < _defaultTableaux.Count; j++)
+                @for (var j = 0; j < _draft.DefaultTableaux.Count; j++)
                 {
                     var itemIndex = j;
-                    @if (_editingDefaultTableauIndex == itemIndex)
+                    var tableau = _draft.DefaultTableaux[itemIndex];
+                    @if (_tableauEdit.IsOpen(itemIndex))
                     {
                         <li class="block-field-item-editing">
-                            @if (!string.IsNullOrEmpty(_defaultTableauEditError))
+                            @if (!string.IsNullOrEmpty(tableau.Error))
                             {
-                                <div class="alert alert-danger" role="alert">@_defaultTableauEditError</div>
+                                <div class="alert alert-danger" role="alert">@tableau.Error</div>
                             }
                             <div class="row g-2 align-items-end">
                                 <div class="col">
                                     <input id="@($"default-tableau-edit-input-{itemIndex}")" class="form-control"
-                                           @bind="_editingDefaultTableauValue" />
+                                           @bind="tableau.Value" @bind:after="MarkAsChanged" />
                                 </div>
                                 <div class="col-auto block-field-actions">
                                     <button id="@($"save-default-tableau-button-{itemIndex}")" type="button"
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                             title="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                            @onclick="() => SaveDefaultTableauEdit(itemIndex)">
+                                            @onclick="() => SubmitDefaultTableau(itemIndex)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
                                         </svg>
@@ -133,7 +136,7 @@ else
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_CancelButton"]"
                                             title="@Loc["ImportProfileEditor_CancelButton"]"
-                                            @onclick="CancelDefaultTableauEdit">
+                                            @onclick="() => _tableauEdit.Cancel(_draft.DefaultTableaux)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                                         </svg>
@@ -146,14 +149,14 @@ else
                     {
                         <li class="block-field-item">
                             <div class="block-field-info">
-                                <span class="block-field-name">@_defaultTableaux[itemIndex]</span>
+                                <span class="block-field-name">@tableau.Value</span>
                             </div>
                             <div class="block-field-actions">
                                 <button id="@($"edit-default-tableau-button-{itemIndex}")" type="button"
                                         class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                         title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                        @onclick="() => StartDefaultTableauEdit(itemIndex)">
+                                        @onclick="() => _tableauEdit.Open(_draft.DefaultTableaux, itemIndex)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                         <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -163,7 +166,7 @@ else
                                         class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                         title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                        @onclick="() => DeleteDefaultTableau(itemIndex)">
+                                        @onclick="() => Delete(_draft.DefaultTableaux, itemIndex, _tableauEdit)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                         <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -191,20 +194,20 @@ else
              768-1150px, before .profile-editor-container's 1140px cap gives enough room again).
              Fixed proportional columns (width-based, no content-driven min-width fight) avoid
              the overlap at every width in between -- KISS over re-tuning breakpoints. -->
-        @if (!string.IsNullOrEmpty(_defaultTableauAddError))
+        @if (!string.IsNullOrEmpty(_draft.PendingDefaultTableau.Error))
         {
-            <div class="alert alert-danger" role="alert">@_defaultTableauAddError</div>
+            <div class="alert alert-danger" role="alert">@_draft.PendingDefaultTableau.Error</div>
         }
         <div class="row g-2">
             <div class="col-12 col-md-8">
                 <div class="form-floating">
-                    <input id="default-tableau-name-input" class="form-control" @bind="_newDefaultTableauName"
+                    <input id="default-tableau-name-input" class="form-control" @bind="_draft.PendingDefaultTableau.Value" @bind:after="() => MarkPendingRowChanged(_draft.PendingDefaultTableau)"
                            placeholder="@Loc["ImportProfileEditor_TableauNamePlaceholder"]" />
                     <label for="default-tableau-name-input">@Loc["ImportProfileEditor_TableauNameLabel"]</label>
                 </div>
             </div>
             <div class="col-12 col-md-4">
-                <button id="add-default-tableau-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultTableau">
+                <button id="add-default-tableau-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitDefaultTableau(null)">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTableauButton"]
                 </button>
             </div>
@@ -217,30 +220,31 @@ else
 <h2 class="h3">@Loc["ImportProfileEditor_DefaultApplicationNamesHeading"]</h2>
 <div class="card bg-light mb-3">
     <div class="card-body">
-        @if (_defaultApplicationNames.Count > 0)
+        @if (_draft.DefaultApplicationNames.Count > 0)
         {
             <ul class="block-field-list">
-                @for (var j = 0; j < _defaultApplicationNames.Count; j++)
+                @for (var j = 0; j < _draft.DefaultApplicationNames.Count; j++)
                 {
                     var itemIndex = j;
-                    @if (_editingDefaultApplicationNameIndex == itemIndex)
+                    var application = _draft.DefaultApplicationNames[itemIndex];
+                    @if (_applicationEdit.IsOpen(itemIndex))
                     {
                         <li class="block-field-item-editing">
-                            @if (!string.IsNullOrEmpty(_defaultApplicationNameEditError))
+                            @if (!string.IsNullOrEmpty(application.Error))
                             {
-                                <div class="alert alert-danger" role="alert">@_defaultApplicationNameEditError</div>
+                                <div class="alert alert-danger" role="alert">@application.Error</div>
                             }
                             <div class="row g-2 align-items-end">
                                 <div class="col">
                                     <input id="@($"default-application-name-edit-input-{itemIndex}")" class="form-control"
-                                           @bind="_editingDefaultApplicationNameValue" />
+                                           @bind="application.Value" @bind:after="MarkAsChanged" />
                                 </div>
                                 <div class="col-auto block-field-actions">
                                     <button id="@($"save-default-application-name-button-{itemIndex}")" type="button"
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                             title="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                            @onclick="() => SaveDefaultApplicationNameEdit(itemIndex)">
+                                            @onclick="() => SubmitDefaultApplicationName(itemIndex)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
                                         </svg>
@@ -249,7 +253,7 @@ else
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_CancelButton"]"
                                             title="@Loc["ImportProfileEditor_CancelButton"]"
-                                            @onclick="CancelDefaultApplicationNameEdit">
+                                            @onclick="() => _applicationEdit.Cancel(_draft.DefaultApplicationNames)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                                         </svg>
@@ -262,14 +266,14 @@ else
                     {
                         <li class="block-field-item">
                             <div class="block-field-info">
-                                <span class="block-field-name">@_defaultApplicationNames[itemIndex]</span>
+                                <span class="block-field-name">@application.Value</span>
                             </div>
                             <div class="block-field-actions">
                                 <button id="@($"edit-default-application-name-button-{itemIndex}")" type="button"
                                         class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                         title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                        @onclick="() => StartDefaultApplicationNameEdit(itemIndex)">
+                                        @onclick="() => _applicationEdit.Open(_draft.DefaultApplicationNames, itemIndex)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                         <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -279,7 +283,7 @@ else
                                         class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                         title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                        @onclick="() => DeleteDefaultApplicationName(itemIndex)">
+                                        @onclick="() => Delete(_draft.DefaultApplicationNames, itemIndex, _applicationEdit)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                         <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -293,20 +297,20 @@ else
         }
         <!-- Lot 053 (53.3/53.4): same mono-field add row treatment as Tableaux above.
              Lot 058 (58.2): same align-items-end removal + .field-inline-action treatment. -->
-        @if (!string.IsNullOrEmpty(_defaultApplicationNameAddError))
+        @if (!string.IsNullOrEmpty(_draft.PendingDefaultApplicationName.Error))
         {
-            <div class="alert alert-danger" role="alert">@_defaultApplicationNameAddError</div>
+            <div class="alert alert-danger" role="alert">@_draft.PendingDefaultApplicationName.Error</div>
         }
         <div class="row g-2">
             <div class="col-12 col-md-8">
                 <div class="form-floating">
-                    <input id="default-application-name-input" class="form-control" @bind="_newDefaultApplicationName"
+                    <input id="default-application-name-input" class="form-control" @bind="_draft.PendingDefaultApplicationName.Value" @bind:after="() => MarkPendingRowChanged(_draft.PendingDefaultApplicationName)"
                            placeholder="@Loc["ImportProfileEditor_ApplicationNamePlaceholder"]" />
                     <label for="default-application-name-input">@Loc["ImportProfileEditor_ApplicationNameLabel"]</label>
                 </div>
             </div>
             <div class="col-12 col-md-4">
-                <button id="add-default-application-name-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddDefaultApplicationName">
+                <button id="add-default-application-name-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitDefaultApplicationName(null)">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddApplicationButton"]
                 </button>
             </div>
@@ -319,30 +323,30 @@ else
 <!-- Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.5:
      same root-level add/edit/delete pattern as Tableaux/Applications above, but each row is a
      Code/Label pair instead of a single string -- kept inline here (not a separate XxxForm.razor
-     component) for consistency with how Tableaux/Applications are handled at this same root level;
-     the dedicated sub-form components elsewhere in this file are reserved for nested SheetRuleForm
-     lists, a different context. -->
+     component) for consistency with how Tableaux/Applications are handled at this same root level
+     (confirmed again at lot 075, decision Q1). -->
 <h2 class="h3">@Loc["ImportProfileEditor_TacheMultipleTypeLabelsHeading"]</h2>
 <div class="card bg-light mb-3">
     <div class="card-body">
-        @if (_tacheMultipleTypeLabels.Count > 0)
+        @if (_draft.TacheMultipleTypeLabels.Count > 0)
         {
             <ul id="tache-multiple-type-labels-list" class="block-field-list">
-                @for (var j = 0; j < _tacheMultipleTypeLabels.Count; j++)
+                @for (var j = 0; j < _draft.TacheMultipleTypeLabels.Count; j++)
                 {
                     var itemIndex = j;
-                    @if (_editingTacheMultipleTypeLabelIndex == itemIndex)
+                    var label = _draft.TacheMultipleTypeLabels[itemIndex];
+                    @if (_labelEdit.IsOpen(itemIndex))
                     {
                         <li class="block-field-item-editing">
-                            @if (!string.IsNullOrEmpty(_tacheMultipleTypeLabelEditError))
+                            @if (!string.IsNullOrEmpty(label.Error))
                             {
-                                <div class="alert alert-danger" role="alert">@_tacheMultipleTypeLabelEditError</div>
+                                <div class="alert alert-danger" role="alert">@label.Error</div>
                             }
                             <div class="row g-2 align-items-end">
                                 <div class="col-12 col-md-5">
                                     <div class="form-floating">
                                         <input id="@($"tache-multiple-type-label-edit-code-input-{itemIndex}")" class="form-control"
-                                               @bind="_editingTacheMultipleTypeLabelCode"
+                                               @bind="label.Code" @bind:after="MarkAsChanged"
                                                placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder"]" />
                                         <label for="@($"tache-multiple-type-label-edit-code-input-{itemIndex}")">@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodeLabel"]</label>
                                     </div>
@@ -350,7 +354,7 @@ else
                                 <div class="col-12 col-md-5">
                                     <div class="form-floating">
                                         <input id="@($"tache-multiple-type-label-edit-label-input-{itemIndex}")" class="form-control"
-                                               @bind="_editingTacheMultipleTypeLabelLabel"
+                                               @bind="label.Label" @bind:after="MarkAsChanged"
                                                placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder"]" />
                                         <label for="@($"tache-multiple-type-label-edit-label-input-{itemIndex}")">@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelLabel"]</label>
                                     </div>
@@ -360,7 +364,7 @@ else
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                             title="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                            @onclick="() => SaveTacheMultipleTypeLabelEdit(itemIndex)">
+                                            @onclick="() => SubmitTacheMultipleTypeLabel(itemIndex)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
                                         </svg>
@@ -369,7 +373,7 @@ else
                                             class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                             aria-label="@Loc["ImportProfileEditor_CancelButton"]"
                                             title="@Loc["ImportProfileEditor_CancelButton"]"
-                                            @onclick="CancelTacheMultipleTypeLabelEdit">
+                                            @onclick="() => _labelEdit.Cancel(_draft.TacheMultipleTypeLabels)">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                             <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                                         </svg>
@@ -382,15 +386,15 @@ else
                     {
                         <li class="block-field-item">
                             <div class="block-field-info">
-                                <span class="block-field-name">@_tacheMultipleTypeLabels[itemIndex].Code</span>
-                                <span class="block-field-range">@_tacheMultipleTypeLabels[itemIndex].Label</span>
+                                <span class="block-field-name">@label.Code</span>
+                                <span class="block-field-range">@label.Label</span>
                             </div>
                             <div class="block-field-actions">
                                 <button id="@($"edit-tache-multiple-type-label-button-{itemIndex}")" type="button"
                                         class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                         title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                        @onclick="() => StartTacheMultipleTypeLabelEdit(itemIndex)">
+                                        @onclick="() => _labelEdit.Open(_draft.TacheMultipleTypeLabels, itemIndex)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                         <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -400,7 +404,7 @@ else
                                         class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                         title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                        @onclick="() => DeleteTacheMultipleTypeLabel(itemIndex)">
+                                        @onclick="() => Delete(_draft.TacheMultipleTypeLabels, itemIndex, _labelEdit)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                         <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -412,27 +416,27 @@ else
                 }
             </ul>
         }
-        @if (!string.IsNullOrEmpty(_tacheMultipleTypeLabelAddError))
+        @if (!string.IsNullOrEmpty(_draft.PendingTacheMultipleTypeLabel.Error))
         {
-            <div class="alert alert-danger" role="alert">@_tacheMultipleTypeLabelAddError</div>
+            <div class="alert alert-danger" role="alert">@_draft.PendingTacheMultipleTypeLabel.Error</div>
         }
         <div class="row g-2">
             <div class="col-12 col-md-5">
                 <div class="form-floating">
-                    <input id="tache-multiple-type-label-code-input" class="form-control" @bind="_newTacheMultipleTypeLabelCode"
+                    <input id="tache-multiple-type-label-code-input" class="form-control" @bind="_draft.PendingTacheMultipleTypeLabel.Code" @bind:after="() => MarkPendingRowChanged(_draft.PendingTacheMultipleTypeLabel)"
                            placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodePlaceholder"]" />
                     <label for="tache-multiple-type-label-code-input">@Loc["ImportProfileEditor_TacheMultipleTypeLabelCodeLabel"]</label>
                 </div>
             </div>
             <div class="col-12 col-md-5">
                 <div class="form-floating">
-                    <input id="tache-multiple-type-label-label-input" class="form-control" @bind="_newTacheMultipleTypeLabelLabel"
+                    <input id="tache-multiple-type-label-label-input" class="form-control" @bind="_draft.PendingTacheMultipleTypeLabel.Label" @bind:after="() => MarkPendingRowChanged(_draft.PendingTacheMultipleTypeLabel)"
                            placeholder="@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelPlaceholder"]" />
                     <label for="tache-multiple-type-label-label-input">@Loc["ImportProfileEditor_TacheMultipleTypeLabelLabelLabel"]</label>
                 </div>
             </div>
             <div class="col-12 col-md-2">
-                <button id="add-tache-multiple-type-label-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="AddTacheMultipleTypeLabel">
+                <button id="add-tache-multiple-type-label-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitTacheMultipleTypeLabel(null)">
                     @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddTacheMultipleTypeLabelButton"]
                 </button>
             </div>
@@ -442,60 +446,59 @@ else
 
 <h2 class="h3">@Loc["ImportProfileEditor_SheetRulesHeading"]</h2>
 
-@if (_sheetRules.Count == 0)
+@if (_draft.SheetRules.Count == 0)
 {
     <p>@Loc["ImportProfileEditor_NoSheetRulesYet"]</p>
 }
 else
 {
     <ul class="sheet-rule-list sheet-rule-grid">
-        @for (var i = 0; i < _sheetRules.Count; i++)
+        @for (var i = 0; i < _draft.SheetRules.Count; i++)
         {
             var index = i;
-            var rule = _sheetRules[index];
+            var rule = _draft.SheetRules[index];
             <li class="@(_openSheetRuleForm.EditIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
                 @if (_openSheetRuleForm.EditIndex == index)
                 {
-                    <SheetRuleForm @ref="_editSheetRuleFormRef"
-                                   IdPrefix="@($"edit-{index}-")"
-                                   InitialRule="rule"
+                    <SheetRuleForm IdPrefix="@($"edit-{index}-")"
+                                   Draft="rule"
                                    SubmitButtonId="@($"save-sheet-rule-button-{index}")"
                                    SubmitLabel="@Loc["ImportProfileEditor_ApplySheetRuleButton"]"
                                    ShowCancel="true"
                                    CancelButtonId="@($"cancel-sheet-rule-button-{index}")"
-                                   OnCancel="() => _openSheetRuleForm = SheetRuleFormOpenState.None"
+                                   OnCancel="() => CancelSheetRuleEdit(index)"
                                    OnDirty="MarkAsChanged"
-                                   OnSubmit="(SheetExtractionRule updated) => HandleSaveSheetRule(index, updated)" />
+                                   OnSubmit="() => HandleSheetRuleSubmit(index)" />
                 }
                 else
                 {
                     <div class="sheet-rule-card-header">
                         <h3 class="sheet-rule-card-title h4">@rule.SheetName</h3>
-                        <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.Locator.FirstBlockStartRow, rule.Locator.Step, rule.Locator.StopFieldName]</span>
-                        @if (rule.ZeroEnergieExpectedValue is not null)
+                        <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.FirstBlockStartRow, rule.Step, rule.StopFieldName]</span>
+                        @if (!string.IsNullOrWhiteSpace(rule.ZeroEnergieExpectedValue))
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueSummary", rule.ZeroEnergieExpectedValue]</span>
                         }
-                        @if (rule.DefaultCouleurEtiquette is not null)
+                        @if (!string.IsNullOrWhiteSpace(rule.DefaultCouleurEtiquette))
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteSummary", rule.DefaultCouleurEtiquette]</span>
                         }
-                        @if (rule.CouleurEtiquetteCell is { } couleurEtiquetteCell)
+                        @if (!string.IsNullOrWhiteSpace(rule.CouleurEtiquetteCellRange))
                         {
-                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_CouleurEtiquetteCellSummary", BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, couleurEtiquetteCell.ColumnRange, couleurEtiquetteCell.RowOffsetStart, couleurEtiquetteCell.RowOffsetEnd)]</span>
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_CouleurEtiquetteCellSummary", rule.CouleurEtiquetteCellRange]</span>
                         }
-                        @if (rule.AllowedCouleursEtiquette is not null)
+                        @if (!string.IsNullOrWhiteSpace(rule.AllowedCouleursEtiquette))
                         {
-                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteSummary", string.Join(", ", rule.AllowedCouleursEtiquette)]</span>
+                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteSummary", rule.AllowedCouleursEtiquette]</span>
                         }
                     </div>
                     <ul class="block-field-list block-field-grid">
-                        @foreach (var field in rule.Locator.Fields)
+                        @foreach (var field in rule.Fields)
                         {
                             <li class="block-field-item">
                                 <div class="block-field-info">
                                     <span class="block-field-name">@field.Name</span>
-                                    <span class="block-field-range text-muted font-monospace">@BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd)</span>
+                                    <span class="block-field-range text-muted font-monospace">@field.AbsoluteRange</span>
                                 </div>
                             </li>
                         }
@@ -514,7 +517,7 @@ else
                                     <ul>
                                         @foreach (var colonneName in rule.UnconditionalColonneNames)
                                         {
-                                            <li>@colonneName</li>
+                                            <li>@colonneName.Value</li>
                                         }
                                     </ul>
                                 }
@@ -534,7 +537,7 @@ else
                                     <ul>
                                         @foreach (var fieldPresenceRule in rule.FieldPresencePointRules)
                                         {
-                                            <li>@fieldPresenceRule.ColonneName (@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule, rule.Locator.FirstBlockStartRow))</li>
+                                            <li>@fieldPresenceRule.ColonneName (@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule.AbsoluteRange, fieldPresenceRule.ExpectedValue))</li>
                                         }
                                     </ul>
                                 }
@@ -544,7 +547,7 @@ else
                                     <ul>
                                         @foreach (var headerField in rule.HeaderFields)
                                         {
-                                            <li>@headerField.Name (@headerField.Cell.Range)</li>
+                                            <li>@headerField.Name (@headerField.Range)</li>
                                         }
                                     </ul>
                                 }
@@ -585,13 +588,13 @@ else
                             <button id="@($"modify-sheet-rule-button-{index}")" type="button"
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_ModifyButton"]" title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                    @onclick="() => RequestOpenEditAsync(index)">
+                                    @onclick="() => RequestOpenEdit(index)">
                                 @((MarkupString)AdminIconMarkup.Pencil)
                             </button>
                             <button id="@($"delete-sheet-rule-button-{index}")" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_DeleteButton"]" title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                    @onclick="() => RequestDeleteSheetRuleAsync(index)">
+                                    @onclick="() => RequestDeleteSheetRule(index)">
                                 @((MarkupString)AdminIconMarkup.Trash)
                             </button>
                         </div>
@@ -605,13 +608,12 @@ else
 <!-- Lot 057 (57.1): the card itself is always rendered (the visual anchor "this is where you add
      a sheet" never disappears); only its card-body -- the SheetRuleForm -- is conditional, behind
      a standalone toggle button (not SheetRuleForm's own ShowCancel, which would also change its
-     submit button's icon/color, see the ticket's constat 3). A genuine conditional render (not CSS
-     display:none) so reopening always remounts a fresh, empty SheetRuleForm instance. -->
+     submit button's icon/color, see the ticket's constat 3). -->
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
         <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
-                @onclick="ToggleAddSheetRuleFormAsync">
+                @onclick="ToggleAddSheetRuleForm">
             @if (_openSheetRuleForm.IsAdd)
             {
                 @Loc["ImportProfileEditor_AddSheetToggleCloseButton"]
@@ -625,7 +627,7 @@ else
     <div class="card-body">
         @if (_openSheetRuleForm.IsAdd)
         {
-            <SheetRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+            <SheetRuleForm Draft="_draft.PendingSheetRule" SubmitLabel="@Loc["ImportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="() => HandleSheetRuleSubmit(null)" />
         }
     </div>
 </div>
@@ -654,50 +656,26 @@ else
     [Parameter]
     public Guid? Id { get; set; }
 
-    private string _name = string.Empty;
-    private string _reperePrefix = ImportProfile.DefaultReperePrefix;
-    private string _equipementTypeElementNom = string.Empty;
+    // Lot 075: the one draft of the whole profile (P3). Every input of this page and of its sub-forms
+    // is bound straight into it; saving converts the whole tree (ImportProfileDraftMapper.ToDomain),
+    // whichever form happens to be open.
+    private ImportProfileDraft _draft = new();
     private Guid? _editingId;
     private bool _notFound;
     private string? _profileErrorMessage;
 
-    private readonly List<string> _defaultTableaux = [];
-    private readonly List<string> _defaultApplicationNames = [];
-    private string _newDefaultTableauName = string.Empty;
-    private string _newDefaultApplicationName = string.Empty;
+    private readonly ListItemEditState<StringItemDraft> _tableauEdit = new();
+    private readonly ListItemEditState<StringItemDraft> _applicationEdit = new();
+    private readonly ListItemEditState<TacheMultipleTypeLabelDraft> _labelEdit = new();
 
-    private int? _editingDefaultTableauIndex;
-    private string _editingDefaultTableauValue = string.Empty;
-    private string? _defaultTableauEditError;
-    private string? _defaultTableauAddError;
-
-    private int? _editingDefaultApplicationNameIndex;
-    private string _editingDefaultApplicationNameValue = string.Empty;
-    private string? _defaultApplicationNameEditError;
-    private string? _defaultApplicationNameAddError;
-
-    // Lot 067: real Domain value objects, not raw strings -- mirrors _sheetRules' own convention of
-    // holding the actual Domain type directly in component state.
-    private readonly List<TacheMultipleTypeLabel> _tacheMultipleTypeLabels = [];
-    private string _newTacheMultipleTypeLabelCode = string.Empty;
-    private string _newTacheMultipleTypeLabelLabel = string.Empty;
-    private string? _tacheMultipleTypeLabelAddError;
-
-    private int? _editingTacheMultipleTypeLabelIndex;
-    private string _editingTacheMultipleTypeLabelCode = string.Empty;
-    private string _editingTacheMultipleTypeLabelLabel = string.Empty;
-    private string? _tacheMultipleTypeLabelEditError;
-
-    private readonly List<SheetExtractionRule> _sheetRules = [];
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
-    // Lot 057 (57.2): the single open-form state -- replaces the pre-057 pair of independent
-    // fields (56.2's _editingIndex, 57.1's own add-open bool), whose combination could otherwise
-    // silently contradict itself (e.g. both "editing index 2" and "add form open" true at once).
-    // Exactly one of the three states holds at any time: none, add, or edit of a specific index --
-    // enforced at the type level (only None/Add/Edit(n) can ever be constructed), not by two
-    // mutable fields a caller could set independently.
+    // Taken when a sheet rule is opened for editing, restored on Cancel.
+    private SheetExtractionRuleDraft? _sheetRuleEditSnapshot;
+
+    // Lot 057 (57.2): the single open-form state -- exactly one of none, add, or edit of a specific
+    // index, enforced at the type level.
     private readonly record struct SheetRuleFormOpenState(bool IsAdd, int? EditIndex)
     {
         public static readonly SheetRuleFormOpenState None = new(false, null);
@@ -712,20 +690,23 @@ else
     // OnInitializedAsync when editing an existing profile (repli par défaut, Simon's 29/07 decision).
     private SheetRuleFormOpenState _openSheetRuleForm = SheetRuleFormOpenState.Add;
 
-    // Lot 056 (56.2): references to the (at most one, since 57.2's mutual exclusion) currently-
-    // rendered sheet-rule-form -- the add-mode instance or the edit-mode instance. "Save profile"
-    // flushes whichever is open before persisting; TryCommitAsync() no-ops for a form that was
-    // never touched.
-    private SheetRuleForm? _addSheetRuleFormRef;
-    private SheetRuleForm? _editSheetRuleFormRef;
-
     // Lot 043: a single global flag, not a per-field diff -- see the ticket's own KISS/YAGNI
-    // rationale. Set by every mutation entry point below, cleared only on a successful save.
+    // rationale. Set by every mutation entry point, cleared only on a successful save.
     private bool _hasUnsavedChanges;
     private bool _showNavigationConfirmation;
     private string? _pendingNavigationTarget;
 
     private void MarkAsChanged() => _hasUnsavedChanges = true;
+
+    // What a pending "Add" row holds is saved with the profile, so typing in it is a change -- but a row
+    // left (or put back) exactly empty is not (Lot 059: a rejected empty add raises no indicator).
+    private void MarkPendingRowChanged<TDraft>(TDraft pending) where TDraft : notnull, new()
+    {
+        if (!DraftJson.IsPristine(pending))
+        {
+            MarkAsChanged();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -744,261 +725,110 @@ else
         }
 
         _editingId = profile.Id;
-        _name = profile.Name;
-        _reperePrefix = profile.ReperePrefix;
-        _equipementTypeElementNom = profile.EquipementTypeElementNom;
-        _defaultTableaux.AddRange(profile.DefaultTableaux);
-        _defaultApplicationNames.AddRange(profile.DefaultApplicationNames);
-        _tacheMultipleTypeLabels.AddRange(profile.TacheMultipleTypeLabels);
-        _sheetRules.AddRange(profile.SheetRules);
+        _draft = ImportProfileDraftMapper.FromDomain(profile);
     }
 
     private void BackToList() => NavigationManager.NavigateTo("import-profiles");
 
-    private void AddDefaultTableau()
-    {
-        try
-        {
-            ImportProfile.ValidateDefaultTableauName(_newDefaultTableauName, _defaultTableaux);
-        }
-        catch (DomainValidationException ex)
-        {
-            _defaultTableauAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
-        }
+    private string Localize(Exception exception) =>
+        exception is DraftValidationException validation
+            ? Loc[validation.ResourceKey]
+            : BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
 
-        _defaultTableaux.Add(_newDefaultTableauName.Trim());
-        _newDefaultTableauName = string.Empty;
-        _defaultTableauAddError = null;
+    private void Delete<TDraft>(List<TDraft> list, int index, ListItemEditState<TDraft> edit) where TDraft : class
+    {
+        DraftListActions.Delete(list, index, edit);
         MarkAsChanged();
     }
 
-    private void AddDefaultApplicationName()
+    // Root lists: an item is validated against the other items of its own list (duplicates, Lot 059/067).
+    private void SubmitDefaultTableau(int? index)
     {
-        try
+        var list = _draft.DefaultTableaux;
+        if (DraftListActions.Submit(list, index, _draft.PendingDefaultTableau, p => _draft.PendingDefaultTableau = p, _tableauEdit,
+                d => ImportProfileDraftMapper.ConvertDefaultTableau(d, list.Where(o => !ReferenceEquals(o, d))), Localize))
         {
-            ImportProfile.ValidateDefaultApplicationName(_newDefaultApplicationName, _defaultApplicationNames);
+            MarkAsChanged();
         }
-        catch (DomainValidationException ex)
-        {
-            _defaultApplicationNameAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
-        }
-
-        _defaultApplicationNames.Add(_newDefaultApplicationName.Trim());
-        _newDefaultApplicationName = string.Empty;
-        _defaultApplicationNameAddError = null;
-        MarkAsChanged();
     }
 
-    private void StartDefaultTableauEdit(int itemIndex)
+    private void SubmitDefaultApplicationName(int? index)
     {
-        _editingDefaultTableauIndex = itemIndex;
-        _editingDefaultTableauValue = _defaultTableaux[itemIndex];
-        _defaultTableauEditError = null;
-    }
-
-    private void SaveDefaultTableauEdit(int itemIndex)
-    {
-        // Excludes the item under edit from the comparison list -- otherwise renaming "zzz" to
-        // "zzz" (a no-op) would reject itself as a duplicate of its own prior value.
-        var otherTableaux = _defaultTableaux.Where((_, i) => i != itemIndex).ToList();
-
-        try
+        var list = _draft.DefaultApplicationNames;
+        if (DraftListActions.Submit(list, index, _draft.PendingDefaultApplicationName, p => _draft.PendingDefaultApplicationName = p, _applicationEdit,
+                d => ImportProfileDraftMapper.ConvertDefaultApplicationName(d, list.Where(o => !ReferenceEquals(o, d))), Localize))
         {
-            ImportProfile.ValidateDefaultTableauName(_editingDefaultTableauValue, otherTableaux);
+            MarkAsChanged();
         }
-        catch (DomainValidationException ex)
+    }
+
+    private void SubmitTacheMultipleTypeLabel(int? index)
+    {
+        var list = _draft.TacheMultipleTypeLabels;
+        if (DraftListActions.Submit(list, index, _draft.PendingTacheMultipleTypeLabel, p => _draft.PendingTacheMultipleTypeLabel = p, _labelEdit,
+                d => ImportProfileDraftMapper.ConvertTacheMultipleTypeLabel(d, list.Where(o => !ReferenceEquals(o, d))), Localize))
         {
-            _defaultTableauEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
+            MarkAsChanged();
         }
-
-        _defaultTableaux[itemIndex] = _editingDefaultTableauValue.Trim();
-        _editingDefaultTableauIndex = null;
-        _defaultTableauEditError = null;
-        MarkAsChanged();
     }
 
-    private void CancelDefaultTableauEdit()
+    // Lot 057 (57.2): the one place that closes whichever sheet-rule form is currently open, validating
+    // it first through the mapper. Returns false, leaving the form open with its errors shown, when the
+    // rule doesn't convert -- callers must not open another form (or a delete confirmation) then. A
+    // pristine pending "Add" rule is a no-op; a non-pristine valid one is added to the list.
+    private bool TryValidateOpenForm()
     {
-        _editingDefaultTableauIndex = null;
-        _defaultTableauEditError = null;
-    }
-
-    private void DeleteDefaultTableau(int itemIndex)
-    {
-        _defaultTableaux.RemoveAt(itemIndex);
-        if (_editingDefaultTableauIndex == itemIndex)
+        var ruleDraft = _openSheetRuleForm.EditIndex is { } index
+            ? _draft.SheetRules[index]
+            : _openSheetRuleForm.IsAdd && !DraftJson.IsPristine(_draft.PendingSheetRule) ? _draft.PendingSheetRule : null;
+        if (ruleDraft is null)
         {
-            _editingDefaultTableauIndex = null;
-        }
-        MarkAsChanged();
-    }
-
-    private void StartDefaultApplicationNameEdit(int itemIndex)
-    {
-        _editingDefaultApplicationNameIndex = itemIndex;
-        _editingDefaultApplicationNameValue = _defaultApplicationNames[itemIndex];
-        _defaultApplicationNameEditError = null;
-    }
-
-    private void SaveDefaultApplicationNameEdit(int itemIndex)
-    {
-        var otherApplicationNames = _defaultApplicationNames.Where((_, i) => i != itemIndex).ToList();
-
-        try
-        {
-            ImportProfile.ValidateDefaultApplicationName(_editingDefaultApplicationNameValue, otherApplicationNames);
-        }
-        catch (DomainValidationException ex)
-        {
-            _defaultApplicationNameEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
+            return true;
         }
 
-        _defaultApplicationNames[itemIndex] = _editingDefaultApplicationNameValue.Trim();
-        _editingDefaultApplicationNameIndex = null;
-        _defaultApplicationNameEditError = null;
-        MarkAsChanged();
-    }
-
-    private void CancelDefaultApplicationNameEdit()
-    {
-        _editingDefaultApplicationNameIndex = null;
-        _defaultApplicationNameEditError = null;
-    }
-
-    private void DeleteDefaultApplicationName(int itemIndex)
-    {
-        _defaultApplicationNames.RemoveAt(itemIndex);
-        if (_editingDefaultApplicationNameIndex == itemIndex)
+        DraftListActions.ClearErrors(ruleDraft);
+        var result = ImportProfileDraftMapper.ConvertSheetRule(ruleDraft);
+        if (!result.IsSuccess)
         {
-            _editingDefaultApplicationNameIndex = null;
-        }
-        MarkAsChanged();
-    }
-
-    // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md), 67.5:
-    // same add/edit/delete shape as Tableaux/Applications above, but each candidate is built via
-    // TacheMultipleTypeLabel's own constructor first (catches empty/too-long Code or Label) before
-    // ImportProfile.ValidateTacheMultipleTypeLabelCode checks for a duplicate Code against the rest
-    // of the list -- the same two-stage validation split the constructor itself uses.
-    private void AddTacheMultipleTypeLabel()
-    {
-        TacheMultipleTypeLabel candidate;
-        try
-        {
-            candidate = new TacheMultipleTypeLabel(_newTacheMultipleTypeLabelCode, _newTacheMultipleTypeLabelLabel);
-            ImportProfile.ValidateTacheMultipleTypeLabelCode(candidate, _tacheMultipleTypeLabels);
-        }
-        catch (DomainValidationException ex)
-        {
-            _tacheMultipleTypeLabelAddError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
+            DraftListActions.ApplyErrors(result.Errors, Localize);
+            return false;
         }
 
-        _tacheMultipleTypeLabels.Add(candidate);
-        _newTacheMultipleTypeLabelCode = string.Empty;
-        _newTacheMultipleTypeLabelLabel = string.Empty;
-        _tacheMultipleTypeLabelAddError = null;
-        MarkAsChanged();
-    }
-
-    private void StartTacheMultipleTypeLabelEdit(int itemIndex)
-    {
-        _editingTacheMultipleTypeLabelIndex = itemIndex;
-        _editingTacheMultipleTypeLabelCode = _tacheMultipleTypeLabels[itemIndex].Code;
-        _editingTacheMultipleTypeLabelLabel = _tacheMultipleTypeLabels[itemIndex].Label;
-        _tacheMultipleTypeLabelEditError = null;
-    }
-
-    private void SaveTacheMultipleTypeLabelEdit(int itemIndex)
-    {
-        // Excludes the item under edit from the comparison list -- otherwise renaming a Code to its
-        // own unchanged value would reject itself as a duplicate of its own prior value.
-        var otherLabels = _tacheMultipleTypeLabels.Where((_, i) => i != itemIndex).ToList();
-
-        TacheMultipleTypeLabel candidate;
-        try
+        if (ReferenceEquals(ruleDraft, _draft.PendingSheetRule))
         {
-            candidate = new TacheMultipleTypeLabel(_editingTacheMultipleTypeLabelCode, _editingTacheMultipleTypeLabelLabel);
-            ImportProfile.ValidateTacheMultipleTypeLabelCode(candidate, otherLabels);
-        }
-        catch (DomainValidationException ex)
-        {
-            _tacheMultipleTypeLabelEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return;
-        }
-
-        _tacheMultipleTypeLabels[itemIndex] = candidate;
-        _editingTacheMultipleTypeLabelIndex = null;
-        _tacheMultipleTypeLabelEditError = null;
-        MarkAsChanged();
-    }
-
-    private void CancelTacheMultipleTypeLabelEdit()
-    {
-        _editingTacheMultipleTypeLabelIndex = null;
-        _tacheMultipleTypeLabelEditError = null;
-    }
-
-    private void DeleteTacheMultipleTypeLabel(int itemIndex)
-    {
-        _tacheMultipleTypeLabels.RemoveAt(itemIndex);
-        if (_editingTacheMultipleTypeLabelIndex == itemIndex)
-        {
-            _editingTacheMultipleTypeLabelIndex = null;
-        }
-        MarkAsChanged();
-    }
-
-    // Lot 057 (57.2): the one place that closes whichever sheet-rule form is currently open,
-    // trying to commit it first via TryCommitAsync() (the single validation path from 56.2 -- this
-    // lot reuses it as-is, per its own inter-lot contract). Returns false, leaving the form open
-    // with its own alert, when the commit fails -- callers must not proceed to open a different
-    // form (or a delete confirmation) in that case. A no-op (true) when nothing is open, or when
-    // the open form was never touched (TryCommitAsync's own "blank form" short-circuit).
-    private async Task<bool> TryCloseOpenFormAsync()
-    {
-        if (_openSheetRuleForm.EditIndex is not null && _editSheetRuleFormRef is not null)
-        {
-            return await _editSheetRuleFormRef.TryCommitAsync();
-        }
-
-        if (_openSheetRuleForm.IsAdd && _addSheetRuleFormRef is not null)
-        {
-            return await _addSheetRuleFormRef.TryCommitAsync();
+            _draft.SheetRules.Add(ruleDraft);
+            _draft.PendingSheetRule = new SheetExtractionRuleDraft();
         }
 
         return true;
     }
 
     // Opening any form (add or edit) also cancels a pending delete confirmation -- "one thing in
-    // progress at a time" covers that case too (constat 5).
-    private async Task RequestOpenEditAsync(int index)
+    // progress at a time" covers that case too (constat 5 of lot 057).
+    private void RequestOpenEdit(int index)
     {
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateOpenForm())
         {
             return;
         }
 
         _pendingDeleteIndex = null;
+        _sheetRuleEditSnapshot = DraftJson.Clone(_draft.SheetRules[index]);
         _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
     }
 
     // The toggle's "close" state (already open) is an explicit abandon, matching "Cancel"'s own
-    // semantics exactly -- no commit attempt, per the ticket's explicit distinction between an
-    // implicit (flush-then-switch) and an explicit (discard) closure.
-    private async Task ToggleAddSheetRuleFormAsync()
+    // semantics exactly -- no validation, and what was typed is discarded.
+    private void ToggleAddSheetRuleForm()
     {
         if (_openSheetRuleForm.IsAdd)
         {
+            _draft.PendingSheetRule = new SheetExtractionRuleDraft();
             _openSheetRuleForm = SheetRuleFormOpenState.None;
             return;
         }
 
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateOpenForm())
         {
             return;
         }
@@ -1007,11 +837,11 @@ else
         _openSheetRuleForm = SheetRuleFormOpenState.Add;
     }
 
-    // Requesting a delete first tries to close whichever form is open (flushing it) -- the
-    // ticket's own "l'inverse est vrai aussi" requirement.
-    private async Task RequestDeleteSheetRuleAsync(int index)
+    // Requesting a delete first validates whichever form is open -- the ticket's own "l'inverse est
+    // vrai aussi" requirement (lot 057).
+    private void RequestDeleteSheetRule(int index)
     {
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateOpenForm())
         {
             return;
         }
@@ -1019,33 +849,40 @@ else
         _pendingDeleteIndex = index;
     }
 
-    private void HandleAddSheetRule(SheetExtractionRule rule)
+    // SheetRuleForm has already converted the rule successfully before raising OnSubmit.
+    private void HandleSheetRuleSubmit(int? index)
     {
-        _sheetRules.Add(rule);
+        if (index is null)
+        {
+            _draft.SheetRules.Add(_draft.PendingSheetRule);
+            _draft.PendingSheetRule = new SheetExtractionRuleDraft();
+        }
+
+        _sheetRuleEditSnapshot = null;
         _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
-    private void HandleSaveSheetRule(int index, SheetExtractionRule updated)
+    private void CancelSheetRuleEdit(int index)
     {
-        _sheetRules[index] = updated;
+        if (_sheetRuleEditSnapshot is not null)
+        {
+            _draft.SheetRules[index] = _sheetRuleEditSnapshot;
+        }
+
+        _sheetRuleEditSnapshot = null;
         _openSheetRuleForm = SheetRuleFormOpenState.None;
-        MarkAsChanged();
     }
 
     private void ConfirmDeleteSheetRule(int index)
     {
-        DeleteSheetRule(index);
-        _pendingDeleteIndex = null;
-    }
-
-    private void DeleteSheetRule(int index)
-    {
-        _sheetRules.RemoveAt(index);
+        _draft.SheetRules.RemoveAt(index);
         if (_openSheetRuleForm.EditIndex == index)
         {
             _openSheetRuleForm = SheetRuleFormOpenState.None;
         }
+
+        _pendingDeleteIndex = null;
         MarkAsChanged();
     }
 
@@ -1057,9 +894,8 @@ else
         }
     }
 
-    // Lot 056 (56.5): Ctrl+Enter triggers the exact same save path as the CTA click, including the
-    // implicit flush above. Plain Enter never saves -- it's reserved for 56.4's own row-level
-    // validation inside a sub-list.
+    // Lot 056 (56.5): Ctrl+Enter triggers the exact same save path as the CTA click. Plain Enter never
+    // saves -- it's reserved for 56.4's own row-level validation inside a sub-list.
     private async Task OnRootKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
     {
         if (args is { Key: "Enter", CtrlKey: true } && _hasUnsavedChanges)
@@ -1072,32 +908,37 @@ else
     {
         _profileErrorMessage = null;
 
-        if (!await TryCloseOpenFormAsync())
+        // Lot 075: the whole draft tree is converted here, whichever form is open or closed -- a row typed
+        // but never added, or an item edit never confirmed, is saved (or blocks the save) like any other.
+        DraftListActions.ClearErrors(_draft);
+        var result = ImportProfileDraftMapper.ToDomain(_draft);
+        if (!result.IsSuccess)
         {
+            DraftListActions.ApplyErrors(result.Errors, Localize);
+
+            // A failure on the root draft itself (name, prefix, no sheet rule...) shows its own message,
+            // as before this lot; one on a nested item shows the generic banner, the specific message
+            // being displayed next to that item.
+            var rootLevelError = result.Errors.FirstOrDefault(e => ReferenceEquals(e.Draft, _draft));
+            _profileErrorMessage = rootLevelError is not null
+                ? Localize(rootLevelError.Exception)
+                : Loc["ImportProfileEditor_PendingRowInvalidError"];
             return;
         }
 
         try
         {
-            var profile = _editingId.HasValue
-                ? new ImportProfile(
-                    _editingId.Value, _name, _reperePrefix, _equipementTypeElementNom,
-                    _defaultTableaux, _defaultApplicationNames, _sheetRules, _tacheMultipleTypeLabels)
-                : new ImportProfile(
-                    _name, _reperePrefix, _equipementTypeElementNom, _defaultTableaux, _defaultApplicationNames, _sheetRules,
-                    _tacheMultipleTypeLabels);
-
-            await ImportProfileStore.SaveAsync(profile);
+            await ImportProfileStore.SaveAsync(result.Value!);
             _hasUnsavedChanges = false;
             NavigationManager.NavigateTo("import-profiles");
         }
         catch (DomainValidationException ex)
         {
-            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            _profileErrorMessage = Localize(ex);
         }
         catch (ProfileNameAlreadyExistsException ex)
         {
-            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            _profileErrorMessage = Localize(ex);
         }
     }
 
@@ -1130,5 +971,4 @@ else
         _showNavigationConfirmation = false;
         _pendingNavigationTarget = null;
     }
-
 }

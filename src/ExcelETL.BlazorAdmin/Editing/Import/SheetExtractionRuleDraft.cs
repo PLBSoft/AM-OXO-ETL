@@ -40,9 +40,4 @@ public sealed class SheetExtractionRuleDraft : IDraftWithError
 
     [JsonIgnore]
     public string? Error { get; set; }
-
-    // Display-only, never visible in practice (the form closes on success) -- kept only to preserve the
-    // pre-draft SheetRuleForm behavior for CouleurEtiquetteCell, see the lot 075 ticket, constat 7.
-    [JsonIgnore]
-    public string? Warning { get; set; }
 }

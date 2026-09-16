@@ -229,6 +229,8 @@ public static class ImportProfileDraftMapper
             draft.CouleurEtiquetteCellRange = ToAbsoluteRange(startRow, couleurEtiquetteCell);
         }
 
+        var allowedCouleursEtiquette = ParseAllowedCouleursEtiquette(draft.AllowedCouleursEtiquette);
+
         try
         {
             var locator = new RepeatingBlockLocator(draft.SheetName, startRow, draft.Step, draft.StopFieldName, fields);
@@ -241,7 +243,8 @@ public static class ImportProfileDraftMapper
                 fieldPresencePointRules: fieldPresencePointRules,
                 couleurEtiquetteCell: couleurEtiquetteCell,
                 defaultCouleurEtiquette: NullIfBlank(draft.DefaultCouleurEtiquette),
-                allowedCouleursEtiquette: ParseAllowedCouleursEtiquette(draft.AllowedCouleursEtiquette));
+                allowedCouleursEtiquette: allowedCouleursEtiquette);
+            draft.AllowedCouleursEtiquette = allowedCouleursEtiquette is null ? string.Empty : string.Join(", ", allowedCouleursEtiquette);
             return ConversionResult<SheetExtractionRule>.Success(rule);
         }
         catch (Exception ex) when (ex is DomainValidationException or DomainArgumentOutOfRangeException or DomainRuleViolationException)
@@ -284,6 +287,7 @@ public static class ImportProfileDraftMapper
                 draft.CellName ?? DefaultFieldPresenceCellName, parsed.ColumnRange, parsed.RowOffsetStart, parsed.RowOffsetEnd);
             var rule = new FieldPresencePointRule(cell, draft.ColonneName, NullIfBlank(draft.ExpectedValue)?.Trim());
             draft.AbsoluteRange = ToAbsoluteRange(firstBlockStartRow, cell);
+            draft.ExpectedValue = rule.ExpectedValue ?? string.Empty;
             return ConversionResult<FieldPresencePointRule>.Success(rule);
         }
         catch (DomainValidationException ex)

@@ -1,41 +1,41 @@
-@using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Editing.Import
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
-@using ExcelETL.Domain.Extraction.Primitives
-@using ExcelETL.Domain.Extraction.Profile
 
-@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 075 (P3 drafts): a pure leaf -- every value lives in Draft, owned and validated by SheetRuleForm
+   (ImportProfileDraftMapper.ConvertHeaderField). No sheet input: a header field always reads its rule's
+   own sheet (Lot 048 decision 2), applied when the rule is converted. *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-field-name-input")" class="form-control" @bind="_name"
+        <input id="@($"{IdPrefix}header-field-name-input")" class="form-control" @bind="Draft.Name" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_HeaderFieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}header-field-name-input")">@Loc["ImportProfileEditor_HeaderFieldNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-field-range-input")" class="form-control" @bind="_range"
+        <input id="@($"{IdPrefix}header-field-range-input")" class="form-control" @bind="Draft.Range" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_HeaderFieldRangePlaceholder"]" />
         <label for="@($"{IdPrefix}header-field-range-input")">@Loc["ImportProfileEditor_HeaderFieldRangeLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-field-date-format-input")" class="form-control" @bind="_dateFormat"
+        <input id="@($"{IdPrefix}header-field-date-format-input")" class="form-control" @bind="Draft.DateFormat" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_HeaderFieldDateFormatPlaceholder"]" />
         <label for="@($"{IdPrefix}header-field-date-format-input")">@Loc["ImportProfileEditor_HeaderFieldDateFormatLabel"]</label>
     </div>
     <div class="form-text">@Loc["ImportProfileEditor_HeaderFieldDateFormatHint"]</div>
 </div>
 <div class="mb-3 form-check">
-    <input id="@($"{IdPrefix}header-field-strip-prefix-checkbox")" type="checkbox" class="form-check-input" @bind="_stripReperePrefix" />
+    <input id="@($"{IdPrefix}header-field-strip-prefix-checkbox")" type="checkbox" class="form-check-input" @bind="Draft.StripReperePrefix" @bind:after="MarkDirty" />
     <label class="form-check-label" for="@($"{IdPrefix}header-field-strip-prefix-checkbox")">@Loc["ImportProfileEditor_HeaderFieldStripPrefixLabel"]</label>
 </div>
 
@@ -44,7 +44,7 @@
      mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
      btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="() => OnSubmit.InvokeAsync()">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)
@@ -57,7 +57,7 @@
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="() => OnCancel.InvokeAsync()">
             @Loc["ImportProfileEditor_CancelButton"]
         </button>
     }
@@ -67,8 +67,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public HeaderFieldRule? InitialField { get; set; }
+    [Parameter, EditorRequired]
+    public HeaderFieldRuleDraft Draft { get; set; } = new();
 
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-header-field-button";
@@ -86,71 +86,10 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public EventCallback<HeaderFieldRule> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
-    private string _name = string.Empty;
-    private string _range = string.Empty;
-    private string _dateFormat = string.Empty;
-    private bool _stripReperePrefix;
-    private string? _errorMessage;
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
 
-    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized: the
-    // parent gives an edit-mode instance a fresh component identity, so InitialField never changes
-    // underneath an already-initialized instance.
-    protected override void OnInitialized()
-    {
-        if (InitialField is null)
-        {
-            return;
-        }
-
-        _name = InitialField.Name;
-        _range = InitialField.Cell.Range;
-        _dateFormat = InitialField.DateFormat ?? string.Empty;
-        _stripReperePrefix = InitialField.StripReperePrefix;
-    }
-
-    // Public so the parent (SheetRuleForm) can flush this instance before its own commit -- see
-    // BlockFieldForm.TryCommitAsync for why.
-    public async Task<bool> TryCommitAsync()
-    {
-        _errorMessage = null;
-
-        try
-        {
-            // Sheet is a placeholder here -- this component has no locator context of its own (Lot
-            // 048 decision 2). SheetRuleForm always re-derives Cell.Sheet from its own current sheet
-            // name at submission, so what's written here is never actually read by anything.
-            var cell = new DirectCell("__pending__", _range);
-
-            // A date format left blank must become null, not "" -- HeaderFieldRule treats a non-null-
-            // but-blank DateFormat as an error (HeaderFieldRule_BlankDateFormat), which would wrongly
-            // fire just because the user never touched this optional field.
-            var dateFormat = string.IsNullOrWhiteSpace(_dateFormat) ? null : _dateFormat;
-
-            var field = new HeaderFieldRule(_name, cell, _stripReperePrefix, dateFormat);
-
-            await OnSubmit.InvokeAsync(field);
-
-            ResetForm();
-            return true;
-        }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
-        }
-    }
-
-    private async Task Submit() => await TryCommitAsync();
-
-    private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _name = string.Empty;
-        _range = string.Empty;
-        _dateFormat = string.Empty;
-        _stripReperePrefix = false;
-    }
+    private void MarkDirty() => OnDirty.InvokeAsync();
 }

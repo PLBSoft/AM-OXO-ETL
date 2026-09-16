@@ -514,6 +514,9 @@
   <data name="ImportProfileEditor_SaveButtonNoChangesHint" xml:space="preserve">
     <value>Nothing to save yet</value>
   </data>
+  <data name="ImportProfileEditor_PendingRowInvalidError" xml:space="preserve">
+    <value>One of the not-yet-added rows is invalid -- fix it before saving the profile.</value>
+  </data>
   <data name="ImportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Sheet rules</value>
   </data>

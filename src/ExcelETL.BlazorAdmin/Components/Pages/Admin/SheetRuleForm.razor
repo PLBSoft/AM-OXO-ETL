@@ -1,74 +1,79 @@
 @using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Editing
+@using ExcelETL.BlazorAdmin.Editing.Import
 @using ExcelETL.BlazorAdmin.Formatting
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Extraction.Primitives
-@using ExcelETL.Domain.Extraction.Profile
 
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 075 (P3 drafts): every value of this form lives in Draft, owned by ImportProfileEditor. This
+   component binds the rule's own fields, owns the edit state of its six nested lists, and validates
+   through ImportProfileDraftMapper -- there is no local copy of the data left to flush or lose. *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
-@if (!string.IsNullOrEmpty(_warningMessage))
+@* Constat 9 of lot 075: the pending point rule's error has always been shown here, at the top of the form. *@
+@if (!string.IsNullOrEmpty(Draft.PendingPointRule.Error))
 {
-    <div class="alert alert-warning">@_warningMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.PendingPointRule.Error</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="_sheetName" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-name-input")" class="form-control" @bind="Draft.SheetName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_SheetNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-name-input")">@Loc["ImportProfileEditor_SheetNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="_firstBlockStartRow" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-first-block-start-row-input")" type="number" class="form-control" @bind="Draft.FirstBlockStartRow" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_FirstBlockStartRowPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-first-block-start-row-input")">@Loc["ImportProfileEditor_FirstBlockStartRowLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="_step" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-step-input")" type="number" class="form-control" @bind="Draft.Step" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_StepPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-step-input")">@Loc["ImportProfileEditor_StepLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="_stopFieldName" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="Draft.StopFieldName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")" class="form-control" @bind="_zeroEnergieExpectedValue" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")" class="form-control" @bind="Draft.ZeroEnergieExpectedValue" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")" class="form-control" @bind="_defaultCouleurEtiquette" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")" class="form-control" @bind="Draft.DefaultCouleurEtiquette" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_DefaultCouleurEtiquettePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-couleur-etiquette-cell-input")" class="form-control" @bind="_couleurEtiquetteCellRange" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-couleur-etiquette-cell-input")" class="form-control" @bind="Draft.CouleurEtiquetteCellRange" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_CouleurEtiquetteCellPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-couleur-etiquette-cell-input")">@Loc["ImportProfileEditor_CouleurEtiquetteCellLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")" class="form-control" @bind="_allowedCouleursEtiquette" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")" class="form-control" @bind="Draft.AllowedCouleursEtiquette" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_AllowedCouleursEtiquettePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteLabel"]</label>
     </div>
@@ -77,26 +82,25 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_FieldsHeading"]</h3>
-@if (_fields.Count > 0)
+@if (Draft.Fields.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _fields.Count; j++)
+        @for (var j = 0; j < Draft.Fields.Count; j++)
         {
             var fieldIndex = j;
-            var field = _fields[fieldIndex];
-            @if (_editingFieldIndex == fieldIndex)
+            var field = Draft.Fields[fieldIndex];
+            @if (_fieldEdit.IsOpen(fieldIndex))
             {
                 <li class="block-field-item-editing">
-                    <BlockFieldForm @ref="_editingBlockFieldFormRef"
-                                     IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
-                                     InitialField="field"
-                                     FirstBlockStartRow="_firstBlockStartRow"
-                                     SubmitButtonId="@($"{IdPrefix}save-block-field-button-{fieldIndex}")"
-                                     SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                     ShowCancel="true"
-                                     CancelButtonId="@($"{IdPrefix}cancel-block-field-button-{fieldIndex}")"
-                                     OnCancel="() => _editingFieldIndex = null"
-                                     OnSubmit="(BlockFieldDefinition updated) => HandleSaveBlockField(fieldIndex, updated)" />
+                    <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
+                                    Draft="field"
+                                    SubmitButtonId="@($"{IdPrefix}save-block-field-button-{fieldIndex}")"
+                                    SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                    ShowCancel="true"
+                                    CancelButtonId="@($"{IdPrefix}cancel-block-field-button-{fieldIndex}")"
+                                    OnCancel="() => _fieldEdit.Cancel(Draft.Fields)"
+                                    OnDirty="MarkDirty"
+                                    OnSubmit="() => SubmitField(fieldIndex)" />
                 </li>
             }
             else
@@ -104,14 +108,14 @@
                 <li class="block-field-item">
                     <div class="block-field-info">
                         <span class="block-field-name">@field.Name</span>
-                        <span class="block-field-range text-muted font-monospace">@BlockFieldRangeFormatter.ToAbsoluteRange(_firstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd)</span>
+                        <span class="block-field-range text-muted font-monospace">@field.AbsoluteRange</span>
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}modify-block-field-button-{fieldIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingFieldIndex = fieldIndex">
+                                @onclick="() => _fieldEdit.Open(Draft.Fields, fieldIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -121,7 +125,7 @@
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteBlockField(fieldIndex)">
+                                @onclick="() => Delete(Draft.Fields, fieldIndex, _fieldEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -134,40 +138,42 @@
     </ul>
 }
 <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-")"
-                FirstBlockStartRow="_firstBlockStartRow"
+                Draft="Draft.PendingField"
                 SubmitButtonId="@($"{IdPrefix}add-block-field-button")"
                 SubmitLabel="@Loc["ImportProfileEditor_AddFieldButton"]"
-                OnSubmit="AddBlockField" />
+                OnDirty="MarkDirty"
+                OnSubmit="() => SubmitField(null)" />
 </div>
 </div>
 
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_UnconditionalColonnesHeading"]</h3>
-@if (_unconditionalColonneNames.Count > 0)
+@if (Draft.UnconditionalColonneNames.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _unconditionalColonneNames.Count; j++)
+        @for (var j = 0; j < Draft.UnconditionalColonneNames.Count; j++)
         {
             var itemIndex = j;
-            @if (_editingUnconditionalColonneIndex == itemIndex)
+            var colonne = Draft.UnconditionalColonneNames[itemIndex];
+            @if (_unconditionalColonneEdit.IsOpen(itemIndex))
             {
                 <li class="block-field-item-editing">
-                    @if (!string.IsNullOrEmpty(_unconditionalColonneEditError))
+                    @if (!string.IsNullOrEmpty(colonne.Error))
                     {
-                        <div class="alert alert-danger" role="alert">@_unconditionalColonneEditError</div>
+                        <div class="alert alert-danger" role="alert">@colonne.Error</div>
                     }
                     <div class="row g-2 align-items-end">
                         <div class="col">
                             <input id="@($"{IdPrefix}unconditional-colonne-edit-input-{itemIndex}")" class="form-control"
-                                   @bind="_editingUnconditionalColonneValue" />
+                                   @bind="colonne.Value" @bind:after="MarkDirty" />
                         </div>
                         <div class="col-auto block-field-actions">
                             <button id="@($"{IdPrefix}save-unconditional-colonne-button-{itemIndex}")" type="button"
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                     title="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                    @onclick="() => SaveUnconditionalColonneEdit(itemIndex)">
+                                    @onclick="() => SubmitUnconditionalColonne(itemIndex)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
                                 </svg>
@@ -176,7 +182,7 @@
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_CancelButton"]"
                                     title="@Loc["ImportProfileEditor_CancelButton"]"
-                                    @onclick="CancelUnconditionalColonneEdit">
+                                    @onclick="() => _unconditionalColonneEdit.Cancel(Draft.UnconditionalColonneNames)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                                 </svg>
@@ -189,14 +195,14 @@
             {
                 <li class="block-field-item">
                     <div class="block-field-info">
-                        <span class="block-field-name">@_unconditionalColonneNames[itemIndex]</span>
+                        <span class="block-field-name">@colonne.Value</span>
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}edit-unconditional-colonne-button-{itemIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => StartUnconditionalColonneEdit(itemIndex)">
+                                @onclick="() => _unconditionalColonneEdit.Open(Draft.UnconditionalColonneNames, itemIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -206,7 +212,7 @@
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteUnconditionalColonneName(itemIndex)">
+                                @onclick="() => Delete(Draft.UnconditionalColonneNames, itemIndex, _unconditionalColonneEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -220,14 +226,15 @@
 }
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}unconditional-colonne-name-input")" @ref="_unconditionalColonneNameInputRef" class="form-control" @bind="_newUnconditionalColonneName"
+        <input id="@($"{IdPrefix}unconditional-colonne-name-input")" @ref="_unconditionalColonneNameInputRef" class="form-control"
+               @bind="Draft.PendingUnconditionalColonneName.Value" @bind:after="MarkDirty"
                @onkeydown="OnUnconditionalColonneRowKeyDownAsync" @onfocusout="OnUnconditionalColonneRowBlurAsync"
                placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
         <label for="@($"{IdPrefix}unconditional-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
     </div>
 </div>
 <div class="right-aligned-actions">
-    <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="AddUnconditionalColonneName">
+    <button id="@($"{IdPrefix}add-unconditional-colonne-button")" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="AddUnconditionalColonne">
         @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddColonneButton"]
     </button>
 </div>
@@ -237,46 +244,46 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_PointRulesHeading"]</h3>
-@if (_pointRules.Count > 0)
+@if (Draft.PointRules.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _pointRules.Count; j++)
+        @for (var j = 0; j < Draft.PointRules.Count; j++)
         {
             var itemIndex = j;
-            var pointRule = _pointRules[itemIndex];
-            @if (_editingPointRuleIndex == itemIndex)
+            var pointRule = Draft.PointRules[itemIndex];
+            @if (_pointRuleEdit.IsOpen(itemIndex))
             {
                 <li class="block-field-item-editing">
-                    @if (!string.IsNullOrEmpty(_pointRuleEditError))
+                    @if (!string.IsNullOrEmpty(pointRule.Error))
                     {
-                        <div class="alert alert-danger" role="alert">@_pointRuleEditError</div>
+                        <div class="alert alert-danger" role="alert">@pointRule.Error</div>
                     }
                     <div class="row g-2 align-items-end">
                         <div class="col">
                             <input id="@($"{IdPrefix}conditional-point-rule-edit-colonne-name-input-{itemIndex}")" class="form-control"
-                                   @bind="_editingPointRuleColonneName" />
+                                   @bind="pointRule.ColonneName" @bind:after="MarkDirty" />
                         </div>
                         <div class="col">
                             <input id="@($"{IdPrefix}conditional-point-rule-edit-source-field-input-{itemIndex}")" class="form-control"
-                                   @bind="_editingPointRuleSourceFieldName" />
+                                   @bind="pointRule.SourceFieldName" @bind:after="MarkDirty" />
                         </div>
                         <div class="col">
                             <select id="@($"{IdPrefix}conditional-point-rule-edit-operator-select-{itemIndex}")" class="form-select"
-                                    @bind="_editingPointRuleOperator">
+                                    @bind="pointRule.Operator" @bind:after="MarkDirty">
                                 <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
                                 <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
                             </select>
                         </div>
                         <div class="col">
                             <input id="@($"{IdPrefix}conditional-point-rule-edit-comparison-value-input-{itemIndex}")" class="form-control"
-                                   @bind="_editingPointRuleComparisonValue" />
+                                   @bind="pointRule.ComparisonValue" @bind:after="MarkDirty" />
                         </div>
                         <div class="col-auto block-field-actions">
                             <button id="@($"{IdPrefix}save-conditional-point-rule-button-{itemIndex}")" type="button"
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                     title="@Loc["ImportProfileEditor_SaveChangesButton"]"
-                                    @onclick="() => SavePointRuleEdit(itemIndex)">
+                                    @onclick="() => SubmitPointRule(itemIndex)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
                                 </svg>
@@ -285,7 +292,7 @@
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                     aria-label="@Loc["ImportProfileEditor_CancelButton"]"
                                     title="@Loc["ImportProfileEditor_CancelButton"]"
-                                    @onclick="CancelPointRuleEdit">
+                                    @onclick="() => _pointRuleEdit.Cancel(Draft.PointRules)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                     <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                                 </svg>
@@ -306,7 +313,7 @@
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => StartPointRuleEdit(itemIndex)">
+                                @onclick="() => _pointRuleEdit.Open(Draft.PointRules, itemIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -316,7 +323,7 @@
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeletePointRule(itemIndex)">
+                                @onclick="() => Delete(Draft.PointRules, itemIndex, _pointRuleEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -330,21 +337,21 @@
 }
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}point-rule-colonne-name-input")" class="form-control" @bind="_newPointRuleColonneName"
+        <input id="@($"{IdPrefix}point-rule-colonne-name-input")" class="form-control" @bind="Draft.PendingPointRule.ColonneName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
         <label for="@($"{IdPrefix}point-rule-colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-control" @bind="_newPointRuleSourceFieldName"
+        <input id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-control" @bind="Draft.PendingPointRule.SourceFieldName" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_SourceFieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}point-rule-source-field-name-input")">@Loc["ImportProfileEditor_SourceFieldNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="_newPointRuleOperator">
+        <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="Draft.PendingPointRule.Operator" @bind:after="MarkDirty">
             <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
             <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
         </select>
@@ -353,13 +360,13 @@
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="_newPointRuleComparisonValue"
+        <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="Draft.PendingPointRule.ComparisonValue" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
         <label for="@($"{IdPrefix}point-rule-comparison-value-input")">@Loc["ImportProfileEditor_ComparisonValueLabel"]</label>
     </div>
 </div>
 <div class="right-aligned-actions">
-    <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="AddPointRule">
+    <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitPointRule(null)">
         @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddPointRuleButton"]
     </button>
 </div>
@@ -370,26 +377,25 @@
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_FieldPresencePointRulesHeading"]</h3>
 <div class="form-text mb-2">@Loc["ImportProfileEditor_FieldPresencePointRulesHint"]</div>
-@if (_fieldPresencePointRules.Count > 0)
+@if (Draft.FieldPresencePointRules.Count > 0)
 {
     <ul id="@($"{IdPrefix}field-presence-rule-list")" class="block-field-list">
-        @for (var j = 0; j < _fieldPresencePointRules.Count; j++)
+        @for (var j = 0; j < Draft.FieldPresencePointRules.Count; j++)
         {
             var itemIndex = j;
-            var fieldPresenceRule = _fieldPresencePointRules[itemIndex];
-            @if (_editingFieldPresencePointRuleIndex == itemIndex)
+            var fieldPresenceRule = Draft.FieldPresencePointRules[itemIndex];
+            @if (_fieldPresenceEdit.IsOpen(itemIndex))
             {
                 <li class="block-field-item-editing">
-                    <FieldPresencePointRuleForm @ref="_editingFieldPresencePointRuleFormRef"
-                                                IdPrefix="@($"{IdPrefix}field-presence-rule-{itemIndex}-")"
-                                                InitialRule="fieldPresenceRule"
-                                                FirstBlockStartRow="_firstBlockStartRow"
+                    <FieldPresencePointRuleForm IdPrefix="@($"{IdPrefix}field-presence-rule-{itemIndex}-")"
+                                                Draft="fieldPresenceRule"
                                                 SubmitButtonId="@($"{IdPrefix}save-field-presence-rule-button-{itemIndex}")"
                                                 SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                                 ShowCancel="true"
                                                 CancelButtonId="@($"{IdPrefix}cancel-field-presence-rule-button-{itemIndex}")"
-                                                OnCancel="() => _editingFieldPresencePointRuleIndex = null"
-                                                OnSubmit="(FieldPresencePointRule updated) => HandleSaveFieldPresencePointRule(itemIndex, updated)" />
+                                                OnCancel="() => _fieldPresenceEdit.Cancel(Draft.FieldPresencePointRules)"
+                                                OnDirty="MarkDirty"
+                                                OnSubmit="() => SubmitFieldPresencePointRule(itemIndex)" />
                 </li>
             }
             else
@@ -397,21 +403,21 @@
                 <li class="block-field-item">
                     <div class="block-field-info">
                         <span class="block-field-name">@fieldPresenceRule.ColonneName</span>
-                        <span class="block-field-range text-muted font-monospace">@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule, _firstBlockStartRow)</span>
+                        <span class="block-field-range text-muted font-monospace">@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule.AbsoluteRange, fieldPresenceRule.ExpectedValue)</span>
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}modify-field-presence-rule-button-{itemIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingFieldPresencePointRuleIndex = itemIndex">
+                                @onclick="() => _fieldPresenceEdit.Open(Draft.FieldPresencePointRules, itemIndex)">
                             @((MarkupString)AdminIconMarkup.Pencil)
                         </button>
                         <button id="@($"{IdPrefix}delete-field-presence-rule-button-{itemIndex}")" type="button"
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteFieldPresencePointRule(itemIndex)">
+                                @onclick="() => Delete(Draft.FieldPresencePointRules, itemIndex, _fieldPresenceEdit)">
                             @((MarkupString)AdminIconMarkup.Trash)
                         </button>
                     </div>
@@ -421,10 +427,11 @@
     </ul>
 }
 <FieldPresencePointRuleForm IdPrefix="@($"{IdPrefix}field-presence-rule-")"
-                            FirstBlockStartRow="_firstBlockStartRow"
+                            Draft="Draft.PendingFieldPresencePointRule"
                             SubmitButtonId="@($"{IdPrefix}add-field-presence-rule-button")"
                             SubmitLabel="@Loc["ImportProfileEditor_AddFieldPresencePointRuleButton"]"
-                            OnSubmit="AddFieldPresencePointRule" />
+                            OnDirty="MarkDirty"
+                            OnSubmit="() => SubmitFieldPresencePointRule(null)" />
 </div>
 </div>
 
@@ -437,25 +444,25 @@
         @Loc["ImportProfileEditor_WellKnownHeaderNamesMissingWarning", string.Join(", ", missingNames)]
     </div>
 }
-@if (_headerFields.Count > 0)
+@if (Draft.HeaderFields.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _headerFields.Count; j++)
+        @for (var j = 0; j < Draft.HeaderFields.Count; j++)
         {
             var fieldIndex = j;
-            var field = _headerFields[fieldIndex];
-            @if (_editingHeaderFieldIndex == fieldIndex)
+            var field = Draft.HeaderFields[fieldIndex];
+            @if (_headerFieldEdit.IsOpen(fieldIndex))
             {
                 <li class="block-field-item-editing">
-                    <HeaderFieldRuleForm @ref="_editingHeaderFieldFormRef"
-                                         IdPrefix="@($"{IdPrefix}header-field-{fieldIndex}-")"
-                                         InitialField="field"
+                    <HeaderFieldRuleForm IdPrefix="@($"{IdPrefix}header-field-{fieldIndex}-")"
+                                         Draft="field"
                                          SubmitButtonId="@($"{IdPrefix}save-header-field-button-{fieldIndex}")"
                                          SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                          ShowCancel="true"
                                          CancelButtonId="@($"{IdPrefix}cancel-header-field-button-{fieldIndex}")"
-                                         OnCancel="() => _editingHeaderFieldIndex = null"
-                                         OnSubmit="(HeaderFieldRule updated) => HandleSaveHeaderField(fieldIndex, updated)" />
+                                         OnCancel="() => _headerFieldEdit.Cancel(Draft.HeaderFields)"
+                                         OnDirty="MarkDirty"
+                                         OnSubmit="() => SubmitHeaderField(fieldIndex)" />
                 </li>
             }
             else
@@ -470,14 +477,14 @@
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingHeaderFieldIndex = fieldIndex">
+                                @onclick="() => _headerFieldEdit.Open(Draft.HeaderFields, fieldIndex)">
                             @((MarkupString)AdminIconMarkup.Pencil)
                         </button>
                         <button id="@($"{IdPrefix}delete-header-field-button-{fieldIndex}")" type="button"
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteHeaderField(fieldIndex)">
+                                @onclick="() => Delete(Draft.HeaderFields, fieldIndex, _headerFieldEdit)">
                             @((MarkupString)AdminIconMarkup.Trash)
                         </button>
                     </div>
@@ -487,34 +494,36 @@
     </ul>
 }
 <HeaderFieldRuleForm IdPrefix="@($"{IdPrefix}header-field-")"
+                     Draft="Draft.PendingHeaderField"
                      SubmitButtonId="@($"{IdPrefix}add-header-field-button")"
                      SubmitLabel="@Loc["ImportProfileEditor_AddHeaderFieldButton"]"
-                     OnSubmit="AddHeaderField" />
+                     OnDirty="MarkDirty"
+                     OnSubmit="() => SubmitHeaderField(null)" />
 </div>
 </div>
 
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_HeaderCompositesHeading"]</h3>
-@if (_headerComposites.Count > 0)
+@if (Draft.HeaderComposites.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _headerComposites.Count; j++)
+        @for (var j = 0; j < Draft.HeaderComposites.Count; j++)
         {
             var itemIndex = j;
-            var composite = _headerComposites[itemIndex];
-            @if (_editingHeaderCompositeIndex == itemIndex)
+            var composite = Draft.HeaderComposites[itemIndex];
+            @if (_headerCompositeEdit.IsOpen(itemIndex))
             {
                 <li class="block-field-item-editing">
-                    <HeaderCompositeRuleForm @ref="_editingHeaderCompositeFormRef"
-                                             IdPrefix="@($"{IdPrefix}header-composite-{itemIndex}-")"
-                                             InitialComposite="composite"
+                    <HeaderCompositeRuleForm IdPrefix="@($"{IdPrefix}header-composite-{itemIndex}-")"
+                                             Draft="composite"
                                              SubmitButtonId="@($"{IdPrefix}save-header-composite-button-{itemIndex}")"
                                              SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
                                              ShowCancel="true"
                                              CancelButtonId="@($"{IdPrefix}cancel-header-composite-button-{itemIndex}")"
-                                             OnCancel="() => _editingHeaderCompositeIndex = null"
-                                             OnSubmit="(HeaderCompositeRule updated) => HandleSaveHeaderComposite(itemIndex, updated)" />
+                                             OnCancel="() => _headerCompositeEdit.Cancel(Draft.HeaderComposites)"
+                                             OnDirty="MarkDirty"
+                                             OnSubmit="() => SubmitHeaderComposite(itemIndex)" />
                 </li>
             }
             else
@@ -529,14 +538,14 @@
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
                                 title="@Loc["ImportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingHeaderCompositeIndex = itemIndex">
+                                @onclick="() => _headerCompositeEdit.Open(Draft.HeaderComposites, itemIndex)">
                             @((MarkupString)AdminIconMarkup.Pencil)
                         </button>
                         <button id="@($"{IdPrefix}delete-header-composite-button-{itemIndex}")" type="button"
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
                                 title="@Loc["ImportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteHeaderComposite(itemIndex)">
+                                @onclick="() => Delete(Draft.HeaderComposites, itemIndex, _headerCompositeEdit)">
                             @((MarkupString)AdminIconMarkup.Trash)
                         </button>
                     </div>
@@ -546,9 +555,11 @@
     </ul>
 }
 <HeaderCompositeRuleForm IdPrefix="@($"{IdPrefix}header-composite-")"
+                         Draft="Draft.PendingHeaderComposite"
                          SubmitButtonId="@($"{IdPrefix}add-header-composite-button")"
                          SubmitLabel="@Loc["ImportProfileEditor_AddHeaderCompositeButton"]"
-                         OnSubmit="AddHeaderComposite" />
+                         OnDirty="MarkDirty"
+                         OnSubmit="() => SubmitHeaderComposite(null)" />
 </div>
 </div>
 
@@ -571,7 +582,7 @@
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="() => OnCancel.InvokeAsync()">
             @Loc["ImportProfileEditor_CancelButton"]
         </button>
     }
@@ -581,8 +592,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public SheetExtractionRule? InitialRule { get; set; }
+    [Parameter, EditorRequired]
+    public SheetExtractionRuleDraft Draft { get; set; } = new();
 
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-sheet-rule-button";
@@ -599,342 +610,148 @@
     [Parameter]
     public EventCallback OnCancel { get; set; }
 
+    // Raised only once the whole rule converts successfully; the owner knows whether Draft is an
+    // already-added rule or its pending "Add" row, and updates its own state accordingly.
     [Parameter]
-    public EventCallback<SheetExtractionRule> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
-    // Lot 056 (56.3): raised on every mutation of this form's own state (root locator fields plus
-    // every add/modify/delete on its four nested sub-lists) so the root editor's "unsaved changes"
-    // indicator/NavigationLock guard also covers in-progress edits, not just committed ones.
+    // Lot 056 (56.3): raised on every mutation of this form's state so the root editor's "unsaved
+    // changes" guard covers in-progress edits too.
     [Parameter]
     public EventCallback OnDirty { get; set; }
 
+    // One edit state per nested list: which item is open and its value when opened, for Cancel.
+    private readonly ListItemEditState<BlockFieldDefinitionDraft> _fieldEdit = new();
+    private readonly ListItemEditState<StringItemDraft> _unconditionalColonneEdit = new();
+    private readonly ListItemEditState<ConditionalPointRuleDraft> _pointRuleEdit = new();
+    private readonly ListItemEditState<FieldPresencePointRuleDraft> _fieldPresenceEdit = new();
+    private readonly ListItemEditState<HeaderFieldRuleDraft> _headerFieldEdit = new();
+    private readonly ListItemEditState<HeaderCompositeRuleDraft> _headerCompositeEdit = new();
+
+    private ElementReference _unconditionalColonneNameInputRef;
+
     private void MarkDirty() => OnDirty.InvokeAsync();
 
-    private string _sheetName = string.Empty;
-    private int _firstBlockStartRow;
-    private int _step;
-    private string _stopFieldName = string.Empty;
-    private string _zeroEnergieExpectedValue = string.Empty;
-    private string _defaultCouleurEtiquette = string.Empty;
-    private string _couleurEtiquetteCellRange = string.Empty;
-    private string _allowedCouleursEtiquette = string.Empty;
-    private readonly List<BlockFieldDefinition> _fields = [];
-    private readonly List<string> _unconditionalColonneNames = [];
-    private readonly List<ConditionalPointRule> _pointRules = [];
-    private readonly List<HeaderFieldRule> _headerFields = [];
-    private readonly List<HeaderCompositeRule> _headerComposites = [];
-    // Must be hydrated from InitialRule and passed back on commit: rebuilding the SheetExtractionRule
-    // without them silently deleted PLATINES' RECEPTION DEBUT MAD/REL rules (client-reported
-    // 2026-09-16, same class of data-loss bug as Lot 048.1). Fully editable since the same day.
-    private readonly List<FieldPresencePointRule> _fieldPresencePointRules = [];
-    private int? _editingFieldPresencePointRuleIndex;
+    private string Localize(Exception exception) =>
+        exception is DraftValidationException validation
+            ? Loc[validation.ResourceKey]
+            : BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
 
-    private int? _editingFieldIndex;
-
-    // Bound only while the matching index above is non-null (the corresponding @if branch renders
-    // the component) -- used to flush an in-progress nested edit before this form's own commit, so a
-    // typed-but-not-yet-"Enregistrer les modifications" change is never silently discarded (the real
-    // incident described just above: PLATINES columns retained their old header text after the admin
-    // renamed them, because the nested edit was never actually flushed into this form's own state).
-    private BlockFieldForm? _editingBlockFieldFormRef;
-    private HeaderFieldRuleForm? _editingHeaderFieldFormRef;
-    private HeaderCompositeRuleForm? _editingHeaderCompositeFormRef;
-    private FieldPresencePointRuleForm? _editingFieldPresencePointRuleFormRef;
-
-    private string _newUnconditionalColonneName = string.Empty;
-    private ElementReference _unconditionalColonneNameInputRef;
-    private string _newPointRuleColonneName = string.Empty;
-    private string _newPointRuleSourceFieldName = string.Empty;
-    private ConditionOperator _newPointRuleOperator = ConditionOperator.Equals;
-    private string _newPointRuleComparisonValue = string.Empty;
-
-    private int? _editingUnconditionalColonneIndex;
-    private string _editingUnconditionalColonneValue = string.Empty;
-    private string? _unconditionalColonneEditError;
-
-    private int? _editingPointRuleIndex;
-    private string _editingPointRuleColonneName = string.Empty;
-    private string _editingPointRuleSourceFieldName = string.Empty;
-    private ConditionOperator _editingPointRuleOperator = ConditionOperator.Equals;
-    private string _editingPointRuleComparisonValue = string.Empty;
-    private string? _pointRuleEditError;
-
-    private int? _editingHeaderFieldIndex;
-    private int? _editingHeaderCompositeIndex;
-
-    private string? _errorMessage;
-    private string? _warningMessage;
-
-    // The stored BlockFieldDefinition.Name for CouleurEtiquetteCell has no lookup role anywhere
-    // (unlike HeaderFieldRule.Name/PointRule.ColonneName) -- DefaultProfileSeeder always uses this
-    // exact literal, so the UI doesn't expose a "name" input for it at all, just the absolute range.
-    private const string CouleurEtiquetteCellName = "CouleurEtiquette";
-
-    // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
-    // component identity (conditionally rendered inside an @if, not a persistently bound one), so
-    // InitialRule never changes underneath an already-initialized instance.
-    protected override void OnInitialized()
+    private void Delete<TDraft>(List<TDraft> list, int index, ListItemEditState<TDraft> edit) where TDraft : class
     {
-        if (InitialRule is null)
+        DraftListActions.Delete(list, index, edit);
+        MarkDirty();
+    }
+
+    private void SubmitField(int? index)
+    {
+        Draft.PendingField.Warning = null;
+        var target = index is { } i ? Draft.Fields[i] : Draft.PendingField;
+        if (!DraftListActions.Submit(Draft.Fields, index, Draft.PendingField, p => Draft.PendingField = p, _fieldEdit,
+                d => ImportProfileDraftMapper.ConvertField(d, Draft.FirstBlockStartRow), Localize))
         {
             return;
         }
 
-        _sheetName = InitialRule.SheetName;
-        _firstBlockStartRow = InitialRule.Locator.FirstBlockStartRow;
-        _step = InitialRule.Locator.Step;
-        _stopFieldName = InitialRule.Locator.StopFieldName;
-        _zeroEnergieExpectedValue = InitialRule.ZeroEnergieExpectedValue ?? string.Empty;
-        _defaultCouleurEtiquette = InitialRule.DefaultCouleurEtiquette ?? string.Empty;
-        _couleurEtiquetteCellRange = InitialRule.CouleurEtiquetteCell is null
-            ? string.Empty
-            : BlockFieldRangeFormatter.ToAbsoluteRange(
-                _firstBlockStartRow, InitialRule.CouleurEtiquetteCell.ColumnRange,
-                InitialRule.CouleurEtiquetteCell.RowOffsetStart, InitialRule.CouleurEtiquetteCell.RowOffsetEnd);
-        _allowedCouleursEtiquette = InitialRule.AllowedCouleursEtiquette is null
-            ? string.Empty
-            : string.Join(", ", InitialRule.AllowedCouleursEtiquette);
-        _fields.AddRange(InitialRule.Locator.Fields);
-        _unconditionalColonneNames.AddRange(InitialRule.UnconditionalColonneNames);
-        _pointRules.AddRange(InitialRule.PointRules);
-        _headerFields.AddRange(InitialRule.HeaderFields);
-        _headerComposites.AddRange(InitialRule.HeaderComposites);
-        _fieldPresencePointRules.AddRange(InitialRule.FieldPresencePointRules);
-    }
-
-    private void AddBlockField(BlockFieldDefinition field)
-    {
-        _fields.Add(field);
-        MarkDirty();
-    }
-
-    private void HandleSaveBlockField(int fieldIndex, BlockFieldDefinition updated)
-    {
-        _fields[fieldIndex] = updated;
-        _editingFieldIndex = null;
-        MarkDirty();
-    }
-
-    private void DeleteBlockField(int fieldIndex)
-    {
-        _fields.RemoveAt(fieldIndex);
-        if (_editingFieldIndex == fieldIndex)
+        if (index is null && IsBeyondPracticalRange(target.AbsoluteRange))
         {
-            _editingFieldIndex = null;
-        }
-        MarkDirty();
-    }
-
-    private void AddUnconditionalColonneName()
-    {
-        if (string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
-        {
-            return;
+            Draft.PendingField.Warning = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
         }
 
-        _unconditionalColonneNames.Add(_newUnconditionalColonneName);
-        _newUnconditionalColonneName = string.Empty;
         MarkDirty();
     }
 
-    // Lot 056 (56.4): a single-field row's "all fields filled" check is just the field itself --
-    // AddUnconditionalColonneName() already no-ops silently on a blank value. Focus is only stolen
-    // back to the field when something was actually added -- otherwise a blank-field blur (e.g. the
-    // user tabbing/clicking away to a different button entirely) would fight that click by
-    // re-focusing this field out from under it.
+    // The Add button ignores a blank Colonne name silently (no error), as it always has; an existing
+    // one cleared in place is an error, reported by the conversion.
+    private void AddUnconditionalColonne()
+    {
+        if (!string.IsNullOrWhiteSpace(Draft.PendingUnconditionalColonneName.Value))
+        {
+            SubmitUnconditionalColonne(null);
+        }
+    }
+
+    private void SubmitUnconditionalColonne(int? index)
+    {
+        if (DraftListActions.Submit(Draft.UnconditionalColonneNames, index, Draft.PendingUnconditionalColonneName,
+                p => Draft.PendingUnconditionalColonneName = p, _unconditionalColonneEdit,
+                ImportProfileDraftMapper.ConvertUnconditionalColonneName, Localize))
+        {
+            MarkDirty();
+        }
+    }
+
+    // Lot 056 (56.4): a single-field row. Focus is only returned to the field when something was
+    // actually added -- a blank-field blur (the user tabbing/clicking elsewhere) must not steal focus.
     private async Task OnUnconditionalColonneRowBlurAsync()
     {
-        if (string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        if (string.IsNullOrWhiteSpace(Draft.PendingUnconditionalColonneName.Value))
         {
             return;
         }
 
-        AddUnconditionalColonneName();
+        AddUnconditionalColonne();
         await _unconditionalColonneNameInputRef.FocusAsync();
     }
 
     private async Task OnUnconditionalColonneRowKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
     {
-        if (args.Key == "Enter" && !string.IsNullOrWhiteSpace(_newUnconditionalColonneName))
+        if (args.Key == "Enter")
         {
-            AddUnconditionalColonneName();
-            await _unconditionalColonneNameInputRef.FocusAsync();
+            await OnUnconditionalColonneRowBlurAsync();
         }
     }
 
-    private void StartUnconditionalColonneEdit(int itemIndex)
+    private void SubmitPointRule(int? index)
     {
-        _editingUnconditionalColonneIndex = itemIndex;
-        _editingUnconditionalColonneValue = _unconditionalColonneNames[itemIndex];
-        _unconditionalColonneEditError = null;
+        if (DraftListActions.Submit(Draft.PointRules, index, Draft.PendingPointRule, p => Draft.PendingPointRule = p, _pointRuleEdit,
+                ImportProfileDraftMapper.ConvertPointRule, Localize))
+        {
+            MarkDirty();
+        }
     }
 
-    private void SaveUnconditionalColonneEdit(int itemIndex)
+    private void SubmitFieldPresencePointRule(int? index)
     {
-        if (string.IsNullOrWhiteSpace(_editingUnconditionalColonneValue))
+        Draft.PendingFieldPresencePointRule.Warning = null;
+        var target = index is { } i ? Draft.FieldPresencePointRules[i] : Draft.PendingFieldPresencePointRule;
+        if (!DraftListActions.Submit(Draft.FieldPresencePointRules, index, Draft.PendingFieldPresencePointRule,
+                p => Draft.PendingFieldPresencePointRule = p, _fieldPresenceEdit,
+                d => ImportProfileDraftMapper.ConvertFieldPresencePointRule(d, Draft.FirstBlockStartRow), Localize))
         {
-            _unconditionalColonneEditError = Loc["ImportProfileEditor_EmptyColonneNameError"];
             return;
         }
 
-        _unconditionalColonneNames[itemIndex] = _editingUnconditionalColonneValue;
-        _editingUnconditionalColonneIndex = null;
-        _unconditionalColonneEditError = null;
-        MarkDirty();
-    }
-
-    private void CancelUnconditionalColonneEdit()
-    {
-        _editingUnconditionalColonneIndex = null;
-        _unconditionalColonneEditError = null;
-    }
-
-    private void DeleteUnconditionalColonneName(int itemIndex)
-    {
-        _unconditionalColonneNames.RemoveAt(itemIndex);
-        if (_editingUnconditionalColonneIndex == itemIndex)
+        if (index is null && IsBeyondPracticalRange(target.AbsoluteRange))
         {
-            _editingUnconditionalColonneIndex = null;
+            Draft.PendingFieldPresencePointRule.Warning = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
         }
+
         MarkDirty();
     }
 
-    private void AddPointRule()
+    private void SubmitHeaderField(int? index)
     {
-        _errorMessage = null;
-
-        try
+        if (DraftListActions.Submit(Draft.HeaderFields, index, Draft.PendingHeaderField, p => Draft.PendingHeaderField = p, _headerFieldEdit,
+                ImportProfileDraftMapper.ConvertHeaderField, Localize))
         {
-            _pointRules.Add(new ConditionalPointRule(
-                _newPointRuleSourceFieldName, _newPointRuleOperator, _newPointRuleComparisonValue, _newPointRuleColonneName));
-            _newPointRuleColonneName = string.Empty;
-            _newPointRuleSourceFieldName = string.Empty;
-            _newPointRuleOperator = ConditionOperator.Equals;
-            _newPointRuleComparisonValue = string.Empty;
             MarkDirty();
         }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-        }
     }
 
-    private void StartPointRuleEdit(int itemIndex)
+    private void SubmitHeaderComposite(int? index)
     {
-        var rule = _pointRules[itemIndex];
-        _editingPointRuleIndex = itemIndex;
-        _editingPointRuleColonneName = rule.ColonneName;
-        _editingPointRuleSourceFieldName = rule.SourceFieldName;
-        _editingPointRuleOperator = rule.Operator;
-        _editingPointRuleComparisonValue = rule.ComparisonValue;
-        _pointRuleEditError = null;
-    }
-
-    private void SavePointRuleEdit(int itemIndex)
-    {
-        _pointRuleEditError = null;
-
-        try
+        if (DraftListActions.Submit(Draft.HeaderComposites, index, Draft.PendingHeaderComposite, p => Draft.PendingHeaderComposite = p,
+                _headerCompositeEdit, ImportProfileDraftMapper.ConvertHeaderComposite, Localize))
         {
-            _pointRules[itemIndex] = new ConditionalPointRule(
-                _editingPointRuleSourceFieldName, _editingPointRuleOperator, _editingPointRuleComparisonValue, _editingPointRuleColonneName);
-            _editingPointRuleIndex = null;
             MarkDirty();
         }
-        catch (DomainValidationException ex)
-        {
-            _pointRuleEditError = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-        }
     }
 
-    private void CancelPointRuleEdit()
-    {
-        _editingPointRuleIndex = null;
-        _pointRuleEditError = null;
-    }
+    private bool IsBeyondPracticalRange(string absoluteRange) =>
+        BlockFieldRangeFormatter.FromAbsoluteRange(absoluteRange, Draft.FirstBlockStartRow).IsBeyondPracticalRange;
 
-    private void DeletePointRule(int itemIndex)
-    {
-        _pointRules.RemoveAt(itemIndex);
-        if (_editingPointRuleIndex == itemIndex)
-        {
-            _editingPointRuleIndex = null;
-        }
-        MarkDirty();
-    }
-
-    private void AddHeaderField(HeaderFieldRule field)
-    {
-        _headerFields.Add(field);
-        MarkDirty();
-    }
-
-    private void HandleSaveHeaderField(int fieldIndex, HeaderFieldRule updated)
-    {
-        _headerFields[fieldIndex] = updated;
-        _editingHeaderFieldIndex = null;
-        MarkDirty();
-    }
-
-    // Deletion is immediate, no confirmation -- same parity-with-sibling-sublists decision as every
-    // other list in this component (Lot 048 decision 1).
-    private void DeleteHeaderField(int fieldIndex)
-    {
-        _headerFields.RemoveAt(fieldIndex);
-        if (_editingHeaderFieldIndex == fieldIndex)
-        {
-            _editingHeaderFieldIndex = null;
-        }
-        MarkDirty();
-    }
-
-    private void AddFieldPresencePointRule(FieldPresencePointRule rule)
-    {
-        _fieldPresencePointRules.Add(rule);
-        MarkDirty();
-    }
-
-    private void HandleSaveFieldPresencePointRule(int itemIndex, FieldPresencePointRule updated)
-    {
-        _fieldPresencePointRules[itemIndex] = updated;
-        _editingFieldPresencePointRuleIndex = null;
-        MarkDirty();
-    }
-
-    private void DeleteFieldPresencePointRule(int itemIndex)
-    {
-        _fieldPresencePointRules.RemoveAt(itemIndex);
-        if (_editingFieldPresencePointRuleIndex == itemIndex)
-        {
-            _editingFieldPresencePointRuleIndex = null;
-        }
-        MarkDirty();
-    }
-
-    private void AddHeaderComposite(HeaderCompositeRule composite)
-    {
-        _headerComposites.Add(composite);
-        MarkDirty();
-    }
-
-    private void HandleSaveHeaderComposite(int itemIndex, HeaderCompositeRule updated)
-    {
-        _headerComposites[itemIndex] = updated;
-        _editingHeaderCompositeIndex = null;
-        MarkDirty();
-    }
-
-    private void DeleteHeaderComposite(int itemIndex)
-    {
-        _headerComposites.RemoveAt(itemIndex);
-        if (_editingHeaderCompositeIndex == itemIndex)
-        {
-            _editingHeaderCompositeIndex = null;
-        }
-        MarkDirty();
-    }
-
-    private string FormatHeaderFieldSummary(HeaderFieldRule field)
+    private string FormatHeaderFieldSummary(HeaderFieldRuleDraft field)
     {
         var indicators = new List<string>();
         if (field.StripReperePrefix)
@@ -942,27 +759,27 @@
             indicators.Add(Loc["ImportProfileEditor_HeaderFieldStripPrefixIndicator"]);
         }
 
-        if (field.DateFormat is not null)
+        if (!string.IsNullOrWhiteSpace(field.DateFormat))
         {
             indicators.Add(Loc["ImportProfileEditor_HeaderFieldDateFormatIndicator", field.DateFormat]);
         }
 
-        return indicators.Count == 0 ? field.Cell.Range : $"{field.Cell.Range} ({string.Join(", ", indicators)})";
+        return indicators.Count == 0 ? field.Range : $"{field.Range} ({string.Join(", ", indicators)})";
     }
 
-    // UI-only advisory (Lot 048, 48.5) -- never consulted by extraction. Compares the current, still
-    // in-progress form state against KnownHeaderFieldNames.For(_sheetName), ordinally/case-sensitively
-    // (matching the real resolver's own Dictionary<string, ...> lookup).
+    // UI-only advisory (Lot 048, 48.5) -- never consulted by extraction. Compares the current form state
+    // against KnownHeaderFieldNames.For(SheetName), ordinally/case-sensitively (matching the real
+    // resolver's own Dictionary<string, ...> lookup).
     private IReadOnlyList<string> GetMissingWellKnownNames()
     {
-        var expected = KnownHeaderFieldNames.For(_sheetName);
+        var expected = KnownHeaderFieldNames.For(Draft.SheetName);
         if (expected.Fields.Count == 0 && expected.Composites.Count == 0)
         {
             return [];
         }
 
-        var presentFields = _headerFields.Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
-        var presentComposites = _headerComposites.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
+        var presentFields = Draft.HeaderFields.Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
+        var presentComposites = Draft.HeaderComposites.Select(c => c.Name).ToHashSet(StringComparer.Ordinal);
 
         return
         [
@@ -971,175 +788,18 @@
         ];
     }
 
-    // Lot 056 (56.2): the single validation path for this form -- reused by the CTA click (Submit,
-    // below) and by the root editor's implicit flush on "Save profile" (TryCommitAsync is the
-    // inter-lot contract Lot 057 also reuses as-is to close a form on an implicit switch). A form
-    // that was never touched (still exactly its just-reset/just-mounted state) is treated as "nothing
-    // to commit" -- true, no side effect -- so the root editor can safely flush an always-rendered,
-    // never-interacted-with add-sheet-rule form on every save without spuriously failing validation.
-    private bool IsBlank() =>
-        string.IsNullOrEmpty(_sheetName) && _firstBlockStartRow == 0 && _step == 0 &&
-        string.IsNullOrEmpty(_stopFieldName) && string.IsNullOrEmpty(_zeroEnergieExpectedValue) &&
-        string.IsNullOrEmpty(_defaultCouleurEtiquette) && string.IsNullOrEmpty(_couleurEtiquetteCellRange) &&
-        string.IsNullOrEmpty(_allowedCouleursEtiquette) &&
-        _fields.Count == 0 &&
-        _unconditionalColonneNames.Count == 0 && _pointRules.Count == 0 &&
-        _headerFields.Count == 0 && _headerComposites.Count == 0 && _fieldPresencePointRules.Count == 0;
-
-    public async Task<bool> TryCommitAsync()
+    // The rule's own submit button: validates the whole rule, including its still-pending nested rows
+    // (ImportProfileDraftMapper.ConvertSheetRule), and tells the owner only on success.
+    private async Task Submit()
     {
-        if (IsBlank())
+        DraftListActions.ClearErrors(Draft);
+        var result = ImportProfileDraftMapper.ConvertSheetRule(Draft);
+        if (!result.IsSuccess)
         {
-            return true;
+            DraftListActions.ApplyErrors(result.Errors, Localize);
+            return;
         }
 
-        _errorMessage = null;
-        _warningMessage = null;
-
-        // Flush whichever nested field/header-field/header-composite/field-presence-rule edit is
-        // currently open -- otherwise a value typed there but not yet confirmed via that row's own
-        // "Enregistrer les modifications" button is silently lost the moment this outer form commits
-        // (see the field-presence-rule comment above _fieldPresencePointRules for the real incident
-        // this class of bug already caused once; this closes the same gap for every other nested
-        // sub-form). A validation failure here aborts this whole commit and leaves the nested form
-        // open with its own alert, same as every other flush in this codebase (Lot 057).
-        if (_editingFieldIndex is not null && _editingBlockFieldFormRef is not null && !await _editingBlockFieldFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_editingHeaderFieldIndex is not null && _editingHeaderFieldFormRef is not null && !await _editingHeaderFieldFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_editingHeaderCompositeIndex is not null && _editingHeaderCompositeFormRef is not null && !await _editingHeaderCompositeFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_editingFieldPresencePointRuleIndex is not null && _editingFieldPresencePointRuleFormRef is not null && !await _editingFieldPresencePointRuleFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        // Same flush, for the two lists edited inline (no nested component/ref -- the typed value
-        // already lives directly in this form's own _editingUnconditionalColonneValue/_editingPointRule*
-        // fields, but the row's own list entry is only overwritten by these Save* methods, which leave
-        // the edit index open (and set their own error message) on a validation failure.
-        if (_editingUnconditionalColonneIndex is { } unconditionalColonneIndex)
-        {
-            SaveUnconditionalColonneEdit(unconditionalColonneIndex);
-            if (_editingUnconditionalColonneIndex is not null)
-            {
-                return false;
-            }
-        }
-
-        if (_editingPointRuleIndex is { } pointRuleIndex)
-        {
-            SavePointRuleEdit(pointRuleIndex);
-            if (_editingPointRuleIndex is not null)
-            {
-                return false;
-            }
-        }
-
-        // Couleur etiquette: blank -> no per-block cell configured (null, not an error) -- distinct
-        // from a non-blank value that fails to parse as a real Excel range, which does block the
-        // commit exactly like BlockFieldForm's own absolute-range field.
-        BlockFieldDefinition? couleurEtiquetteCell = null;
-        if (!string.IsNullOrWhiteSpace(_couleurEtiquetteCellRange))
-        {
-            var parseResult = BlockFieldRangeFormatter.FromAbsoluteRange(_couleurEtiquetteCellRange, _firstBlockStartRow);
-            if (!parseResult.IsSuccess)
-            {
-                _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
-                return false;
-            }
-
-            couleurEtiquetteCell = new BlockFieldDefinition(
-                CouleurEtiquetteCellName, parseResult.ColumnRange, parseResult.RowOffsetStart, parseResult.RowOffsetEnd);
-            if (parseResult.IsBeyondPracticalRange)
-            {
-                _warningMessage = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
-            }
-        }
-
-        try
-        {
-            var locator = new RepeatingBlockLocator(_sheetName, _firstBlockStartRow, _step, _stopFieldName, _fields);
-
-            // Header fields always re-derive Cell.Sheet from the current sheet name (decision 2, Lot
-            // 048) -- so a sheet rename after a header field was added still lands consistently, and
-            // the UI never exposes "read from another sheet" (which the domain allows but no seeded
-            // profile ever uses).
-            var headerFields = _headerFields
-                .Select(f => new HeaderFieldRule(f.Name, new DirectCell(_sheetName, f.Cell.Range), f.StripReperePrefix, f.DateFormat))
-                .ToList();
-
-            // SheetExtractionRule stores these lists by reference (unlike PointRules, which it copies) --
-            // pass snapshots so ResetForm()'s Clear() below can't reach back into the rule we just handed off.
-            // Client feedback (2026-09-11): a comma-separated single field, not a full add/edit/delete
-            // sub-list like UnconditionalColonneNames -- this list is short (3 real colors) and rarely
-            // changed, so the lighter UI is proportionate; each entry's own blank/duplicate validation
-            // still runs in the Domain constructor below, same as every other list on this form.
-            IReadOnlyList<string>? allowedCouleursEtiquette = string.IsNullOrWhiteSpace(_allowedCouleursEtiquette)
-                ? null
-                : _allowedCouleursEtiquette.Split(',').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-
-            var rule = new SheetExtractionRule(
-                _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites],
-                string.IsNullOrWhiteSpace(_zeroEnergieExpectedValue) ? null : _zeroEnergieExpectedValue,
-                fieldPresencePointRules: [.. _fieldPresencePointRules],
-                couleurEtiquetteCell: couleurEtiquetteCell,
-                defaultCouleurEtiquette: string.IsNullOrWhiteSpace(_defaultCouleurEtiquette) ? null : _defaultCouleurEtiquette,
-                allowedCouleursEtiquette: allowedCouleursEtiquette);
-
-            await OnSubmit.InvokeAsync(rule);
-
-            ResetForm();
-            return true;
-        }
-        catch (Exception ex) when (ex is DomainValidationException or DomainArgumentOutOfRangeException or DomainRuleViolationException)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
-        }
-    }
-
-    private async Task Submit() => await TryCommitAsync();
-
-    private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _sheetName = string.Empty;
-        _firstBlockStartRow = 0;
-        _step = 0;
-        _stopFieldName = string.Empty;
-        _zeroEnergieExpectedValue = string.Empty;
-        _defaultCouleurEtiquette = string.Empty;
-        _couleurEtiquetteCellRange = string.Empty;
-        _allowedCouleursEtiquette = string.Empty;
-        _fields.Clear();
-        _unconditionalColonneNames.Clear();
-        _pointRules.Clear();
-        _headerFields.Clear();
-        _headerComposites.Clear();
-        _fieldPresencePointRules.Clear();
-        _editingFieldPresencePointRuleIndex = null;
-        _editingFieldIndex = null;
-        _editingHeaderFieldIndex = null;
-        _editingHeaderCompositeIndex = null;
-        _newUnconditionalColonneName = string.Empty;
-        _newPointRuleColonneName = string.Empty;
-        _newPointRuleSourceFieldName = string.Empty;
-        _newPointRuleOperator = ConditionOperator.Equals;
-        _newPointRuleComparisonValue = string.Empty;
-        _editingUnconditionalColonneIndex = null;
-        _unconditionalColonneEditError = null;
-        _editingPointRuleIndex = null;
-        _pointRuleEditError = null;
+        await OnSubmit.InvokeAsync();
     }
 }

@@ -14,6 +14,11 @@ public static class FieldPresencePointRuleFormatter
         var range = BlockFieldRangeFormatter.ToAbsoluteRange(
             firstBlockStartRow, rule.Cell.ColumnRange, rule.Cell.RowOffsetStart, rule.Cell.RowOffsetEnd);
 
-        return rule.ExpectedValue is null ? range : $"{range} = \"{rule.ExpectedValue}\"";
+        return FormatCell(range, rule.ExpectedValue);
     }
+
+    // Same display from an already-absolute range, as held by a draft (lot 075); a blank expected value
+    // means a presence-only rule.
+    public static string FormatCell(string absoluteRange, string? expectedValue) =>
+        string.IsNullOrWhiteSpace(expectedValue) ? absoluteRange : $"{absoluteRange} = \"{expectedValue}\"";
 }

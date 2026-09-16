@@ -1,24 +1,24 @@
-@using ExcelETL.Application.Exceptions
-@using ExcelETL.BlazorAdmin.Formatting
+@using ExcelETL.BlazorAdmin.Editing.Import
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
-@using ExcelETL.Domain.Extraction.Primitives
 
-@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 075 (P3 drafts): a pure leaf -- every value lives in Draft, owned by SheetRuleForm, which converts
+   and validates it (ImportProfileDraftMapper.ConvertField) and decides what a successful submit means for
+   the slot this Draft came from (an already-added field, or the pending "Add" row). *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
-@if (!string.IsNullOrEmpty(_warningMessage))
+@if (!string.IsNullOrEmpty(Draft.Warning))
 {
-    <div class="alert alert-warning">@_warningMessage</div>
+    <div class="alert alert-warning">@Draft.Warning</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}name-input")" @ref="_nameInputRef" class="form-control" @bind="_name"
+        <input id="@($"{IdPrefix}name-input")" @ref="_nameInputRef" class="form-control" @bind="Draft.Name" @bind:after="MarkDirty"
                @onkeydown="OnRowKeyDownAsync"
                placeholder="@Loc["ImportProfileEditor_FieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}name-input")">@Loc["ImportProfileEditor_FieldNameLabel"]</label>
@@ -26,7 +26,7 @@
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
+        <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="Draft.AbsoluteRange" @bind:after="MarkDirty"
                @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
                placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
         <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
@@ -51,7 +51,7 @@
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="() => OnCancel.InvokeAsync()">
             @Loc["ImportProfileEditor_CancelButton"]
         </button>
     }
@@ -61,14 +61,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public BlockFieldDefinition? InitialField { get; set; }
-
-    // Needed to translate between the field's stored relative offsets and the absolute Excel range
-    // shown/entered here -- the parent SheetRuleForm owns FirstBlockStartRow, this component has no
-    // locator context of its own. See BlockFieldRangeFormatter.
-    [Parameter]
-    public int FirstBlockStartRow { get; set; }
+    [Parameter, EditorRequired]
+    public BlockFieldDefinitionDraft Draft { get; set; } = new();
 
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-block-field-button";
@@ -86,80 +80,31 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public EventCallback<BlockFieldDefinition> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
-    private string _name = string.Empty;
-    private string _absoluteRange = string.Empty;
-    private string? _errorMessage;
-    private string? _warningMessage;
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
+
     private ElementReference _nameInputRef;
 
-    // Only ever runs once per mounted instance -- same reasoning as SheetRuleForm.OnInitialized:
-    // the parent gives an edit-mode instance a fresh component identity, so InitialField never
-    // changes underneath an already-initialized instance. FirstBlockStartRow is already set by the
-    // time this runs (Blazor sets parameters before the first OnInitialized call).
-    protected override void OnInitialized()
+    private void MarkDirty() => OnDirty.InvokeAsync();
+
+    // The owner sets Draft.Error when the submit fails. Lot 056 (56.4): after a successful submit, focus
+    // returns to the row's first field for a rapid, mouse-free "type, type, next" entry rhythm.
+    private async Task Submit()
     {
-        if (InitialField is null)
+        await OnSubmit.InvokeAsync();
+        if (Draft.Error is null)
         {
-            return;
-        }
-
-        _name = InitialField.Name;
-        _absoluteRange = BlockFieldRangeFormatter.ToAbsoluteRange(
-            FirstBlockStartRow, InitialField.ColumnRange, InitialField.RowOffsetStart, InitialField.RowOffsetEnd);
-    }
-
-    // Public so the parent (SheetRuleForm) can flush this instance -- when it's the currently-open
-    // edit-mode form -- before its own commit, instead of silently discarding a typed-but-not-yet-
-    // -Saved edit (the real-world incident this fix closes: renaming a header/range here, then
-    // clicking the outer "Enregistrer les modifications"/"Enregistrer le profil" button directly,
-    // used to leave the old value in place with no error and no indication anything was lost).
-    public async Task<bool> TryCommitAsync()
-    {
-        _errorMessage = null;
-        _warningMessage = null;
-
-        var parseResult = BlockFieldRangeFormatter.FromAbsoluteRange(_absoluteRange, FirstBlockStartRow);
-        if (!parseResult.IsSuccess)
-        {
-            _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
-            return false;
-        }
-
-        try
-        {
-            var field = new BlockFieldDefinition(
-                _name, parseResult.ColumnRange, parseResult.RowOffsetStart, parseResult.RowOffsetEnd);
-
-            await OnSubmit.InvokeAsync(field);
-
-            if (parseResult.IsBeyondPracticalRange)
-            {
-                _warningMessage = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
-            }
-
-            ResetForm();
-
-            // Lot 056 (56.4): after a successful blur/Enter-triggered add, return focus to the first
-            // field of the row so a rapid, mouse-free "type, type, next" entry rhythm is possible.
             await _nameInputRef.FocusAsync();
-            return true;
-        }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
         }
     }
 
-    private async Task Submit() => await TryCommitAsync();
-
-    // Lot 056 (56.4): validation on blur of the row's last field, or Enter anywhere in the row --
-    // but only when every field of the row is already filled in. A partially-filled row produces no
-    // add and no error message on blur (a normal "click elsewhere" gesture must never surface a red
-    // alert); the button click remains a fully equivalent, always-available third path.
-    private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(_name) && !string.IsNullOrWhiteSpace(_absoluteRange);
+    // Lot 056 (56.4): validation on blur of the row's last field, or Enter anywhere in the row -- but
+    // only when every field of the row is already filled in. A partially-filled row produces no add and
+    // no error message on blur (a normal "click elsewhere" gesture must never surface a red alert); the
+    // button click remains a fully equivalent, always-available third path.
+    private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(Draft.Name) && !string.IsNullOrWhiteSpace(Draft.AbsoluteRange);
 
     private async Task OnLastFieldBlurAsync()
     {
@@ -175,13 +120,5 @@
         {
             await Submit();
         }
-    }
-
-    private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _name = string.Empty;
-        _absoluteRange = string.Empty;
     }
 }

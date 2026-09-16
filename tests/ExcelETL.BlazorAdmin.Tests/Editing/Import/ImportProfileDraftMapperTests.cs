@@ -150,6 +150,15 @@ public class ImportProfileDraftMapperTests
     }
 
     [Fact]
+    public void ConvertFieldPresencePointRule_Success_TrimsTheExpectedValueInTheDraft()
+    {
+        var ruleDraft = new FieldPresencePointRuleDraft { ColonneName = "X", AbsoluteRange = "H21:N21", ExpectedValue = " DEBUT MAD " };
+
+        ImportProfileDraftMapper.ConvertFieldPresencePointRule(ruleDraft, 19).Value!.ExpectedValue.Should().Be("DEBUT MAD");
+        ruleDraft.ExpectedValue.Should().Be("DEBUT MAD");
+    }
+
+    [Fact]
     public void ConvertField_Success_NormalizesTheTypedRange()
     {
         var fieldDraft = new BlockFieldDefinitionDraft { Name = "Identification", AbsoluteRange = "b19:b19" };
@@ -470,6 +479,7 @@ public class ImportProfileDraftMapperTests
 
         ImportProfileDraftMapper.ConvertSheetRule(ruleDraft).Value!.AllowedCouleursEtiquette
             .Should().Equal("ROUGE", "BLANC");
+        ruleDraft.AllowedCouleursEtiquette.Should().Be("ROUGE, BLANC");
 
         ruleDraft.AllowedCouleursEtiquette = "";
         ImportProfileDraftMapper.ConvertSheetRule(ruleDraft).Value!.AllowedCouleursEtiquette.Should().BeNull();
