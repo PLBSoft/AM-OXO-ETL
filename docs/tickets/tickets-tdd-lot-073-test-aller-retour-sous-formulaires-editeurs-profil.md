@@ -188,3 +188,15 @@ aller-retour).
 | 3. `SheetGenerationRuleForm` ne reporte plus `ConstantColumnDefinitions` (commit `0cbac22`) | 18 / 165 | `ExportProfileEditorRoundTripTests.SheetRule_OpenedAndResubmittedUnchanged_SavesAnEquivalentProfile(ruleIndex: 2, sheetName: "Tâches multiples")` et les 17 colonnes de cette règle |
 
 Après restauration : 165/165 verts, `git status` propre.
+
+### 073.5 — convention
+
+Paragraphe « Nouveau champ sur un type de profil » ajouté en fin de section 9 de
+`docs/conventions/recommandations-tickets-tdd.md` (provisoire, à remplacer à la fin de la migration P3).
+
+### Clôture
+
+`ExcelETL.BlazorAdmin.Tests` complet : 1210/1211 verts. Le seul échec,
+`ExportProfileTestTests.ClickingGenerate_WithoutExportProfileSelected_ShowsError_WithRoleAlert`, est le
+défaut préexistant déjà signalé (fixture `new ExportProfile(..., [])` rejetée par le constructeur),
+sans lien avec ce lot.

@@ -148,3 +148,15 @@ structurel répété (état imbriqué édité localement, non propagé sans une 
   ne pas confondre les deux. Si le patron structurel lui-même (validation multi-niveaux avec bouton
   intermédiaire par niveau) est identifié comme la cause racine récurrente, c'est un sujet de
   conception à traiter à part, pas quelque chose qu'un recensement plus rigoureux suffit à clore.
+
+**Nouveau champ sur un type de profil (lot 073, règle provisoire).** Un champ perdu quand un
+formulaire reconstruit l'objet métier (défaut B : lot 048.1, commits `1736886` et `0cbac22`) est gardé
+par `ImportProfileEditorRoundTripTests.cs` et `ExportProfileEditorRoundTripTests.cs`, qui rouvrent
+chaque élément du **profil par défaut semé** et exigent un profil sauvegardé identique. Ils ne voient
+que ce que ce profil contient : tout nouveau champ ajouté à `ImportProfile`, `SheetExtractionRule`,
+`ExportProfile`, `SheetGenerationRule` ou à l'un de leurs éléments doit donc être **semé dans
+`DefaultProfileSeeder`** avec une valeur non vide, ou, si le profil par défaut n'en a pas l'usage,
+ajouté comme **cas construit à la main** dans ces tests (précédent : `FieldPresencePointRule` à
+`ExpectedValue` nulle). Faute de quoi le garde-fou reste vert alors que le champ se perd. Cette règle
+sera remplacée, à la fin de la migration P3 de l'import (lot 074 et suivants), par la règle propre aux
+brouillons : tout champ passe par les conversions, gardées par leur test unitaire aller-retour.
