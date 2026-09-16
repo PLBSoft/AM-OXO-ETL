@@ -1,12 +1,14 @@
 @page "/export-profiles"
 @attribute [Authorize]
 
+@using ExcelETL.Application.Extraction.Oxo
 @using ExcelETL.Application.Generation
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Generation.Profile
 @using Microsoft.AspNetCore.Authorization
 
 @inject IExportProfileStore ExportProfileStore
+@inject IDefaultProfileSeeder DefaultProfileSeeder
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject NavigationManager NavigationManager
 
@@ -70,6 +72,22 @@ else
                                 </button>
                             </div>
                         }
+                        else if (_profileIdPendingReset == profile.Id)
+                        {
+                            <div id="@($"reset-export-profile-confirm-{profile.Id}")" class="right-aligned-actions" role="alert">
+                                <span class="text-danger me-auto">@Loc["ExportProfiles_ConfirmResetMessage", _profileNamePendingReset ?? string.Empty]</span>
+                                <button id="@($"confirm-reset-export-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-danger"
+                                        @onclick="ConfirmResetProfileAsync">
+                                    @Loc["ExportProfiles_ConfirmResetButton"]
+                                </button>
+                                <button id="@($"cancel-reset-export-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        @onclick="CancelResetProfile">
+                                    @Loc["ExportProfiles_CancelResetButton"]
+                                </button>
+                            </div>
+                        }
                         else
                         {
                             <button id="edit-export-profile-button-@profile.Id" type="button"
@@ -84,6 +102,15 @@ else
                                     @onclick="() => DuplicateProfileAsync(profile)">
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
+                            @if (profile.Id == DefaultProfileSeeder.ExportProfileId)
+                            {
+                                <button id="reset-export-profile-button-@profile.Id" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["ExportProfiles_ResetToDefault", profile.Name]" title="@Loc["ExportProfiles_ResetToDefault", profile.Name]"
+                                        @onclick="() => RequestResetProfile(profile)">
+                                    @((MarkupString)AdminIconMarkup.Reset)
+                                </button>
+                            }
                             <button id="delete-export-profile-button-@profile.Id" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
@@ -120,6 +147,22 @@ else
                             </button>
                         </div>
                     }
+                    else if (_profileIdPendingReset == profile.Id)
+                    {
+                        <div id="@($"reset-export-profile-confirm-card-{profile.Id}")" class="right-aligned-actions" role="alert">
+                            <span class="text-danger me-auto">@Loc["ExportProfiles_ConfirmResetMessage", _profileNamePendingReset ?? string.Empty]</span>
+                            <button id="@($"confirm-reset-export-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-danger"
+                                    @onclick="ConfirmResetProfileAsync">
+                                @Loc["ExportProfiles_ConfirmResetButton"]
+                            </button>
+                            <button id="@($"cancel-reset-export-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-secondary"
+                                    @onclick="CancelResetProfile">
+                                @Loc["ExportProfiles_CancelResetButton"]
+                            </button>
+                        </div>
+                    }
                     else
                     {
                         <div class="right-aligned-actions">
@@ -135,6 +178,15 @@ else
                                     @onclick="() => DuplicateProfileAsync(profile)">
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
+                            @if (profile.Id == DefaultProfileSeeder.ExportProfileId)
+                            {
+                                <button id="reset-export-profile-button-card-@profile.Id" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["ExportProfiles_ResetToDefault", profile.Name]" title="@Loc["ExportProfiles_ResetToDefault", profile.Name]"
+                                        @onclick="() => RequestResetProfile(profile)">
+                                    @((MarkupString)AdminIconMarkup.Reset)
+                                </button>
+                            }
                             <button id="delete-export-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Delete", profile.Name]" title="@Loc["ExportProfiles_Delete", profile.Name]"
@@ -153,6 +205,8 @@ else
     private List<ExportProfile>? _profiles;
     private Guid? _profileIdPendingDeletion;
     private string? _profileNamePendingDeletion;
+    private Guid? _profileIdPendingReset;
+    private string? _profileNamePendingReset;
 
     protected override async Task OnInitializedAsync() => await LoadProfilesAsync();
 
@@ -168,6 +222,8 @@ else
     {
         _profileIdPendingDeletion = profile.Id;
         _profileNamePendingDeletion = profile.Name;
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
     }
 
     private void CancelDeleteProfile()
@@ -181,6 +237,31 @@ else
         await ExportProfileStore.DeleteAsync(id);
         _profileIdPendingDeletion = null;
         _profileNamePendingDeletion = null;
+        await LoadProfilesAsync();
+    }
+
+    // Client feedback (2026-09-16): only ever offered for the row matching
+    // IDefaultProfileSeeder.ExportProfileId (see markup above) -- see ImportProfiles.razor's own
+    // comment on the same action for the full rationale.
+    private void RequestResetProfile(ExportProfile profile)
+    {
+        _profileIdPendingReset = profile.Id;
+        _profileNamePendingReset = profile.Name;
+        _profileIdPendingDeletion = null;
+        _profileNamePendingDeletion = null;
+    }
+
+    private void CancelResetProfile()
+    {
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
+    }
+
+    private async Task ConfirmResetProfileAsync()
+    {
+        await DefaultProfileSeeder.ResetExportProfileToDefaultAsync();
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
         await LoadProfilesAsync();
     }
 

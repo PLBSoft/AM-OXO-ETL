@@ -22,12 +22,20 @@ namespace ExcelETL.Infrastructure.Seeding;
 public class DefaultProfileSeeder(
     IImportProfileStore importProfileStore,
     IExportProfileStore exportProfileStore,
-    ILogger<DefaultProfileSeeder> logger)
+    ILogger<DefaultProfileSeeder> logger) : IDefaultProfileSeeder
 {
     public static readonly Guid ImportProfileId = Guid.Parse("a2d81110-6ed6-4b56-ac38-59e543c79f22");
     public static readonly Guid ExportProfileId = Guid.Parse("2d0c19f0-9183-486d-8293-26993069858b");
 
     public const string ProfileName = "Profil OXO standard";
+
+    // Explicit interface implementation so a Razor component consuming IDefaultProfileSeeder never
+    // needs to reference this concrete Infrastructure type just to identify the standard profiles
+    // (see IDefaultProfileSeeder's own comment) -- the static fields above stay the single source of
+    // truth, referenced directly by every existing test/seeder call site.
+    Guid IDefaultProfileSeeder.ImportProfileId => ImportProfileId;
+
+    Guid IDefaultProfileSeeder.ExportProfileId => ExportProfileId;
 
     // ISOLEMENT's "ZERO ENERGIE" Colonne carries a "(PS941)" suffix that DIVERS' does not -- these are
     // two genuinely distinct Colonne names in the real OXO referential, not a typo. See
@@ -76,6 +84,31 @@ public class DefaultProfileSeeder(
     {
         await SeedImportProfileAsync(cancellationToken);
         await SeedExportProfileAsync(cancellationToken);
+    }
+
+    // Client feedback (2026-09-16): a profile already seeded before a deployment that changed this
+    // class's own build methods is never touched again by SeedAsync above (by design -- an admin's
+    // customization to the standard profile must never be silently overwritten on restart). That
+    // leaves no in-app way to pick up a genuine seed-definition change other than manually
+    // reconciling the profile by hand, or dropping the database -- neither of which the client
+    // wants. These two methods give the admin UI a single, explicit, destructive action per
+    // profile: discard whatever is currently stored under the standard profile's stable Id and
+    // rebuild it fresh from the seed. IImportProfileStore/IExportProfileStore.SaveAsync is already a
+    // true upsert keyed by the profile's own Id (delete the existing owned graph, then insert the
+    // new one -- see EfImportProfileStore/EfExportProfileStore's own comments), so simply saving a
+    // freshly built default profile IS the "delete and recreate from the seed" action; no separate
+    // DeleteAsync call is needed or correct here (DeleteAsync would leave nothing to immediately
+    // re-insert as part of the same action, and would momentarily surface the profile as gone).
+    public async Task ResetImportProfileToDefaultAsync(CancellationToken cancellationToken = default)
+    {
+        await importProfileStore.SaveAsync(BuildDefaultImportProfile(), cancellationToken);
+        logger.LogInformation("Reset default import profile {ProfileId} to its seed definition", ImportProfileId);
+    }
+
+    public async Task ResetExportProfileToDefaultAsync(CancellationToken cancellationToken = default)
+    {
+        await exportProfileStore.SaveAsync(BuildDefaultExportProfile(), cancellationToken);
+        logger.LogInformation("Reset default export profile {ProfileId} to its seed definition", ExportProfileId);
     }
 
     private async Task SeedImportProfileAsync(CancellationToken cancellationToken)

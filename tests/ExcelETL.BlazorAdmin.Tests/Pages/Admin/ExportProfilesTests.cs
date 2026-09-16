@@ -1,5 +1,6 @@
 using System.Globalization;
 using Bunit;
+using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Generation;
 using ExcelETL.BlazorAdmin.Components.Pages.Admin;
 using ExcelETL.BlazorAdmin.Tests;
@@ -8,6 +9,7 @@ using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
+using ExcelETL.Infrastructure.Seeding;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,12 +20,18 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
 public class ExportProfilesTests : BunitContext
 {
+    private readonly Mock<IDefaultProfileSeeder> _defaultProfileSeederMock = new();
+
     public ExportProfilesTests()
     {
         var dbContextFactory = new TestDbContextFactory("ExportProfilesTests_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
         Services.AddLocalization();
+
+        // 2026-09-16: mirrors ImportProfilesTests' own setup -- see there for the fuller rationale.
+        _defaultProfileSeederMock.Setup(s => s.ExportProfileId).Returns(DefaultProfileSeeder.ExportProfileId);
+        Services.AddSingleton(_defaultProfileSeederMock.Object);
     }
 
     private static void WithCulture(string cultureName, Action action)
@@ -64,6 +72,17 @@ public class ExportProfilesTests : BunitContext
 
     private static ExportProfile BuildProfileWithOneSheetRule(string name = "MAD OXO export") =>
         new(name,
+            [
+                new SheetGenerationRule(
+                    "Parents",
+                    PivotSource.Equipement,
+                    [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                    [],
+                    [])
+            ]);
+
+    private static ExportProfile BuildProfileWithId(Guid id, string name = "MAD OXO export") =>
+        new(id, name,
             [
                 new SheetGenerationRule(
                     "Parents",
@@ -465,5 +484,122 @@ public class ExportProfilesTests : BunitContext
             var store = Services.GetRequiredService<IExportProfileStore>();
             var all = await store.GetAllAsync();
             all.Should().Contain(p => p.Id == profileA.Id);
+        });
+
+    // 2026-09-16: mirrors ImportProfilesTests' own coverage for the same "reset the standard
+    // profile to its seed definition" action -- see there for the fuller rationale comments.
+    [Fact]
+    public async Task ResetButton_OnlyVisibleForTheStandardProfileRow_InBothTableAndCardTemplates() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId, "Profil OXO standard");
+            var ordinary = BuildProfileWithId(Guid.NewGuid(), "Un autre profil");
+            await SeedProfileAsync(standard);
+            await SeedProfileAsync(ordinary);
+
+            var cut = Render<ExportProfiles>();
+
+            cut.FindAll($"#reset-export-profile-button-{standard.Id}").Should().HaveCount(1);
+            cut.FindAll($"#reset-export-profile-button-card-{standard.Id}").Should().HaveCount(1);
+            cut.FindAll($"#reset-export-profile-button-{ordinary.Id}").Should().BeEmpty();
+            cut.FindAll($"#reset-export-profile-button-card-{ordinary.Id}").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task ResetButton_DoesNotCallResetImmediately_OnlyOpensConfirmation() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId);
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#reset-export-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#reset-export-profile-confirm-{standard.Id}").Should().NotBeNull();
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetExportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Never);
+        });
+
+    [Fact]
+    public async Task ResetButton_OpensConfirmation_ShowingTheTargetedProfileName() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId, "Profil OXO standard");
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#reset-export-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#reset-export-profile-confirm-{standard.Id}").TextContent.Should().Contain("Profil OXO standard");
+            cut.Find($"#reset-export-profile-confirm-{standard.Id}").GetAttribute("role").Should().Be("alert");
+        });
+
+    [Fact]
+    public async Task CancelResetButton_ClosesConfirmation_WithoutCallingReset_AndOtherActionsStillWork() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId);
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ExportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+            cut.Find($"#reset-export-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#cancel-reset-export-profile-button-{standard.Id}").Click();
+
+            cut.FindAll($"#reset-export-profile-confirm-{standard.Id}").Should().BeEmpty();
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetExportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Never);
+
+            cut.Find($"#edit-export-profile-button-{standard.Id}").Click();
+            navigationManager.Uri.Should().EndWith($"/export-profiles/{standard.Id}/edit");
+        });
+
+    [Fact]
+    public async Task ConfirmResetButton_CallsResetExportProfileToDefaultAsync_AndReloadsTheList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId);
+            await SeedProfileAsync(standard);
+            _defaultProfileSeederMock
+                .Setup(s => s.ResetExportProfileToDefaultAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#reset-export-profile-button-{standard.Id}").Click();
+            cut.Find($"#confirm-reset-export-profile-button-{standard.Id}").Click();
+
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetExportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Once);
+            cut.FindAll($"#reset-export-profile-confirm-{standard.Id}").Should().BeEmpty();
+            var store = Services.GetRequiredService<IExportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().ContainSingle(p => p.Id == standard.Id);
+        });
+
+    // See ImportProfilesTests' own comment on the same test for why the mutual exclusion is
+    // necessarily across two rows, not within a single row's own confirmation states.
+    [Fact]
+    public async Task OpeningResetConfirmationOnOneRow_ClosesAnAlreadyOpenDeleteConfirmationOnAnotherRow_AndViceVersa() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ExportProfileId, "Profil OXO standard");
+            var ordinary = BuildProfileWithId(Guid.NewGuid(), "Un autre profil");
+            await SeedProfileAsync(standard);
+            await SeedProfileAsync(ordinary);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#delete-export-profile-button-{ordinary.Id}").Click();
+            cut.FindAll($"#delete-export-profile-confirm-{ordinary.Id}").Should().HaveCount(1);
+
+            cut.Find($"#reset-export-profile-button-{standard.Id}").Click();
+
+            cut.FindAll($"#delete-export-profile-confirm-{ordinary.Id}").Should().BeEmpty();
+            cut.FindAll($"#reset-export-profile-confirm-{standard.Id}").Should().HaveCount(1);
+
+            cut.Find($"#delete-export-profile-button-{ordinary.Id}").Click();
+
+            cut.FindAll($"#reset-export-profile-confirm-{standard.Id}").Should().BeEmpty();
+            cut.FindAll($"#delete-export-profile-confirm-{ordinary.Id}").Should().HaveCount(1);
         });
 }

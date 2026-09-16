@@ -10,9 +10,11 @@ using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
+using ExcelETL.Infrastructure.Seeding;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
@@ -23,12 +25,20 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 // to drift apart silently over time.
 public class ProfileListPageParityTests : BunitContext
 {
+    private readonly Mock<IDefaultProfileSeeder> _defaultProfileSeederMock = new();
+
     public ProfileListPageParityTests()
     {
         var dbContextFactory = new TestDbContextFactory("ProfileListPageParityTests_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
+
+        // 2026-09-16: mirrors ImportProfilesTests/ExportProfilesTests' own setup -- both pages now
+        // inject IDefaultProfileSeeder for the "reset the standard profile" row action.
+        _defaultProfileSeederMock.Setup(s => s.ImportProfileId).Returns(DefaultProfileSeeder.ImportProfileId);
+        _defaultProfileSeederMock.Setup(s => s.ExportProfileId).Returns(DefaultProfileSeeder.ExportProfileId);
+        Services.AddSingleton(_defaultProfileSeederMock.Object);
         Services.AddLocalization();
     }
 
@@ -144,6 +154,35 @@ public class ProfileListPageParityTests : BunitContext
             importCut.Find($"#duplicate-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
             exportCut.Find($"#edit-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
             exportCut.Find($"#duplicate-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+        });
+    }
+
+    // 2026-09-16: the "reset the standard profile to its seed definition" row action -- only ever
+    // rendered for the row matching DefaultProfileSeeder.ImportProfileId/ExportProfileId, and
+    // styled identically to Modify/Duplicate (non-destructive, outline-secondary) on both lists.
+    [Fact]
+    public async Task ResetButton_CssClass_IsIdenticalBetweenImportAndExportProfilesLists_AndIsNonDestructive()
+    {
+        var importProfile = new ImportProfile(
+            DefaultProfileSeeder.ImportProfileId, "Profil OXO standard", ImportProfile.DefaultReperePrefix,
+            "MAD TRAVAUX", [], [], BuildImportProfileForParity().SheetRules);
+        var exportProfile = new ExportProfile(
+            DefaultProfileSeeder.ExportProfileId, "Profil OXO standard", BuildExportProfileForParity().SheetRules);
+        await Services.GetRequiredService<IImportProfileStore>().SaveAsync(importProfile);
+        await Services.GetRequiredService<IExportProfileStore>().SaveAsync(exportProfile);
+
+        WithCulture("en-US", () =>
+        {
+            var importCut = Render<ImportProfiles>();
+            var exportCut = Render<ExportProfiles>();
+
+            const string nonDestructiveClass = "btn btn-outline-secondary btn-sm block-field-icon-btn";
+
+            var importResetClass = importCut.Find($"#reset-profile-button-{importProfile.Id}").GetAttribute("class");
+            var exportResetClass = exportCut.Find($"#reset-export-profile-button-{exportProfile.Id}").GetAttribute("class");
+
+            importResetClass.Should().Be(exportResetClass);
+            importResetClass.Should().Be(nonDestructiveClass);
         });
     }
 }

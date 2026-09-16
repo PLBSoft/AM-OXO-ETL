@@ -135,6 +135,7 @@ public class IconLabelButtonGabaritTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("IconGabarit_ImportProfiles_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var cut = Render<ImportProfiles>();
@@ -148,6 +149,7 @@ public class IconLabelButtonGabaritTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("IconGabarit_ExportProfiles_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var cut = Render<ExportProfiles>();
@@ -163,6 +165,7 @@ public class IconLabelButtonGabaritTests : BunitContext
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(importDbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var importCut = Render<ImportProfiles>();

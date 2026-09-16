@@ -166,7 +166,10 @@ builder.Services.AddScoped<IdentitySeeder>();
 // Seeds the standard OXO import/export profiles this deployment relies on -- BlazorAdmin only (the
 // sole host owning ImportProfile/ExportProfile persistence today), same idempotent startup pattern as
 // IdentitySeeder just above. See DefaultProfileSeeder and docs/tickets-tdd-seed-profils-defaut.md.
-builder.Services.AddScoped<DefaultProfileSeeder>();
+// Registered against its Application-layer abstraction (IDefaultProfileSeeder) rather than the
+// concrete Infrastructure type, since ImportProfiles.razor/ExportProfiles.razor now also inject it
+// (2026-09-16, "reset the standard profile to its seed definition" action).
+builder.Services.AddScoped<IDefaultProfileSeeder, DefaultProfileSeeder>();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -253,7 +256,7 @@ var enableProfileSeeding = builder.Configuration.GetValue("ProfileSeeding:Enable
 if (enableProfileSeeding)
 {
     using var scope = app.Services.CreateScope();
-    var profileSeeder = scope.ServiceProvider.GetRequiredService<DefaultProfileSeeder>();
+    var profileSeeder = scope.ServiceProvider.GetRequiredService<IDefaultProfileSeeder>();
     await profileSeeder.SeedAsync();
 }
 

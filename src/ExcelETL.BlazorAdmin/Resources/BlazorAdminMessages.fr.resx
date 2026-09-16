@@ -463,6 +463,18 @@
   <data name="ImportProfiles_CancelDeleteButton" xml:space="preserve">
     <value>Annuler</value>
   </data>
+  <data name="ImportProfiles_ResetToDefault" xml:space="preserve">
+    <value>Réinitialiser le profil {0} à sa définition par défaut</value>
+  </data>
+  <data name="ImportProfiles_ConfirmResetMessage" xml:space="preserve">
+    <value>Réinitialiser le profil « {0} » à sa définition par défaut ? Toute personnalisation apportée sera perdue. Cette action est irréversible.</value>
+  </data>
+  <data name="ImportProfiles_ConfirmResetButton" xml:space="preserve">
+    <value>Confirmer la réinitialisation</value>
+  </data>
+  <data name="ImportProfiles_CancelResetButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
   <data name="ImportProfileEditor_PageTitle" xml:space="preserve">
     <value>Nouveau profil d'import</value>
   </data>
@@ -998,6 +1010,18 @@
     <value>Confirmer la suppression</value>
   </data>
   <data name="ExportProfiles_CancelDeleteButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ExportProfiles_ResetToDefault" xml:space="preserve">
+    <value>Réinitialiser le profil {0} à sa définition par défaut</value>
+  </data>
+  <data name="ExportProfiles_ConfirmResetMessage" xml:space="preserve">
+    <value>Réinitialiser le profil « {0} » à sa définition par défaut ? Toute personnalisation apportée sera perdue. Cette action est irréversible.</value>
+  </data>
+  <data name="ExportProfiles_ConfirmResetButton" xml:space="preserve">
+    <value>Confirmer la réinitialisation</value>
+  </data>
+  <data name="ExportProfiles_CancelResetButton" xml:space="preserve">
     <value>Annuler</value>
   </data>
   <data name="ExportProfileEditor_PageTitle" xml:space="preserve">

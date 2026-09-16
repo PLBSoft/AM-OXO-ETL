@@ -58,6 +58,7 @@ public class ListPageDeleteButtonColorTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("ListPageDeleteButtonColorTests_Import_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var profile = BuildImportProfile();
@@ -75,6 +76,7 @@ public class ListPageDeleteButtonColorTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("ListPageDeleteButtonColorTests_Import2_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var profile = BuildImportProfile();
@@ -109,6 +111,7 @@ public class ListPageDeleteButtonColorTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("ListPageDeleteButtonColorTests_Export_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var profile = BuildExportProfile();
@@ -126,6 +129,7 @@ public class ListPageDeleteButtonColorTests : BunitContext
         var dbContextFactory = new TestDbContextFactory("ListPageDeleteButtonColorTests_Export2_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IExportProfileStore, EfExportProfileStore>();
+        Services.AddSingleton(new Mock<IDefaultProfileSeeder>().Object);
         Services.AddLocalization();
 
         var profile = BuildExportProfile();

@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.Authorization
 
 @inject IImportProfileStore ImportProfileStore
+@inject IDefaultProfileSeeder DefaultProfileSeeder
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject NavigationManager NavigationManager
 
@@ -76,6 +77,22 @@ else
                                 </button>
                             </div>
                         }
+                        else if (_profileIdPendingReset == profile.Id)
+                        {
+                            <div id="@($"reset-profile-confirm-{profile.Id}")" class="right-aligned-actions" role="alert">
+                                <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmResetMessage", _profileNamePendingReset ?? string.Empty]</span>
+                                <button id="@($"confirm-reset-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-danger"
+                                        @onclick="ConfirmResetProfileAsync">
+                                    @Loc["ImportProfiles_ConfirmResetButton"]
+                                </button>
+                                <button id="@($"cancel-reset-profile-button-{profile.Id}")" type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        @onclick="CancelResetProfile">
+                                    @Loc["ImportProfiles_CancelResetButton"]
+                                </button>
+                            </div>
+                        }
                         else
                         {
                             <button id="edit-profile-button-@profile.Id" type="button"
@@ -90,6 +107,15 @@ else
                                     @onclick="() => DuplicateProfileAsync(profile)">
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
+                            @if (profile.Id == DefaultProfileSeeder.ImportProfileId)
+                            {
+                                <button id="reset-profile-button-@profile.Id" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfiles_ResetToDefault", profile.Name]" title="@Loc["ImportProfiles_ResetToDefault", profile.Name]"
+                                        @onclick="() => RequestResetProfile(profile)">
+                                    @((MarkupString)AdminIconMarkup.Reset)
+                                </button>
+                            }
                             <button id="delete-profile-button-@profile.Id" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
@@ -129,6 +155,22 @@ else
                             </button>
                         </div>
                     }
+                    else if (_profileIdPendingReset == profile.Id)
+                    {
+                        <div id="@($"reset-profile-confirm-card-{profile.Id}")" class="right-aligned-actions" role="alert">
+                            <span class="text-danger me-auto">@Loc["ImportProfiles_ConfirmResetMessage", _profileNamePendingReset ?? string.Empty]</span>
+                            <button id="@($"confirm-reset-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-danger"
+                                    @onclick="ConfirmResetProfileAsync">
+                                @Loc["ImportProfiles_ConfirmResetButton"]
+                            </button>
+                            <button id="@($"cancel-reset-profile-button-card-{profile.Id}")" type="button"
+                                    class="btn btn-sm btn-secondary"
+                                    @onclick="CancelResetProfile">
+                                @Loc["ImportProfiles_CancelResetButton"]
+                            </button>
+                        </div>
+                    }
                     else
                     {
                         <div class="right-aligned-actions">
@@ -144,6 +186,15 @@ else
                                     @onclick="() => DuplicateProfileAsync(profile)">
                                 @((MarkupString)AdminIconMarkup.Copy)
                             </button>
+                            @if (profile.Id == DefaultProfileSeeder.ImportProfileId)
+                            {
+                                <button id="reset-profile-button-card-@profile.Id" type="button"
+                                        class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfiles_ResetToDefault", profile.Name]" title="@Loc["ImportProfiles_ResetToDefault", profile.Name]"
+                                        @onclick="() => RequestResetProfile(profile)">
+                                    @((MarkupString)AdminIconMarkup.Reset)
+                                </button>
+                            }
                             <button id="delete-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Delete", profile.Name]" title="@Loc["ImportProfiles_Delete", profile.Name]"
@@ -162,6 +213,8 @@ else
     private List<ImportProfile>? _profiles;
     private Guid? _profileIdPendingDeletion;
     private string? _profileNamePendingDeletion;
+    private Guid? _profileIdPendingReset;
+    private string? _profileNamePendingReset;
 
     protected override async Task OnInitializedAsync() => await LoadProfilesAsync();
 
@@ -177,6 +230,8 @@ else
     {
         _profileIdPendingDeletion = profile.Id;
         _profileNamePendingDeletion = profile.Name;
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
     }
 
     private void CancelDeleteProfile()
@@ -190,6 +245,33 @@ else
         await ImportProfileStore.DeleteAsync(id);
         _profileIdPendingDeletion = null;
         _profileNamePendingDeletion = null;
+        await LoadProfilesAsync();
+    }
+
+    // Client feedback (2026-09-16): only ever offered for the row matching
+    // IDefaultProfileSeeder.ImportProfileId (see markup above) -- discards whatever is currently
+    // stored under that Id and rebuilds it fresh from the current seed definition, so a stale
+    // standard profile can be brought back in line with a deployment that changed the seed
+    // without wiping the database by hand.
+    private void RequestResetProfile(ImportProfile profile)
+    {
+        _profileIdPendingReset = profile.Id;
+        _profileNamePendingReset = profile.Name;
+        _profileIdPendingDeletion = null;
+        _profileNamePendingDeletion = null;
+    }
+
+    private void CancelResetProfile()
+    {
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
+    }
+
+    private async Task ConfirmResetProfileAsync()
+    {
+        await DefaultProfileSeeder.ResetImportProfileToDefaultAsync();
+        _profileIdPendingReset = null;
+        _profileNamePendingReset = null;
         await LoadProfilesAsync();
     }
 

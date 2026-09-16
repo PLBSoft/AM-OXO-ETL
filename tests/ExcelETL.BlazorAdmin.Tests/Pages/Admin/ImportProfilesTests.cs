@@ -9,6 +9,7 @@ using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
+using ExcelETL.Infrastructure.Seeding;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,12 +20,22 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
 public class ImportProfilesTests : BunitContext
 {
+    private readonly Mock<IDefaultProfileSeeder> _defaultProfileSeederMock = new();
+
     public ImportProfilesTests()
     {
         var dbContextFactory = new TestDbContextFactory("ImportProfilesTests_" + Guid.NewGuid());
         Services.AddSingleton<IDbContextFactory<ExcelEtlDbContext>>(dbContextFactory);
         Services.AddSingleton<IImportProfileStore, EfImportProfileStore>();
         Services.AddLocalization();
+
+        // 2026-09-16 ("reset the standard profile to its seed definition"): mocked so the row-level
+        // reset button can be tested independently of DefaultProfileSeeder's own real
+        // BuildDefaultImportProfile() content -- the mock's ImportProfileId returns the real seed
+        // constant, since that's what ImportProfiles.razor compares each row's Id against to decide
+        // whether to show the button at all.
+        _defaultProfileSeederMock.Setup(s => s.ImportProfileId).Returns(DefaultProfileSeeder.ImportProfileId);
+        Services.AddSingleton(_defaultProfileSeederMock.Object);
     }
 
     private static void WithCulture(string cultureName, Action action)
@@ -77,6 +88,21 @@ public class ImportProfilesTests : BunitContext
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         return new ImportProfile(name, equipementTypeElementNom, [], [], [sheetRule]);
+    }
+
+    private static ImportProfile BuildProfileWithId(Guid id, string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
+    {
+        var locator = new RepeatingBlockLocator(
+            "ISOLEMENT",
+            firstBlockStartRow: 9,
+            step: 7,
+            stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+
+        var sheetRule = new SheetExtractionRule(
+            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
+
+        return new ImportProfile(id, name, ImportProfile.DefaultReperePrefix, equipementTypeElementNom, [], [], [sheetRule]);
     }
 
     [Fact]
@@ -502,4 +528,126 @@ public class ImportProfilesTests : BunitContext
         topRow.QuerySelectorAll("button, a[id]").Should().BeEmpty();
         topRow.QuerySelector(".navbar-brand").Should().NotBeNull();
     });
+
+    // 2026-09-16: the reset-to-default action is only ever offered for the row matching
+    // IDefaultProfileSeeder.ImportProfileId -- an ordinary profile (any other Id) never gets it, in
+    // either the table or the mobile card template.
+    [Fact]
+    public async Task ResetButton_OnlyVisibleForTheStandardProfileRow_InBothTableAndCardTemplates() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId, "Profil OXO standard");
+            var ordinary = BuildProfileWithId(Guid.NewGuid(), "Un autre profil");
+            await SeedProfileAsync(standard);
+            await SeedProfileAsync(ordinary);
+
+            var cut = Render<ImportProfiles>();
+
+            cut.FindAll($"#reset-profile-button-{standard.Id}").Should().HaveCount(1);
+            cut.FindAll($"#reset-profile-button-card-{standard.Id}").Should().HaveCount(1);
+            cut.FindAll($"#reset-profile-button-{ordinary.Id}").Should().BeEmpty();
+            cut.FindAll($"#reset-profile-button-card-{ordinary.Id}").Should().BeEmpty();
+        });
+
+    [Fact]
+    public async Task ResetButton_DoesNotCallResetImmediately_OnlyOpensConfirmation() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId);
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#reset-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#reset-profile-confirm-{standard.Id}").Should().NotBeNull();
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetImportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Never);
+        });
+
+    [Fact]
+    public async Task ResetButton_OpensConfirmation_ShowingTheTargetedProfileName() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId, "Profil OXO standard");
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#reset-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#reset-profile-confirm-{standard.Id}").TextContent.Should().Contain("Profil OXO standard");
+            cut.Find($"#reset-profile-confirm-{standard.Id}").GetAttribute("role").Should().Be("alert");
+        });
+
+    [Fact]
+    public async Task CancelResetButton_ClosesConfirmation_WithoutCallingReset_AndOtherActionsStillWork() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId);
+            await SeedProfileAsync(standard);
+
+            var cut = Render<ImportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+            cut.Find($"#reset-profile-button-{standard.Id}").Click();
+
+            cut.Find($"#cancel-reset-profile-button-{standard.Id}").Click();
+
+            cut.FindAll($"#reset-profile-confirm-{standard.Id}").Should().BeEmpty();
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetImportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Never);
+
+            cut.Find($"#edit-profile-button-{standard.Id}").Click();
+            navigationManager.Uri.Should().EndWith($"/import-profiles/{standard.Id}/edit");
+        });
+
+    [Fact]
+    public async Task ConfirmResetButton_CallsResetImportProfileToDefaultAsync_AndReloadsTheList() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId);
+            await SeedProfileAsync(standard);
+            _defaultProfileSeederMock
+                .Setup(s => s.ResetImportProfileToDefaultAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#reset-profile-button-{standard.Id}").Click();
+            cut.Find($"#confirm-reset-profile-button-{standard.Id}").Click();
+
+            _defaultProfileSeederMock.Verify(
+                s => s.ResetImportProfileToDefaultAsync(It.IsAny<CancellationToken>()), Times.Once);
+            cut.FindAll($"#reset-profile-confirm-{standard.Id}").Should().BeEmpty();
+            var store = Services.GetRequiredService<IImportProfileStore>();
+            var all = await store.GetAllAsync();
+            all.Should().ContainSingle(p => p.Id == standard.Id);
+        });
+
+    // The reset button only ever renders in the row's "idle" state -- while a delete confirmation
+    // is open on that same row, only its Confirm/Cancel buttons exist, so the two confirmations can
+    // never both be requested on one single row through the real UI. The mutual exclusion this
+    // guards against is instead across two rows, sharing the same page-wide pending-action fields:
+    // opening one row's confirmation must close whatever the other row currently has open, exactly
+    // the pre-existing cross-row delete/delete behavior this test extends to delete/reset.
+    [Fact]
+    public async Task OpeningResetConfirmationOnOneRow_ClosesAnAlreadyOpenDeleteConfirmationOnAnotherRow_AndViceVersa() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var standard = BuildProfileWithId(DefaultProfileSeeder.ImportProfileId, "Profil OXO standard");
+            var ordinary = BuildProfileWithId(Guid.NewGuid(), "Un autre profil");
+            await SeedProfileAsync(standard);
+            await SeedProfileAsync(ordinary);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#delete-profile-button-{ordinary.Id}").Click();
+            cut.FindAll($"#delete-profile-confirm-{ordinary.Id}").Should().HaveCount(1);
+
+            cut.Find($"#reset-profile-button-{standard.Id}").Click();
+
+            cut.FindAll($"#delete-profile-confirm-{ordinary.Id}").Should().BeEmpty();
+            cut.FindAll($"#reset-profile-confirm-{standard.Id}").Should().HaveCount(1);
+
+            cut.Find($"#delete-profile-button-{ordinary.Id}").Click();
+
+            cut.FindAll($"#reset-profile-confirm-{standard.Id}").Should().BeEmpty();
+            cut.FindAll($"#delete-profile-confirm-{ordinary.Id}").Should().HaveCount(1);
+        });
 }
