@@ -11,9 +11,15 @@ traiter séparément.
 | **A — brouillon non validé** | Une saisie reste dans l'état local d'un sous-formulaire tant que son propre bouton n'a pas été cliqué ; une sauvegarde plus haut ne la lit pas. | Lot 056 ; commit `0cbac22` |
 | **B — champ perdu à la reconstruction** | Un formulaire reconstruit l'objet métier à partir des seuls champs qu'il connaît ; ce qu'il n'expose pas (ou oublie de reporter) disparaît. | Lot 048.1 (`HeaderFields`/`HeaderComposites`) ; commit `1736886` (PLATINES, `FieldPresencePointRules`) ; commit `0cbac22` (`ConstantColumnDefinitions` des feuilles `TM_PROC_*`) |
 
-Ce lot traite **B uniquement**, en préalable au lot 074 (qui traite A). B s'est produit trois fois,
-chaque fois corrigé champ par champ, et chaque fois découvert en production ou par le client. Le
-mécanisme d'enregistrement retenu pour A (lot 074) ne le touche pas : il faut un garde-fou propre.
+Ce lot traite **B uniquement**, en préalable au lot 074. B s'est produit trois fois, chaque fois
+corrigé champ par champ, et chaque fois découvert en production ou par le client.
+
+**Place de ce lot dans la décision retenue (P3, brouillon unique possédé par la racine,
+`tickets-tdd-lot-074-pilote-brouillon-editeur-profil-export.md`)** : à terme, P3 rend B impossible par
+construction et le garde par un test **unitaire** aller-retour sur ses conversions. Ce lot reste
+nécessaire avant : ses tests pilotent l'interface par ses identifiants et ses gestes, sans rien savoir
+de l'état interne — c'est exactement le filet qu'exige la réécriture interne des lots 074 et suivants.
+Ils doivent rester verts, **sans modifier leurs assertions**, pendant toute la migration.
 
 ## Constats (code au commit `8c05bc4`)
 
@@ -122,6 +128,10 @@ nouveau champ ajouté à un type de profil (`ImportProfile`, `SheetExtractionRul
 `SheetGenerationRule` et leurs éléments) doit être **semé dans le profil par défaut** ou ajouté comme
 cas manuel à ces tests aller-retour, faute de quoi le garde-fou ne le voit pas. Citer les fichiers de
 test par leur nom, ne pas recopier leur contenu.
+
+Ce paragraphe est provisoire : il sera remplacé, à la fin de la migration P3 de l'import, par la règle
+propre aux brouillons (tout champ passe par les conversions, gardées par leur test unitaire
+aller-retour).
 
 ## Refactor à considérer
 
