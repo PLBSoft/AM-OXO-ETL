@@ -122,7 +122,9 @@
         _expectedValue = InitialRule.ExpectedValue ?? string.Empty;
     }
 
-    private async Task Submit()
+    // Public so the parent (SheetRuleForm) can flush this instance before its own commit -- see
+    // BlockFieldForm.TryCommitAsync for why.
+    public async Task<bool> TryCommitAsync()
     {
         _errorMessage = null;
         _warningMessage = null;
@@ -131,7 +133,7 @@
         if (!parseResult.IsSuccess)
         {
             _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
-            return;
+            return false;
         }
 
         try
@@ -153,12 +155,16 @@
             ResetForm();
 
             await _colonneNameInputRef.FocusAsync();
+            return true;
         }
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return false;
         }
     }
+
+    private async Task Submit() => await TryCommitAsync();
 
     // Lot 056 (56.4): same "all fields filled" blur/Enter contract as BlockFieldForm.
     private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(_colonneName) && !string.IsNullOrWhiteSpace(_absoluteRange);

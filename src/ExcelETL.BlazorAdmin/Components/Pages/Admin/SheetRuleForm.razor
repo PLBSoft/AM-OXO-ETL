@@ -87,7 +87,8 @@
             @if (_editingFieldIndex == fieldIndex)
             {
                 <li class="block-field-item-editing">
-                    <BlockFieldForm IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
+                    <BlockFieldForm @ref="_editingBlockFieldFormRef"
+                                     IdPrefix="@($"{IdPrefix}block-field-{fieldIndex}-")"
                                      InitialField="field"
                                      FirstBlockStartRow="_firstBlockStartRow"
                                      SubmitButtonId="@($"{IdPrefix}save-block-field-button-{fieldIndex}")"
@@ -379,7 +380,8 @@
             @if (_editingFieldPresencePointRuleIndex == itemIndex)
             {
                 <li class="block-field-item-editing">
-                    <FieldPresencePointRuleForm IdPrefix="@($"{IdPrefix}field-presence-rule-{itemIndex}-")"
+                    <FieldPresencePointRuleForm @ref="_editingFieldPresencePointRuleFormRef"
+                                                IdPrefix="@($"{IdPrefix}field-presence-rule-{itemIndex}-")"
                                                 InitialRule="fieldPresenceRule"
                                                 FirstBlockStartRow="_firstBlockStartRow"
                                                 SubmitButtonId="@($"{IdPrefix}save-field-presence-rule-button-{itemIndex}")"
@@ -445,7 +447,8 @@
             @if (_editingHeaderFieldIndex == fieldIndex)
             {
                 <li class="block-field-item-editing">
-                    <HeaderFieldRuleForm IdPrefix="@($"{IdPrefix}header-field-{fieldIndex}-")"
+                    <HeaderFieldRuleForm @ref="_editingHeaderFieldFormRef"
+                                         IdPrefix="@($"{IdPrefix}header-field-{fieldIndex}-")"
                                          InitialField="field"
                                          SubmitButtonId="@($"{IdPrefix}save-header-field-button-{fieldIndex}")"
                                          SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
@@ -503,7 +506,8 @@
             @if (_editingHeaderCompositeIndex == itemIndex)
             {
                 <li class="block-field-item-editing">
-                    <HeaderCompositeRuleForm IdPrefix="@($"{IdPrefix}header-composite-{itemIndex}-")"
+                    <HeaderCompositeRuleForm @ref="_editingHeaderCompositeFormRef"
+                                             IdPrefix="@($"{IdPrefix}header-composite-{itemIndex}-")"
                                              InitialComposite="composite"
                                              SubmitButtonId="@($"{IdPrefix}save-header-composite-button-{itemIndex}")"
                                              SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
@@ -626,6 +630,16 @@
     private int? _editingFieldPresencePointRuleIndex;
 
     private int? _editingFieldIndex;
+
+    // Bound only while the matching index above is non-null (the corresponding @if branch renders
+    // the component) -- used to flush an in-progress nested edit before this form's own commit, so a
+    // typed-but-not-yet-"Enregistrer les modifications" change is never silently discarded (the real
+    // incident described just above: PLATINES columns retained their old header text after the admin
+    // renamed them, because the nested edit was never actually flushed into this form's own state).
+    private BlockFieldForm? _editingBlockFieldFormRef;
+    private HeaderFieldRuleForm? _editingHeaderFieldFormRef;
+    private HeaderCompositeRuleForm? _editingHeaderCompositeFormRef;
+    private FieldPresencePointRuleForm? _editingFieldPresencePointRuleFormRef;
 
     private string _newUnconditionalColonneName = string.Empty;
     private ElementReference _unconditionalColonneNameInputRef;
@@ -981,6 +995,55 @@
 
         _errorMessage = null;
         _warningMessage = null;
+
+        // Flush whichever nested field/header-field/header-composite/field-presence-rule edit is
+        // currently open -- otherwise a value typed there but not yet confirmed via that row's own
+        // "Enregistrer les modifications" button is silently lost the moment this outer form commits
+        // (see the field-presence-rule comment above _fieldPresencePointRules for the real incident
+        // this class of bug already caused once; this closes the same gap for every other nested
+        // sub-form). A validation failure here aborts this whole commit and leaves the nested form
+        // open with its own alert, same as every other flush in this codebase (Lot 057).
+        if (_editingFieldIndex is not null && _editingBlockFieldFormRef is not null && !await _editingBlockFieldFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_editingHeaderFieldIndex is not null && _editingHeaderFieldFormRef is not null && !await _editingHeaderFieldFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_editingHeaderCompositeIndex is not null && _editingHeaderCompositeFormRef is not null && !await _editingHeaderCompositeFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_editingFieldPresencePointRuleIndex is not null && _editingFieldPresencePointRuleFormRef is not null && !await _editingFieldPresencePointRuleFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        // Same flush, for the two lists edited inline (no nested component/ref -- the typed value
+        // already lives directly in this form's own _editingUnconditionalColonneValue/_editingPointRule*
+        // fields, but the row's own list entry is only overwritten by these Save* methods, which leave
+        // the edit index open (and set their own error message) on a validation failure.
+        if (_editingUnconditionalColonneIndex is { } unconditionalColonneIndex)
+        {
+            SaveUnconditionalColonneEdit(unconditionalColonneIndex);
+            if (_editingUnconditionalColonneIndex is not null)
+            {
+                return false;
+            }
+        }
+
+        if (_editingPointRuleIndex is { } pointRuleIndex)
+        {
+            SavePointRuleEdit(pointRuleIndex);
+            if (_editingPointRuleIndex is not null)
+            {
+                return false;
+            }
+        }
 
         // Couleur etiquette: blank -> no per-block cell configured (null, not an error) -- distinct
         // from a non-blank value that fails to parse as a real Excel range, which does block the

@@ -110,7 +110,12 @@
             FirstBlockStartRow, InitialField.ColumnRange, InitialField.RowOffsetStart, InitialField.RowOffsetEnd);
     }
 
-    private async Task Submit()
+    // Public so the parent (SheetRuleForm) can flush this instance -- when it's the currently-open
+    // edit-mode form -- before its own commit, instead of silently discarding a typed-but-not-yet-
+    // -Saved edit (the real-world incident this fix closes: renaming a header/range here, then
+    // clicking the outer "Enregistrer les modifications"/"Enregistrer le profil" button directly,
+    // used to leave the old value in place with no error and no indication anything was lost).
+    public async Task<bool> TryCommitAsync()
     {
         _errorMessage = null;
         _warningMessage = null;
@@ -119,7 +124,7 @@
         if (!parseResult.IsSuccess)
         {
             _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
-            return;
+            return false;
         }
 
         try
@@ -139,12 +144,16 @@
             // Lot 056 (56.4): after a successful blur/Enter-triggered add, return focus to the first
             // field of the row so a rapid, mouse-free "type, type, next" entry rhythm is possible.
             await _nameInputRef.FocusAsync();
+            return true;
         }
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return false;
         }
     }
+
+    private async Task Submit() => await TryCommitAsync();
 
     // Lot 056 (56.4): validation on blur of the row's last field, or Enter anywhere in the row --
     // but only when every field of the row is already filled in. A partially-filled row produces no

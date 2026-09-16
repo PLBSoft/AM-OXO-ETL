@@ -107,7 +107,9 @@
         _markValue = InitialApplicationColumn.MarkValue;
     }
 
-    private async Task Submit()
+    // Public so the parent (SheetGenerationRuleForm) can flush this instance before its own commit --
+    // see ColumnDefinitionForm.TryCommitAsync for why.
+    public async Task<bool> TryCommitAsync()
     {
         _errorMessage = null;
 
@@ -118,12 +120,16 @@
             await OnSubmit.InvokeAsync(applicationColumn);
 
             ResetForm();
+            return true;
         }
         catch (DomainValidationException ex)
         {
             _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            return false;
         }
     }
+
+    private async Task Submit() => await TryCommitAsync();
 
     private async Task Cancel() => await OnCancel.InvokeAsync();
 

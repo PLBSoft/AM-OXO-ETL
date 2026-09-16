@@ -48,7 +48,8 @@
             @if (_editingColumnIndex == columnIndex)
             {
                 <li class="block-field-item-editing">
-                    <ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
+                    <ColumnDefinitionForm @ref="_editingColumnFormRef"
+                                          IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
                                           InitialColumn="column"
                                           PivotSource="_pivotSource"
                                           SubmitButtonId="@($"{IdPrefix}save-column-definition-button-{columnIndex}")"
@@ -114,7 +115,8 @@
             @if (_editingPointColumnIndex == pointColumnIndex)
             {
                 <li class="block-field-item-editing">
-                    <PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
+                    <PointColumnDefinitionForm @ref="_editingPointColumnFormRef"
+                                               IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
                                                InitialPointColumn="pointColumn"
                                                SubmitButtonId="@($"{IdPrefix}save-point-column-definition-button-{pointColumnIndex}")"
                                                SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
@@ -176,7 +178,8 @@
             @if (_editingApplicationColumnIndex == applicationColumnIndex)
             {
                 <li class="block-field-item-editing">
-                    <ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
+                    <ApplicationColumnDefinitionForm @ref="_editingApplicationColumnFormRef"
+                                                      IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
                                                       InitialApplicationColumn="applicationColumn"
                                                       SubmitButtonId="@($"{IdPrefix}save-application-column-definition-button-{applicationColumnIndex}")"
                                                       SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
@@ -289,10 +292,23 @@
     private readonly List<ColumnDefinition> _columns = [];
     private readonly List<PointColumnDefinition> _pointColumns = [];
     private readonly List<ApplicationColumnDefinition> _applicationColumns = [];
+    // No editing UI exists for this list yet (Lot 069's own deliberate deferral -- only settable via
+    // DefaultProfileSeeder.cs) but it must still be carried through unmodified whenever an existing
+    // rule is re-saved, exactly like the PLATINES FieldPresencePointRules incident this same day (see
+    // SheetRuleForm._fieldPresencePointRules) -- rebuilding the SheetGenerationRule without it would
+    // silently delete a TM_PROC_* sheet's CRITERE/AVANCEMENT/SUPPRESSION constant columns.
+    private readonly List<ConstantColumnDefinition> _constantColumns = [];
 
     private int? _editingColumnIndex;
     private int? _editingPointColumnIndex;
     private int? _editingApplicationColumnIndex;
+
+    // Bound only while the corresponding index above is non-null (the matching @if branch renders
+    // the component) -- used to flush an in-progress nested edit before this form's own commit, so a
+    // typed-but-not-yet-"Enregistrer les modifications" change is never silently discarded.
+    private ColumnDefinitionForm? _editingColumnFormRef;
+    private PointColumnDefinitionForm? _editingPointColumnFormRef;
+    private ApplicationColumnDefinitionForm? _editingApplicationColumnFormRef;
 
     private string? _errorMessage;
 
@@ -311,6 +327,7 @@
         _columns.AddRange(InitialRule.ColumnDefinitions);
         _pointColumns.AddRange(InitialRule.PointColumnDefinitions);
         _applicationColumns.AddRange(InitialRule.ApplicationColumnDefinitions);
+        _constantColumns.AddRange(InitialRule.ConstantColumnDefinitions);
     }
 
     // PointColumnDefinitions/ApplicationColumnDefinitions have no meaning for TacheMultiple (Domain
@@ -429,12 +446,38 @@
 
         _errorMessage = null;
 
+        // Flush whichever nested Column/PointColumn/ApplicationColumn edit is currently open --
+        // otherwise a header/value typed there but not yet confirmed via that row's own "Enregistrer
+        // les modifications" button is silently lost the moment this outer form commits (real
+        // incident: an export profile's PLATINES columns kept their old header text even after the
+        // admin renamed them and saved the profile). A validation failure here aborts this whole
+        // commit and leaves the nested form open with its own alert, same as every other flush in
+        // this codebase (Lot 057's mutual-exclusion helpers).
+        if (_editingColumnIndex is not null && _editingColumnFormRef is not null && !await _editingColumnFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_editingPointColumnIndex is not null && _editingPointColumnFormRef is not null && !await _editingPointColumnFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
+        if (_editingApplicationColumnIndex is not null && _editingApplicationColumnFormRef is not null && !await _editingApplicationColumnFormRef.TryCommitAsync())
+        {
+            return false;
+        }
+
         try
         {
-            // SheetGenerationRule's constructor snapshots all three lists itself ([.. ...]), unlike the
+            // SheetGenerationRule's constructor snapshots all four lists itself ([.. ...]), unlike the
             // import side's SheetExtractionRule.UnconditionalColonneNames -- no defensive copy needed
-            // here before ResetForm() clears _columns/_pointColumns/_applicationColumns below.
-            var rule = new SheetGenerationRule(_sheetName, _pivotSource, _columns, _pointColumns, _applicationColumns);
+            // here before ResetForm() clears _columns/_pointColumns/_applicationColumns/_constantColumns
+            // below. _constantColumns must always be passed through, even though no UI edits it yet
+            // (see its own field comment) -- omitting it here is exactly the bug that used to silently
+            // wipe a TM_PROC_* sheet's constant columns on every save.
+            var rule = new SheetGenerationRule(
+                _sheetName, _pivotSource, _columns, _pointColumns, _applicationColumns, _constantColumns);
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -459,6 +502,7 @@
         _columns.Clear();
         _pointColumns.Clear();
         _applicationColumns.Clear();
+        _constantColumns.Clear();
         _editingColumnIndex = null;
         _editingPointColumnIndex = null;
         _editingApplicationColumnIndex = null;
