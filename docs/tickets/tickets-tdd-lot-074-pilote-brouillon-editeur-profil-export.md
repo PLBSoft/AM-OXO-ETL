@@ -339,3 +339,14 @@ cette session.
 Sur la base des trois critères mesurables, ce pilote justifie une poursuite vers l'éditeur d'import
 (`ImportProfileEditor`/`SheetRuleForm` et ses sous-formulaires), à confirmer avec Simon avant d'ouvrir
 les tickets correspondants (hors périmètre de ce document, par instruction explicite du 074.5).
+
+### Décision (confirmée avec Simon, 2026-09-16)
+
+Le 4e critère est levé : Simon a relu le code migré (`ExportProfileEditor.razor`,
+`SheetGenerationRuleForm.razor`, `Editing/`) et le juge plus simple que l'ancien mécanisme de flush.
+**Les 4 critères de poursuite sont donc remplis.**
+
+**Poursuite confirmée** vers l'éditeur d'import, **dans une session dédiée** — conformément à
+l'instruction explicite du 074.5, les tickets de migration de l'import (`ImportProfileEditor`/
+`SheetRuleForm` et ses sous-formulaires, 1 145 lignes) ne sont pas rédigés dans ce document ni dans
+cette session ; ils seront rédigés à part, sur la base des mesures ci-dessus.
