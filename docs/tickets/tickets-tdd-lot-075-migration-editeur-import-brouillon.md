@@ -241,4 +241,129 @@ constat 1, assertions modifiées (et pourquoi), points à toucher pour ajouter u
 
 ## Résultat
 
-*(à remplir en 075.5)*
+Mesures prises au commit `a64c119` (075.3 + 075.4), sur `git diff --stat 7b648e1 a64c119` (7b648e1 = état
+juste après 075.2, avant toute migration).
+
+### Lignes de code
+
+| Fichier | Avant (constat 1) | Après | Delta |
+| :--- | ---: | ---: | ---: |
+| `ImportProfileEditor.razor` | 1 134 | 974 | −160 |
+| `SheetRuleForm.razor` | 1 145 | 805 | −340 |
+| `BlockFieldForm.razor` | 187 | 124 | −63 |
+| `HeaderFieldRuleForm.razor` | 156 | 95 | −61 |
+| `HeaderCompositeRuleForm.razor` | 151 | 115 | −36 |
+| `FieldPresencePointRuleForm.razor` | 196 | 127 | −69 |
+| **Total, 6 composants migrés** | **2 969** | **2 240** | **−729** |
+
+Contrairement au pilote export (−35, les deux composants racines y grossissaient), **les deux racines
+maigrissent aussi** : la gestion des 9 listes éditables passe par deux petits outils génériques
+(`ListItemEditState<T>`, `DraftListActions`) au lieu de neuf jeux de tampons/index/erreurs/méthodes
+écrits à la main.
+
+En plus : 160 lignes de nouveaux outils génériques (`DraftValidationException`, `ListItemEditState<T>`,
+`DraftListActions`), 618 lignes de brouillons et de mapper d'import (`Editing/Import/`), 1 135 lignes de
+tests nouveaux (mapper, outils, `ImportProfileEditorPendingRowTests.cs`).
+
+### Champs d'état et `@ref`, contre le constat 1
+
+| Composant | Champs avant | Champs après | `@ref` de composant avant → après |
+| :--- | ---: | ---: | :--- |
+| `ImportProfileEditor.razor` | 35 | 14 | 2 → 0 |
+| `SheetRuleForm.razor` | 39 | 7 (6 `ListItemEditState` + 1 référence d'élément pour le focus) | 4 → 0 |
+| `BlockFieldForm.razor` | 5 | 1 (référence d'élément) | 0 → 0 |
+| `HeaderFieldRuleForm.razor` | 5 | 0 | 0 → 0 |
+| `HeaderCompositeRuleForm.razor` | 4 | 1 (référence d'élément) | 0 → 0 |
+| `FieldPresencePointRuleForm.razor` | 6 | 1 (référence d'élément) | 0 → 0 |
+| **Total** | **94** | **24** | **6 → 0** |
+
+Disparus entièrement : les 5 `TryCommitAsync`, les 5 `ResetForm`, les 5 `OnInitialized` de
+pré-remplissage, `IsBlank`, la chaîne de vidage imbriquée et tous les tampons d'édition en ligne
+(`_editingXxxValue`, `_newXxx`). Les composants feuilles ne valident plus rien.
+
+### Tests existants dont une assertion a dû changer
+
+**Aucun.** Les tests du constat 11 (`ImportProfileEditorTests.cs`, les fichiers `…Lot056/057/058/059/063/067`,
+`…CouleurEtiquette`, `…FieldPresencePointRule`, `…NestedEditFlush`, les 72 cas aller-retour du lot 073),
+`ProfileEditorParityTests.cs`, `FormFloatingStructureAuditTests.cs` et `IconLabelButtonGabaritTests.cs` :
+501 tests verts sur le périmètre filtré, aucun fichier de test existant modifié (`git status` le confirme).
+Projet `ExcelETL.BlazorAdmin.Tests` complet : 1 310/1 311 — le seul échec,
+`ExportProfileTestTests.ClickingGenerate_WithoutExportProfileSelected_ShowsError_WithRoleAlert`, est le
+défaut préexistant signalé après le lot 070, sans rapport.
+
+Un seul test existant a exigé une intervention, **dans le code de production, pas dans le test** :
+`DefaultTableau_AddRejectedOnFreshProfile_UnsavedChangesIndicatorStaysAbsent` (lot 059). La première
+version liait chaque saisie d'une ligne en attente à l'indicateur de modification ; bUnit envoie un
+`change` à valeur vide, ce qui levait l'indicateur. La règle juste a été posée
+(`MarkPendingRowChanged`) : une ligne en attente restée exactement vide n'est pas une modification.
+
+**Rouge d'abord confirmé** : les 15 tests de fuite de `ImportProfileEditorPendingRowTests.cs` échouaient
+tous sur l'interface d'avant, chacun pour la raison attendue (profil sauvegardé sans la ligne, ou
+navigation effectuée) — les 6 fuites du constat 5 sont réelles, pas seulement lues. Ils ont été
+committés avec la migration (et non seuls) pour garder `main` vert, comme au 074.3.
+
+### Changements de comportement assumés (aucun test existant touché)
+
+1. **Q3** : modifier « Ligne de début du premier bloc » garde les plages affichées et déplace les
+   décalages.
+2. **Message global** `ImportProfileEditor_PendingRowInvalidError` quand une ligne en attente ou une
+   édition ouverte est invalide à la sauvegarde.
+3. **Saisir dans une ligne en attente ou une édition ouverte lève l'indicateur de modification** et active
+   le bouton d'enregistrement — cohérent avec le fait que cette saisie est désormais sauvegardée, et
+   identique au comportement de l'export depuis le lot 074.
+4. **Supprimer un élément placé avant l'élément en cours d'édition** laisse l'édition sur le même élément
+   (avant : l'index restait fixe et pointait sur l'élément suivant — défaut latent).
+5. **Avertissement mort retiré** : celui de `CouleurEtiquetteCell` dans `SheetRuleForm` n'était jamais
+   visible (constat 7) ; il n'a pas été reproduit.
+
+### Points à toucher pour ajouter un champ à `FieldPresencePointRule`
+
+**Avant** (~7 points) : le record du domaine ; un champ local dans `FieldPresencePointRuleForm` ; son
+pré-remplissage dans `OnInitialized` ; sa construction dans `TryCommitAsync` ; sa remise à zéro dans
+`ResetForm` ; le balisage ; et, s'il est affiché, la lecture dans `SheetRuleForm` et dans la carte de
+`ImportProfileEditor`. Un oubli à la construction perdait le champ en silence (incident PLATINES du 16/09).
+
+**Après** (4 points) : le record du domaine ; une propriété de `FieldPresencePointRuleDraft` ; deux lignes
+du mapper (`FromDomainRule`, `ConvertFieldPresencePointRule`) ; le balisage lié à `Draft`. Un oubli dans le
+mapper fait échouer `RoundTrip_…` (vérifié par mutation en 075.2 : retirer le report des noms de cellule
+fait échouer les deux allers-retours).
+
+### Difficultés rencontrées
+
+- **Erreurs obsolètes** : une erreur corrigée restait affichée tant que l'élément n'était pas re-soumis
+  seul. Résolu par `DraftListActions.ClearErrors`, parcours générique (réflexion sur les propriétés, aucun
+  code par type) appelé avant chaque conversion. **Le même défaut existe côté export**, qui n'a pas cet
+  appel (voir « Suite proposée »).
+- **Focus après un ajout réussi (lot 056.4) sans validation dans la feuille** : la feuille relaie la
+  soumission puis ne rend le focus que si `Draft.Error` est resté vide.
+- **Ajout vide d'une colonne inconditionnelle** : ignoré en silence depuis toujours, alors que la
+  conversion le signale comme une erreur ; le bouton « Ajouter » garde son filtre, et une ligne en attente
+  blanche est ignorée à la sauvegarde.
+- **`HeaderFieldRule` sans `init`** : impossible de réécrire sa feuille avec `with` ; reconstruit par son
+  constructeur.
+- **Doublons de codes de tâche multiple** : comparer à des voisins eux-mêmes invalides aurait levé une
+  exception attribuée au mauvais brouillon ; seuls leurs codes sont comparés.
+
+### Bilan global P3 (export + import)
+
+| | Export (074) | Import (075) |
+| :--- | ---: | ---: |
+| Composants migrés | 5 | 6 |
+| Solde de lignes des composants | −35 | −729 |
+| Champs d'état | 35 → 17 | 94 → 24 |
+| `@ref` de composant | 5 → 0 | 6 → 0 |
+| Assertions de tests existants modifiées | 0 | 0 |
+| Fuites du défaut A fermées | L4 | L1 à L6 |
+| Garde-fou du défaut B | aller-retour unitaire du mapper + lot 073 | idem |
+
+Les deux éditeurs n'ont plus aucune chaîne de validation imbriquée : tout ce qui est saisi vit dans un
+seul brouillon, converti en entier à la sauvegarde. Les défauts A et B ne dépendent plus de la vigilance
+de celui qui ajoute un sous-formulaire. **Conclusion : P3 est confirmé comme l'architecture des éditeurs
+de profil ; la règle provisoire du lot 073 est remplacée (075.6).**
+
+### Suite proposée (hors périmètre de ce lot)
+
+Aligner l'éditeur d'export sur les outils créés ici (« Refactor à considérer ») : `SheetGenerationRuleForm`
+garde 3 paires index/copie écrites à la main et 3 méthodes de soumission quasi identiques que
+`ListItemEditState<T>`/`DraftListActions` remplaceraient, et il lui manque `ClearErrors` (erreurs
+obsolètes). Petit lot autonome, gardé par les tests export existants.
