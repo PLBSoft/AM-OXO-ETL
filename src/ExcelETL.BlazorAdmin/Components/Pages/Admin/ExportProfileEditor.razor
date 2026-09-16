@@ -162,13 +162,13 @@ else
                                 <button id="@($"modify-sheet-generation-rule-button-{index}")" type="button"
                                         class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                         aria-label="@Loc["ExportProfileEditor_ModifyButton"]" title="@Loc["ExportProfileEditor_ModifyButton"]"
-                                        @onclick="() => RequestOpenEditAsync(index)">
+                                        @onclick="() => RequestOpenEdit(index)">
                                     @((MarkupString)AdminIconMarkup.Pencil)
                                 </button>
                                 <button id="@($"delete-sheet-generation-rule-button-{index}")" type="button"
                                         class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                         aria-label="@Loc["ExportProfileEditor_DeleteButton"]" title="@Loc["ExportProfileEditor_DeleteButton"]"
-                                        @onclick="() => RequestDeleteSheetRuleAsync(index)">
+                                        @onclick="() => RequestDeleteSheetRule(index)">
                                     @((MarkupString)AdminIconMarkup.Trash)
                                 </button>
                             </div>
@@ -184,7 +184,7 @@ else
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>@Loc["ExportProfileEditor_AddSheetHeading"]</span>
             <button id="toggle-add-sheet-generation-rule-form-button" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
-                    @onclick="ToggleAddSheetRuleFormAsync">
+                    @onclick="ToggleAddSheetRuleForm">
                 @if (_openSheetRuleForm.IsAdd)
                 {
                     @Loc["ExportProfileEditor_AddSheetToggleCloseButton"]
@@ -288,7 +288,7 @@ else
     // a still-pristine pending Add rule is a no-op; a non-pristine, valid pending Add rule is
     // promoted into the list exactly as if "Add sheet rule" had been clicked. Errors of an earlier
     // attempt are cleared first (lot 076).
-    private bool TryValidateAndCloseCurrentForm()
+    private bool TryValidateOpenForm()
     {
         var ruleDraft = _openSheetRuleForm.EditIndex is { } index
             ? _draft.SheetRules[index]
@@ -315,9 +315,9 @@ else
         return true;
     }
 
-    private void RequestOpenEditAsync(int index)
+    private void RequestOpenEdit(int index)
     {
-        if (!TryValidateAndCloseCurrentForm())
+        if (!TryValidateOpenForm())
         {
             return;
         }
@@ -327,7 +327,7 @@ else
         _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
     }
 
-    private void ToggleAddSheetRuleFormAsync()
+    private void ToggleAddSheetRuleForm()
     {
         if (_openSheetRuleForm.IsAdd)
         {
@@ -342,7 +342,7 @@ else
             return;
         }
 
-        if (!TryValidateAndCloseCurrentForm())
+        if (!TryValidateOpenForm())
         {
             return;
         }
@@ -351,9 +351,9 @@ else
         _openSheetRuleForm = SheetRuleFormOpenState.Add;
     }
 
-    private void RequestDeleteSheetRuleAsync(int index)
+    private void RequestDeleteSheetRule(int index)
     {
-        if (!TryValidateAndCloseCurrentForm())
+        if (!TryValidateOpenForm())
         {
             return;
         }
