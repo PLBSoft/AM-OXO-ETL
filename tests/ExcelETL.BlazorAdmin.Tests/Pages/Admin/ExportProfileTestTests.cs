@@ -375,8 +375,20 @@ public class ExportProfileTestTests : BunitContext
             var importProfile = await SeedRealImportProfileAsync();
             await SeedRealExportProfileAsync();
             // A single export profile would be auto-selected on load -- seed a second one so this
-            // scenario (no selection made) is still reachable.
-            await Services.GetRequiredService<IExportProfileStore>().SaveAsync(new ExportProfile("Second export profile", []));
+            // scenario (no selection made) is still reachable. ExportProfile requires at least one
+            // sheet rule, so this needs a minimal-but-valid one, not an empty list.
+            await Services.GetRequiredService<IExportProfileStore>().SaveAsync(new ExportProfile(
+                "Second export profile",
+                [
+                    new SheetGenerationRule(
+                        "Parents",
+                        PivotSource.Equipement,
+                        [
+                            new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)
+                        ],
+                        [],
+                        [])
+                ]));
             var cut = Render<ExportProfileTest>();
 
             SelectImportProfile(cut, importProfile.Id);
