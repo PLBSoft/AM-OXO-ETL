@@ -1,28 +1,31 @@
-@using ExcelETL.Application.Exceptions
-@using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Editing.Export
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Generation.Fields
 @using ExcelETL.Domain.Generation.Profile
 
-@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 074 (P3 draft pilot): a pure leaf -- all state lives in Draft, owned by the parent
+   (SheetGenerationRuleForm). This component only binds fields and forwards button clicks; the
+   parent performs the actual conversion/validation and decides what "valid" means for the slot
+   this Draft came from (an already-added item vs. the always-present pending "Add" row). See
+   ExportProfileDraftMapper. *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
+        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="Draft.Header" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
         <label for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <select id="@($"{IdPrefix}source-select")" class="form-select" @bind="_sourceValue">
+        <select id="@($"{IdPrefix}source-select")" class="form-select" @bind="Draft.SourceValue" @bind:after="MarkDirty">
             <option value="">@Loc["ExportProfileEditor_SourceNotMapped"]</option>
             @foreach (var fieldRef in AvailableFieldRefs())
             {
@@ -35,10 +38,9 @@
 
 <!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
      submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
-     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
-     btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
+     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="() => OnSubmit.InvokeAsync()">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)
@@ -51,7 +53,7 @@
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="() => OnCancel.InvokeAsync()">
             @Loc["ExportProfileEditor_CancelButton"]
         </button>
     }
@@ -61,8 +63,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public ColumnDefinition? InitialColumn { get; set; }
+    [Parameter, EditorRequired]
+    public ColumnDefinitionDraft Draft { get; set; } = new();
 
     // Needed to filter the source <select>'s options -- the parent SheetGenerationRuleForm owns
     // PivotSource, this component has no sheet-rule context of its own. Live-bound so the option
@@ -86,66 +88,13 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public EventCallback<ColumnDefinition> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
-    private string _header = string.Empty;
-    private string _sourceValue = string.Empty;
-    private string? _errorMessage;
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
 
-    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized:
-    // the parent gives an edit-mode instance a fresh component identity, so InitialColumn never
-    // changes underneath an already-initialized instance.
-    protected override void OnInitialized()
-    {
-        if (InitialColumn is null)
-        {
-            return;
-        }
-
-        _header = InitialColumn.Header;
-        _sourceValue = InitialColumn.Source?.ToString() ?? string.Empty;
-    }
+    private void MarkDirty() => OnDirty.InvokeAsync();
 
     private IEnumerable<PivotFieldRef> AvailableFieldRefs() =>
         Enum.GetValues<PivotFieldRef>().Where(fieldRef => PivotFieldResolver.GetPivotSource(fieldRef) == PivotSource);
-
-    // Public so the parent (SheetGenerationRuleForm) can flush this instance -- when it's the
-    // currently-open edit-mode form -- before its own commit, instead of silently discarding a
-    // typed-but-not-yet-Saved edit (the real-world incident this fix closes: renaming a column
-    // header here, then clicking the outer "Enregistrer les modifications"/"Enregistrer le profil"
-    // button directly, used to leave the old header in place with no error and no indication
-    // anything was lost -- exactly what generated a target workbook with stale column names).
-    public async Task<bool> TryCommitAsync()
-    {
-        _errorMessage = null;
-
-        try
-        {
-            PivotFieldRef? source = string.IsNullOrEmpty(_sourceValue)
-                ? null
-                : Enum.Parse<PivotFieldRef>(_sourceValue);
-
-            var column = new ColumnDefinition(_header, source);
-
-            await OnSubmit.InvokeAsync(column);
-
-            ResetForm();
-            return true;
-        }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
-        }
-    }
-
-    private async Task Submit() => await TryCommitAsync();
-
-    private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _header = string.Empty;
-        _sourceValue = string.Empty;
-    }
 }

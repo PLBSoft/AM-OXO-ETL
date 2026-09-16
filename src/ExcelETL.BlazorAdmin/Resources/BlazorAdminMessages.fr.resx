@@ -1051,6 +1051,9 @@
   <data name="ExportProfileEditor_SaveButtonNoChangesHint" xml:space="preserve">
     <value>Rien à enregistrer pour l'instant</value>
   </data>
+  <data name="ExportProfileEditor_PendingRowInvalidError" xml:space="preserve">
+    <value>Une des lignes pas encore ajoutées est invalide -- corrigez-la avant d'enregistrer le profil.</value>
+  </data>
   <data name="ExportProfileEditor_SheetRulesHeading" xml:space="preserve">
     <value>Règles de feuille</value>
   </data>

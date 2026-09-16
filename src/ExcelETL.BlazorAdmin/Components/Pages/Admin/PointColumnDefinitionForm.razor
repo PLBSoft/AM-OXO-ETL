@@ -1,44 +1,40 @@
-@using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Editing.Export
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
-@using ExcelETL.Domain.Generation.Profile
 
-@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 074 (P3 draft pilot): pure leaf -- see ColumnDefinitionForm.razor's own header comment. *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}nom-input")" class="form-control" @bind="_colonneNom"
+        <input id="@($"{IdPrefix}nom-input")" class="form-control" @bind="Draft.ColonneNom" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_ColonneNomPlaceholder"]" />
         <label for="@($"{IdPrefix}nom-input")">@Loc["ExportProfileEditor_ColonneNomLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="_header"
+        <input id="@($"{IdPrefix}header-input")" class="form-control" @bind="Draft.Header" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_HeaderPlaceholder"]" />
         <label for="@($"{IdPrefix}header-input")">@Loc["ExportProfileEditor_HeaderLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}mark-value-input")" class="form-control" @bind="_markValue"
+        <input id="@($"{IdPrefix}mark-value-input")" class="form-control" @bind="Draft.MarkValue" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_MarkValuePlaceholder"]" />
         <label for="@($"{IdPrefix}mark-value-input")">@Loc["ExportProfileEditor_MarkValueLabel"]</label>
     </div>
 </div>
 
-<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
-     submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
-     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
-     btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
+<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode. -->
 <div class="right-aligned-actions">
-    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="() => OnSubmit.InvokeAsync()">
         @if (ShowCancel)
         {
             @((MarkupString)AdminIconMarkup.Check)
@@ -51,7 +47,7 @@
     </button>
     @if (ShowCancel)
     {
-        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="() => OnCancel.InvokeAsync()">
             @Loc["ExportProfileEditor_CancelButton"]
         </button>
     }
@@ -61,8 +57,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public PointColumnDefinition? InitialPointColumn { get; set; }
+    [Parameter, EditorRequired]
+    public PointColumnDefinitionDraft Draft { get; set; } = new();
 
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-point-column-definition-button";
@@ -80,58 +76,10 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public EventCallback<PointColumnDefinition> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
-    private string _colonneNom = string.Empty;
-    private string _header = string.Empty;
-    private string _markValue = PointColumnDefinition.DefaultMarkValue;
-    private string? _errorMessage;
+    [Parameter]
+    public EventCallback OnDirty { get; set; }
 
-    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized:
-    // the parent gives an edit-mode instance a fresh component identity, so InitialPointColumn
-    // never changes underneath an already-initialized instance.
-    protected override void OnInitialized()
-    {
-        if (InitialPointColumn is null)
-        {
-            return;
-        }
-
-        _colonneNom = InitialPointColumn.ColonneNom;
-        _header = InitialPointColumn.Header;
-        _markValue = InitialPointColumn.MarkValue;
-    }
-
-    // Public so the parent (SheetGenerationRuleForm) can flush this instance before its own commit --
-    // see ColumnDefinitionForm.TryCommitAsync for why.
-    public async Task<bool> TryCommitAsync()
-    {
-        _errorMessage = null;
-
-        try
-        {
-            var pointColumn = new PointColumnDefinition(_colonneNom, _header, _markValue);
-
-            await OnSubmit.InvokeAsync(pointColumn);
-
-            ResetForm();
-            return true;
-        }
-        catch (DomainValidationException ex)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
-        }
-    }
-
-    private async Task Submit() => await TryCommitAsync();
-
-    private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _colonneNom = string.Empty;
-        _header = string.Empty;
-        _markValue = PointColumnDefinition.DefaultMarkValue;
-    }
+    private void MarkDirty() => OnDirty.InvokeAsync();
 }

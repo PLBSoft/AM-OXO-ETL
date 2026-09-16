@@ -4,6 +4,8 @@
 
 @using ExcelETL.Application.Exceptions
 @using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Editing
+@using ExcelETL.BlazorAdmin.Editing.Export
 @using ExcelETL.BlazorAdmin.Shared
 @using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Generation.Profile
@@ -14,6 +16,14 @@
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject NavigationManager NavigationManager
+
+@* Lot 074 (P3 draft pilot, docs/tickets/tickets-tdd-lot-074-pilote-brouillon-editeur-profil-export.md):
+   this page owns the single ExportProfileDraft (_draft) for the whole editing session. Every field's
+   value lives directly on the draft tree the instant it's typed -- there is no per-form local state
+   left to "flush" before a save, which is what removes defect A (a typed-but-never-explicitly-
+   submitted row silently lost) by construction. ExportProfileDraftMapper.ToDomain/ConvertSheetRule
+   are called directly here (and by SheetGenerationRuleForm for its own nested items) -- no @ref is
+   needed anywhere in this editor any more. *@
 
 <PageTitle>@(_editingId.HasValue ? Loc["ExportProfileEditor_EditPageTitle"] : Loc["ExportProfileEditor_PageTitle"])</PageTitle>
 
@@ -58,7 +68,7 @@ else
 
     <div class="mb-3">
         <div class="form-floating">
-            <input id="export-profile-name-input" class="form-control" @bind="_name" @bind:after="MarkAsChanged" maxlength="@ExportProfile.MaxNameLength"
+            <input id="export-profile-name-input" class="form-control" @bind="_draft.Name" @bind:after="MarkAsChanged" maxlength="@ExportProfile.MaxNameLength"
                    placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
             <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
         </div>
@@ -66,30 +76,29 @@ else
 
     <h2 class="h3">@Loc["ExportProfileEditor_SheetRulesHeading"]</h2>
 
-    @if (_sheetRules.Count == 0)
+    @if (_draft.SheetRules.Count == 0)
     {
         <p>@Loc["ExportProfileEditor_NoSheetRulesYet"]</p>
     }
     else
     {
         <ul class="sheet-rule-list sheet-rule-grid">
-            @for (var i = 0; i < _sheetRules.Count; i++)
+            @for (var i = 0; i < _draft.SheetRules.Count; i++)
             {
                 var index = i;
-                var rule = _sheetRules[index];
+                var rule = _draft.SheetRules[index];
                 <li class="@(_openSheetRuleForm.EditIndex == index ? "sheet-rule-editing-item" : "sheet-rule-card")">
                     @if (_openSheetRuleForm.EditIndex == index)
                     {
-                        <SheetGenerationRuleForm @ref="_editSheetRuleFormRef"
-                                                  IdPrefix="@($"edit-{index}-")"
-                                                  InitialRule="rule"
+                        <SheetGenerationRuleForm IdPrefix="@($"edit-{index}-")"
+                                                  Draft="rule"
                                                   SubmitButtonId="@($"save-sheet-generation-rule-button-{index}")"
                                                   SubmitLabel="@Loc["ExportProfileEditor_ApplySheetRuleButton"]"
                                                   ShowCancel="true"
                                                   CancelButtonId="@($"cancel-sheet-generation-rule-button-{index}")"
-                                                  OnCancel="() => _openSheetRuleForm = SheetRuleFormOpenState.None"
+                                                  OnCancel="() => CancelSheetRuleEdit(index)"
                                                   OnDirty="MarkAsChanged"
-                                                  OnSubmit="(SheetGenerationRule updated) => HandleSaveSheetRule(index, updated)" />
+                                                  OnSubmit="() => HandleSheetRuleSubmit(index)" />
                     }
                     else
                     {
@@ -100,24 +109,24 @@ else
                         <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">
                             <summary id="@($"sheet-rule-details-toggle-{index}")"
                                      @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
-                                @Loc["ExportProfileEditor_SheetRuleDetailsSummary", rule.ColumnDefinitions.Count, rule.PointColumnDefinitions.Count]
+                                @Loc["ExportProfileEditor_SheetRuleDetailsSummary", rule.Columns.Count, rule.PointColumns.Count]
                             </summary>
                             @if (_expandedSheetRuleDetails.Contains(index))
                             {
                                 <div id="@($"sheet-rule-details-content-{index}")">
-                                    @if (rule.ColumnDefinitions.Count > 0 || rule.PointColumnDefinitions.Count > 0)
+                                    @if (rule.Columns.Count > 0 || rule.PointColumns.Count > 0)
                                     {
                                         <ul class="block-field-list block-field-grid">
-                                            @foreach (var column in rule.ColumnDefinitions)
+                                            @foreach (var column in rule.Columns)
                                             {
                                                 <li class="block-field-item">
                                                     <div class="block-field-info">
                                                         <span class="block-field-name">@column.Header</span>
-                                                        <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                                                        <span class="block-field-range text-muted font-monospace">@(string.IsNullOrEmpty(column.SourceValue) ? Loc["ExportProfileEditor_SourceNotMapped"] : column.SourceValue)</span>
                                                     </div>
                                                 </li>
                                             }
-                                            @foreach (var pointColumn in rule.PointColumnDefinitions)
+                                            @foreach (var pointColumn in rule.PointColumns)
                                             {
                                                 <li class="block-field-item">
                                                     <div class="block-field-info">
@@ -189,7 +198,7 @@ else
         <div class="card-body">
             @if (_openSheetRuleForm.IsAdd)
             {
-                <SheetGenerationRuleForm @ref="_addSheetRuleFormRef" SubmitLabel="@Loc["ExportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="HandleAddSheetRule" />
+                <SheetGenerationRuleForm Draft="_draft.PendingSheetRule" SubmitLabel="@Loc["ExportProfileEditor_AddSheetButton"]" OnDirty="MarkAsChanged" OnSubmit="() => HandleSheetRuleSubmit(null)" />
             }
         </div>
     </div>
@@ -217,14 +226,17 @@ else
     [Parameter]
     public Guid? Id { get; set; }
 
-    private string _name = string.Empty;
+    private ExportProfileDraft _draft = new();
     private Guid? _editingId;
     private bool _notFound;
     private string? _profileErrorMessage;
 
-    private readonly List<SheetGenerationRule> _sheetRules = [];
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
+
+    // Taken at "Modify" click time (DraftJson.Clone), restored into the list on Cancel -- see
+    // SheetGenerationRuleForm.razor's own identical mechanism for its nested items.
+    private SheetGenerationRuleDraft? _sheetRuleEditSnapshot;
 
     // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own single open-form state.
     private readonly record struct SheetRuleFormOpenState(bool IsAdd, int? EditIndex)
@@ -237,10 +249,6 @@ else
     }
 
     private SheetRuleFormOpenState _openSheetRuleForm = SheetRuleFormOpenState.Add;
-
-    // Lot 056 (56.2): mirror of ImportProfileEditor.razor's own form references.
-    private SheetGenerationRuleForm? _addSheetRuleFormRef;
-    private SheetGenerationRuleForm? _editSheetRuleFormRef;
 
     // Lot 043 (43.2): mirror of ImportProfileEditor.razor's own state/logic (43.1).
     private bool _hasUnsavedChanges;
@@ -266,48 +274,95 @@ else
         }
 
         _editingId = profile.Id;
-        _name = profile.Name;
-        _sheetRules.AddRange(profile.SheetRules);
+        _draft = ExportProfileDraftMapper.FromDomain(profile);
     }
 
     private void BackToList() => NavigationManager.NavigateTo("export-profiles");
 
-    // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own mutual-exclusion helpers.
-    private async Task<bool> TryCloseOpenFormAsync()
+    private string Localize(Exception exception) => BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
+
+    private void ApplyErrors(IReadOnlyList<DraftConversionError> errors)
     {
-        if (_openSheetRuleForm.EditIndex is not null && _editSheetRuleFormRef is not null)
+        foreach (var error in errors)
         {
-            return await _editSheetRuleFormRef.TryCommitAsync();
+            if (error.Draft is IDraftWithError withError)
+            {
+                withError.Error = Localize(error.Exception);
+            }
+        }
+    }
+
+    // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own mutual-exclusion helper -- validates
+    // whichever sheet-rule form is currently open directly against ExportProfileDraftMapper (no
+    // @ref needed, unlike the pre-migration architecture): an Edit-mode rule is validated in place;
+    // a still-pristine pending Add rule is a no-op; a non-pristine, valid pending Add rule is
+    // promoted into the list exactly as if "Add sheet rule" had been clicked.
+    private bool TryValidateAndCloseCurrentForm()
+    {
+        if (_openSheetRuleForm.EditIndex is int index)
+        {
+            var result = ExportProfileDraftMapper.ConvertSheetRule(_draft.SheetRules[index]);
+            if (!result.IsSuccess)
+            {
+                ApplyErrors(result.Errors);
+                return false;
+            }
+
+            _draft.SheetRules[index].Error = null;
+            return true;
         }
 
-        if (_openSheetRuleForm.IsAdd && _addSheetRuleFormRef is not null)
+        if (_openSheetRuleForm.IsAdd)
         {
-            return await _addSheetRuleFormRef.TryCommitAsync();
+            if (DraftJson.IsPristine(_draft.PendingSheetRule))
+            {
+                return true;
+            }
+
+            var result = ExportProfileDraftMapper.ConvertSheetRule(_draft.PendingSheetRule);
+            if (!result.IsSuccess)
+            {
+                ApplyErrors(result.Errors);
+                return false;
+            }
+
+            _draft.SheetRules.Add(_draft.PendingSheetRule);
+            _draft.PendingSheetRule = new SheetGenerationRuleDraft();
+            return true;
         }
 
         return true;
     }
 
-    private async Task RequestOpenEditAsync(int index)
+    private void RequestOpenEditAsync(int index)
     {
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateAndCloseCurrentForm())
         {
             return;
         }
 
         _pendingDeleteIndex = null;
+        _sheetRuleEditSnapshot = DraftJson.Clone(_draft.SheetRules[index]);
+        _draft.SheetRules[index].Error = null;
         _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
     }
 
-    private async Task ToggleAddSheetRuleFormAsync()
+    private void ToggleAddSheetRuleFormAsync()
     {
         if (_openSheetRuleForm.IsAdd)
         {
+            // Closing the add-sheet-rule form via the toggle is this form's only "Cancel"
+            // equivalent (ShowCancel is false in add mode) -- discards whatever was typed, exactly
+            // like SheetGenerationRuleForm's own per-item Cancel restores rather than keeps a
+            // pending edit. Under the pre-migration architecture this discard happened implicitly
+            // (the child component was unmounted); the draft now needs it done explicitly, since
+            // nothing else would ever clear a merely-closed pending sheet rule.
+            _draft.PendingSheetRule = new SheetGenerationRuleDraft();
             _openSheetRuleForm = SheetRuleFormOpenState.None;
             return;
         }
 
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateAndCloseCurrentForm())
         {
             return;
         }
@@ -316,9 +371,9 @@ else
         _openSheetRuleForm = SheetRuleFormOpenState.Add;
     }
 
-    private async Task RequestDeleteSheetRuleAsync(int index)
+    private void RequestDeleteSheetRuleAsync(int index)
     {
-        if (!await TryCloseOpenFormAsync())
+        if (!TryValidateAndCloseCurrentForm())
         {
             return;
         }
@@ -326,18 +381,35 @@ else
         _pendingDeleteIndex = index;
     }
 
-    private void HandleAddSheetRule(SheetGenerationRule rule)
+    // This form's own top-level Submit button already validated the rule via
+    // ExportProfileDraftMapper.ConvertSheetRule (see SheetGenerationRuleForm.Submit) before raising
+    // OnSubmit -- this handler only performs the list mutation the successful validation implies.
+    private void HandleSheetRuleSubmit(int? index)
     {
-        _sheetRules.Add(rule);
-        _openSheetRuleForm = SheetRuleFormOpenState.None;
+        if (index.HasValue)
+        {
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
+            _sheetRuleEditSnapshot = null;
+        }
+        else
+        {
+            _draft.SheetRules.Add(_draft.PendingSheetRule);
+            _draft.PendingSheetRule = new SheetGenerationRuleDraft();
+            _openSheetRuleForm = SheetRuleFormOpenState.None;
+        }
+
         MarkAsChanged();
     }
 
-    private void HandleSaveSheetRule(int index, SheetGenerationRule updated)
+    private void CancelSheetRuleEdit(int index)
     {
-        _sheetRules[index] = updated;
+        if (_sheetRuleEditSnapshot is not null)
+        {
+            _draft.SheetRules[index] = _sheetRuleEditSnapshot;
+        }
+
+        _sheetRuleEditSnapshot = null;
         _openSheetRuleForm = SheetRuleFormOpenState.None;
-        MarkAsChanged();
     }
 
     private void ConfirmDeleteSheetRule(int index)
@@ -348,7 +420,7 @@ else
 
     private void DeleteSheetRule(int index)
     {
-        _sheetRules.RemoveAt(index);
+        _draft.SheetRules.RemoveAt(index);
         if (_openSheetRuleForm.EditIndex == index)
         {
             _openSheetRuleForm = SheetRuleFormOpenState.None;
@@ -377,28 +449,39 @@ else
     {
         _profileErrorMessage = null;
 
-        if (!await TryCloseOpenFormAsync())
+        // Lot 074 (074.3): the whole draft tree is walked here regardless of which sub-form
+        // happens to be visually open or closed -- there is no "flush the open form" step left,
+        // since every field already lives in _draft the instant it's typed. This is what fixes L4
+        // (a pending row filled but never explicitly "Add"-ed) without any special-casing.
+        var result = ExportProfileDraftMapper.ToDomain(_draft);
+        if (!result.IsSuccess)
         {
+            ApplyErrors(result.Errors);
+
+            // A failure attached directly to the root draft (Name empty/too long, no sheet rules)
+            // shows its own real message, exactly as before this lot -- one only ever attached to a
+            // nested item (a pending row the user never explicitly submitted) shows the generic
+            // banner instead, since the specific message is already displayed inline on that item.
+            var rootLevelError = result.Errors.FirstOrDefault(e => ReferenceEquals(e.Draft, _draft));
+            _profileErrorMessage = rootLevelError is not null
+                ? Localize(rootLevelError.Exception)
+                : Loc["ExportProfileEditor_PendingRowInvalidError"];
             return;
         }
 
         try
         {
-            var profile = _editingId.HasValue
-                ? new ExportProfile(_editingId.Value, _name, _sheetRules)
-                : new ExportProfile(_name, _sheetRules);
-
-            await ExportProfileStore.SaveAsync(profile);
+            await ExportProfileStore.SaveAsync(result.Value!);
             _hasUnsavedChanges = false;
             NavigationManager.NavigateTo("export-profiles");
         }
         catch (DomainValidationException ex)
         {
-            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            _profileErrorMessage = Localize(ex);
         }
         catch (ProfileNameAlreadyExistsException ex)
         {
-            _profileErrorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+            _profileErrorMessage = Localize(ex);
         }
     }
 

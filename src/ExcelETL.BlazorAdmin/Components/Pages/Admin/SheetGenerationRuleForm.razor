@@ -1,24 +1,33 @@
 @using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Editing
+@using ExcelETL.BlazorAdmin.Editing.Export
 @using ExcelETL.BlazorAdmin.Shared
-@using ExcelETL.Domain.Exceptions
 @using ExcelETL.Domain.Generation.Profile
 
 @inject BusinessExceptionLocalizer BusinessExceptionLocalizer
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
-@if (!string.IsNullOrEmpty(_errorMessage))
+@* Lot 074 (P3 draft pilot, docs/tickets/tickets-tdd-lot-074-pilote-brouillon-editeur-profil-export.md):
+   owns the 3 nested lists (Columns/PointColumns/ApplicationColumns) of the one SheetGenerationRuleDraft
+   it is bound to -- their own conversion/validation is orchestrated here, not by the leaf sub-forms,
+   which are now pure input binders (see ColumnDefinitionForm.razor's own header comment). This
+   component's own Submit button validates and, on success, invokes OnSubmit -- the root
+   (ExportProfileEditor) decides what "success" means for the slot Draft came from (an already-added
+   rule vs. the always-present pending "Add" row). *@
+
+@if (!string.IsNullOrEmpty(Draft.Error))
 {
-    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+    <div class="alert alert-danger" role="alert">@Draft.Error</div>
 }
 
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="_sheetName" @bind:after="MarkDirty"
+        <input id="@($"{IdPrefix}sheet-generation-rule-name-input")" class="form-control" @bind="Draft.SheetName" @bind:after="MarkDirty"
                placeholder="@Loc["ExportProfileEditor_SheetNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-generation-rule-name-input")">@Loc["ExportProfileEditor_SheetNameLabel"]</label>
     </div>
     <div class="form-text">
-        @(_pivotSource == PivotSource.TacheMultiple
+        @(Draft.PivotSource == PivotSource.TacheMultiple
             ? Loc["ExportProfileEditor_SheetNameHelpTacheMultiple"]
             : Loc["ExportProfileEditor_SheetNameHelp"])
     </div>
@@ -26,7 +35,7 @@
 <div class="mb-3">
     <div class="form-floating">
         <select id="@($"{IdPrefix}sheet-generation-rule-pivot-source-select")" class="form-select"
-                @bind="_pivotSource" @bind:after="OnPivotSourceChangedAndMarkDirty">
+                @bind="Draft.PivotSource" @bind:after="OnPivotSourceChangedAndMarkDirty">
             <option value="@PivotSource.Equipement">@Loc["ExportProfileEditor_PivotSource_Equipement"]</option>
             <option value="@PivotSource.Isolement">@Loc["ExportProfileEditor_PivotSource_Isolement"]</option>
             <option value="@PivotSource.TacheMultiple">@Loc["ExportProfileEditor_PivotSource_TacheMultiple"]</option>
@@ -38,26 +47,26 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ExportProfileEditor_ColumnsHeading"]</h3>
-@if (_columns.Count > 0)
+@if (Draft.Columns.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _columns.Count; j++)
+        @for (var j = 0; j < Draft.Columns.Count; j++)
         {
             var columnIndex = j;
-            var column = _columns[columnIndex];
+            var column = Draft.Columns[columnIndex];
             @if (_editingColumnIndex == columnIndex)
             {
                 <li class="block-field-item-editing">
-                    <ColumnDefinitionForm @ref="_editingColumnFormRef"
-                                          IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
-                                          InitialColumn="column"
-                                          PivotSource="_pivotSource"
+                    <ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
+                                          Draft="column"
+                                          PivotSource="Draft.PivotSource"
                                           SubmitButtonId="@($"{IdPrefix}save-column-definition-button-{columnIndex}")"
                                           SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                           ShowCancel="true"
                                           CancelButtonId="@($"{IdPrefix}cancel-column-definition-button-{columnIndex}")"
-                                          OnCancel="() => _editingColumnIndex = null"
-                                          OnSubmit="(ColumnDefinition updated) => HandleSaveColumn(columnIndex, updated)" />
+                                          OnCancel="() => CancelColumnEdit(columnIndex)"
+                                          OnDirty="MarkDirty"
+                                          OnSubmit="() => HandleColumnSubmit(columnIndex)" />
                 </li>
             }
             else
@@ -65,13 +74,13 @@
                 <li class="block-field-item">
                     <div class="block-field-info">
                         <span class="block-field-name">@column.Header</span>
-                        <span class="block-field-range text-muted font-monospace">@(column.Source is null ? Loc["ExportProfileEditor_SourceNotMapped"] : column.Source.Value.ToString())</span>
+                        <span class="block-field-range text-muted font-monospace">@(string.IsNullOrEmpty(column.SourceValue) ? Loc["ExportProfileEditor_SourceNotMapped"] : column.SourceValue)</span>
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}modify-column-definition-button-{columnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingColumnIndex = columnIndex">
+                                @onclick="() => OpenColumnEdit(columnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -93,37 +102,39 @@
     </ul>
 }
 <ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-")"
-                      PivotSource="_pivotSource"
+                      Draft="Draft.PendingColumn"
+                      PivotSource="Draft.PivotSource"
                       SubmitButtonId="@($"{IdPrefix}add-column-definition-button")"
                       SubmitLabel="@Loc["ExportProfileEditor_AddColumnButton"]"
-                      OnSubmit="AddColumn" />
+                      OnDirty="MarkDirty"
+                      OnSubmit="() => HandleColumnSubmit(null)" />
 </div>
 </div>
 
-@if (_pivotSource != PivotSource.TacheMultiple)
+@if (Draft.PivotSource != PivotSource.TacheMultiple)
 {
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ExportProfileEditor_PointColumnsHeading"]</h3>
-@if (_pointColumns.Count > 0)
+@if (Draft.PointColumns.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _pointColumns.Count; j++)
+        @for (var j = 0; j < Draft.PointColumns.Count; j++)
         {
             var pointColumnIndex = j;
-            var pointColumn = _pointColumns[pointColumnIndex];
+            var pointColumn = Draft.PointColumns[pointColumnIndex];
             @if (_editingPointColumnIndex == pointColumnIndex)
             {
                 <li class="block-field-item-editing">
-                    <PointColumnDefinitionForm @ref="_editingPointColumnFormRef"
-                                               IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
-                                               InitialPointColumn="pointColumn"
+                    <PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
+                                               Draft="pointColumn"
                                                SubmitButtonId="@($"{IdPrefix}save-point-column-definition-button-{pointColumnIndex}")"
                                                SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                                ShowCancel="true"
                                                CancelButtonId="@($"{IdPrefix}cancel-point-column-definition-button-{pointColumnIndex}")"
-                                               OnCancel="() => _editingPointColumnIndex = null"
-                                               OnSubmit="(PointColumnDefinition updated) => HandleSavePointColumn(pointColumnIndex, updated)" />
+                                               OnCancel="() => CancelPointColumnEdit(pointColumnIndex)"
+                                               OnDirty="MarkDirty"
+                                               OnSubmit="() => HandlePointColumnSubmit(pointColumnIndex)" />
                 </li>
             }
             else
@@ -137,7 +148,7 @@
                         <button id="@($"{IdPrefix}modify-point-column-definition-button-{pointColumnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingPointColumnIndex = pointColumnIndex">
+                                @onclick="() => OpenPointColumnEdit(pointColumnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -159,34 +170,36 @@
     </ul>
 }
 <PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-")"
+                           Draft="Draft.PendingPointColumn"
                            SubmitButtonId="@($"{IdPrefix}add-point-column-definition-button")"
                            SubmitLabel="@Loc["ExportProfileEditor_AddPointColumnButton"]"
-                           OnSubmit="AddPointColumn" />
+                           OnDirty="MarkDirty"
+                           OnSubmit="() => HandlePointColumnSubmit(null)" />
 </div>
 </div>
 
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ExportProfileEditor_ApplicationColumnsHeading"]</h3>
-@if (_applicationColumns.Count > 0)
+@if (Draft.ApplicationColumns.Count > 0)
 {
     <ul class="block-field-list">
-        @for (var j = 0; j < _applicationColumns.Count; j++)
+        @for (var j = 0; j < Draft.ApplicationColumns.Count; j++)
         {
             var applicationColumnIndex = j;
-            var applicationColumn = _applicationColumns[applicationColumnIndex];
+            var applicationColumn = Draft.ApplicationColumns[applicationColumnIndex];
             @if (_editingApplicationColumnIndex == applicationColumnIndex)
             {
                 <li class="block-field-item-editing">
-                    <ApplicationColumnDefinitionForm @ref="_editingApplicationColumnFormRef"
-                                                      IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
-                                                      InitialApplicationColumn="applicationColumn"
+                    <ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
+                                                      Draft="applicationColumn"
                                                       SubmitButtonId="@($"{IdPrefix}save-application-column-definition-button-{applicationColumnIndex}")"
                                                       SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                                       ShowCancel="true"
                                                       CancelButtonId="@($"{IdPrefix}cancel-application-column-definition-button-{applicationColumnIndex}")"
-                                                      OnCancel="() => _editingApplicationColumnIndex = null"
-                                                      OnSubmit="(ApplicationColumnDefinition updated) => HandleSaveApplicationColumn(applicationColumnIndex, updated)" />
+                                                      OnCancel="() => CancelApplicationColumnEdit(applicationColumnIndex)"
+                                                      OnDirty="MarkDirty"
+                                                      OnSubmit="() => HandleApplicationColumnSubmit(applicationColumnIndex)" />
                 </li>
             }
             else
@@ -201,7 +214,7 @@
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
                                 title="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => _editingApplicationColumnIndex = applicationColumnIndex">
+                                @onclick="() => OpenApplicationColumnEdit(applicationColumnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -224,17 +237,16 @@
     </ul>
 }
 <ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-")"
+                                 Draft="Draft.PendingApplicationColumn"
                                  SubmitButtonId="@($"{IdPrefix}add-application-column-definition-button")"
                                  SubmitLabel="@Loc["ExportProfileEditor_AddApplicationColumnButton"]"
-                                 OnSubmit="AddApplicationColumn" />
+                                 OnDirty="MarkDirty"
+                                 OnSubmit="() => HandleApplicationColumnSubmit(null)" />
 </div>
 </div>
 }
 
-<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
-     submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
-     mode, Lot 041 unchanged); "Cancel" stays btn-outline-secondary. Previously both were
-     btn-outline-secondary in edit mode, indistinguishable (audit S2.3 / lot 053 deferral). -->
+<!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode. -->
 <div class="right-aligned-actions">
     <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
         @if (ShowCancel)
@@ -259,8 +271,8 @@
     [Parameter]
     public string IdPrefix { get; set; } = string.Empty;
 
-    [Parameter]
-    public SheetGenerationRule? InitialRule { get; set; }
+    [Parameter, EditorRequired]
+    public SheetGenerationRuleDraft Draft { get; set; } = new();
 
     [Parameter]
     public string SubmitButtonId { get; set; } = "add-sheet-generation-rule-button";
@@ -278,7 +290,7 @@
     public EventCallback OnCancel { get; set; }
 
     [Parameter]
-    public EventCallback<SheetGenerationRule> OnSubmit { get; set; }
+    public EventCallback OnSubmit { get; set; }
 
     // Lot 056 (56.3): mirror of SheetRuleForm's own OnDirty -- raised on every mutation of this
     // form's state so the root editor's "unsaved changes" guard covers in-progress edits too.
@@ -287,55 +299,25 @@
 
     private void MarkDirty() => OnDirty.InvokeAsync();
 
-    private string _sheetName = string.Empty;
-    private PivotSource _pivotSource = PivotSource.Equipement;
-    private readonly List<ColumnDefinition> _columns = [];
-    private readonly List<PointColumnDefinition> _pointColumns = [];
-    private readonly List<ApplicationColumnDefinition> _applicationColumns = [];
-    // No editing UI exists for this list yet (Lot 069's own deliberate deferral -- only settable via
-    // DefaultProfileSeeder.cs) but it must still be carried through unmodified whenever an existing
-    // rule is re-saved, exactly like the PLATINES FieldPresencePointRules incident this same day (see
-    // SheetRuleForm._fieldPresencePointRules) -- rebuilding the SheetGenerationRule without it would
-    // silently delete a TM_PROC_* sheet's CRITERE/AVANCEMENT/SUPPRESSION constant columns.
-    private readonly List<ConstantColumnDefinition> _constantColumns = [];
-
     private int? _editingColumnIndex;
     private int? _editingPointColumnIndex;
     private int? _editingApplicationColumnIndex;
 
-    // Bound only while the corresponding index above is non-null (the matching @if branch renders
-    // the component) -- used to flush an in-progress nested edit before this form's own commit, so a
-    // typed-but-not-yet-"Enregistrer les modifications" change is never silently discarded.
-    private ColumnDefinitionForm? _editingColumnFormRef;
-    private PointColumnDefinitionForm? _editingPointColumnFormRef;
-    private ApplicationColumnDefinitionForm? _editingApplicationColumnFormRef;
-
-    private string? _errorMessage;
-
-    // Only ever runs once per mounted instance -- the parent gives an edit-mode instance a fresh
-    // component identity (conditionally rendered inside an @if, not a persistently bound one), so
-    // InitialRule never changes underneath an already-initialized instance.
-    protected override void OnInitialized()
-    {
-        if (InitialRule is null)
-        {
-            return;
-        }
-
-        _sheetName = InitialRule.SheetName;
-        _pivotSource = InitialRule.PivotSource;
-        _columns.AddRange(InitialRule.ColumnDefinitions);
-        _pointColumns.AddRange(InitialRule.PointColumnDefinitions);
-        _applicationColumns.AddRange(InitialRule.ApplicationColumnDefinitions);
-        _constantColumns.AddRange(InitialRule.ConstantColumnDefinitions);
-    }
+    // Taken at "Modify" click time (DraftJson.Clone), restored into the list on Cancel -- the one
+    // per-item "undo" mechanism the P3 architecture still needs, since a field's own @bind writes
+    // straight into the shared draft the instant it's typed (see this component's own header
+    // comment and the design table's "« Annuler » d'un élément" row).
+    private ColumnDefinitionDraft? _columnEditSnapshot;
+    private PointColumnDefinitionDraft? _pointColumnEditSnapshot;
+    private ApplicationColumnDefinitionDraft? _applicationColumnEditSnapshot;
 
     // PointColumnDefinitions/ApplicationColumnDefinitions have no meaning for TacheMultiple (Domain
     // rejects them outright, T2/U4) and the subforms that add them are hidden the moment this pivot
     // source is selected -- clearing any already-added ones here avoids a confusing submit-time
     // DomainRuleViolationException for state the user can no longer even see. Switching back to
     // Equipement/Isolement only restores the ability to add new Point/Application columns, it does not
-    // resurrect ones cleared by an earlier switch to TacheMultiple.
+    // resurrect ones cleared by an earlier switch to TacheMultiple. This stays a UI rule applied
+    // directly to the draft, not a conversion (see ExportProfileDraftMapper's own header comment).
     private void OnPivotSourceChangedAndMarkDirty()
     {
         OnPivotSourceChanged();
@@ -344,167 +326,227 @@
 
     private void OnPivotSourceChanged()
     {
-        if (_pivotSource != PivotSource.TacheMultiple)
+        if (Draft.PivotSource != PivotSource.TacheMultiple)
         {
             return;
         }
 
-        if (_pointColumns.Count > 0)
+        if (Draft.PointColumns.Count > 0)
         {
-            _pointColumns.Clear();
+            Draft.PointColumns.Clear();
             _editingPointColumnIndex = null;
         }
 
-        if (_applicationColumns.Count > 0)
+        if (Draft.ApplicationColumns.Count > 0)
         {
-            _applicationColumns.Clear();
+            Draft.ApplicationColumns.Clear();
             _editingApplicationColumnIndex = null;
         }
     }
 
-    private void AddColumn(ColumnDefinition column)
+    // --- Columns --------------------------------------------------------------------------
+
+    private void OpenColumnEdit(int index)
     {
-        _columns.Add(column);
-        MarkDirty();
+        _editingColumnIndex = index;
+        _columnEditSnapshot = DraftJson.Clone(Draft.Columns[index]);
+        Draft.Columns[index].Error = null;
     }
 
-    private void HandleSaveColumn(int index, ColumnDefinition updated)
+    private void CancelColumnEdit(int index)
     {
-        _columns[index] = updated;
+        if (_columnEditSnapshot is not null)
+        {
+            Draft.Columns[index] = _columnEditSnapshot;
+        }
+
         _editingColumnIndex = null;
+        _columnEditSnapshot = null;
+        OnCancelledNestedEdit();
+    }
+
+    private void HandleColumnSubmit(int? index)
+    {
+        var target = index.HasValue ? Draft.Columns[index.Value] : Draft.PendingColumn;
+        var result = ExportProfileDraftMapper.ConvertColumn(target);
+        if (!result.IsSuccess)
+        {
+            target.Error = Localize(result.Errors[0].Exception);
+            return;
+        }
+
+        target.Error = null;
+        if (index.HasValue)
+        {
+            _editingColumnIndex = null;
+            _columnEditSnapshot = null;
+        }
+        else
+        {
+            Draft.Columns.Add(Draft.PendingColumn);
+            Draft.PendingColumn = new ColumnDefinitionDraft();
+        }
+
         MarkDirty();
     }
 
     private void DeleteColumn(int index)
     {
-        _columns.RemoveAt(index);
+        Draft.Columns.RemoveAt(index);
         if (_editingColumnIndex == index)
         {
             _editingColumnIndex = null;
         }
+
         MarkDirty();
     }
 
-    private void AddPointColumn(PointColumnDefinition pointColumn)
+    // --- Point columns ----------------------------------------------------------------------
+
+    private void OpenPointColumnEdit(int index)
     {
-        _pointColumns.Add(pointColumn);
-        MarkDirty();
+        _editingPointColumnIndex = index;
+        _pointColumnEditSnapshot = DraftJson.Clone(Draft.PointColumns[index]);
+        Draft.PointColumns[index].Error = null;
     }
 
-    private void HandleSavePointColumn(int index, PointColumnDefinition updated)
+    private void CancelPointColumnEdit(int index)
     {
-        _pointColumns[index] = updated;
+        if (_pointColumnEditSnapshot is not null)
+        {
+            Draft.PointColumns[index] = _pointColumnEditSnapshot;
+        }
+
         _editingPointColumnIndex = null;
+        _pointColumnEditSnapshot = null;
+        OnCancelledNestedEdit();
+    }
+
+    private void HandlePointColumnSubmit(int? index)
+    {
+        var target = index.HasValue ? Draft.PointColumns[index.Value] : Draft.PendingPointColumn;
+        var result = ExportProfileDraftMapper.ConvertPointColumn(target);
+        if (!result.IsSuccess)
+        {
+            target.Error = Localize(result.Errors[0].Exception);
+            return;
+        }
+
+        target.Error = null;
+        if (index.HasValue)
+        {
+            _editingPointColumnIndex = null;
+            _pointColumnEditSnapshot = null;
+        }
+        else
+        {
+            Draft.PointColumns.Add(Draft.PendingPointColumn);
+            Draft.PendingPointColumn = new PointColumnDefinitionDraft();
+        }
+
         MarkDirty();
     }
 
     private void DeletePointColumn(int index)
     {
-        _pointColumns.RemoveAt(index);
+        Draft.PointColumns.RemoveAt(index);
         if (_editingPointColumnIndex == index)
         {
             _editingPointColumnIndex = null;
         }
+
         MarkDirty();
     }
 
-    private void AddApplicationColumn(ApplicationColumnDefinition applicationColumn)
+    // --- Application columns -----------------------------------------------------------------
+
+    private void OpenApplicationColumnEdit(int index)
     {
-        _applicationColumns.Add(applicationColumn);
-        MarkDirty();
+        _editingApplicationColumnIndex = index;
+        _applicationColumnEditSnapshot = DraftJson.Clone(Draft.ApplicationColumns[index]);
+        Draft.ApplicationColumns[index].Error = null;
     }
 
-    private void HandleSaveApplicationColumn(int index, ApplicationColumnDefinition updated)
+    private void CancelApplicationColumnEdit(int index)
     {
-        _applicationColumns[index] = updated;
+        if (_applicationColumnEditSnapshot is not null)
+        {
+            Draft.ApplicationColumns[index] = _applicationColumnEditSnapshot;
+        }
+
         _editingApplicationColumnIndex = null;
+        _applicationColumnEditSnapshot = null;
+        OnCancelledNestedEdit();
+    }
+
+    private void HandleApplicationColumnSubmit(int? index)
+    {
+        var target = index.HasValue ? Draft.ApplicationColumns[index.Value] : Draft.PendingApplicationColumn;
+        var result = ExportProfileDraftMapper.ConvertApplicationColumn(target);
+        if (!result.IsSuccess)
+        {
+            target.Error = Localize(result.Errors[0].Exception);
+            return;
+        }
+
+        target.Error = null;
+        if (index.HasValue)
+        {
+            _editingApplicationColumnIndex = null;
+            _applicationColumnEditSnapshot = null;
+        }
+        else
+        {
+            Draft.ApplicationColumns.Add(Draft.PendingApplicationColumn);
+            Draft.PendingApplicationColumn = new ApplicationColumnDefinitionDraft();
+        }
+
         MarkDirty();
     }
 
     private void DeleteApplicationColumn(int index)
     {
-        _applicationColumns.RemoveAt(index);
+        Draft.ApplicationColumns.RemoveAt(index);
         if (_editingApplicationColumnIndex == index)
         {
             _editingApplicationColumnIndex = null;
         }
+
         MarkDirty();
     }
 
-    // Lot 056 (56.2): same "blank form is trivially committed" contract as SheetRuleForm.TryCommitAsync
-    // -- lets the root editor safely flush an always-rendered, untouched add-sheet form on every save.
-    private bool IsBlank() =>
-        string.IsNullOrEmpty(_sheetName) && _pivotSource == PivotSource.Equipement &&
-        _columns.Count == 0 && _pointColumns.Count == 0 && _applicationColumns.Count == 0;
-
-    public async Task<bool> TryCommitAsync()
+    // Cancel is a pure discard -- explicitly does not call MarkDirty (matches the pre-migration
+    // behavior: cancelling a nested edit was never itself a "change" worth flagging).
+    private void OnCancelledNestedEdit()
     {
-        if (IsBlank())
-        {
-            return true;
-        }
-
-        _errorMessage = null;
-
-        // Flush whichever nested Column/PointColumn/ApplicationColumn edit is currently open --
-        // otherwise a header/value typed there but not yet confirmed via that row's own "Enregistrer
-        // les modifications" button is silently lost the moment this outer form commits (real
-        // incident: an export profile's PLATINES columns kept their old header text even after the
-        // admin renamed them and saved the profile). A validation failure here aborts this whole
-        // commit and leaves the nested form open with its own alert, same as every other flush in
-        // this codebase (Lot 057's mutual-exclusion helpers).
-        if (_editingColumnIndex is not null && _editingColumnFormRef is not null && !await _editingColumnFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_editingPointColumnIndex is not null && _editingPointColumnFormRef is not null && !await _editingPointColumnFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        if (_editingApplicationColumnIndex is not null && _editingApplicationColumnFormRef is not null && !await _editingApplicationColumnFormRef.TryCommitAsync())
-        {
-            return false;
-        }
-
-        try
-        {
-            // SheetGenerationRule's constructor snapshots all four lists itself ([.. ...]), unlike the
-            // import side's SheetExtractionRule.UnconditionalColonneNames -- no defensive copy needed
-            // here before ResetForm() clears _columns/_pointColumns/_applicationColumns/_constantColumns
-            // below. _constantColumns must always be passed through, even though no UI edits it yet
-            // (see its own field comment) -- omitting it here is exactly the bug that used to silently
-            // wipe a TM_PROC_* sheet's constant columns on every save.
-            var rule = new SheetGenerationRule(
-                _sheetName, _pivotSource, _columns, _pointColumns, _applicationColumns, _constantColumns);
-
-            await OnSubmit.InvokeAsync(rule);
-
-            ResetForm();
-            return true;
-        }
-        catch (Exception ex) when (ex is DomainValidationException or DomainRuleViolationException)
-        {
-            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
-            return false;
-        }
     }
 
-    private async Task Submit() => await TryCommitAsync();
+    private string Localize(Exception exception) => BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
+
+    // This form's own top-level Submit button: validates the whole rule (including its own 3
+    // still-pending nested rows, per ExportProfileDraftMapper.ConvertSheetRule) and, only on
+    // success, tells the owner (OnSubmit) what happened -- the owner (ExportProfileEditor) knows
+    // from its own state whether Draft is an already-added rule or the pending "Add" slot, and
+    // performs the corresponding list mutation itself.
+    private async Task Submit()
+    {
+        var result = ExportProfileDraftMapper.ConvertSheetRule(Draft);
+        if (!result.IsSuccess)
+        {
+            foreach (var error in result.Errors)
+            {
+                if (error.Draft is IDraftWithError withError)
+                {
+                    withError.Error = Localize(error.Exception);
+                }
+            }
+
+            return;
+        }
+
+        Draft.Error = null;
+        await OnSubmit.InvokeAsync();
+    }
 
     private async Task Cancel() => await OnCancel.InvokeAsync();
-
-    private void ResetForm()
-    {
-        _sheetName = string.Empty;
-        _pivotSource = PivotSource.Equipement;
-        _columns.Clear();
-        _pointColumns.Clear();
-        _applicationColumns.Clear();
-        _constantColumns.Clear();
-        _editingColumnIndex = null;
-        _editingPointColumnIndex = null;
-        _editingApplicationColumnIndex = null;
-    }
 }
