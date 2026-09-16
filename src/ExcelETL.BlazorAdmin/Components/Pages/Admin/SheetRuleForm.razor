@@ -558,6 +558,10 @@
     private readonly List<ConditionalPointRule> _pointRules = [];
     private readonly List<HeaderFieldRule> _headerFields = [];
     private readonly List<HeaderCompositeRule> _headerComposites = [];
+    // No add/edit UI for these (seed-only today), but they must survive an edit of the rule: rebuilding
+    // the SheetExtractionRule without them silently deleted PLATINES' RECEPTION DEBUT MAD/REL rules
+    // (client-reported 2026-09-16, same class of data-loss bug as Lot 048.1).
+    private readonly List<FieldPresencePointRule> _fieldPresencePointRules = [];
 
     private int? _editingFieldIndex;
 
@@ -619,6 +623,7 @@
         _pointRules.AddRange(InitialRule.PointRules);
         _headerFields.AddRange(InitialRule.HeaderFields);
         _headerComposites.AddRange(InitialRule.HeaderComposites);
+        _fieldPresencePointRules.AddRange(InitialRule.FieldPresencePointRules);
     }
 
     private void AddBlockField(BlockFieldDefinition field)
@@ -880,7 +885,7 @@
         string.IsNullOrEmpty(_allowedCouleursEtiquette) &&
         _fields.Count == 0 &&
         _unconditionalColonneNames.Count == 0 && _pointRules.Count == 0 &&
-        _headerFields.Count == 0 && _headerComposites.Count == 0;
+        _headerFields.Count == 0 && _headerComposites.Count == 0 && _fieldPresencePointRules.Count == 0;
 
     public async Task<bool> TryCommitAsync()
     {
@@ -938,6 +943,7 @@
             var rule = new SheetExtractionRule(
                 _sheetName, locator, _pointRules, [.. _unconditionalColonneNames], headerFields, [.. _headerComposites],
                 string.IsNullOrWhiteSpace(_zeroEnergieExpectedValue) ? null : _zeroEnergieExpectedValue,
+                fieldPresencePointRules: [.. _fieldPresencePointRules],
                 couleurEtiquetteCell: couleurEtiquetteCell,
                 defaultCouleurEtiquette: string.IsNullOrWhiteSpace(_defaultCouleurEtiquette) ? null : _defaultCouleurEtiquette,
                 allowedCouleursEtiquette: allowedCouleursEtiquette);
@@ -973,6 +979,7 @@
         _pointRules.Clear();
         _headerFields.Clear();
         _headerComposites.Clear();
+        _fieldPresencePointRules.Clear();
         _editingFieldIndex = null;
         _editingHeaderFieldIndex = null;
         _editingHeaderCompositeIndex = null;
