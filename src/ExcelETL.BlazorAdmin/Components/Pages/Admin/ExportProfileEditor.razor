@@ -234,8 +234,9 @@ else
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
 
-    // Taken at "Modify" click time (DraftJson.Clone), restored into the list on Cancel -- see
-    // SheetGenerationRuleForm.razor's own identical mechanism for its nested items.
+    // Taken at "Modify" click time (DraftJson.Clone), restored into the list on Cancel. Kept by hand
+    // rather than as a ListItemEditState (used for the nested lists in SheetGenerationRuleForm): the
+    // open rule shares one state with the add form (lot 057), exactly as in ImportProfileEditor.
     private SheetGenerationRuleDraft? _sheetRuleEditSnapshot;
 
     // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own single open-form state.
@@ -281,54 +282,34 @@ else
 
     private string Localize(Exception exception) => BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
 
-    private void ApplyErrors(IReadOnlyList<DraftConversionError> errors)
-    {
-        foreach (var error in errors)
-        {
-            if (error.Draft is IDraftWithError withError)
-            {
-                withError.Error = Localize(error.Exception);
-            }
-        }
-    }
-
     // Lot 057 (57.2): mirror of ImportProfileEditor.razor's own mutual-exclusion helper -- validates
     // whichever sheet-rule form is currently open directly against ExportProfileDraftMapper (no
     // @ref needed, unlike the pre-migration architecture): an Edit-mode rule is validated in place;
     // a still-pristine pending Add rule is a no-op; a non-pristine, valid pending Add rule is
-    // promoted into the list exactly as if "Add sheet rule" had been clicked.
+    // promoted into the list exactly as if "Add sheet rule" had been clicked. Errors of an earlier
+    // attempt are cleared first (lot 076).
     private bool TryValidateAndCloseCurrentForm()
     {
-        if (_openSheetRuleForm.EditIndex is int index)
+        var ruleDraft = _openSheetRuleForm.EditIndex is { } index
+            ? _draft.SheetRules[index]
+            : _openSheetRuleForm.IsAdd && !DraftJson.IsPristine(_draft.PendingSheetRule) ? _draft.PendingSheetRule : null;
+        if (ruleDraft is null)
         {
-            var result = ExportProfileDraftMapper.ConvertSheetRule(_draft.SheetRules[index]);
-            if (!result.IsSuccess)
-            {
-                ApplyErrors(result.Errors);
-                return false;
-            }
-
-            _draft.SheetRules[index].Error = null;
             return true;
         }
 
-        if (_openSheetRuleForm.IsAdd)
+        DraftListActions.ClearErrors(ruleDraft);
+        var result = ExportProfileDraftMapper.ConvertSheetRule(ruleDraft);
+        if (!result.IsSuccess)
         {
-            if (DraftJson.IsPristine(_draft.PendingSheetRule))
-            {
-                return true;
-            }
+            DraftListActions.ApplyErrors(result.Errors, Localize);
+            return false;
+        }
 
-            var result = ExportProfileDraftMapper.ConvertSheetRule(_draft.PendingSheetRule);
-            if (!result.IsSuccess)
-            {
-                ApplyErrors(result.Errors);
-                return false;
-            }
-
-            _draft.SheetRules.Add(_draft.PendingSheetRule);
+        if (ReferenceEquals(ruleDraft, _draft.PendingSheetRule))
+        {
+            _draft.SheetRules.Add(ruleDraft);
             _draft.PendingSheetRule = new SheetGenerationRuleDraft();
-            return true;
         }
 
         return true;
@@ -343,7 +324,6 @@ else
 
         _pendingDeleteIndex = null;
         _sheetRuleEditSnapshot = DraftJson.Clone(_draft.SheetRules[index]);
-        _draft.SheetRules[index].Error = null;
         _openSheetRuleForm = SheetRuleFormOpenState.Edit(index);
     }
 
@@ -386,18 +366,14 @@ else
     // OnSubmit -- this handler only performs the list mutation the successful validation implies.
     private void HandleSheetRuleSubmit(int? index)
     {
-        if (index.HasValue)
-        {
-            _openSheetRuleForm = SheetRuleFormOpenState.None;
-            _sheetRuleEditSnapshot = null;
-        }
-        else
+        if (index is null)
         {
             _draft.SheetRules.Add(_draft.PendingSheetRule);
             _draft.PendingSheetRule = new SheetGenerationRuleDraft();
-            _openSheetRuleForm = SheetRuleFormOpenState.None;
         }
 
+        _sheetRuleEditSnapshot = null;
+        _openSheetRuleForm = SheetRuleFormOpenState.None;
         MarkAsChanged();
     }
 
@@ -414,17 +390,13 @@ else
 
     private void ConfirmDeleteSheetRule(int index)
     {
-        DeleteSheetRule(index);
-        _pendingDeleteIndex = null;
-    }
-
-    private void DeleteSheetRule(int index)
-    {
         _draft.SheetRules.RemoveAt(index);
         if (_openSheetRuleForm.EditIndex == index)
         {
             _openSheetRuleForm = SheetRuleFormOpenState.None;
         }
+
+        _pendingDeleteIndex = null;
         MarkAsChanged();
     }
 
@@ -453,10 +425,11 @@ else
         // happens to be visually open or closed -- there is no "flush the open form" step left,
         // since every field already lives in _draft the instant it's typed. This is what fixes L4
         // (a pending row filled but never explicitly "Add"-ed) without any special-casing.
+        DraftListActions.ClearErrors(_draft);
         var result = ExportProfileDraftMapper.ToDomain(_draft);
         if (!result.IsSuccess)
         {
-            ApplyErrors(result.Errors);
+            DraftListActions.ApplyErrors(result.Errors, Localize);
 
             // A failure attached directly to the root draft (Name empty/too long, no sheet rules)
             // shows its own real message, exactly as before this lot -- one only ever attached to a

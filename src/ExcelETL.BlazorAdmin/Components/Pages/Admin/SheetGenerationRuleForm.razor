@@ -54,7 +54,7 @@
         {
             var columnIndex = j;
             var column = Draft.Columns[columnIndex];
-            @if (_editingColumnIndex == columnIndex)
+            @if (_columnEdit.IsOpen(columnIndex))
             {
                 <li class="block-field-item-editing">
                     <ColumnDefinitionForm IdPrefix="@($"{IdPrefix}column-{columnIndex}-")"
@@ -64,9 +64,9 @@
                                           SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                           ShowCancel="true"
                                           CancelButtonId="@($"{IdPrefix}cancel-column-definition-button-{columnIndex}")"
-                                          OnCancel="() => CancelColumnEdit(columnIndex)"
+                                          OnCancel="() => _columnEdit.Cancel(Draft.Columns)"
                                           OnDirty="MarkDirty"
-                                          OnSubmit="() => HandleColumnSubmit(columnIndex)" />
+                                          OnSubmit="() => SubmitColumn(columnIndex)" />
                 </li>
             }
             else
@@ -80,7 +80,7 @@
                         <button id="@($"{IdPrefix}modify-column-definition-button-{columnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => OpenColumnEdit(columnIndex)">
+                                @onclick="() => _columnEdit.Open(Draft.Columns, columnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -89,7 +89,7 @@
                         <button id="@($"{IdPrefix}delete-column-definition-button-{columnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteColumn(columnIndex)">
+                                @onclick="() => Delete(Draft.Columns, columnIndex, _columnEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -107,7 +107,7 @@
                       SubmitButtonId="@($"{IdPrefix}add-column-definition-button")"
                       SubmitLabel="@Loc["ExportProfileEditor_AddColumnButton"]"
                       OnDirty="MarkDirty"
-                      OnSubmit="() => HandleColumnSubmit(null)" />
+                      OnSubmit="() => SubmitColumn(null)" />
 </div>
 </div>
 
@@ -123,7 +123,7 @@
         {
             var pointColumnIndex = j;
             var pointColumn = Draft.PointColumns[pointColumnIndex];
-            @if (_editingPointColumnIndex == pointColumnIndex)
+            @if (_pointColumnEdit.IsOpen(pointColumnIndex))
             {
                 <li class="block-field-item-editing">
                     <PointColumnDefinitionForm IdPrefix="@($"{IdPrefix}point-column-{pointColumnIndex}-")"
@@ -132,9 +132,9 @@
                                                SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                                ShowCancel="true"
                                                CancelButtonId="@($"{IdPrefix}cancel-point-column-definition-button-{pointColumnIndex}")"
-                                               OnCancel="() => CancelPointColumnEdit(pointColumnIndex)"
+                                               OnCancel="() => _pointColumnEdit.Cancel(Draft.PointColumns)"
                                                OnDirty="MarkDirty"
-                                               OnSubmit="() => HandlePointColumnSubmit(pointColumnIndex)" />
+                                               OnSubmit="() => SubmitPointColumn(pointColumnIndex)" />
                 </li>
             }
             else
@@ -148,7 +148,7 @@
                         <button id="@($"{IdPrefix}modify-point-column-definition-button-{pointColumnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => OpenPointColumnEdit(pointColumnIndex)">
+                                @onclick="() => _pointColumnEdit.Open(Draft.PointColumns, pointColumnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -157,7 +157,7 @@
                         <button id="@($"{IdPrefix}delete-point-column-definition-button-{pointColumnIndex}")" type="button"
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeletePointColumn(pointColumnIndex)">
+                                @onclick="() => Delete(Draft.PointColumns, pointColumnIndex, _pointColumnEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -174,7 +174,7 @@
                            SubmitButtonId="@($"{IdPrefix}add-point-column-definition-button")"
                            SubmitLabel="@Loc["ExportProfileEditor_AddPointColumnButton"]"
                            OnDirty="MarkDirty"
-                           OnSubmit="() => HandlePointColumnSubmit(null)" />
+                           OnSubmit="() => SubmitPointColumn(null)" />
 </div>
 </div>
 
@@ -188,7 +188,7 @@
         {
             var applicationColumnIndex = j;
             var applicationColumn = Draft.ApplicationColumns[applicationColumnIndex];
-            @if (_editingApplicationColumnIndex == applicationColumnIndex)
+            @if (_applicationColumnEdit.IsOpen(applicationColumnIndex))
             {
                 <li class="block-field-item-editing">
                     <ApplicationColumnDefinitionForm IdPrefix="@($"{IdPrefix}application-column-{applicationColumnIndex}-")"
@@ -197,9 +197,9 @@
                                                       SubmitLabel="@Loc["ExportProfileEditor_SaveChangesButton"]"
                                                       ShowCancel="true"
                                                       CancelButtonId="@($"{IdPrefix}cancel-application-column-definition-button-{applicationColumnIndex}")"
-                                                      OnCancel="() => CancelApplicationColumnEdit(applicationColumnIndex)"
+                                                      OnCancel="() => _applicationColumnEdit.Cancel(Draft.ApplicationColumns)"
                                                       OnDirty="MarkDirty"
-                                                      OnSubmit="() => HandleApplicationColumnSubmit(applicationColumnIndex)" />
+                                                      OnSubmit="() => SubmitApplicationColumn(applicationColumnIndex)" />
                 </li>
             }
             else
@@ -214,7 +214,7 @@
                                 class="btn btn-sm btn-outline-secondary block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_ModifyButton"]"
                                 title="@Loc["ExportProfileEditor_ModifyButton"]"
-                                @onclick="() => OpenApplicationColumnEdit(applicationColumnIndex)">
+                                @onclick="() => _applicationColumnEdit.Open(Draft.ApplicationColumns, applicationColumnIndex)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12z" />
                                 <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
@@ -224,7 +224,7 @@
                                 class="btn btn-sm btn-outline-danger block-field-icon-btn"
                                 aria-label="@Loc["ExportProfileEditor_DeleteButton"]"
                                 title="@Loc["ExportProfileEditor_DeleteButton"]"
-                                @onclick="() => DeleteApplicationColumn(applicationColumnIndex)">
+                                @onclick="() => Delete(Draft.ApplicationColumns, applicationColumnIndex, _applicationColumnEdit)">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                                 <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
                                 <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
@@ -241,7 +241,7 @@
                                  SubmitButtonId="@($"{IdPrefix}add-application-column-definition-button")"
                                  SubmitLabel="@Loc["ExportProfileEditor_AddApplicationColumnButton"]"
                                  OnDirty="MarkDirty"
-                                 OnSubmit="() => HandleApplicationColumnSubmit(null)" />
+                                 OnSubmit="() => SubmitApplicationColumn(null)" />
 </div>
 </div>
 }
@@ -299,17 +299,12 @@
 
     private void MarkDirty() => OnDirty.InvokeAsync();
 
-    private int? _editingColumnIndex;
-    private int? _editingPointColumnIndex;
-    private int? _editingApplicationColumnIndex;
-
-    // Taken at "Modify" click time (DraftJson.Clone), restored into the list on Cancel -- the one
-    // per-item "undo" mechanism the P3 architecture still needs, since a field's own @bind writes
-    // straight into the shared draft the instant it's typed (see this component's own header
-    // comment and the design table's "« Annuler » d'un élément" row).
-    private ColumnDefinitionDraft? _columnEditSnapshot;
-    private PointColumnDefinitionDraft? _pointColumnEditSnapshot;
-    private ApplicationColumnDefinitionDraft? _applicationColumnEditSnapshot;
+    // One edit state per nested list (lot 076, same generic tools as SheetRuleForm since lot 075): which
+    // item is open and its value when opened, restored on Cancel -- a field's own @bind writes straight
+    // into the shared draft the instant it's typed, so this is the only "undo" P3 still needs.
+    private readonly ListItemEditState<ColumnDefinitionDraft> _columnEdit = new();
+    private readonly ListItemEditState<PointColumnDefinitionDraft> _pointColumnEdit = new();
+    private readonly ListItemEditState<ApplicationColumnDefinitionDraft> _applicationColumnEdit = new();
 
     // PointColumnDefinitions/ApplicationColumnDefinitions have no meaning for TacheMultiple (Domain
     // rejects them outright, T2/U4) and the subforms that add them are hidden the moment this pivot
@@ -320,231 +315,72 @@
     // directly to the draft, not a conversion (see ExportProfileDraftMapper's own header comment).
     private void OnPivotSourceChangedAndMarkDirty()
     {
-        OnPivotSourceChanged();
-        MarkDirty();
-    }
-
-    private void OnPivotSourceChanged()
-    {
-        if (Draft.PivotSource != PivotSource.TacheMultiple)
-        {
-            return;
-        }
-
-        if (Draft.PointColumns.Count > 0)
+        if (Draft.PivotSource == PivotSource.TacheMultiple)
         {
             Draft.PointColumns.Clear();
-            _editingPointColumnIndex = null;
-        }
-
-        if (Draft.ApplicationColumns.Count > 0)
-        {
+            _pointColumnEdit.Close();
             Draft.ApplicationColumns.Clear();
-            _editingApplicationColumnIndex = null;
-        }
-    }
-
-    // --- Columns --------------------------------------------------------------------------
-
-    private void OpenColumnEdit(int index)
-    {
-        _editingColumnIndex = index;
-        _columnEditSnapshot = DraftJson.Clone(Draft.Columns[index]);
-        Draft.Columns[index].Error = null;
-    }
-
-    private void CancelColumnEdit(int index)
-    {
-        if (_columnEditSnapshot is not null)
-        {
-            Draft.Columns[index] = _columnEditSnapshot;
-        }
-
-        _editingColumnIndex = null;
-        _columnEditSnapshot = null;
-        OnCancelledNestedEdit();
-    }
-
-    private void HandleColumnSubmit(int? index)
-    {
-        var target = index.HasValue ? Draft.Columns[index.Value] : Draft.PendingColumn;
-        var result = ExportProfileDraftMapper.ConvertColumn(target);
-        if (!result.IsSuccess)
-        {
-            target.Error = Localize(result.Errors[0].Exception);
-            return;
-        }
-
-        target.Error = null;
-        if (index.HasValue)
-        {
-            _editingColumnIndex = null;
-            _columnEditSnapshot = null;
-        }
-        else
-        {
-            Draft.Columns.Add(Draft.PendingColumn);
-            Draft.PendingColumn = new ColumnDefinitionDraft();
+            _applicationColumnEdit.Close();
         }
 
         MarkDirty();
-    }
-
-    private void DeleteColumn(int index)
-    {
-        Draft.Columns.RemoveAt(index);
-        if (_editingColumnIndex == index)
-        {
-            _editingColumnIndex = null;
-        }
-
-        MarkDirty();
-    }
-
-    // --- Point columns ----------------------------------------------------------------------
-
-    private void OpenPointColumnEdit(int index)
-    {
-        _editingPointColumnIndex = index;
-        _pointColumnEditSnapshot = DraftJson.Clone(Draft.PointColumns[index]);
-        Draft.PointColumns[index].Error = null;
-    }
-
-    private void CancelPointColumnEdit(int index)
-    {
-        if (_pointColumnEditSnapshot is not null)
-        {
-            Draft.PointColumns[index] = _pointColumnEditSnapshot;
-        }
-
-        _editingPointColumnIndex = null;
-        _pointColumnEditSnapshot = null;
-        OnCancelledNestedEdit();
-    }
-
-    private void HandlePointColumnSubmit(int? index)
-    {
-        var target = index.HasValue ? Draft.PointColumns[index.Value] : Draft.PendingPointColumn;
-        var result = ExportProfileDraftMapper.ConvertPointColumn(target);
-        if (!result.IsSuccess)
-        {
-            target.Error = Localize(result.Errors[0].Exception);
-            return;
-        }
-
-        target.Error = null;
-        if (index.HasValue)
-        {
-            _editingPointColumnIndex = null;
-            _pointColumnEditSnapshot = null;
-        }
-        else
-        {
-            Draft.PointColumns.Add(Draft.PendingPointColumn);
-            Draft.PendingPointColumn = new PointColumnDefinitionDraft();
-        }
-
-        MarkDirty();
-    }
-
-    private void DeletePointColumn(int index)
-    {
-        Draft.PointColumns.RemoveAt(index);
-        if (_editingPointColumnIndex == index)
-        {
-            _editingPointColumnIndex = null;
-        }
-
-        MarkDirty();
-    }
-
-    // --- Application columns -----------------------------------------------------------------
-
-    private void OpenApplicationColumnEdit(int index)
-    {
-        _editingApplicationColumnIndex = index;
-        _applicationColumnEditSnapshot = DraftJson.Clone(Draft.ApplicationColumns[index]);
-        Draft.ApplicationColumns[index].Error = null;
-    }
-
-    private void CancelApplicationColumnEdit(int index)
-    {
-        if (_applicationColumnEditSnapshot is not null)
-        {
-            Draft.ApplicationColumns[index] = _applicationColumnEditSnapshot;
-        }
-
-        _editingApplicationColumnIndex = null;
-        _applicationColumnEditSnapshot = null;
-        OnCancelledNestedEdit();
-    }
-
-    private void HandleApplicationColumnSubmit(int? index)
-    {
-        var target = index.HasValue ? Draft.ApplicationColumns[index.Value] : Draft.PendingApplicationColumn;
-        var result = ExportProfileDraftMapper.ConvertApplicationColumn(target);
-        if (!result.IsSuccess)
-        {
-            target.Error = Localize(result.Errors[0].Exception);
-            return;
-        }
-
-        target.Error = null;
-        if (index.HasValue)
-        {
-            _editingApplicationColumnIndex = null;
-            _applicationColumnEditSnapshot = null;
-        }
-        else
-        {
-            Draft.ApplicationColumns.Add(Draft.PendingApplicationColumn);
-            Draft.PendingApplicationColumn = new ApplicationColumnDefinitionDraft();
-        }
-
-        MarkDirty();
-    }
-
-    private void DeleteApplicationColumn(int index)
-    {
-        Draft.ApplicationColumns.RemoveAt(index);
-        if (_editingApplicationColumnIndex == index)
-        {
-            _editingApplicationColumnIndex = null;
-        }
-
-        MarkDirty();
-    }
-
-    // Cancel is a pure discard -- explicitly does not call MarkDirty (matches the pre-migration
-    // behavior: cancelling a nested edit was never itself a "change" worth flagging).
-    private void OnCancelledNestedEdit()
-    {
     }
 
     private string Localize(Exception exception) => BusinessExceptionLocalizer.TryLocalize(exception) ?? exception.Message;
+
+    private void Delete<TDraft>(List<TDraft> list, int index, ListItemEditState<TDraft> edit) where TDraft : class
+    {
+        DraftListActions.Delete(list, index, edit);
+        MarkDirty();
+    }
+
+    // Cancel (ListItemEditState.Cancel, wired in the markup) is a pure discard and never marks the
+    // profile dirty -- cancelling a nested edit was never itself a "change" worth flagging.
+
+    private void SubmitColumn(int? index)
+    {
+        if (DraftListActions.Submit(Draft.Columns, index, Draft.PendingColumn, p => Draft.PendingColumn = p, _columnEdit,
+                ExportProfileDraftMapper.ConvertColumn, Localize))
+        {
+            MarkDirty();
+        }
+    }
+
+    private void SubmitPointColumn(int? index)
+    {
+        if (DraftListActions.Submit(Draft.PointColumns, index, Draft.PendingPointColumn, p => Draft.PendingPointColumn = p,
+                _pointColumnEdit, ExportProfileDraftMapper.ConvertPointColumn, Localize))
+        {
+            MarkDirty();
+        }
+    }
+
+    private void SubmitApplicationColumn(int? index)
+    {
+        if (DraftListActions.Submit(Draft.ApplicationColumns, index, Draft.PendingApplicationColumn,
+                p => Draft.PendingApplicationColumn = p, _applicationColumnEdit, ExportProfileDraftMapper.ConvertApplicationColumn,
+                Localize))
+        {
+            MarkDirty();
+        }
+    }
 
     // This form's own top-level Submit button: validates the whole rule (including its own 3
     // still-pending nested rows, per ExportProfileDraftMapper.ConvertSheetRule) and, only on
     // success, tells the owner (OnSubmit) what happened -- the owner (ExportProfileEditor) knows
     // from its own state whether Draft is an already-added rule or the pending "Add" slot, and
-    // performs the corresponding list mutation itself.
+    // performs the corresponding list mutation itself. Errors of an earlier attempt are cleared
+    // first, so one the user has since fixed never stays on screen (lot 076).
     private async Task Submit()
     {
+        DraftListActions.ClearErrors(Draft);
         var result = ExportProfileDraftMapper.ConvertSheetRule(Draft);
         if (!result.IsSuccess)
         {
-            foreach (var error in result.Errors)
-            {
-                if (error.Draft is IDraftWithError withError)
-                {
-                    withError.Error = Localize(error.Exception);
-                }
-            }
-
+            DraftListActions.ApplyErrors(result.Errors, Localize);
             return;
         }
 
-        Draft.Error = null;
         await OnSubmit.InvokeAsync();
     }
 
