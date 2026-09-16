@@ -171,6 +171,27 @@ tests puis lui laisser la vérification finale.
 
 ---
 
+## Compteurs de version (`version.txt`, BlazorAdmin et WebAPI)
+
+`src/ExcelETL.BlazorAdmin/version.txt` et `src/ExcelETL.WebAPI/version.txt` contiennent
+chacun un simple entier, incrémenté automatiquement par une target MSBuild au moment
+d'un `dotnet publish` réel (jamais `dotnet build`/F5) — voir "Lot 062" dans la section
+"CURRENT SOLUTION STATE" pour le détail du mécanisme. Ce sont des fichiers suivis dans
+le repo (pas de `.gitignore`), volontairement : un compteur non versionné repartirait
+de zéro à chaque nouveau clone/poste et désynchroniserait la numérotation entre les deux
+hôtes déployés.
+
+**Ces 2 fichiers ne doivent jamais être mélangés à un commit de code applicatif.**
+Quand `git status` montre une modification sur l'un des deux (typiquement après un
+`dotnet publish` lancé en local, par Simon ou pendant une vérification) :
+- committer ces fichiers **seuls**, dans leur propre commit, jamais avec un `git add`
+  large qui embarquerait aussi du travail en cours ;
+- message type : `chore: incrementation du compteur de version (publication reelle)` ;
+- le faire dès que constaté, sans attendre une demande explicite de Simon — au même
+  titre que les autres nettoyages de statut git attendus par défaut dans ce projet.
+
+---
+
 ## Sessions Claude Code concurrentes sur ce dépôt
 
 Simon fait parfois tourner plusieurs sessions Claude Code en parallèle sur ce même
