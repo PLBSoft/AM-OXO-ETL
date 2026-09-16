@@ -1072,7 +1072,7 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-details-toggle-0").Click();
 
             cut.Find("#sheet-rule-details-content-0").TextContent
-                .Should().Contain("No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.");
+                .Should().Contain("No unconditional colonnes, conditional point rules, filled-cell rules, header fields, or header composites for this sheet.");
             cut.Find("li.sheet-rule-card").QuerySelectorAll("h4").Should().BeEmpty();
         });
 
@@ -3229,6 +3229,6 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-details-toggle-0").Click();
 
             cut.Find("#sheet-rule-details-content-0").TextContent.Should()
-                .Contain("No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.");
+                .Contain("No unconditional colonnes, conditional point rules, filled-cell rules, header fields, or header composites for this sheet.");
         });
 }

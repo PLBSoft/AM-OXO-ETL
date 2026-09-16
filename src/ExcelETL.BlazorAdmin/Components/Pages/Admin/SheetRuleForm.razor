@@ -367,6 +367,67 @@
 
 <div class="card bg-light mb-3">
 <div class="card-body">
+<h3 class="h5">@Loc["ImportProfileEditor_FieldPresencePointRulesHeading"]</h3>
+<div class="form-text mb-2">@Loc["ImportProfileEditor_FieldPresencePointRulesHint"]</div>
+@if (_fieldPresencePointRules.Count > 0)
+{
+    <ul id="@($"{IdPrefix}field-presence-rule-list")" class="block-field-list">
+        @for (var j = 0; j < _fieldPresencePointRules.Count; j++)
+        {
+            var itemIndex = j;
+            var fieldPresenceRule = _fieldPresencePointRules[itemIndex];
+            @if (_editingFieldPresencePointRuleIndex == itemIndex)
+            {
+                <li class="block-field-item-editing">
+                    <FieldPresencePointRuleForm IdPrefix="@($"{IdPrefix}field-presence-rule-{itemIndex}-")"
+                                                InitialRule="fieldPresenceRule"
+                                                FirstBlockStartRow="_firstBlockStartRow"
+                                                SubmitButtonId="@($"{IdPrefix}save-field-presence-rule-button-{itemIndex}")"
+                                                SubmitLabel="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                                ShowCancel="true"
+                                                CancelButtonId="@($"{IdPrefix}cancel-field-presence-rule-button-{itemIndex}")"
+                                                OnCancel="() => _editingFieldPresencePointRuleIndex = null"
+                                                OnSubmit="(FieldPresencePointRule updated) => HandleSaveFieldPresencePointRule(itemIndex, updated)" />
+                </li>
+            }
+            else
+            {
+                <li class="block-field-item">
+                    <div class="block-field-info">
+                        <span class="block-field-name">@fieldPresenceRule.ColonneName</span>
+                        <span class="block-field-range text-muted font-monospace">@BlockFieldRangeFormatter.ToAbsoluteRange(_firstBlockStartRow, fieldPresenceRule.Cell.ColumnRange, fieldPresenceRule.Cell.RowOffsetStart, fieldPresenceRule.Cell.RowOffsetEnd)</span>
+                    </div>
+                    <div class="block-field-actions">
+                        <button id="@($"{IdPrefix}modify-field-presence-rule-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                @onclick="() => _editingFieldPresencePointRuleIndex = itemIndex">
+                            @((MarkupString)AdminIconMarkup.Pencil)
+                        </button>
+                        <button id="@($"{IdPrefix}delete-field-presence-rule-button-{itemIndex}")" type="button"
+                                class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                @onclick="() => DeleteFieldPresencePointRule(itemIndex)">
+                            @((MarkupString)AdminIconMarkup.Trash)
+                        </button>
+                    </div>
+                </li>
+            }
+        }
+    </ul>
+}
+<FieldPresencePointRuleForm IdPrefix="@($"{IdPrefix}field-presence-rule-")"
+                            FirstBlockStartRow="_firstBlockStartRow"
+                            SubmitButtonId="@($"{IdPrefix}add-field-presence-rule-button")"
+                            SubmitLabel="@Loc["ImportProfileEditor_AddFieldPresencePointRuleButton"]"
+                            OnSubmit="AddFieldPresencePointRule" />
+</div>
+</div>
+
+<div class="card bg-light mb-3">
+<div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_HeaderFieldsHeading"]</h3>
 @if (GetMissingWellKnownNames() is { Count: > 0 } missingNames)
 {
@@ -558,10 +619,11 @@
     private readonly List<ConditionalPointRule> _pointRules = [];
     private readonly List<HeaderFieldRule> _headerFields = [];
     private readonly List<HeaderCompositeRule> _headerComposites = [];
-    // No add/edit UI for these (seed-only today), but they must survive an edit of the rule: rebuilding
-    // the SheetExtractionRule without them silently deleted PLATINES' RECEPTION DEBUT MAD/REL rules
-    // (client-reported 2026-09-16, same class of data-loss bug as Lot 048.1).
+    // Must be hydrated from InitialRule and passed back on commit: rebuilding the SheetExtractionRule
+    // without them silently deleted PLATINES' RECEPTION DEBUT MAD/REL rules (client-reported
+    // 2026-09-16, same class of data-loss bug as Lot 048.1). Fully editable since the same day.
     private readonly List<FieldPresencePointRule> _fieldPresencePointRules = [];
+    private int? _editingFieldPresencePointRuleIndex;
 
     private int? _editingFieldIndex;
 
@@ -812,6 +874,29 @@
         MarkDirty();
     }
 
+    private void AddFieldPresencePointRule(FieldPresencePointRule rule)
+    {
+        _fieldPresencePointRules.Add(rule);
+        MarkDirty();
+    }
+
+    private void HandleSaveFieldPresencePointRule(int itemIndex, FieldPresencePointRule updated)
+    {
+        _fieldPresencePointRules[itemIndex] = updated;
+        _editingFieldPresencePointRuleIndex = null;
+        MarkDirty();
+    }
+
+    private void DeleteFieldPresencePointRule(int itemIndex)
+    {
+        _fieldPresencePointRules.RemoveAt(itemIndex);
+        if (_editingFieldPresencePointRuleIndex == itemIndex)
+        {
+            _editingFieldPresencePointRuleIndex = null;
+        }
+        MarkDirty();
+    }
+
     private void AddHeaderComposite(HeaderCompositeRule composite)
     {
         _headerComposites.Add(composite);
@@ -980,6 +1065,7 @@
         _headerFields.Clear();
         _headerComposites.Clear();
         _fieldPresencePointRules.Clear();
+        _editingFieldPresencePointRuleIndex = null;
         _editingFieldIndex = null;
         _editingHeaderFieldIndex = null;
         _editingHeaderCompositeIndex = null;

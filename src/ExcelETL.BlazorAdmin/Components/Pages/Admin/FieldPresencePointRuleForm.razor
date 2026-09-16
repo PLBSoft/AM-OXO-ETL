@@ -1,0 +1,175 @@
+@using ExcelETL.Application.Exceptions
+@using ExcelETL.BlazorAdmin.Formatting
+@using ExcelETL.BlazorAdmin.Shared
+@using ExcelETL.Domain.Exceptions
+@using ExcelETL.Domain.Extraction.Primitives
+
+@inject BusinessExceptionLocalizer BusinessExceptionLocalizer
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+@* Add/edit sub-form for a FieldPresencePointRule ("create this Colonne's Point only when this cell
+   of the block is filled in", e.g. PLATINES' RECEPTION DEBUT MAD/REL). Same shape as BlockFieldForm:
+   the cell is entered as an absolute Excel range of the first block, translated to relative offsets
+   through the parent's FirstBlockStartRow. *@
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <div class="alert alert-danger" role="alert">@_errorMessage</div>
+}
+@if (!string.IsNullOrEmpty(_warningMessage))
+{
+    <div class="alert alert-warning">@_warningMessage</div>
+}
+
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}colonne-name-input")" @ref="_colonneNameInputRef" class="form-control" @bind="_colonneName"
+               @onkeydown="OnRowKeyDownAsync"
+               placeholder="@Loc["ImportProfileEditor_ColonneNamePlaceholder"]" />
+        <label for="@($"{IdPrefix}colonne-name-input")">@Loc["ImportProfileEditor_ColonneNameLabel"]</label>
+    </div>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
+               @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
+               placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
+        <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
+    </div>
+</div>
+
+<div class="right-aligned-actions">
+    <button id="@SubmitButtonId" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="Submit">
+        @if (ShowCancel)
+        {
+            @((MarkupString)AdminIconMarkup.Check)
+        }
+        else
+        {
+            @((MarkupString)AdminIconMarkup.Plus)
+        }
+        @SubmitLabel
+    </button>
+    @if (ShowCancel)
+    {
+        <button id="@CancelButtonId" class="btn btn-outline-secondary w-100 mt-3" @onclick="Cancel">
+            @Loc["ImportProfileEditor_CancelButton"]
+        </button>
+    }
+</div>
+
+@code {
+    // BlockFieldDefinition.Name has no lookup role for a FieldPresencePointRule's cell (the Colonne
+    // name is the rule's identity). An edited rule keeps its original name (e.g. "PoseeLe" from the
+    // seeder); a new one gets this constant -- same approach as SheetRuleForm's CouleurEtiquetteCell.
+    private const string NewCellName = "FieldPresenceCell";
+
+    [Parameter]
+    public string IdPrefix { get; set; } = string.Empty;
+
+    [Parameter]
+    public FieldPresencePointRule? InitialRule { get; set; }
+
+    [Parameter]
+    public int FirstBlockStartRow { get; set; }
+
+    [Parameter]
+    public string SubmitButtonId { get; set; } = "add-field-presence-rule-button";
+
+    [Parameter]
+    public string CancelButtonId { get; set; } = "cancel-field-presence-rule-button";
+
+    [Parameter]
+    public string SubmitLabel { get; set; } = string.Empty;
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public EventCallback<FieldPresencePointRule> OnSubmit { get; set; }
+
+    private string _colonneName = string.Empty;
+    private string _absoluteRange = string.Empty;
+    private string? _errorMessage;
+    private string? _warningMessage;
+    private ElementReference _colonneNameInputRef;
+
+    // Only ever runs once per mounted instance -- same reasoning as BlockFieldForm.OnInitialized.
+    protected override void OnInitialized()
+    {
+        if (InitialRule is null)
+        {
+            return;
+        }
+
+        _colonneName = InitialRule.ColonneName;
+        _absoluteRange = BlockFieldRangeFormatter.ToAbsoluteRange(
+            FirstBlockStartRow, InitialRule.Cell.ColumnRange, InitialRule.Cell.RowOffsetStart, InitialRule.Cell.RowOffsetEnd);
+    }
+
+    private async Task Submit()
+    {
+        _errorMessage = null;
+        _warningMessage = null;
+
+        var parseResult = BlockFieldRangeFormatter.FromAbsoluteRange(_absoluteRange, FirstBlockStartRow);
+        if (!parseResult.IsSuccess)
+        {
+            _errorMessage = Loc["ImportProfileEditor_InvalidExcelRangeError"];
+            return;
+        }
+
+        try
+        {
+            var cell = new BlockFieldDefinition(
+                InitialRule?.Cell.Name ?? NewCellName,
+                parseResult.ColumnRange, parseResult.RowOffsetStart, parseResult.RowOffsetEnd);
+            var rule = new FieldPresencePointRule(cell, _colonneName);
+
+            await OnSubmit.InvokeAsync(rule);
+
+            if (parseResult.IsBeyondPracticalRange)
+            {
+                _warningMessage = Loc["ImportProfileEditor_ExcelRangeBeyondPracticalRangeWarning"];
+            }
+
+            ResetForm();
+
+            await _colonneNameInputRef.FocusAsync();
+        }
+        catch (DomainValidationException ex)
+        {
+            _errorMessage = BusinessExceptionLocalizer.TryLocalize(ex) ?? ex.Message;
+        }
+    }
+
+    // Lot 056 (56.4): same "all fields filled" blur/Enter contract as BlockFieldForm.
+    private bool IsRowFullyFilled() => !string.IsNullOrWhiteSpace(_colonneName) && !string.IsNullOrWhiteSpace(_absoluteRange);
+
+    private async Task OnLastFieldBlurAsync()
+    {
+        if (IsRowFullyFilled())
+        {
+            await Submit();
+        }
+    }
+
+    private async Task OnRowKeyDownAsync(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && IsRowFullyFilled())
+        {
+            await Submit();
+        }
+    }
+
+    private async Task Cancel() => await OnCancel.InvokeAsync();
+
+    private void ResetForm()
+    {
+        _colonneName = string.Empty;
+        _absoluteRange = string.Empty;
+    }
+}

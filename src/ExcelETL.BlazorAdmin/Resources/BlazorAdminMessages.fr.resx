@@ -668,10 +668,19 @@
     <value>Règles de point conditionnelles</value>
   </data>
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
-    <value>{0} colonnes inconditionnelles, {1} règles conditionnelles, {2} champs d'en-tête, {3} champs composés</value>
+    <value>{0} colonnes inconditionnelles, {1} règles conditionnelles, {4} règles sur cellule renseignée, {2} champs d'en-tête, {3} champs composés</value>
   </data>
   <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
-    <value>Aucune colonne inconditionnelle, règle de point conditionnelle, champ d'en-tête ou champ composé pour cette feuille.</value>
+    <value>Aucune colonne inconditionnelle, règle de point conditionnelle, règle sur cellule renseignée, champ d'en-tête ou champ composé pour cette feuille.</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresencePointRulesHeading" xml:space="preserve">
+    <value>Colonnes cochées si une cellule est renseignée</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresencePointRulesHint" xml:space="preserve">
+    <value>La colonne est cochée pour un bloc uniquement si cette cellule du bloc contient une valeur (quelle qu'elle soit). Saisir la cellule du 1ᵉʳ bloc.</value>
+  </data>
+  <data name="ImportProfileEditor_AddFieldPresencePointRuleButton" xml:space="preserve">
+    <value>Ajouter une règle sur cellule renseignée</value>
   </data>
   <data name="ImportProfileEditor_HeaderFieldsHeading" xml:space="preserve">
     <value>Champs d'en-tête</value>

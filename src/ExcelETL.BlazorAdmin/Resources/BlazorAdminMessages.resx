@@ -668,10 +668,19 @@
     <value>Conditional point rules</value>
   </data>
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
-    <value>{0} unconditional colonnes, {1} conditional rules, {2} header fields, {3} header composites</value>
+    <value>{0} unconditional colonnes, {1} conditional rules, {4} filled-cell rules, {2} header fields, {3} header composites</value>
   </data>
   <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
-    <value>No unconditional colonnes, conditional point rules, header fields, or header composites for this sheet.</value>
+    <value>No unconditional colonnes, conditional point rules, filled-cell rules, header fields, or header composites for this sheet.</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresencePointRulesHeading" xml:space="preserve">
+    <value>Colonnes checked when a cell is filled in</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresencePointRulesHint" xml:space="preserve">
+    <value>The colonne is checked for a block only if this cell of the block contains a value (whatever the value). Enter the cell for the 1st block.</value>
+  </data>
+  <data name="ImportProfileEditor_AddFieldPresencePointRuleButton" xml:space="preserve">
+    <value>Add filled-cell rule</value>
   </data>
   <data name="ImportProfileEditor_HeaderFieldsHeading" xml:space="preserve">
     <value>Header fields</value>
