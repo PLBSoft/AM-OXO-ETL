@@ -135,9 +135,19 @@ elles ne portent aucune `ConditionalPointRule`.
 **Règles métier**
 - Repère de l'isolement = `{Equipement.Repere}-{Identification}`
 - Arrêt dès que Identification est vide
-- Points créés — **variantes `DEBUT` uniquement** : `"POSE ÉTIQUETTES"`, `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`, `"RECEPTION DEBUT MAD"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"RECEPTION DEBUT REL"`, `"PLATINES / TAMPONS PLEINS"`
+- Points créés sans condition : `"POSE ÉTIQUETTES"`, `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"PLATINES / TAMPONS PLEINS"`
+- Points créés sous condition de valeur : `"RECEPTION DEBUT MAD"` et `"RECEPTION DEBUT REL"` (voir ci-dessous)
 
-**Variantes DEB/FIN** : la spécification initiale est retenue (`DEBUT` uniquement). Un écart avait été observé dans un fichier cible de test du client (qui ne cochait que `FIN`, jamais `DEB`) — resté sans explication logique, jugé non fiable, sans retour attendu dessus. Les variantes `FIN` restent volontairement exclues du profil.
+**Variantes DEB/FIN × MAD/REL** (clarification client du 16/09, remplace la décision « `DEBUT` uniquement ») : les 4 colonnes de réception sont les 4 variantes, leur nom OXO ne change pas.
+
+| `Colonne.Nom` | Sens métier | Point créé si… |
+|---|---|---|
+| `RECEPTION DEBUT MAD` | DEB MAD réception platines/tampons pleins | une des 2 cellules H du bloc (POSÉE LE, ligne +2, ou DÉPOSÉE LE, ligne +3 ; fusion `H:N`) vaut `DEBUT MAD` |
+| `RÉCEPTION PLATINES/TAMPONS PLEINS` | FIN MAD réception platines/tampons pleins | toujours (identification non vide) |
+| `RECEPTION DEBUT REL` | DEB REL platines/tampons pleins | une des 2 cellules H du bloc vaut `DEBUT REL` |
+| `PLATINES / TAMPONS PLEINS` | FIN REL platines/tampons pleins | toujours (identification non vide) |
+
+L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur des cellules H (confirmé par le client). Comparaison sans tenir compte des majuscules ni des espaces autour. Une valeur `FIN MAD`/`FIN REL` ne coche aucune colonne `DEBUT`. Relevé des fichiers réels : `DEBUT MAD` apparaît dans les deux lignes (E6431A, C8503, E8582), `DEBUT REL` uniquement dans POSÉE LE (C7401 PT15B, C8503, RANGEE N°1). Profil : 4 `FieldPresencePointRule` avec valeur attendue (une par cellule × colonne), un bloc n'obtient jamais deux fois le même Point.
 
 **Point de conception** : le profil d'import définit, par feuille, la liste des `Colonne.Nom` pour lesquelles créer des Points sans condition (`UnconditionalColonneNames`), et éventuellement une condition par colonne (`ConditionalPointRule`) — voir modèle de domaine §1.4.
 

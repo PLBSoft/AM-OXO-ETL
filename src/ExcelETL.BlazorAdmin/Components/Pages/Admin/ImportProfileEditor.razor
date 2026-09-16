@@ -534,7 +534,7 @@ else
                                     <ul>
                                         @foreach (var fieldPresenceRule in rule.FieldPresencePointRules)
                                         {
-                                            <li>@fieldPresenceRule.ColonneName (@BlockFieldRangeFormatter.ToAbsoluteRange(rule.Locator.FirstBlockStartRow, fieldPresenceRule.Cell.ColumnRange, fieldPresenceRule.Cell.RowOffsetStart, fieldPresenceRule.Cell.RowOffsetEnd))</li>
+                                            <li>@fieldPresenceRule.ColonneName (@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule, rule.Locator.FirstBlockStartRow))</li>
                                         }
                                     </ul>
                                 }

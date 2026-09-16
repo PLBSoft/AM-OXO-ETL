@@ -395,7 +395,7 @@
                 <li class="block-field-item">
                     <div class="block-field-info">
                         <span class="block-field-name">@fieldPresenceRule.ColonneName</span>
-                        <span class="block-field-range text-muted font-monospace">@BlockFieldRangeFormatter.ToAbsoluteRange(_firstBlockStartRow, fieldPresenceRule.Cell.ColumnRange, fieldPresenceRule.Cell.RowOffsetStart, fieldPresenceRule.Cell.RowOffsetEnd)</span>
+                        <span class="block-field-range text-muted font-monospace">@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule, _firstBlockStartRow)</span>
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}modify-field-presence-rule-button-{itemIndex}")" type="button"

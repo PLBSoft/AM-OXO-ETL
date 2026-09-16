@@ -73,7 +73,7 @@ avertissement non bloquant) — aucune action corrective côté ETL.
 | Pose étiquettes | `Colonne.Nom` = "Pose étiquettes" | Confirmé |
 | Réceptions Assemblages : boulonnés (PS938) ou tubings | `Colonne.Nom` = idem | Confirmé |
 | Contrôle Etanchéités | `Colonne.Nom` = "Contrôle Etanchéités" | Confirmé |
-| Réceptions Platines/Tampons pleins (variantes DEB/FIN × MAD/REL) | `Colonne.Nom` : `"RECEPTION DEBUT MAD"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"RECEPTION DEBUT REL"`, `"PLATINES / TAMPONS PLEINS"` | Tranché — variantes `DEBUT` uniquement (spécification initiale). L'écart observé dans un fichier cible de test (qui ne cochait que `FIN`) reste sans explication, jugé non fiable. Les variantes `FIN` restent volontairement exclues, sans retour attendu sur ce point. |
+| Réceptions Platines/Tampons pleins (variantes DEB/FIN × MAD/REL) | `Colonne.Nom` : `"RECEPTION DEBUT MAD"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"RECEPTION DEBUT REL"`, `"PLATINES / TAMPONS PLEINS"` | Clarifié par le client le 16/09 : ce sont les 4 variantes (`RECEPTION DEBUT MAD` = DEB MAD, `RÉCEPTION PLATINES/TAMPONS PLEINS` = FIN MAD, `RECEPTION DEBUT REL` = DEB REL, `PLATINES / TAMPONS PLEINS` = FIN REL). FIN toujours cochées ; DEB cochées si une cellule H du bloc vaut `DEBUT MAD`/`DEBUT REL`. Détail : spec extraction, feuille PLATINES. |
 | INSTRUMENTATION | `TypeElement.Nom` = "INSTRUMENTATION" | Confirmé |
 | ZERO ENERGIE | `TypeElement.Nom` = "ZERO ENERGIE" | Confirmé |
 | SOUPAPE | `TypeElement.Nom` = "SOUPAPE" | Confirmé |

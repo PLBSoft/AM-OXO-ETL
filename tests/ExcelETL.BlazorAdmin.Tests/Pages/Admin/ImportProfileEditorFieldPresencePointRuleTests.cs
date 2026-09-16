@@ -49,7 +49,7 @@ public class ImportProfileEditorFieldPresencePointRuleTests : BunitContext
             "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
             fieldPresencePointRules:
             [
-                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
                 new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
             ],
             couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
@@ -110,7 +110,7 @@ public class ImportProfileEditorFieldPresencePointRuleTests : BunitContext
             ExpandDetails(cut);
             var content = cut.Find("#sheet-rule-details-content-0").TextContent;
             content.Should().Contain("Colonnes checked when a cell is filled in");
-            content.Should().Contain("RECEPTION DEBUT MAD (H19:N19)");
+            content.Should().Contain("RECEPTION DEBUT MAD (H19:N19 = \"DEBUT MAD\")");
             content.Should().Contain("RECEPTION DEBUT REL (H20:N20)");
         });
 
@@ -127,7 +127,8 @@ public class ImportProfileEditorFieldPresencePointRuleTests : BunitContext
             var items = cut.FindAll("#edit-0-field-presence-rule-list .block-field-item");
             items.Should().HaveCount(2);
             items[0].QuerySelector(".block-field-name")!.TextContent.Should().Be("RECEPTION DEBUT MAD");
-            items[0].QuerySelector(".block-field-range")!.TextContent.Should().Be("H19:N19");
+            items[0].QuerySelector(".block-field-range")!.TextContent.Should().Be("H19:N19 = \"DEBUT MAD\"");
+            items[1].QuerySelector(".block-field-range")!.TextContent.Should().Be("H20:N20");
             cut.FindAll("#edit-0-modify-field-presence-rule-button-1").Should().ContainSingle();
             cut.FindAll("#edit-0-delete-field-presence-rule-button-1").Should().ContainSingle();
         });
@@ -145,6 +146,7 @@ public class ImportProfileEditorFieldPresencePointRuleTests : BunitContext
 
             cut.Find("#edit-0-field-presence-rule-0-colonne-name-input").GetAttribute("value").Should().Be("RECEPTION DEBUT MAD");
             cut.Find("#edit-0-field-presence-rule-0-absolute-range-input").GetAttribute("value").Should().Be("H19:N19");
+            cut.Find("#edit-0-field-presence-rule-0-expected-value-input").GetAttribute("value").Should().Be("DEBUT MAD");
 
             cut.Find("#edit-0-field-presence-rule-0-colonne-name-input").Change("RECEPTION FIN MAD");
             cut.Find("#edit-0-field-presence-rule-0-absolute-range-input").Change("H21:N21");
@@ -256,7 +258,68 @@ public class ImportProfileEditorFieldPresencePointRuleTests : BunitContext
 
         cut.FindAll("label[for='field-presence-rule-colonne-name-input']").Should().ContainSingle();
         cut.FindAll("label[for='field-presence-rule-absolute-range-input']").Should().ContainSingle();
+        cut.FindAll("label[for='field-presence-rule-expected-value-input']").Should().ContainSingle();
     }
+
+    // --- Expected value (client clarification 2026-09-16): "DEBUT MAD" must be the cell's exact text. ---
+
+    [Fact]
+    public async Task ModifyFieldPresencePointRule_ChangingExpectedValue_PersistsIt() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithPlatinesFieldPresenceRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-modify-field-presence-rule-button-1").Click();
+            cut.Find("#edit-0-field-presence-rule-1-expected-value-input").GetAttribute("value").Should().BeNullOrEmpty();
+            cut.Find("#edit-0-field-presence-rule-1-expected-value-input").Change("DEBUT REL");
+            cut.Find("#edit-0-save-field-presence-rule-button-1").Click();
+
+            var rule = await SaveSheetRuleAndProfileAndReloadAsync(cut, profile.Id);
+            rule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT REL")
+                .ExpectedValue.Should().Be("DEBUT REL");
+        });
+
+    [Fact]
+    public async Task ModifyFieldPresencePointRule_ClearingExpectedValue_PersistsNull() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithPlatinesFieldPresenceRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-modify-field-presence-rule-button-0").Click();
+            cut.Find("#edit-0-field-presence-rule-0-expected-value-input").Change("   ");
+            cut.Find("#edit-0-save-field-presence-rule-button-0").Click();
+
+            var rule = await SaveSheetRuleAndProfileAndReloadAsync(cut, profile.Id);
+            rule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT MAD")
+                .ExpectedValue.Should().BeNull();
+        });
+
+    [Fact]
+    public async Task AddFieldPresencePointRule_WithExpectedValue_PersistsIt() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithPlatinesFieldPresenceRules();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-field-presence-rule-colonne-name-input").Change("RECEPTION DEBUT MAD");
+            cut.Find("#edit-0-field-presence-rule-absolute-range-input").Change("H20:N20");
+            cut.Find("#edit-0-field-presence-rule-expected-value-input").Change("DEBUT MAD");
+            cut.Find("#edit-0-add-field-presence-rule-button").Click();
+
+            var rule = await SaveSheetRuleAndProfileAndReloadAsync(cut, profile.Id);
+            rule.FieldPresencePointRules
+                .Where(r => r.ColonneName == "RECEPTION DEBUT MAD")
+                .Select(r => (r.Cell.RowOffsetStart, r.ExpectedValue))
+                .Should().BeEquivalentTo(new (int, string?)[] { (2, "DEBUT MAD"), (3, "DEBUT MAD") });
+        });
 
     [Fact]
     public async Task SaveProfile_WithoutTouchingSheetRules_PreservesFieldPresencePointRules() =>

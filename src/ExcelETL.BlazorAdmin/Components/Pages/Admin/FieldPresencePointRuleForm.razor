@@ -8,9 +8,10 @@
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
 @* Add/edit sub-form for a FieldPresencePointRule ("create this Colonne's Point only when this cell
-   of the block is filled in", e.g. PLATINES' RECEPTION DEBUT MAD/REL). Same shape as BlockFieldForm:
-   the cell is entered as an absolute Excel range of the first block, translated to relative offsets
-   through the parent's FirstBlockStartRow. *@
+   of the block is filled in" -- or, with an expected value, "holds exactly this text", e.g. PLATINES'
+   RECEPTION DEBUT MAD when H19 = DEBUT MAD). Same shape as BlockFieldForm: the cell is entered as an
+   absolute Excel range of the first block, translated to relative offsets through the parent's
+   FirstBlockStartRow. The blur-to-add trigger sits on the last field, the optional expected value. *@
 
 @if (!string.IsNullOrEmpty(_errorMessage))
 {
@@ -32,10 +33,19 @@
 <div class="mb-3">
     <div class="form-floating">
         <input id="@($"{IdPrefix}absolute-range-input")" class="form-control" @bind="_absoluteRange"
-               @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
+               @onkeydown="OnRowKeyDownAsync"
                placeholder="@Loc["ImportProfileEditor_AbsoluteRangePlaceholder"]" />
         <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
     </div>
+</div>
+<div class="mb-3">
+    <div class="form-floating">
+        <input id="@($"{IdPrefix}expected-value-input")" class="form-control" @bind="_expectedValue"
+               @onkeydown="OnRowKeyDownAsync" @onfocusout="OnLastFieldBlurAsync"
+               placeholder="@Loc["ImportProfileEditor_FieldPresenceExpectedValuePlaceholder"]" />
+        <label for="@($"{IdPrefix}expected-value-input")">@Loc["ImportProfileEditor_FieldPresenceExpectedValueLabel"]</label>
+    </div>
+    <div class="form-text">@Loc["ImportProfileEditor_FieldPresenceExpectedValueHint"]</div>
 </div>
 
 <div class="right-aligned-actions">
@@ -93,6 +103,7 @@
 
     private string _colonneName = string.Empty;
     private string _absoluteRange = string.Empty;
+    private string _expectedValue = string.Empty;
     private string? _errorMessage;
     private string? _warningMessage;
     private ElementReference _colonneNameInputRef;
@@ -108,6 +119,7 @@
         _colonneName = InitialRule.ColonneName;
         _absoluteRange = BlockFieldRangeFormatter.ToAbsoluteRange(
             FirstBlockStartRow, InitialRule.Cell.ColumnRange, InitialRule.Cell.RowOffsetStart, InitialRule.Cell.RowOffsetEnd);
+        _expectedValue = InitialRule.ExpectedValue ?? string.Empty;
     }
 
     private async Task Submit()
@@ -127,7 +139,9 @@
             var cell = new BlockFieldDefinition(
                 InitialRule?.Cell.Name ?? NewCellName,
                 parseResult.ColumnRange, parseResult.RowOffsetStart, parseResult.RowOffsetEnd);
-            var rule = new FieldPresencePointRule(cell, _colonneName);
+            // Blank expected value = presence-only rule (null), never an empty string the Domain rejects.
+            var rule = new FieldPresencePointRule(
+                cell, _colonneName, string.IsNullOrWhiteSpace(_expectedValue) ? null : _expectedValue.Trim());
 
             await OnSubmit.InvokeAsync(rule);
 
@@ -171,5 +185,6 @@
     {
         _colonneName = string.Empty;
         _absoluteRange = string.Empty;
+        _expectedValue = string.Empty;
     }
 }

@@ -677,7 +677,16 @@
     <value>Colonnes checked when a cell is filled in</value>
   </data>
   <data name="ImportProfileEditor_FieldPresencePointRulesHint" xml:space="preserve">
-    <value>The colonne is checked for a block only if this cell of the block contains a value (whatever the value). Enter the cell for the 1st block.</value>
+    <value>The colonne is checked for a block only if this cell of the block contains a value -- any value, or exactly the expected value when one is entered. Enter the cell for the 1st block.</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValueLabel" xml:space="preserve">
+    <value>Expected value (optional)</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValuePlaceholder" xml:space="preserve">
+    <value>Expected value (optional)</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValueHint" xml:space="preserve">
+    <value>E.g. DEBUT MAD. Leave empty to accept any value. Compared ignoring case and surrounding spaces.</value>
   </data>
   <data name="ImportProfileEditor_AddFieldPresencePointRuleButton" xml:space="preserve">
     <value>Add filled-cell rule</value>

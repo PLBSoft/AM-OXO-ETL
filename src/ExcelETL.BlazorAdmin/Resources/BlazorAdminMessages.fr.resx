@@ -677,7 +677,16 @@
     <value>Colonnes cochées si une cellule est renseignée</value>
   </data>
   <data name="ImportProfileEditor_FieldPresencePointRulesHint" xml:space="preserve">
-    <value>La colonne est cochée pour un bloc uniquement si cette cellule du bloc contient une valeur (quelle qu'elle soit). Saisir la cellule du 1ᵉʳ bloc.</value>
+    <value>La colonne est cochée pour un bloc uniquement si cette cellule du bloc contient une valeur -- n'importe laquelle, ou exactement la valeur attendue si elle est renseignée. Saisir la cellule du 1ᵉʳ bloc.</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValueLabel" xml:space="preserve">
+    <value>Valeur attendue (facultative)</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValuePlaceholder" xml:space="preserve">
+    <value>Valeur attendue (facultative)</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresenceExpectedValueHint" xml:space="preserve">
+    <value>Ex. DEBUT MAD. Laisser vide pour accepter n'importe quelle valeur. Comparaison sans tenir compte des majuscules ni des espaces autour.</value>
   </data>
   <data name="ImportProfileEditor_AddFieldPresencePointRuleButton" xml:space="preserve">
     <value>Ajouter une règle sur cellule renseignée</value>
