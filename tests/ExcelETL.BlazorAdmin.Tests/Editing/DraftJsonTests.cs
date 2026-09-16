@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using ExcelETL.BlazorAdmin.Editing;
+using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Generation.Profile;
 using FluentAssertions;
 using Xunit;
@@ -107,5 +108,54 @@ public class DraftJsonTests
         clone.ConstantColumns[0].Header.Should().Be("SUPPRESSION");
         clone.ConstantColumns[0].Value.Should().Be("N");
         clone.ConstantColumns[0].Should().Be(original.ConstantColumns[0]);
+    }
+
+    // Lot 075.1: shapes the import-side drafts introduce and the export pilot never exercised -- an
+    // enum, a bool, an int left at zero and a nullable Guid. Verified, not assumed.
+    private sealed class SampleDraftWithScalars
+    {
+        public Guid? Id { get; set; }
+        public ConditionOperator Operator { get; set; } = ConditionOperator.Equals;
+        public bool Flag { get; set; }
+        public int Row { get; set; }
+        public string Value { get; set; } = string.Empty;
+    }
+
+    [Fact]
+    public void IsPristine_ScalarDefaults_ArePristine()
+    {
+        DraftJson.IsPristine(new SampleDraftWithScalars()).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("operator")]
+    [InlineData("flag")]
+    [InlineData("row")]
+    [InlineData("id")]
+    [InlineData("value")]
+    public void IsPristine_AnyScalarChanged_IsNotPristine(string changed)
+    {
+        var value = new SampleDraftWithScalars();
+        switch (changed)
+        {
+            case "operator": value.Operator = ConditionOperator.NotEquals; break;
+            case "flag": value.Flag = true; break;
+            case "row": value.Row = 19; break;
+            case "id": value.Id = Guid.NewGuid(); break;
+            case "value": value.Value = "PROLOCK"; break;
+        }
+
+        DraftJson.IsPristine(value).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Clone_WithScalars_RoundTripsEveryValue()
+    {
+        var original = new SampleDraftWithScalars
+        {
+            Id = Guid.NewGuid(), Operator = ConditionOperator.NotEquals, Flag = true, Row = 19, Value = "PROLOCK",
+        };
+
+        DraftJson.Clone(original).Should().BeEquivalentTo(original);
     }
 }
