@@ -105,58 +105,43 @@ Ces quatre postes sont précisément ceux qui évitent une séance d'implémenta
 pour économiser du texte déplace la dépense au lieu de la réduire, et la déplace vers l'endroit où
 elle coûte le plus cher.
 
-## 9. Généraliser un correctif de perte d'état, pas seulement le cas reproduit (leçon du 16/09)
+## 9. Perte d'état dans les éditeurs de profil : corriger le patron, pas seulement le cas reproduit (leçon du 16/09, lots 073 à 075)
 
-Le lot 056 (29/07) a modélisé l'incident réellement vécu par Simon comme ayant « trois niveaux de
-commit » (`BlockFieldForm` → `SheetRuleForm` → `ImportProfileEditor`) — un modèle construit sur le
-**seul cas reproduit** (un champ `BlockFieldDefinition` oublié). Le correctif a bien réparé la
-frontière entre les niveaux 2 et 1, mais jamais généralisé à la frontière entre le niveau 3 et le
-niveau 2 : les autres sous-formulaires imbriqués (`HeaderFieldRuleForm`, `HeaderCompositeRuleForm`,
-et plus tard `FieldPresencePointRuleForm`, `ColumnDefinitionForm`, `PointColumnDefinitionForm`,
-`ApplicationColumnDefinitionForm`) occupaient déjà, ou allaient occuper, la même position structurelle
-que `BlockFieldForm` — sans en hériter le correctif. Le même défaut a donc dû être réparé une seconde
-fois, deux mois plus tard (16/09), une fois par sous-formulaire.
+**Leçon générale, toujours valable.** Le lot 056 (29/07) a corrigé l'incident réellement vécu (un champ
+de bloc perdu) sur la seule frontière reproduite ; les autres sous-formulaires occupaient la même
+position et ont dû être réparés une seconde fois, deux mois plus tard (16/09). Quand un ticket corrige une
+perte d'état causée par un **patron structurel répété** : recenser toutes les instances du patron avant
+d'écrire le correctif (un `grep` suffit en général), les couvrir toutes dans le même ticket, et se
+demander si c'est le patron lui-même qu'il faut changer plutôt que ses instances.
 
-Ni le ticket, ni les tests, ni les tests TDD ne sont en cause pris isolément — chacun a fait
-correctement ce qu'on lui demandait, borné au cas concrètement reproduit, exactement comme la
-section 1 de ce document le recommande. Le vrai défaut est ailleurs : **le patron architectural
-lui-même** (plusieurs niveaux d'état non persisté, chacun avec son propre bouton de validation
-intermédiaire) recrée mécaniquement ce type de piège à chaque nouveau sous-formulaire ajouté, et rien
-ne forçait à vérifier, au moment du correctif, si d'autres instances du même patron existaient déjà
-ailleurs dans le code.
+**C'est ce qui a été fait ici.** Le patron en cause — plusieurs niveaux d'état non persisté, chacun avec
+son propre bouton de validation, que le parent devait penser à « vider » — produisait deux défauts :
+A (une saisie non validée perdue à la sauvegarde) et B (un champ perdu quand un formulaire reconstruit
+l'objet métier). Les deux éditeurs de profil ont été migrés sur un **brouillon unique possédé par la page
+racine** (P3 : export au lot 074, import au lot 075). Il n'existe plus de chaîne de vidage à brancher.
 
-Règle à appliquer dès qu'un ticket corrige une perte d'état silencieuse causée par un patron
-structurel répété (état imbriqué édité localement, non propagé sans une action explicite) :
+Règles à appliquer pour toute évolution de `ImportProfileEditor`/`ExportProfileEditor` et de leurs
+sous-formulaires :
 
-- **Recenser toutes les instances existantes du même patron avant d'écrire le correctif**, pas
-  seulement celle qui a été signalée — un `grep` sur la forme du composant/de la méthode incriminée
-  suffit généralement (voir le lot 059's «&nbsp;check before choosing an approach&nbsp;» ou le lot
-  037's audit des boutons `Modifier`/`Supprimer` pour le même réflexe appliqué à un autre défaut). Le
-  correctif doit couvrir toutes les instances recensées **dans le même ticket**, pas seulement celle
-  du rapport initial.
-- **Un test dédié par instance, qui reproduit le scénario réel** — ouvrir l'élément déjà existant en
-  édition, modifier un champ, sauvegarder le niveau au-dessus **sans jamais cliquer sur le bouton
-  d'enregistrement propre à l'élément édité** — et non un test qui se contente de vérifier qu'un
-  formulaire encore vide/jamais ouvert est correctement ignoré (ça, c'était déjà couvert). Voir
-  `tests/ExcelETL.BlazorAdmin.Tests/Pages/Admin/ImportProfileEditorNestedEditFlushTests.cs` et son
-  miroir export comme référence : un test par type de sous-formulaire imbriqué, chacun reproduisant
-  fidèlement l'incident.
-- **Toute future instance du même patron (un nouveau sous-formulaire imbriqué) doit être branchée sur
-  la chaîne de flush du parent et couverte par son propre test dans le ticket qui l'introduit** —
-  jamais reportée à un lot ultérieur « si besoin ».
-- Ce recensement/cette généralisation **limite les dégâts du patron actuel, il ne le corrige pas** —
-  ne pas confondre les deux. Si le patron structurel lui-même (validation multi-niveaux avec bouton
-  intermédiaire par niveau) est identifié comme la cause racine récurrente, c'est un sujet de
-  conception à traiter à part, pas quelque chose qu'un recensement plus rigoureux suffit à clore.
-
-**Nouveau champ sur un type de profil (lot 073, règle provisoire).** Un champ perdu quand un
-formulaire reconstruit l'objet métier (défaut B : lot 048.1, commits `1736886` et `0cbac22`) est gardé
-par `ImportProfileEditorRoundTripTests.cs` et `ExportProfileEditorRoundTripTests.cs`, qui rouvrent
-chaque élément du **profil par défaut semé** et exigent un profil sauvegardé identique. Ils ne voient
-que ce que ce profil contient : tout nouveau champ ajouté à `ImportProfile`, `SheetExtractionRule`,
-`ExportProfile`, `SheetGenerationRule` ou à l'un de leurs éléments doit donc être **semé dans
-`DefaultProfileSeeder`** avec une valeur non vide, ou, si le profil par défaut n'en a pas l'usage,
-ajouté comme **cas construit à la main** dans ces tests (précédent : `FieldPresencePointRule` à
-`ExpectedValue` nulle). Faute de quoi le garde-fou reste vert alors que le champ se perd. Cette règle
-sera remplacée, à la fin de la migration P3 de l'import (lot 074 et suivants), par la règle propre aux
-brouillons : tout champ passe par les conversions, gardées par leur test unitaire aller-retour.
+- **Tout champ passe par le brouillon et par le mapper.** Un nouveau champ d'un type de profil =
+  une propriété de la classe brouillon (`src/ExcelETL.BlazorAdmin/Editing/Import|Export/`), deux lignes du
+  mapper (`FromDomain` et la conversion correspondante), et le balisage lié directement au brouillon.
+  Jamais de copie locale de la valeur dans un composant, jamais de construction d'objet métier dans un
+  composant : un sous-formulaire ne fait que lier des champs et relayer ses boutons.
+- **Le garde-fou du défaut B est le test aller-retour unitaire du mapper**
+  (`tests/ExcelETL.BlazorAdmin.Tests/Editing/Import|Export/…DraftMapperTests.cs`, `RoundTrip_…`), qui
+  compare membre à membre `FromDomain` puis `ToDomain` sur le profil par défaut semé **et** sur un profil
+  construit à la main. Un champ que le profil semé ne porte pas (valeur nulle, nom de cellule non exposé,
+  forme optionnelle) doit être ajouté au **profil construit à la main** de ce test — sinon le garde-fou
+  reste vert alors que le champ se perd. Les tests bUnit aller-retour du lot 073 restent en place en
+  seconde ligne.
+- **Le garde-fou du défaut A est la conversion de l'arbre entier à la sauvegarde** (`ToDomain`), qui
+  promeut ou refuse chaque ligne « Ajouter » en attente et chaque édition ouverte. Une nouvelle liste
+  éditable = une liste et sa ligne en attente dans le brouillon, traitées par le mapper comme les autres,
+  et un test « ligne remplie mais pas ajoutée, puis sauvegarde » dans `…EditorPendingRowTests.cs`.
+- **Une règle métier reste dans le domaine.** Le mapper appelle les constructeurs et validateurs du
+  domaine ; il ne signale lui-même que ce qu'aucun type du domaine ne porte (plage Excel à analyser, nom
+  de colonne vide), via `DraftValidationException` et une clé de ressource — il ne localise rien.
+- **Une liste éditable se gère avec les outils génériques** `ListItemEditState<T>` (élément ouvert et copie
+  pour « Annuler ») et `DraftListActions` (soumission, suppression, application et effacement des
+  erreurs), plutôt qu'avec des index, tampons et messages écrits à la main.
