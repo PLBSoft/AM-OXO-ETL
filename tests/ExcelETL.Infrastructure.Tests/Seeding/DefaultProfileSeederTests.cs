@@ -127,17 +127,18 @@ public class DefaultProfileSeederTests
         platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT REL");
         platines.PointRules.Should().BeEmpty();
 
-        platines.FieldPresencePointRules.Should().HaveCount(2);
-        var poseeLeRule = platines.FieldPresencePointRules.Should()
-            .ContainSingle(r => r.ColonneName == "RECEPTION DEBUT MAD").Which;
-        poseeLeRule.Cell.ColumnRange.Should().Be("H:N");
-        poseeLeRule.Cell.RowOffsetStart.Should().Be(2);
-        poseeLeRule.Cell.RowOffsetEnd.Should().Be(2);
-        var deposeeLeRule = platines.FieldPresencePointRules.Should()
-            .ContainSingle(r => r.ColonneName == "RECEPTION DEBUT REL").Which;
-        deposeeLeRule.Cell.ColumnRange.Should().Be("H:N");
-        deposeeLeRule.Cell.RowOffsetStart.Should().Be(3);
-        deposeeLeRule.Cell.RowOffsetEnd.Should().Be(3);
+        // Client clarification (2026-09-16): a DEBUT Colonne is ticked when either H cell of the block
+        // (POSÉE LE row +2 or DÉPOSÉE LE row +3 -- the row label itself doesn't matter) holds the exact
+        // text, not just any value. One rule per (cell, Colonne) pair: 4 rules.
+        platines.FieldPresencePointRules
+            .Select(r => (r.ColonneName, r.Cell.ColumnRange, r.Cell.RowOffsetStart, r.Cell.RowOffsetEnd, r.ExpectedValue))
+            .Should().BeEquivalentTo(new (string, string, int, int, string?)[]
+            {
+                ("RECEPTION DEBUT MAD", "H:N", 2, 2, "DEBUT MAD"),
+                ("RECEPTION DEBUT MAD", "H:N", 3, 3, "DEBUT MAD"),
+                ("RECEPTION DEBUT REL", "H:N", 2, 2, "DEBUT REL"),
+                ("RECEPTION DEBUT REL", "H:N", 3, 3, "DEBUT REL")
+            });
 
         // Lot 068 (couleur d'étiquette, client remark) -- PLATINES-only.
         platines.CouleurEtiquetteCell.Should().NotBeNull();

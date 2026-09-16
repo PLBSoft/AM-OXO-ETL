@@ -22,6 +22,7 @@ public enum DomainErrorCode
     ConditionalPointRule_EmptyComparisonValue,
     ConditionalPointRule_EmptyColonneName,
     FieldPresencePointRule_EmptyColonneName,
+    FieldPresencePointRule_BlankExpectedValue,
     EquipementPivot_EmptyRepere,
     EquipementPivot_EmptyDesignation,
     EquipementPivot_EmptyTypeElementNom,

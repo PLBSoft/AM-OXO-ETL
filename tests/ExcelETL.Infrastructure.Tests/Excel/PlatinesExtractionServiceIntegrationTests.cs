@@ -75,15 +75,22 @@ public class PlatinesExtractionServiceIntegrationTests
         result.Points.Should().HaveCount(5 * 7);
     }
 
-    // PLATINES client feedback (2026-09): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" become
-    // field-presence-driven instead of unconditional -- verified here against the real fixtures
-    // (not the hand-built cells UnconditionalIsolementSheetExtractionServiceTests uses), including
-    // C7401's PT15A/PT15B block-split anomaly (spec §3, "jugé non fiable") and G4010A, the file
-    // behind the client's own screenshot.
-    private static readonly FieldPresencePointRule PoseeLeRule = new(
-        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD");
-    private static readonly FieldPresencePointRule DeposeeLeRule = new(
-        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL");
+    // PLATINES client clarification (2026-09-16): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" are ticked
+    // only when one of the block's two H value cells (POSÉE LE +2 or DÉPOSÉE LE +3 -- the row label
+    // doesn't matter) holds the exact text "DEBUT MAD"/"DEBUT REL". Same 4 rules as DefaultProfileSeeder,
+    // verified here against the real fixtures (not the hand-built cells
+    // UnconditionalIsolementSheetExtractionServiceTests uses). Expected values below come from a direct
+    // dump of every fixture's PLATINES H cells.
+    private const string DebutMad = "RECEPTION DEBUT MAD";
+    private const string DebutRel = "RECEPTION DEBUT REL";
+
+    private static readonly FieldPresencePointRule[] DebutRules =
+    [
+        new(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), DebutMad, "DEBUT MAD"),
+        new(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), DebutMad, "DEBUT MAD"),
+        new(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), DebutRel, "DEBUT REL"),
+        new(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), DebutRel, "DEBUT REL")
+    ];
 
     private static SheetExtractionRule CreateSheetRuleWithFieldPresenceRules() => new(
         Sheet,
@@ -104,30 +111,56 @@ public class PlatinesExtractionServiceIntegrationTests
             "PLATINES / TAMPONS PLEINS"
         ],
         [], [],
-        fieldPresencePointRules: [PoseeLeRule, DeposeeLeRule]);
+        fieldPresencePointRules: DebutRules);
+
+    private static IReadOnlyList<string> DebutColonnesOf(IsolementSheetExtractionResult result, string identification) =>
+        result.Points
+            .Where(p => p.ParentRepere == result.Isolements
+                .Single(i => i.Repere.EndsWith("-" + identification, StringComparison.Ordinal)).Repere)
+            .Select(p => p.ColonneNom)
+            .Where(c => c is DebutMad or DebutRel)
+            .Order(StringComparer.Ordinal)
+            .ToList();
 
     [Fact]
-    public void Extract_C7401Fixture_WithFieldPresenceRules_OnlyPT15AAndPT15BGetBothPoints()
+    public void Extract_C7401Fixture_PT15AGetsOnlyDebutMad_PT15BGetsOnlyDebutRel()
     {
+        // PT15A: H123 "DEBUT MAD" / H124 "FIN MAD"; PT15B: H131 "DEBUT REL" / H132 "FIN REL". Before the
+        // client clarification both blocks got both DEBUT Points (any filled cell counted).
         var result = ExtractFromFixtureWithFieldPresenceRules("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
         result.Errors.Should().BeEmpty();
         result.Isolements.Should().HaveCount(15);
+        DebutColonnesOf(result, "PT15A").Should().Equal(DebutMad);
+        DebutColonnesOf(result, "PT15B").Should().Equal(DebutRel);
+        result.Points.Should().HaveCount(15 * 5 + 2);
+    }
 
-        var pt15A = result.Isolements.Single(i => i.Repere.EndsWith("-PT15A", StringComparison.Ordinal));
-        var pt15B = result.Isolements.Single(i => i.Repere.EndsWith("-PT15B", StringComparison.Ordinal));
-        result.Points.Should().Contain(p => p.ParentRepere == pt15A.Repere && p.ColonneNom == "RECEPTION DEBUT MAD");
-        result.Points.Should().Contain(p => p.ParentRepere == pt15A.Repere && p.ColonneNom == "RECEPTION DEBUT REL");
-        result.Points.Should().Contain(p => p.ParentRepere == pt15B.Repere && p.ColonneNom == "RECEPTION DEBUT MAD");
-        result.Points.Should().Contain(p => p.ParentRepere == pt15B.Repere && p.ColonneNom == "RECEPTION DEBUT REL");
+    [Fact]
+    public void Extract_C8503Fixture_DebutValuesInEitherRowTickBothColonnes_FinValuesTickNone()
+    {
+        // The client's own screenshot file: TP3/TP6/TP9 carry "DEBUT REL" in POSÉE LE and "DEBUT MAD" in
+        // DÉPOSÉE LE; TP14 carries "FIN REL"/"FIN MAD".
+        var result = ExtractFromFixtureWithFieldPresenceRules("Dossier de MaD IDL -  C8503 PORTE FILTRE.xlsx");
 
-        // Every other block (13 of the 15 platines) has both source cells blank -- neither Point.
-        var otherIsolements = result.Isolements.Where(i => i != pt15A && i != pt15B);
-        otherIsolements.Should().OnlyContain(i =>
-            !result.Points.Any(p => p.ParentRepere == i.Repere &&
-                (p.ColonneNom == "RECEPTION DEBUT MAD" || p.ColonneNom == "RECEPTION DEBUT REL")));
+        foreach (var identification in new[] { "TP3", "TP6", "TP9" })
+        {
+            DebutColonnesOf(result, identification).Should().Equal(DebutMad, DebutRel);
+        }
 
-        result.Points.Should().HaveCount(15 * 5 + 4);
+        DebutColonnesOf(result, "TP14").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_E6431AFixture_DebutMadInPoseeLeOrDeposeeLe_TicksDebutMadOnlyOnce()
+    {
+        // P1-P4: "DEBUT MAD" in POSÉE LE; TP1-TP4: "DEBUT MAD" in DÉPOSÉE LE (with "FIN MAD" in POSÉE LE).
+        var result = ExtractFromFixtureWithFieldPresenceRules("Dossier de MaD IDL -  E6431A Dépose cellule.xlsx");
+
+        foreach (var identification in new[] { "P1", "P2", "P3", "P4", "TP1", "TP2", "TP3", "TP4" })
+        {
+            DebutColonnesOf(result, identification).Should().Equal(DebutMad);
+        }
     }
 
     [Theory]
@@ -141,8 +174,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
         result.Errors.Should().BeEmpty();
         result.Isolements.Should().HaveCount(expectedIsolementCount);
-        result.Points.Should().NotContain(p =>
-            p.ColonneNom == "RECEPTION DEBUT MAD" || p.ColonneNom == "RECEPTION DEBUT REL");
+        result.Points.Should().NotContain(p => p.ColonneNom == DebutMad || p.ColonneNom == DebutRel);
         result.Points.Should().HaveCount(expectedIsolementCount * 5);
     }
 

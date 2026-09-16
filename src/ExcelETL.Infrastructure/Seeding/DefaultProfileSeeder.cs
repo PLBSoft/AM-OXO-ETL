@@ -183,22 +183,26 @@ public class DefaultProfileSeeder(
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "PLATINES / TAMPONS PLEINS"
                 ], [], [],
-                // Client feedback (2026-09): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" are no longer
-                // created unconditionally -- they now reflect whether the source block's own "POSÉE
-                // LE"/"DÉPOSÉE LE" cells were actually filled in (H, block offsets +2/+3, same H:N
-                // merge width as every other value cell in this form -- confirmed against all 4 real
-                // client fixtures on disk, incl. G4010A, the file behind the client's screenshot).
-                // Deliberately not folded into UnconditionalColonneNames/PointRules -- neither can
-                // express "Point only if this specific cell has a value at all" (PointRules always
-                // compares against a fixed ComparisonValue). Presence, not the label text itself, is
-                // read -- known unreliable in the DEBUT/FIN block-split anomaly (spec §3, "jugé non
-                // fiable"), accepted as-is, no special handling.
+                // Client clarification (2026-09-16), the 4 PLATINES reception Colonnes are the DEB/FIN
+                // x MAD/REL variants: "RÉCEPTION PLATINES/TAMPONS PLEINS" (FIN MAD) and "PLATINES /
+                // TAMPONS PLEINS" (FIN REL) stay unconditional above; "RECEPTION DEBUT MAD"/"RECEPTION
+                // DEBUT REL" are ticked only when one of the block's two H value cells (POSÉE LE +2,
+                // DÉPOSÉE LE +3, merged H:N) holds the exact text "DEBUT MAD"/"DEBUT REL" -- the client
+                // confirmed the row label itself doesn't matter, only the H cell values. Real fixtures
+                // back this: DEBUT MAD appears in both rows (E6431A TP1-4, C8503, E8582) and DEBUT REL
+                // only ever in POSÉE LE (C7401 PT15B, C8503, RANGEE N°1). A FIN MAD/FIN REL value no
+                // longer ticks a DEBUT Colonne. The service deduplicates, so a block with the value in
+                // both cells still gets one Point.
                 fieldPresencePointRules:
                 [
                     new FieldPresencePointRule(
-                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
                     new FieldPresencePointRule(
-                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
+                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT MAD", "DEBUT MAD"),
+                    new FieldPresencePointRule(
+                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT REL", "DEBUT REL"),
+                    new FieldPresencePointRule(
+                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL")
                 ],
                 // Lot 068: "couleur d'étiquette" (client remark, no written spec) -- PLATINES-only,
                 // read directly into IsolementPivot.CouleurEtiquette (not a Point/Colonne). H:N,

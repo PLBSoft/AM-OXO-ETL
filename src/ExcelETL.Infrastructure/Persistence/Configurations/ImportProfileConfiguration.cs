@@ -241,6 +241,11 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                     .IsRequired()
                     .HasMaxLength(200);
 
+                // Optional (null = any non-blank value satisfies the rule) -- client clarification
+                // 2026-09-16, e.g. "DEBUT MAD" for RECEPTION DEBUT MAD.
+                fieldPresenceRules.Property(r => r.ExpectedValue)
+                    .HasMaxLength(200);
+
                 fieldPresenceRules.OwnsOne(r => r.Cell, cell =>
                 {
                     cell.Property(c => c.Name)

@@ -72,6 +72,11 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             "FieldPresencePointRule_EmptyColonneName",
             () => new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), string.Empty),
         ];
+        yield return
+        [
+            "FieldPresencePointRule_BlankExpectedValue",
+            () => new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", " "),
+        ];
     }
 
     [Theory]

@@ -31,6 +31,43 @@ public class FieldPresencePointRuleTests
     }
 
     [Fact]
+    public void Constructor_WithoutExpectedValue_LeavesExpectedValueNull()
+    {
+        var rule = new FieldPresencePointRule(CreateCell(), "RECEPTION DEBUT MAD");
+
+        rule.ExpectedValue.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithExpectedValue_StoresIt()
+    {
+        var rule = new FieldPresencePointRule(CreateCell(), "RECEPTION DEBUT MAD", "DEBUT MAD");
+
+        rule.ExpectedValue.Should().Be("DEBUT MAD");
+    }
+
+    [Fact]
+    public void Constructor_WithDifferentExpectedValues_ProducesUnequalInstances()
+    {
+        var first = new FieldPresencePointRule(CreateCell(), "RECEPTION DEBUT MAD", "DEBUT MAD");
+        var second = new FieldPresencePointRule(CreateCell(), "RECEPTION DEBUT MAD", "FIN MAD");
+
+        first.Should().NotBe(second);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WithBlankButNonNullExpectedValue_ThrowsDomainValidationException(string blankExpectedValue)
+    {
+        var act = () => new FieldPresencePointRule(CreateCell(), "RECEPTION DEBUT MAD", blankExpectedValue);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("expectedValue")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.FieldPresencePointRule_BlankExpectedValue);
+    }
+
+    [Fact]
     public void Constructor_WithNullCell_ThrowsArgumentNullException()
     {
         var act = () => new FieldPresencePointRule(null!, "RECEPTION DEBUT MAD");

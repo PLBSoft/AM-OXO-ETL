@@ -17,7 +17,13 @@ public sealed record FieldPresencePointRule
     public BlockFieldDefinition Cell { get; }
     public string ColonneName { get; }
 
-    public FieldPresencePointRule(BlockFieldDefinition cell, string colonneName)
+    // Client clarification (2026-09-16): null = the historical behavior, any non-blank value creates
+    // the Point. Non-null = the cell must hold exactly this text (compared trimmed and ignoring case by
+    // the extraction service, spec §7 convention), e.g. "DEBUT MAD" in POSÉE LE for RECEPTION DEBUT MAD
+    // -- a FIN MAD written in the same cell must no longer tick the DEBUT Colonne.
+    public string? ExpectedValue { get; }
+
+    public FieldPresencePointRule(BlockFieldDefinition cell, string colonneName, string? expectedValue = null)
     {
         ArgumentNullException.ThrowIfNull(cell);
 
@@ -28,8 +34,16 @@ public sealed record FieldPresencePointRule
                 DomainErrorCode.FieldPresencePointRule_EmptyColonneName);
         }
 
+        if (expectedValue is not null && string.IsNullOrWhiteSpace(expectedValue))
+        {
+            throw new DomainValidationException(
+                "Expected value must not be blank when provided.", nameof(expectedValue),
+                DomainErrorCode.FieldPresencePointRule_BlankExpectedValue);
+        }
+
         Cell = cell;
         ColonneName = colonneName;
+        ExpectedValue = expectedValue;
     }
 
     // EF Core materialization only -- constructor binding cannot bind a reference to an owned type

@@ -251,7 +251,7 @@ public class EfImportProfileStoreTests
             "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
             fieldPresencePointRules:
             [
-                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
                 new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
             ]);
         var profile = new ImportProfile("Profil field presence", "MAD TRAVAUX", [], [], [sheetRule]);
@@ -268,10 +268,13 @@ public class EfImportProfileStoreTests
         poseeLe.Cell.ColumnRange.Should().Be("H:N");
         poseeLe.Cell.RowOffsetStart.Should().Be(2);
         poseeLe.Cell.RowOffsetEnd.Should().Be(2);
+        poseeLe.ExpectedValue.Should().Be("DEBUT MAD");
 
         var deposeeLe = reloadedRule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT REL");
         deposeeLe.Cell.RowOffsetStart.Should().Be(3);
         deposeeLe.Cell.RowOffsetEnd.Should().Be(3);
+        // No expected value configured: must reload as a genuine null (presence-only rule).
+        deposeeLe.ExpectedValue.Should().BeNull();
     }
 
     [Fact]

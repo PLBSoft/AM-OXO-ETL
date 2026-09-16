@@ -270,6 +270,81 @@ public class UnconditionalIsolementSheetExtractionServiceTests
         result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT REL (FIELD PRESENCE)");
     }
 
+    // Client clarification (2026-09-16): an optional ExpectedValue turns "cell is filled in" into "cell
+    // holds this exact text" (trimmed, case-insensitive) -- FIN MAD written in POSÉE LE must no longer
+    // tick the DEBUT Colonne.
+    private static readonly FieldPresencePointRule PoseeLeDebutMadRule = new(
+        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD (FIELD PRESENCE)", "DEBUT MAD");
+
+    [Fact]
+    public void Extract_WithExpectedValueAndMatchingCell_CreatesThePoint()
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = "DEBUT MAD";
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([PoseeLeDebutMadRule]));
+
+        result.Points.Should().Contain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)" && p.ParentRepere == "C7401-PT1");
+    }
+
+    [Theory]
+    [InlineData("FIN MAD")]
+    [InlineData("DEBUT REL")]
+    [InlineData("12/03/2026")]
+    public void Extract_WithExpectedValueAndDifferentNonBlankCell_DoesNotCreateThePoint(string cellValue)
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = cellValue;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([PoseeLeDebutMadRule]));
+
+        result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(" debut mad ")]
+    [InlineData("Debut Mad")]
+    public void Extract_WithExpectedValue_ComparesTrimmedAndIgnoringCase(string cellValue)
+    {
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = cellValue;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([PoseeLeDebutMadRule]));
+
+        result.Points.Should().Contain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+    }
+
+    [Fact]
+    public void Extract_WithExpectedValueAndBlankCell_DoesNotCreateThePoint()
+    {
+        var workbookReader = CreateWorkbookReader(CreateOneBlockCells());
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([PoseeLeDebutMadRule]));
+
+        result.Points.Should().NotContain(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)");
+    }
+
+    [Fact]
+    public void Extract_WithTwoRulesForTheSameColonneBothMatching_CreatesThePointOnlyOnce()
+    {
+        // Lets a profile say "DEBUT MAD in POSÉE LE or in DÉPOSÉE LE" with two rules on one Colonne,
+        // without ever producing a duplicate Point for the same block.
+        var deposeeLeDebutMadRule = new FieldPresencePointRule(
+            new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT MAD (FIELD PRESENCE)", "DEBUT MAD");
+        var cells = CreateOneBlockCells();
+        cells["H19:N19"] = "DEBUT MAD";
+        cells["H20:N20"] = "DEBUT MAD";
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([PoseeLeDebutMadRule, deposeeLeDebutMadRule]));
+
+        result.Points.Where(p => p.ColonneNom == "RECEPTION DEBUT MAD (FIELD PRESENCE)").Should().ContainSingle();
+    }
+
     [Fact]
     public void Extract_WithNoFieldPresencePointRules_NeverReadsAnyExtraCellsBeyondTheDeclaredFields()
     {

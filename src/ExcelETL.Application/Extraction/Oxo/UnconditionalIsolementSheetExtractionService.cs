@@ -65,11 +65,15 @@ public sealed class UnconditionalIsolementSheetExtractionService(
                 points.Add(new PointPivot(colonneName, repere));
             }
 
+            // Several rules may target the same Colonne (e.g. "DEBUT MAD in POSÉE LE or DÉPOSÉE LE"):
+            // a block never gets the same Point twice, whichever rules matched.
+            var fieldPresenceColonnesCreated = new HashSet<string>(StringComparer.Ordinal);
             foreach (var rule in sheetRule.FieldPresencePointRules)
             {
                 var cellValue = workbookReader.ReadCellValue(
                     sheet, BlockFieldRangeCalculator.BuildRange(rule.Cell, block.StartRow));
-                if (!string.IsNullOrWhiteSpace(cellValue))
+                if (IsFieldPresenceSatisfied(cellValue, rule.ExpectedValue)
+                    && fieldPresenceColonnesCreated.Add(rule.ColonneName))
                 {
                     points.Add(new PointPivot(rule.ColonneName, repere));
                 }
@@ -77,6 +81,20 @@ public sealed class UnconditionalIsolementSheetExtractionService(
         }
 
         return new IsolementSheetExtractionResult(isolements, points, errors);
+    }
+
+    // No ExpectedValue: any non-blank value satisfies the rule (historical behavior). With one: the
+    // trimmed cell must equal it, ignoring case (spec §7). A different value is not a warning -- a
+    // FIN MAD in POSÉE LE is legitimate data that simply doesn't tick the DEBUT Colonne.
+    private static bool IsFieldPresenceSatisfied(string? cellValue, string? expectedValue)
+    {
+        if (string.IsNullOrWhiteSpace(cellValue))
+        {
+            return false;
+        }
+
+        return expectedValue is null
+            || string.Equals(cellValue.Trim(), expectedValue.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private string ComposeRepere(string equipementRepere, string identification)
