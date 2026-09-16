@@ -42,6 +42,13 @@ public class DefaultProfileSeeder(
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
 
+    // Client feedback (2026-09-16): a 3rd unconditional PROCEDURE Point the client wants alongside the
+    // two above -- same mechanism (ImportProfile.DefaultTableaux -> ProcedureExtractionService, never
+    // SheetExtractionRule.UnconditionalColonneNames, which PROCEDURE's own extraction service never
+    // reads at all; the client had tried adding it there in the editor, which is why it silently had
+    // no effect).
+    private const string VisitePrealableChantierColonneName = "VISITE PRÉALABLE CHANTIER";
+
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), decision #4: the only
     // Application name seeded by default. "PROGRESS" is the legacy EF6 AMProgress Application name
     // this deployment cares about today -- an admin can add more via the profile editor.
@@ -124,7 +131,7 @@ public class DefaultProfileSeeder(
     // checklist (docs/tickets-tdd-seed-profils-defaut.md, closing section) -- zero divergence found.
     private static ImportProfile BuildDefaultImportProfile() => new(
         ImportProfileId, ProfileName, ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
-        [TravauxCompletColonneName, TravauxDetailColonneName],
+        [TravauxCompletColonneName, TravauxDetailColonneName, VisitePrealableChantierColonneName],
         [ProgressApplicationName],
         [
             new SheetExtractionRule(
