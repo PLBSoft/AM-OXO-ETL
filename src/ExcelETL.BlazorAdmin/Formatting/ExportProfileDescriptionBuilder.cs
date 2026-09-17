@@ -1,4 +1,5 @@
 using ExcelETL.BlazorAdmin.Resources;
+using ExcelETL.Domain.Generation.Fields;
 using ExcelETL.Domain.Generation.Profile;
 using Microsoft.Extensions.Localization;
 using static ExcelETL.BlazorAdmin.Formatting.ProfileDescriptionMarking;
@@ -73,6 +74,35 @@ public static class ExportProfileDescriptionBuilder
             sentences.Add(new(loc["ExportProfileDetails_SheetNoColumn"]));
         }
 
+        sentences.AddRange(DescribeColumns(columns, loc));
         return new ProfileDescriptionSection(title, sentences, [], []);
     }
+
+    private static IEnumerable<ProfileDescriptionSentence> DescribeColumns(
+        IReadOnlyList<ExportColumn> columns, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        foreach (var column in columns)
+        {
+            switch (column.Definition)
+            {
+                case ColumnDefinition { Source: null }:
+                    yield return ColumnSentence(column, loc["ExportProfileDetails_ColumnEmpty"], loc);
+                    break;
+                case ColumnDefinition { Source: { } source }:
+                    // CRITERE's two values are coded in PivotFieldResolver, not editable in the profile.
+                    yield return source == PivotFieldRef.TacheMultipleCritere
+                        ? ColumnSentence(column, loc["ExportProfileDetails_Field_TacheMultipleCritere", Quote("A faire", loc), Quote("Pour info", loc)], loc, isFixed: true)
+                        : ColumnSentence(column, loc[$"ExportProfileDetails_Field_{source}"], loc);
+                    break;
+                case ConstantColumnDefinition constant:
+                    yield return ColumnSentence(column, loc["ExportProfileDetails_ColumnConstant", Quote(constant.Value, loc)], loc);
+                    break;
+            }
+        }
+    }
+
+    // "Colonne A « Repère » : {content}." -- the letter marked as a cell coordinate (D1).
+    private static ProfileDescriptionSentence ColumnSentence(
+        ExportColumn column, string content, IStringLocalizer<BlazorAdminMessages> loc, bool isFixed = false) =>
+        new(loc["ExportProfileDetails_Column", CellRef(column.Letter), Quote(column.Header, loc), content], isFixed);
 }

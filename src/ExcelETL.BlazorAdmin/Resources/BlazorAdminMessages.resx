@@ -1834,4 +1834,94 @@
   <data name="ExportProfileDetails_SheetNoColumn" xml:space="preserve">
     <value>Aucune colonne.</value>
   </data>
+  <data name="ExportProfileDetails_Column" xml:space="preserve">
+    <value>Colonne {0} {1} : {2}.</value>
+  </data>
+  <data name="ExportProfileDetails_ColumnEmpty" xml:space="preserve">
+    <value>toujours vide</value>
+  </data>
+  <data name="ExportProfileDetails_ColumnConstant" xml:space="preserve">
+    <value>toujours {0}</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementRepere" xml:space="preserve">
+    <value>le repère de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementDesignation" xml:space="preserve">
+    <value>la désignation de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementTypeElementNom" xml:space="preserve">
+    <value>le type d'élément de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementLocalisation" xml:space="preserve">
+    <value>la zone de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementTableaux" xml:space="preserve">
+    <value>les tableaux de l'équipement, séparés par une virgule</value>
+  </data>
+  <data name="ExportProfileDetails_Field_EquipementSourceSheet" xml:space="preserve">
+    <value>le nom de la feuille du fichier source d'où vient la ligne</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementRepere" xml:space="preserve">
+    <value>le repère de l'élément</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementDesignation" xml:space="preserve">
+    <value>la désignation de l'élément</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementTypeElementNom" xml:space="preserve">
+    <value>le type d'élément de l'élément</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementPositionALaPose" xml:space="preserve">
+    <value>la position à la pose (vide hors feuille ISOLEMENT)</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementLocalisation" xml:space="preserve">
+    <value>la zone de l'élément</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementTableaux" xml:space="preserve">
+    <value>les tableaux de l'élément, séparés par une virgule</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementRepereParent" xml:space="preserve">
+    <value>le repère de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementCouleurEtiquette" xml:space="preserve">
+    <value>la couleur d'étiquette (vide si la feuille d'origine n'en fournit pas)</value>
+  </data>
+  <data name="ExportProfileDetails_Field_IsolementSourceSheet" xml:space="preserve">
+    <value>le nom de la feuille du fichier source d'où vient la ligne</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleOrdre" xml:space="preserve">
+    <value>l'ordre de la tâche (vide pour un titre de section)</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleAction" xml:space="preserve">
+    <value>l'action</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleActeur" xml:space="preserve">
+    <value>l'acteur</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleRisques" xml:space="preserve">
+    <value>les risques</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleDateValidation" xml:space="preserve">
+    <value>la date de validation, au format jj/mm/aaaa</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleRepere" xml:space="preserve">
+    <value>le repère de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleTypeElementNom" xml:space="preserve">
+    <value>le type d'élément de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleColonneTravaux" xml:space="preserve">
+    <value>le libellé « colonne travaux » du type de tâche, défini dans le profil d'import</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleTypeTacheMultipleCode" xml:space="preserve">
+    <value>le code du type de tâche</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleLocalisation" xml:space="preserve">
+    <value>la zone de l'équipement</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleLigneSource" xml:space="preserve">
+    <value>le numéro de ligne de la tâche dans la feuille PROCEDURE</value>
+  </data>
+  <data name="ExportProfileDetails_Field_TacheMultipleCritere" xml:space="preserve">
+    <value>{0}, ou {1} pour un titre de section</value>
+  </data>
 </root>

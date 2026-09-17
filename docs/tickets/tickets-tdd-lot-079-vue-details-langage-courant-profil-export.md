@@ -423,6 +423,11 @@ différent du nom de clé) — un nouveau champ ajouté au domaine sans libellé
 
 **Vert** : clés `ExportProfileDetails_Column*` et les 27 `ExportProfileDetails_Field_*`.
 
+**Fait (2026-09-17)** : `DescribeColumns`/`ColumnSentence` dans `ExportProfileDescriptionBuilder`, 30 clés.
+« A faire »/« Pour info » passés en valeurs mises en évidence. `ExportProfileDescriptionBuilderColumnTests` :
+32/32 (rouge vérifié : 32 échecs) ; non-vacuité du `[Theory]` vérifiée en renommant une clé de libellé
+(1 échec). Constructeur d'export complet : 39/39.
+
 ### 79.5 — Colonnes d'applications et de points (D1, D2)
 
 **Comportement** :
