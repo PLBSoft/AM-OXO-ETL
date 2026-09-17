@@ -207,9 +207,12 @@ colonne conditionnelle n'est cochée pour un élément.
 
 #### 5. Catalogue rendu sur le profil seedé « Profil OXO standard »
 
-*Plages indiquées pour le premier bloc, calculées comme `BlockFieldRangeFormatter.ToAbsoluteRange`.
-Les phrases marquées « (fixe) » décrivent un comportement codé, non modifiable dans le profil
-(décision D3).*
+*Sortie réelle de `ImportProfileDescriptionBuilder` sur le profil semé, figée par
+`ImportProfileDescriptionBuilderSeededProfileTests` (78.11) — les deux doivent rester identiques.
+Mise à jour le 2026-09-17 à la clôture du lot : ordre en-tête → blocs → comportements fixes → points →
+couleur, format de date affiché tel que saisi, couleurs entre guillemets, « Pour la première tâche ».
+Les phrases marquées « (fixe) » décrivent un comportement codé, non modifiable dans le profil (D3) ;
+la page les affiche avec le badge « non modifiable ». Plages indiquées pour le premier bloc.*
 
 **Paramètres généraux**
 - Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.
@@ -222,17 +225,18 @@ Les phrases marquées « (fixe) » décrivent un comportement codé, non modifia
 **Feuille PROCEDURE**
 - En-tête : le repère de l'équipement (« nomMAD ») est lu en M2:O2, préfixe « OXO- » retiré.
 - En-tête : la révision (« revision ») est lue en P2:Q2.
-- En-tête : la date de révision (« dateRev ») est lue en R2:T2 et écrite au format jj/mm/aaaa. Une date illisible fait refuser le fichier entier (fixe).
-- La désignation de l'équipement suit le modèle « Rév {revision} du {dateRev} », où {revision} et {dateRev} sont remplacés par les valeurs ci-dessus.
+- En-tête : la date de révision (« dateRev ») est lue en R2:T2, au format « dd/MM/yyyy ».
+- La désignation de l'équipement suit le modèle « Rév {revision} du {dateRev} », où {revision} et {dateRev} sont remplacés par les valeurs lues ci-dessus.
 - Une tâche est lue par ligne à partir de la ligne 9. La lecture s'arrête à la première ligne dont l'action est vide.
 - Pour la première tâche : action en C9:L9, ordre en B9, acteur en M9:N9, risques en O9:Q9, type en R9, date de validation en T9:U9.
-- Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL » (fixe).
-- Une ligne sans ordre est un titre de section, pas une tâche à réaliser (fixe).
+- Une date de révision illisible fait refuser le fichier entier. (fixe)
+- Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ». (fixe)
+- Une ligne sans ordre est un titre de section, pas une tâche à réaliser. (fixe)
 
 **Feuille ISOLEMENT**
 - Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B19:E20, désignation en H18:U19, position à la pose en H20:O21, type d'élément en B22:E23, indicateur zéro énergie en V18:V19.
-- Le repère de l'élément est la cellule K6:T6, un tiret, puis l'identifiant (fixe).
+- Le repère de l'élément est la cellule K6:T6, un tiret, puis l'identifiant. (fixe)
 - Chaque élément est coché dans les 2 colonnes « PROLOCK VANNES », « DEPROLOCK VANNES ».
 - Si l'indicateur zéro énergie contient « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ». Toute autre valeur non vide donne un avertissement.
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
@@ -240,33 +244,33 @@ Les phrases marquées « (fixe) » décrivent un comportement codé, non modifia
 **Feuille PLATINES**
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22.
-- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant (fixe).
+- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant. (fixe)
 - Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « RÉCEPTION PLATINES/TAMPONS PLEINS », « PLATINES / TAMPONS PLEINS ».
 - Si la cellule H19:N19 ou H20:N20 contient « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
 - Si la cellule H19:N19 ou H20:N20 contient « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
-- La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : ROUGE, BLANC, JAUNE, VERT, BLEUE. Une autre valeur est ignorée, avec un avertissement.
+- La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC », « JAUNE », « VERT », « BLEUE ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille ORIFICES CAPACITES**
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22.
-- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant (fixe).
+- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant. (fixe)
 - Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
-- La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : ROUGE, BLANC. Une autre valeur est ignorée, avec un avertissement.
+- La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille AUTRES JOINTS TOUCHES**
+- En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 7 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B17:E18, désignation en F16:Y17, type d'élément en B20:E21.
-- En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Chaque élément est coché dans les 2 colonnes « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
 - Si le type d'élément n'est pas « TUBING », l'élément est coché dans la colonne « POSE ÉTIQUETTES ».
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 - La couleur d'étiquette de chaque élément est toujours « BLEUE ».
 
 **Feuille DIVERS**
+- En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 3 lignes à partir de la ligne 9. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : type d'élément en B9:G11, identifiant en H9:K11, désignation en L9:V11.
-- En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
-- La zone lue en B6:E6 est appliquée à l'équipement et à tous les éléments du fichier (fixe).
+- La zone lue en B6:E6 est appliquée à l'équipement et à tous les éléments du fichier. (fixe)
 - Si le type d'élément est « INSTRUMENTATION », l'élément est coché dans la colonne « SYNCHRONISATION INSTRUMENTATION ».
 - Si le type d'élément est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
 - Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes « SOUPAPE : CONSTAT ENCRASSEMENT », « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS ».
@@ -615,6 +619,15 @@ marquées « (fixe) », `Ignored` et `Blocking` vides. Un écart = soit un défa
 « CURRENT SOLUTION STATE » de `CLAUDE.md` (nouvelle page, nouvelle table, D5 et sa conséquence) ;
 ajout de `/import-profiles/{id}/details` au tableau des routes de
 `convention-autorisation-pages-blazoradmin.md`.
+
+**Fait (2026-09-17)** : le §5 a d'abord été confronté à la sortie réelle, puis réécrit pour lui être
+identique (les écarts notés en 78.3 à 78.7 y sont désormais intégrés) ; le test fige cette même liste,
+titre, texte et `IsFixed` compris. Pas d'étape rouge (aucun code neuf) ; non-vacuité vérifiée en
+modifiant une plage attendue (`R9` → `R10`) : le test échoue. Suite `ExcelETL.BlazorAdmin.Tests`
+complète : 1490/1490 (1314 avant le lot). Aucun autre projet modifié par le lot. `CLAUDE.md` et le
+tableau des routes de `convention-autorisation-pages-blazoradmin.md` mis à jour.
+
+**Lot 078 terminé.**
 
 ### Hors périmètre de 78.1 à 78.11
 

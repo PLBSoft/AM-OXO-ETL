@@ -44,6 +44,7 @@ comptes ni consulter les journaux système.
 | `/` | Authentifié | Page d'accueil (lot 054) — quatre indicateurs, aucun contenu conditionné au rôle ; **doit** rester accessible à tout compte connecté (voir §5) |
 | `/import-profiles` | Authentifié | |
 | `/import-profiles/new`, `/import-profiles/{Id}/edit` | Authentifié | Éditeur complet |
+| `/import-profiles/{Id}/details` | Authentifié | Vue « Détails » en lecture seule, en langage courant (lot 078) |
 | `/export-profiles` | Authentifié | |
 | `/export-profiles/new`, `/export-profiles/{Id:guid}/edit` | Authentifié | Éditeur complet |
 | `/import-profiles/test`, `/export-profiles/test` | Authentifié | Pages de test des pipelines d'import/export ; c'est l'outil de travail principal d'un utilisateur non-Admin |
