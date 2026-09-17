@@ -55,7 +55,7 @@ public static class ExportProfileDescriptionBuilder
         var tacheMultipleRules = profile.SheetRules.Where(r => r.PivotSource == PivotSource.TacheMultiple).ToList();
 
         blocking.AddRange(namedSheets
-            .GroupBy(name => name, ExcelSheetNameRules.NameComparer)
+            .GroupBy(name => name, ExcelSheetName.NameComparer)
             .Where(group => group.Count() > 1)
             .Select(group => loc["ExportProfileDetails_BlockingDuplicateSheetName", JoinWithAnd([.. group.Select(name => Quote(name, loc))], loc)].Value));
 
@@ -68,7 +68,7 @@ public static class ExportProfileDescriptionBuilder
         if (tacheMultipleRules.Count > 0)
         {
             blocking.AddRange(namedSheets
-                .Where(name => KnownTacheMultipleCodes.Contains(name, ExcelSheetNameRules.NameComparer))
+                .Where(name => KnownTacheMultipleCodes.Contains(name, ExcelSheetName.NameComparer))
                 .Select(name => loc["ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode", Quote(name, loc)].Value));
         }
 
@@ -85,18 +85,18 @@ public static class ExportProfileDescriptionBuilder
         }
 
         var name = Quote(rule.SheetName, loc);
-        if (ExcelSheetNameRules.IsTooLong(rule.SheetName))
+        if (ExcelSheetName.IsTooLong(rule.SheetName))
         {
-            blocking.Add(loc["ExportProfileDetails_BlockingNameTooLong", name, ExcelSheetNameRules.MaxLength, rule.SheetName.Length]);
+            blocking.Add(loc["ExportProfileDetails_BlockingNameTooLong", name, ExcelSheetName.MaxLength, rule.SheetName.Length]);
         }
 
-        var forbidden = ExcelSheetNameRules.ForbiddenCharactersIn(rule.SheetName);
+        var forbidden = ExcelSheetName.ForbiddenCharactersIn(rule.SheetName);
         if (forbidden.Count > 0)
         {
             blocking.Add(loc["ExportProfileDetails_BlockingNameForbiddenCharacter", name, QuoteList(forbidden.Select(c => c.ToString()), loc)]);
         }
 
-        if (ExcelSheetNameRules.HasApostropheAtEdge(rule.SheetName))
+        if (ExcelSheetName.HasApostropheAtEdge(rule.SheetName))
         {
             blocking.Add(loc["ExportProfileDetails_BlockingNameApostrophe", name]);
         }
