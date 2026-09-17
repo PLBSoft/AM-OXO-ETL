@@ -372,6 +372,11 @@ d'import, routes HTTP) : 243/243.
 
 **Vert** : deux classes statiques dans `Formatting/`.
 
+**Fait (2026-09-17)** : `ExcelColumnLetters.cs`, `ExportColumnLayout.cs` (record `ExportColumn(Letter,
+Header, Kind, Definition)`, `Definition` = l'enregistrement de colonne du profil). Rouge = compilation.
+Non-vacuité du garde-fou vérifiée : placer les points avant les applications fait échouer le test sur le
+profil semé. `ExcelColumnLettersTests` + `ExportColumnLayoutTests` : 14/14.
+
 ### 79.3 — Section « Classeur généré » et sections de règles
 
 **Comportement** : `ExportProfileDescriptionBuilder.Build` produit :
