@@ -1645,4 +1645,46 @@
   <data name="ImportProfileDetails_ListLastSeparator" xml:space="preserve">
     <value> et </value>
   </data>
+  <data name="ImportProfileDetails_PointUnconditionalOne" xml:space="preserve">
+    <value>Chaque élément est coché dans la colonne {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointUnconditionalSeveral" xml:space="preserve">
+    <value>Chaque élément est coché dans les {0} colonnes {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointEqualsOne" xml:space="preserve">
+    <value>Si {0} est {1}, l'élément est coché dans la colonne {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointEqualsSeveral" xml:space="preserve">
+    <value>Si {0} est {1}, l'élément est coché dans les {2} colonnes {3}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointNotEqualsOne" xml:space="preserve">
+    <value>Si {0} n'est pas {1}, l'élément est coché dans la colonne {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointNotEqualsSeveral" xml:space="preserve">
+    <value>Si {0} n'est pas {1}, l'élément est coché dans les {2} colonnes {3}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointZeroEnergieOne" xml:space="preserve">
+    <value>Si l'indicateur zéro énergie contient {0}, l'élément est coché dans la colonne {1}. Toute autre valeur non vide donne un avertissement.</value>
+  </data>
+  <data name="ImportProfileDetails_PointZeroEnergieSeveral" xml:space="preserve">
+    <value>Si l'indicateur zéro énergie contient {0}, l'élément est coché dans les {1} colonnes {2}. Toute autre valeur non vide donne un avertissement.</value>
+  </data>
+  <data name="ImportProfileDetails_PointZeroEnergieNeverOne" xml:space="preserve">
+    <value>L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : la colonne {0} n'est jamais cochée.</value>
+  </data>
+  <data name="ImportProfileDetails_PointZeroEnergieNeverSeveral" xml:space="preserve">
+    <value>L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : les {0} colonnes {1} ne sont jamais cochées.</value>
+  </data>
+  <data name="ImportProfileDetails_PointNoConditionMet" xml:space="preserve">
+    <value>Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.</value>
+  </data>
+  <data name="ImportProfileDetails_PointCellHasValue" xml:space="preserve">
+    <value>Si la cellule {0} contient {1}, l'élément est coché dans la colonne {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointCellFilledIn" xml:space="preserve">
+    <value>Si la cellule {0} est renseignée, l'élément est coché dans la colonne {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_ListLastOrSeparator" xml:space="preserve">
+    <value> ou </value>
+  </data>
 </root>

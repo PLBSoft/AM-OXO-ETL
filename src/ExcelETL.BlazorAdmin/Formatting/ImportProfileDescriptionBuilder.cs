@@ -1,3 +1,4 @@
+using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -45,6 +46,7 @@ public static class ImportProfileDescriptionBuilder
         }
 
         sentences.AddRange(DescribeBlocks(rule.Locator, usage.ItemKind, loc));
+        sentences.AddRange(DescribePoints(rule, usage, loc));
 
         return new ProfileDescriptionSection(loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences, [], []);
     }
@@ -100,6 +102,90 @@ public static class ImportProfileDescriptionBuilder
         }
     }
 
+    // Colonnes ticked for every element, then conditional rules grouped the reverse way from the engine
+    // (by field, operator and compared value rather than by Colonne), then cell-driven rules.
+    private static IEnumerable<ProfileDescriptionSentence> DescribePoints(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        if (usage.ReadMembers.Contains(SheetRuleMember.UnconditionalColonnes) && rule.UnconditionalColonneNames.Count > 0)
+        {
+            yield return new(OneOrSeveral(rule.UnconditionalColonneNames, loc,
+                "ImportProfileDetails_PointUnconditionalOne", "ImportProfileDetails_PointUnconditionalSeveral"));
+        }
+
+        if (usage.ReadMembers.Contains(SheetRuleMember.ConditionalPointRules) && rule.PointRules.Count > 0)
+        {
+            foreach (var group in GroupConditionalRules(rule.PointRules))
+            {
+                yield return new(DescribeConditionalGroup(rule, group, loc));
+            }
+
+            yield return new(loc["ImportProfileDetails_PointNoConditionMet"]);
+        }
+
+        if (usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules))
+        {
+            var groups = rule.FieldPresencePointRules.GroupBy(
+                r => (r.ColonneName, ExpectedValue: r.ExpectedValue?.Trim().ToUpperInvariant()));
+            foreach (var group in groups)
+            {
+                var cells = JoinWithOr(
+                    [.. group.Select(r => BlockFieldRangeFormatter.ToAbsoluteRange(
+                            rule.Locator.FirstBlockStartRow, r.Cell.ColumnRange, r.Cell.RowOffsetStart, r.Cell.RowOffsetEnd))
+                        .Distinct()],
+                    loc);
+                var colonne = Quote(group.Key.ColonneName, loc);
+                var expectedValue = group.First().ExpectedValue;
+                yield return new(expectedValue is null
+                    ? loc["ImportProfileDetails_PointCellFilledIn", cells, colonne]
+                    : loc["ImportProfileDetails_PointCellHasValue", cells, Quote(expectedValue.Trim(), loc), colonne]);
+            }
+        }
+    }
+
+    // Same normalization as ConditionalPointRuleEvaluator: compared value trimmed, case ignored.
+    private static IEnumerable<IGrouping<(string SourceFieldName, ConditionOperator Operator, string Value), ConditionalPointRule>>
+        GroupConditionalRules(IEnumerable<ConditionalPointRule> rules) =>
+        rules.GroupBy(r => (r.SourceFieldName, r.Operator, Value: r.ComparisonValue.Trim().ToUpperInvariant()));
+
+    private static string DescribeConditionalGroup(
+        SheetExtractionRule rule,
+        IGrouping<(string SourceFieldName, ConditionOperator Operator, string Value), ConditionalPointRule> group,
+        IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var colonnes = group.Select(r => r.ColonneName).Distinct(StringComparer.Ordinal).ToList();
+        var first = group.First();
+
+        // ISOLEMENT's zero-energie rule compares a computed "true"/"false" flag -- meaningless read
+        // literally, so it's described through the cell and ZeroEnergieExpectedValue that produce it.
+        if (first.SourceFieldName == IsolementFieldNames.HasZeroEnergie
+            && first.Operator == ConditionOperator.Equals
+            && group.Key.Value == bool.TrueString.ToUpperInvariant())
+        {
+            var isEvaluated = rule.ZeroEnergieExpectedValue is not null
+                && rule.Locator.Fields.Any(f => f.Name == IsolementFieldNames.HasZeroEnergie);
+            return isEvaluated
+                ? colonnes.Count == 1
+                    ? loc["ImportProfileDetails_PointZeroEnergieOne", Quote(rule.ZeroEnergieExpectedValue!, loc), Quote(colonnes[0], loc)]
+                    : loc["ImportProfileDetails_PointZeroEnergieSeveral", Quote(rule.ZeroEnergieExpectedValue!, loc), colonnes.Count,
+                        QuoteList(colonnes, loc)]
+                : OneOrSeveral(colonnes, loc,
+                    "ImportProfileDetails_PointZeroEnergieNeverOne", "ImportProfileDetails_PointZeroEnergieNeverSeveral");
+        }
+
+        var field = FieldLabel(first.SourceFieldName, definite: true, loc);
+        var value = Quote(first.ComparisonValue.Trim(), loc);
+        var isEquals = first.Operator == ConditionOperator.Equals;
+        return colonnes.Count == 1
+            ? loc[isEquals ? "ImportProfileDetails_PointEqualsOne" : "ImportProfileDetails_PointNotEqualsOne", field, value, Quote(colonnes[0], loc)]
+            : loc[isEquals ? "ImportProfileDetails_PointEqualsSeveral" : "ImportProfileDetails_PointNotEqualsSeveral", field, value,
+                colonnes.Count, QuoteList(colonnes, loc)];
+    }
+
+    // One / several: the "several" template takes the count as {0} and the quoted list as {1}.
+    private static string OneOrSeveral(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string oneKey, string severalKey) =>
+        values.Count == 1 ? loc[oneKey, Quote(values[0], loc)] : loc[severalKey, values.Count, QuoteList(values, loc)];
+
     // D1: where the data is read -- step, start row, stop field, then each field's range in the first block.
     private static IEnumerable<ProfileDescriptionSentence> DescribeBlocks(
         RepeatingBlockLocator locator, BlockItemKind itemKind, IStringLocalizer<BlazorAdminMessages> loc)
@@ -150,15 +236,9 @@ public static class ImportProfileDescriptionBuilder
         return new ProfileDescriptionSection(loc["ImportProfileDetails_GeneralSectionTitle"], sentences, [], []);
     }
 
-    // Zero / one / several: the "several" template takes the count as {0} and the quoted list as {1}.
     private static string CountedSentence(
         IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string noneKey, string oneKey, string severalKey) =>
-        values.Count switch
-        {
-            0 => loc[noneKey],
-            1 => loc[oneKey, Quote(values[0], loc)],
-            _ => loc[severalKey, values.Count, QuoteList(values, loc)],
-        };
+        values.Count == 0 ? loc[noneKey] : OneOrSeveral(values, loc, oneKey, severalKey);
 
     private static string Quote(string value, IStringLocalizer<BlazorAdminMessages> loc) =>
         loc["ImportProfileDetails_QuotedValue", value];
@@ -168,6 +248,12 @@ public static class ImportProfileDescriptionBuilder
         values.Count == 1
             ? values[0]
             : string.Join(ListSeparator, values.Take(values.Count - 1)) + loc["ImportProfileDetails_ListLastSeparator"] + values[^1];
+
+    // "a", "a ou b", "a, b ou c".
+    private static string JoinWithOr(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
+        values.Count == 1
+            ? values[0]
+            : string.Join(ListSeparator, values.Take(values.Count - 1)) + loc["ImportProfileDetails_ListLastOrSeparator"] + values[^1];
 
     private static string QuoteList(IEnumerable<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
         string.Join(ListSeparator, values.Select(value => Quote(value, loc)));

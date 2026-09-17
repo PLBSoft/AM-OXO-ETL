@@ -484,6 +484,8 @@ valeurs → deux phrases ; aucune phrase de points si la feuille n'en a pas.
 **Refactor (effort élevé)** : un seul algorithme de regroupement générique pour les deux types de
 règles si le code s'y prête, sans rendre les gabarits illisibles.
 
+**Fait (2026-09-17)** : ordre dans la partie points : colonnes d'office, groupes conditionnels, phrase de clôture, règles de cellule. Règles de cellule regroupées par (colonne, valeur attendue rognée, insensible à la casse) ; cellules en double retirées. Phrase zéro énergie « jamais évalué » unique pour les deux causes (valeur attendue absente, cellule absente du bloc). **Refactor** : un algorithme de regroupement générique commun n'a pas été retenu — les deux clés et les deux gabarits diffèrent trop, un seul `GroupBy` par type reste plus lisible ; factorisation retenue : `OneOrSeveral` (singulier/pluriel) réutilisé par la section générale. `ImportProfileDescriptionBuilderPointTests` : 12/12 (rouge vérifié : 10 échecs, 2 cas « rien à décrire ») ; périmètre filtré : 41/41.
+
 ### 78.6 — Couleur d'étiquette
 
 **Comportement** (PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES) : cellule renseignée → « La
