@@ -22,6 +22,14 @@ Tests (`ImportProfileEditorTests.cs`, rouges avant le changement) :
 
 Non-régression : aucune assertion existante modifiée. `SheetRuleForm_Field_ContainerIsFullWidthFormFloating_WithNoColumnGridClass` (conteneur `mb-3`, sans `row`/`col-`) et `SheetRuleForm_FieldsPointRulesAndUnconditionalColonnesSubforms_AreEachWrappedInABgLightCard` restent verts inchangés. Périmètre filtré (éditeur d'import, parité, audits form-floating/titres) : 432/432.
 
+## 2. Regroupement des champs racine du profil — fait (demande de Simon, 17/09, après validation du 1.)
+
+- Les 3 champs du profil (Nom du profil, Préfixe de repère, Nom du type d'élément d'équipement) sont dans une carte `card bg-light mb-3` > `card-body`, précédée d'un titre `h2.h3` (clé `ImportProfileEditor_ProfileGeneralSettingsHeading` : EN « General profile settings », FR « Paramètres généraux du profil »).
+- Titre **au-dessus** de la carte (et non dedans comme au 1.) : même forme que les sections Tableaux/Applications de ce niveau de page ; `h2` car sœur de ces sections sous le `h1`.
+- Ids, ordre et grille deux colonnes du lot 53.2 inchangés. Import uniquement : l'éditeur d'export (un seul champ racine) n'est pas touché.
+
+Test : `RootFields_AreGroupedInABgLightCard_UnderAGeneralSettingsHeading` (EN + FR), rouge avant le changement. Aucune assertion existante modifiée (`ShortRootFields_AreDirectChildrenOfTheSameRow`, parité du conteneur racine `mb-3` import/export, audit des titres restent verts). Périmètre filtré : 434/434.
+
 ## Hors périmètre explicite
 
 - `SheetGenerationRuleForm.razor` (export) — reporté, ne pas anticiper.

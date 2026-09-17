@@ -592,6 +592,9 @@
   <data name="ImportProfileEditor_AllowedCouleursEtiquetteSummary" xml:space="preserve">
     <value>Allowed couleurs etiquette: {0}</value>
   </data>
+  <data name="ImportProfileEditor_ProfileGeneralSettingsHeading" xml:space="preserve">
+    <value>General profile settings</value>
+  </data>
   <data name="ImportProfileEditor_SheetGeneralSettingsHeading" xml:space="preserve">
     <value>General sheet settings</value>
   </data>

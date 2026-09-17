@@ -592,6 +592,9 @@
   <data name="ImportProfileEditor_AllowedCouleursEtiquetteSummary" xml:space="preserve">
     <value>Couleurs d'étiquette autorisées : {0}</value>
   </data>
+  <data name="ImportProfileEditor_ProfileGeneralSettingsHeading" xml:space="preserve">
+    <value>Paramètres généraux du profil</value>
+  </data>
   <data name="ImportProfileEditor_SheetGeneralSettingsHeading" xml:space="preserve">
     <value>Paramètres généraux de la feuille</value>
   </data>

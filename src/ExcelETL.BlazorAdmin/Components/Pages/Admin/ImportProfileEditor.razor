@@ -67,6 +67,12 @@ else
     <div class="alert alert-danger" role="alert">@_profileErrorMessage</div>
 }
 
+<!-- Lot 077 (suite): the 3 profile root fields grouped in the same bg-light card as the
+     Tableaux/Applications sections below, heading above the card like theirs. Ids, order and
+     the 53.2 two-column row are unchanged. -->
+<h2 class="h3">@Loc["ImportProfileEditor_ProfileGeneralSettingsHeading"]</h2>
+<div class="card bg-light mb-3">
+<div class="card-body">
 <div class="mb-3">
     <div class="form-floating">
         <input id="profile-name-input" class="form-control" @bind="_draft.Name" @bind:after="MarkAsChanged" maxlength="@ImportProfile.MaxNameLength"
@@ -92,6 +98,8 @@ else
             <label for="profile-equipement-type-element-nom-input">@Loc["ImportProfileEditor_EquipementTypeElementNomLabel"]</label>
         </div>
     </div>
+</div>
+</div>
 </div>
 
 <!-- Lot 059 (59.3): the two blocks sit side by side above 768px, each h2 inside its own column

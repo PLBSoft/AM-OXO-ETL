@@ -523,6 +523,33 @@ public class ImportProfileEditorTests : BunitContext
         reperePrefixColumn.ParentElement!.ClassList.Should().Contain("row");
     });
 
+    // Lot 077 (suite): the 3 profile root fields sit in one bg-light card, headed by an h2.h3 placed
+    // right above it -- same shape as the Tableaux/Applications sections below. The name field's
+    // mb-3 wrapper and the short fields' row are direct children of the card body.
+    [Theory]
+    [InlineData("en-US", "General profile settings")]
+    [InlineData("fr-FR", "Paramètres généraux du profil")]
+    public void RootFields_AreGroupedInABgLightCard_UnderAGeneralSettingsHeading(string culture, string expectedHeading) =>
+        WithCulture(culture, () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            var nameContainer = cut.Find("#profile-name-input").ParentElement!.ParentElement!;
+            var shortFieldsRow = cut.Find("#profile-repere-prefix-input").ParentElement!.ParentElement!.ParentElement!;
+            var cardBody = nameContainer.ParentElement!;
+
+            cardBody.GetAttribute("class").Should().Be("card-body");
+            shortFieldsRow.ParentElement.Should().Be(cardBody);
+            cut.Find("#profile-equipement-type-element-nom-input").Closest("div.card-body").Should().Be(cardBody);
+
+            var card = cardBody.ParentElement!;
+            card.GetAttribute("class").Should().Be("card bg-light mb-3");
+            var heading = card.PreviousElementSibling!;
+            heading.TagName.Should().Be("H2");
+            heading.GetAttribute("class").Should().Be("h3");
+            heading.TextContent.Should().Be(expectedHeading);
+        });
+
     [Fact]
     public void DefaultTableauxAndApplications_AddFields_AreFullWidthFormFloating_InsideABgLightCard() =>
         WithCulture("en-US", () =>
