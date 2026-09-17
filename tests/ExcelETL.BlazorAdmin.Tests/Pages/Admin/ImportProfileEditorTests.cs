@@ -640,6 +640,63 @@ public class ImportProfileEditorTests : BunitContext
             container.GetAttribute("class").Should().NotContain("row");
         });
 
+    // Lot 077: the sheet rule's 8 general settings sit in the same bg-light card as "Block fields",
+    // headed by their own section title. Each field's mb-3 wrapper is a direct child of the card body.
+    private static readonly string[] SheetGeneralSettingsInputIds =
+    [
+        "sheet-rule-name-input",
+        "sheet-rule-first-block-start-row-input",
+        "sheet-rule-step-input",
+        "sheet-rule-stop-field-name-input",
+        "sheet-rule-zero-energie-expected-value-input",
+        "sheet-rule-default-couleur-etiquette-input",
+        "sheet-rule-couleur-etiquette-cell-input",
+        "sheet-rule-allowed-couleurs-etiquette-input",
+    ];
+
+    private static void AssertGeneralSettingsGroupedInOneCard(IRenderedComponent<ImportProfileEditor> cut, string idPrefix, string expectedHeading)
+    {
+        var cardBodies = SheetGeneralSettingsInputIds
+            .Select(id =>
+            {
+                var fieldContainer = cut.Find($"#{idPrefix}{id}").ParentElement!.ParentElement!;
+                fieldContainer.GetAttribute("class").Should().Be("mb-3");
+                var cardBody = fieldContainer.ParentElement!;
+                cardBody.GetAttribute("class").Should().Be("card-body");
+                cardBody.ParentElement!.GetAttribute("class").Should().Be("card bg-light mb-3");
+                return cardBody;
+            })
+            .Distinct()
+            .ToList();
+
+        cardBodies.Should().ContainSingle();
+        cardBodies[0].QuerySelector("h3.h5")!.TextContent.Should().Be(expectedHeading);
+    }
+
+    [Theory]
+    [InlineData("en-US", "General sheet settings")]
+    [InlineData("fr-FR", "Paramètres généraux de la feuille")]
+    public void SheetRuleForm_AddMode_GeneralSettings_AreGroupedInABgLightCardWithHeading(string culture, string expectedHeading) =>
+        WithCulture(culture, () =>
+        {
+            var cut = Render<ImportProfileEditor>();
+
+            AssertGeneralSettingsGroupedInOneCard(cut, "", expectedHeading);
+        });
+
+    [Fact]
+    public async Task SheetRuleForm_EditMode_GeneralSettings_AreGroupedInABgLightCardWithHeading() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await Store.SaveAsync(profile);
+
+            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
+            cut.Find("#modify-sheet-rule-button-0").Click();
+
+            AssertGeneralSettingsGroupedInOneCard(cut, "edit-0-", "General sheet settings");
+        });
+
     [Fact]
     public void SheetRuleForm_FieldsPointRulesAndUnconditionalColonnesSubforms_AreEachWrappedInABgLightCard() =>
         WithCulture("en-US", () =>
