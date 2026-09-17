@@ -221,7 +221,7 @@ regroupées en une phrase (proposition D2).*
 - Colonne T « PROGRESS » : « O » si l'élément est rattaché à l'application « PROGRESS », sinon vide.
 - Colonnes U à AJ : « X » si l'élément est coché dans la colonne du même nom à l'import (nom identique, majuscules comprises), sinon vide : « PROLOCK VANNES » (U), « DEPROLOCK VANNES » (V), « ZÉRO ENERGIE EN PRESENCE EE (PS941) » (W), « POSE ÉTIQUETTES » (X), « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS » (Y), « CONTRÔLE ETANCHÉITÉS » (Z), « RECEPTION DEBUT MAD » (AA), « RÉCEPTION PLATINES/TAMPONS PLEINS » (AB), « RECEPTION DEBUT REL » (AC), « PLATINES / TAMPONS PLEINS » (AD), « SYNCHRONISATION INSTRUMENTATION » (AE), « SOUPAPE : CONSTAT ENCRASSEMENT » (AF), « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS » (AG), « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES » (AH), « PF : VALIDATION CONSTAT ENCRASSEMENT » (AI), « PF : ACCORD TRAVAUX FEU » (AJ).
 
-**Tâches multiples**
+**Feuilles par type de tâche (règle « Tâches multiples »)**
 - Une feuille est créée par type de tâche présent dans le fichier importé, nommée d'après le code du type (« TM_PROC_MAD », « TM_PROC_REL »…), par ordre alphabétique. Le nom « Tâches multiples » n'apparaît pas dans le fichier. (fixe)
 - Chaque feuille contient une ligne par tâche de ce type, titres de section compris, dans l'ordre de la feuille PROCEDURE. (fixe)
 - Colonne A « GUID » : toujours vide.
@@ -280,6 +280,234 @@ Le profil semé ne déclenche aucun cas du §2 : aucun bloc bloquant sur cette p
   génération ». Les règles de nom de feuille d'Excel sont dupliquées côté `BlazorAdmin` et
   vérifiées par test contre ClosedXML.
 - **D4 — acté : non.** Pas de contrôle croisé avec les profils d'import dans ce lot.
-- **D5, D6, D7 — recommandations du §6 retenues, à confirmer** : reprise du lot 078 par éléments
-  partagés (renommage `ProfileDescription`, helpers et rendu extraits, tests du lot 078 inchangés),
-  id `details-export-profile-button-{id}` / `-card-{id}`, français seulement.
+- **D5, D6, D7 — actés (Simon, 2026-09-17)** : reprise du lot 078 par éléments partagés (renommage
+  `ProfileDescription`, helpers et rendu extraits, tests du lot 078 inchangés), id
+  `details-export-profile-button-{id}` / `-card-{id}`, français seulement.
+
+---
+
+## Sous-tickets 79.1 à 79.9
+
+*Rédigés le 2026-09-17 à partir de la note ci-dessus (§1 à §7), qui reste la référence : les phrases
+attendues sont celles du catalogue §5, citées ici par feuille plutôt que recopiées.*
+
+### Cadre commun à tous les sous-tickets
+
+- **Emplacement** : `src/ExcelETL.BlazorAdmin/Formatting/` pour le code non visuel,
+  `Components/Pages/Admin/` pour la page et le rendu commun des sections ; tests en miroir sous
+  `tests/ExcelETL.BlazorAdmin.Tests/`.
+- **Modèle de sortie** : celui du lot 078, renommé en 79.1 : `ProfileDescription(Sections)`,
+  `ProfileDescriptionSection(Title, Sentences, Ignored, Blocking)`,
+  `ProfileDescriptionSentence(Content, IsFixed)`, `ProfileDescriptionText`/`Segment` (`Text`, `Value`,
+  `CellReference`). Côté export, `Ignored` est toujours vide (§2). Les lettres de colonnes sont des
+  segments `CellReference` (D1 : rendues en `<code class="profile-details-cell">`, comme une
+  coordonnée de cellule).
+- **Point d'entrée** : `ExportProfileDescriptionBuilder.Build(ExportProfile, IStringLocalizer<BlazorAdminMessages>)`,
+  classe statique ; une méthode privée par partie (classeur, section de règle, colonnes descriptives
+  et constantes, applications et points, blocages).
+- **Ordre** : sections dans l'ordre de `ExportProfile.SheetRules` tel que chargé, colonnes dans
+  l'ordre du moteur (§1). Contrairement au lot 078, pas de réordonnancement : le moteur et l'écriture
+  suivent exactement cet ordre sur le profil chargé, la page décrit donc le fichier réel.
+- **Ressources** : clés `ExportProfileDetails_*` (et `ExportProfiles_Details` pour le bouton) dans
+  `BlazorAdminMessages.resx` **et** `.fr.resx` avec le même texte français (D7). Clés communes aux
+  deux vues renommées `ProfileDescription_*` en 79.1. Guillemets français « … ».
+- **Tests du constructeur** : xUnit pur, localiseur réel en `fr-FR` via un support de test calqué
+  sur `DescriptionTestSupport` (profils d'export minimaux construits à la main) ; le profil semé
+  n'arrive qu'en 79.9. Assertions sur le texte exact.
+- **Exécution** : `dotnet test tests/ExcelETL.BlazorAdmin.Tests --filter <classe> --verbosity quiet`
+  (sortie `-p:BaseOutputPath=bin-claude/`, dossiers supprimés ensuite) ; projet complet en 79.9.
+- **Commit** : un commit par sous-ticket passé au vert.
+
+### 79.1 — Éléments partagés avec la vue d'import (D5)
+
+**Comportement** : aucun changement visible. Refactor pur qui prépare la réutilisation :
+- `ImportProfileDescription` renommé `ProfileDescription` (fichier `ProfileDescription.cs`) ;
+- helpers de marquage sortis de `ImportProfileDescriptionBuilder` dans une classe interne partagée
+  `ProfileDescriptionMarking` : `Quote`, `QuoteList`, `CellRef`, `Marked`, `JoinWithAnd`,
+  `JoinWithOr`, `OneOrSeveral`. `CellRange` (propre au bloc d'import) reste dans le constructeur
+  d'import ;
+- clés utilisées par ces helpers et par le rendu renommées, valeur inchangée :
+  `ImportProfileDetails_QuotedValue` → `ProfileDescription_QuotedValue`,
+  `ImportProfileDetails_ListLastSeparator` / `_ListLastOrSeparator` →
+  `ProfileDescription_ListLastSeparator` / `_ListLastOrSeparator`,
+  `ImportProfileDetails_FixedMarker` → `ProfileDescription_FixedMarker` ;
+- rendu des sections sorti de `ImportProfileDetails.razor` dans `ProfileDescriptionView.razor` :
+  paramètres `Description`, `BlockingHeading`, `IgnoredHeading` ; mêmes ids
+  (`details-section-general`, `details-section-sheet-{i}`, suffixes `-blocking` / `-ignored`), même
+  markup, `RenderText` déplacé tel quel. La page d'import passe ses titres
+  `ImportProfileDetails_BlockingHeading` / `_IgnoredHeading`.
+
+**Rouge** : aucun (refactor). **Garde-fou** : toute la suite du lot 078
+(`Formatting/ImportProfileDescription*`, `ImportSheetUsageTests`, `ImportProfileDetailsTests`, route
+de `BusinessPageAuthorizationHttpTests`) reste verte **sans modifier une assertion** ; seul
+`DescriptionTestSupport` change de type de retour. Vérifier par recherche qu'aucune clé renommée
+n'est encore référencée sous l'ancien nom.
+
+### 79.2 — Lettres de colonnes et disposition des colonnes
+
+**Comportement** :
+- `ExcelColumnLetters.FromNumber(int)` : 1 → `A`, 26 → `Z`, 27 → `AA`, 52 → `AZ`, 53 → `BA`,
+  702 → `ZZ`, 703 → `AAA`, 16384 → `XFD` ; 0 ou négatif → `ArgumentOutOfRangeException`.
+- `ExportColumnLayout.For(SheetGenerationRule)` : liste ordonnée des colonnes d'une règle telle que
+  le moteur les écrit — `(Letter, Header, Kind, Definition)`, `Kind` ∈ {`Descriptive`, `Constant`,
+  `Application`, `Point`} ; ordre descriptives → constantes → applications → points (les deux
+  dernières listes sont vides par construction pour `TacheMultiple`).
+
+**Rouge** :
+- `ExcelColumnLettersTests` : les cas ci-dessus.
+- `ExportColumnLayoutTests` : ordre et lettres sur une règle Équipement mélangeant les 4 listes ;
+  règle `TacheMultiple`.
+- **Garde-fou contre la dérive avec le moteur** : pour chaque règle du profil d'export semé
+  (`DefaultProfileSeeder`, EF InMemory), les `Header` de `ExportColumnLayout.For` sont égaux, dans
+  l'ordre, aux `Headers` de la feuille produite par le vrai `SheetGenerationEngine` sur un
+  `ImportResult` minimal (un équipement, un élément, une tâche). Si le moteur change d'ordre, ce test
+  casse avant que la page ne donne de fausses lettres.
+
+**Vert** : deux classes statiques dans `Formatting/`.
+
+### 79.3 — Section « Classeur généré » et sections de règles
+
+**Comportement** : `ExportProfileDescriptionBuilder.Build` produit :
+- section 0, titre « Classeur généré » : la liste des feuilles dans l'ordre des règles (« la feuille
+  « Parents » », « une feuille par type de tâche » pour une règle `TacheMultiple`) ; la phrase fixe
+  « Chaque feuille commence par une ligne de titres ; les données commencent à la ligne 2. » ; la
+  phrase sur la dépendance au profil d'import ;
+- une section par règle : titre « Feuille {nom} » (Équipement, Élément) ou « Feuilles par type de
+  tâche (règle « {nom} ») » (`TacheMultiple`) ; phrase(s) fixe(s) de lignes selon la source :
+  Équipement « Une seule ligne : l'équipement. », Élément « Une ligne par élément, dans l'ordre des
+  feuilles ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS. »,
+  `TacheMultiple` les deux phrases du §5 ;
+- règle sans aucune colonne : phrase « Aucune colonne. ».
+
+**Rouge** (`ExportProfileDescriptionBuilderSheetTests`) : un cas par source ; profil à 3 règles
+(ordre des feuilles dans la section 0 et ordre des sections) ; `IsFixed` vrai exactement sur les
+phrases fixes ; règle sans colonne.
+
+**Vert** : modèle rempli, clés `ExportProfileDetails_Workbook*` et `ExportProfileDetails_Sheet*`.
+
+### 79.4 — Colonnes descriptives et constantes (D1)
+
+**Comportement** : une phrase par colonne, dans l'ordre de `ExportColumnLayout`, après les phrases de
+79.3 : « Colonne {lettre} « {titre} » : {contenu}. », la lettre en segment `CellReference`, le titre
+en segment `Value`.
+- `Source` renseignée : libellé du champ, clé `ExportProfileDetails_Field_{PivotFieldRef}` (contenu du
+  tableau du §1, formulé comme dans le catalogue §5) ;
+- `Source = null` : « toujours vide » ;
+- constante : « toujours « {valeur} » » ;
+- la colonne de source `TacheMultipleCritere` est une phrase `IsFixed` (valeurs codées en dur, §1).
+
+**Rouge** (`ExportProfileDescriptionBuilderColumnTests`) : colonnes renseignée, vide et constante
+sur chaque source ; lettres au-delà de `Z` ; `CRITERE` fixe et aucune autre colonne fixe ;
+**`[Theory]` sur toutes les valeurs de `PivotFieldRef`** : la clé de libellé existe (texte localisé
+différent du nom de clé) — un nouveau champ ajouté au domaine sans libellé fait échouer ce test.
+
+**Vert** : clés `ExportProfileDetails_Column*` et les 27 `ExportProfileDetails_Field_*`.
+
+### 79.5 — Colonnes d'applications et de points (D1, D2)
+
+**Comportement** :
+- application : « Colonne {lettre} « {titre} » : « {coche} » si {l'équipement | l'élément} est
+  rattaché à l'application « {application} », sinon vide. » ;
+- points **regroupés** (D2) : les colonnes de points d'une règle dont le `Header` est égal au
+  `ColonneNom` forment un groupe par valeur de coche ; un groupe d'au moins deux colonnes donne une
+  seule phrase « Colonnes {première} à {dernière} : « {coche} » si … est coché dans la colonne du
+  même nom à l'import, sinon vide : « {c1} » ({l1}), « {c2} » ({l2})… », placée à la position de sa
+  première colonne ; colonnes du groupe non consécutives : « Colonnes {l1}, {l2}… » au lieu de
+  « {première} à {dernière} » ;
+- autres colonnes de points (titre différent du nom, ou groupe d'une seule colonne) : une phrase
+  chacune, « Colonne {lettre} « {titre} » : « {coche} » si … est coché dans la colonne « {nom} » à
+  l'import, sinon vide. » ;
+- sujet selon la source : Équipement « l'équipement, ou au moins un de ses éléments, » ; Élément
+  « l'élément », avec « (nom identique, majuscules comprises) » (écart du §1).
+
+**Rouge** (`ExportProfileDescriptionBuilderPointTests`) : Parents et Enfants du §5 réduits à trois
+colonnes de points ; deux valeurs de coche → deux groupes ; une colonne dont le titre diffère du
+nom ; un groupe d'une seule colonne ; colonnes du groupe non consécutives ; application sur chaque
+source.
+
+**Vert** : clés `ExportProfileDetails_Application*` et `ExportProfileDetails_Point*`.
+
+### 79.6 — Configurations qui empêchent la génération (D3)
+
+**Comportement** :
+- `ExcelSheetNameRules` (`Formatting/`) : nom valide pour Excel/ClosedXML — 1 à 31 caractères, aucun
+  de `\ / ? * [ ] :`, ne commence ni ne finit par `'` ; doublons comparés sans tenir compte de la
+  casse.
+- `Blocking` de la section d'une règle Équipement/Élément : nom trop long, caractère interdit (cité),
+  apostrophe en début ou fin. Les règles `TacheMultiple` ne sont pas concernées (nom interne).
+- `Blocking` de la section « Classeur généré » : deux règles Équipement/Élément de même nom à la
+  casse près (les deux noms cités) ; plus d'une règle `TacheMultiple` ; une règle Équipement/Élément
+  nommée `TM_PROC_MAD` ou `TM_PROC_REL` (casse ignorée) en présence d'une règle `TacheMultiple`, avec
+  la mention « si le fichier contient des tâches de ce type ». Ces deux codes sont dupliqués depuis
+  la conversion fixe de `ProcedureExtractionService`.
+- Titre du bloc sur la page : « Problèmes qui empêchent la génération : ».
+
+**Rouge** :
+- `ExportProfileDescriptionBuilderBlockingTests` : un cas par ligne du tableau du §2, plus le nom
+  avec espaces (aucun blocage).
+- **Garde-fou contre ClosedXML** (`ExcelSheetNameRulesTests`) : pour chaque cas du tableau du §2,
+  générer le classeur avec le vrai `SheetGenerationEngine` sur un `ImportResult` contenant au moins
+  une tâche `TM_PROC_MAD` et une `TM_PROC_REL`, l'écrire avec le vrai `ClosedXmlWorkbookWriter`, et
+  vérifier que l'écriture échoue **si et seulement si** `ExportProfileDescriptionBuilder` signale un
+  blocage.
+
+**Vert** : clés `ExportProfileDetails_Blocking*`.
+
+### 79.7 — Page `/export-profiles/{Id:guid}/details`
+
+**Comportement** : `ExportProfileDetails.razor`, `[Authorize]` sans rôle, charge le profil via
+`IExportProfileStore.GetByIdAsync`, affiche `ProfileDescriptionView` avec
+`BlockingHeading = ExportProfileDetails_BlockingHeading` ; `PageBackNavLink`
+`back-to-export-profiles-button` vers `export-profiles` ; `h1` « Détails du profil « {nom} » » ;
+id inconnu : `div#export-profile-details-not-found.alert.alert-danger` (`role="alert"`), aucune
+section ; conteneur `container-fluid px-3 profile-editor-container` ; aucun contrôle hors retour.
+
+**Rouge** :
+- bUnit (`ExportProfileDetailsTests`) : sections et phrases depuis un profil minimal en store EF
+  InMemory ; lettre en `code.profile-details-cell`, titre en `strong.profile-details-value` ;
+  badge « non modifiable » sur une phrase fixe seulement ; bloc bloquant présent ou absent, aucun
+  bloc ignoré ; profil introuvable ; lecture seule ; hiérarchie des titres ; retour à la liste.
+- HTTP : route `/export-profiles/00000000-0000-0000-0000-000000000001/details` ajoutée à
+  `BusinessRoutes` de `BusinessPageAuthorizationHttpTests`, et test dédié du corps contenant
+  `export-profile-details-not-found`.
+
+**Vert** : la page, clés `ExportProfileDetails_PageTitle` / `_PageTitleGeneric` / `_NotFound` /
+`_BackToListButton` / `_BlockingHeading`.
+
+### 79.8 — Bouton « Voir les détails » sur la liste des profils d'export (D6)
+
+**Comportement** : `ExportProfiles.razor`, tableau et carte mobile, bouton icône seule placé avant
+« Modifier » : ids `details-export-profile-button-{id}` et `details-export-profile-button-card-{id}`,
+classe `btn btn-outline-secondary btn-sm block-field-icon-btn`, `AdminIconMarkup.Eye`,
+`aria-label`/`title` = `ExportProfiles_Details` (EN « View details » / FR « Voir les détails » : même
+écart à D7 que le lot 078, libellé de la liste existante, déjà bilingue). Clic →
+`export-profiles/{id}/details`. Masqué pendant une confirmation de suppression ou de
+réinitialisation.
+
+**Rouge** (`ExportProfilesTests.cs`) : navigation tableau et carte ; extension de
+`RowActionButtons_AreIconOnly_WithAriaLabelAndTitle_InBothTableAndCardTemplates` ; position juste
+avant `edit-export-profile-button-{id}` ; absent pendant une confirmation de suppression.
+`ProfileListPageParityTests` : même classe pour le bouton détails des deux listes.
+
+**Vert** : bouton, clé `ExportProfiles_Details`.
+
+### 79.9 — Clôture : catalogue du profil semé
+
+**Comportement** : aucun nouveau code attendu ; le test fige le catalogue.
+
+**Rouge/vert** (`ExportProfileDescriptionBuilderSeededProfileTests`) : profil d'export semé relu par
+`IExportProfileStore`, `Build` en `fr-FR` : chaque section produit exactement les phrases du §5,
+dans l'ordre, `IsFixed` sur les phrases « (fixe) », `Blocking` et `Ignored` vides. Le §5 est d'abord
+confronté à la sortie réelle et réécrit pour lui être identique si un écart voulu est apparu en
+79.3 à 79.6. Non-vacuité : modifier une lettre attendue fait échouer le test.
+
+**Puis** : suite `ExcelETL.BlazorAdmin.Tests` complète ; `CLAUDE.md` (« CURRENT SOLUTION STATE ») ;
+route ajoutée au tableau de `convention-autorisation-pages-blazoradmin.md`.
+
+### Hors périmètre de 79.1 à 79.9
+
+- Traduction anglaise des clés `ExportProfileDetails_*` (D7, lot ultérieur).
+- Contrôle croisé avec les profils d'import (D4).
+- Toute correction des cas bloquants ou de l'écart de comparaison des points (§1, §2) : domaine,
+  moteur, écriture et éditeur inchangés.
+- Lien vers la vue Détails depuis l'éditeur ou les pages de test ; export PDF/impression.
