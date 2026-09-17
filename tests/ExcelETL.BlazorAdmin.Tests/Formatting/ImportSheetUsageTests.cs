@@ -84,6 +84,16 @@ public class ImportSheetUsageTests
         ImportSheetUsage.IsProcessed(sheetName).Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData(Procedure, BlockItemKind.Task)]
+    [InlineData(Isolement, BlockItemKind.Element)]
+    [InlineData(Platines, BlockItemKind.Element)]
+    [InlineData(OrificesCapacites, BlockItemKind.Element)]
+    [InlineData(AutresJointsTouches, BlockItemKind.Element)]
+    [InlineData(Divers, BlockItemKind.Element)]
+    public void For_KnownSheet_TellsWhatOneBlockHolds(string sheetName, BlockItemKind expected) =>
+        ImportSheetUsage.For(sheetName)!.ItemKind.Should().Be(expected);
+
     [Fact]
     public void KnownSheetNames_AreTheSixPipelineSheets_InPipelineOrder() =>
         ImportSheetUsage.KnownSheetNames.Should().Equal(

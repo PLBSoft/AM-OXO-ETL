@@ -38,7 +38,7 @@ public static class ImportSheetUsage
                 new(ProcedureHeaderFieldNames.Revision, HeaderRole.Revision),
                 new(ProcedureHeaderFieldNames.DateRev, HeaderRole.RevisionDate)
             ],
-            [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]),
+            [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) { ItemKind = BlockItemKind.Task },
         [Isolement] = new(
             [
                 SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
@@ -80,11 +80,20 @@ public sealed record ImportSheetUsageEntry(
     IReadOnlyList<RequiredHeaderName> RequiredHeaderFields,
     IReadOnlyList<RequiredHeaderName> RequiredHeaderComposites)
 {
+    // What one repeating block holds, for the Details page vocabulary ("une tâche" / "un élément").
+    public BlockItemKind ItemKind { get; init; } = BlockItemKind.Element;
+
     public ImportSheetUsageEntry(
         SheetRuleMember[] readMembers, RequiredHeaderName[] requiredHeaderFields, RequiredHeaderName[] requiredHeaderComposites)
         : this(new HashSet<SheetRuleMember>(readMembers), requiredHeaderFields, requiredHeaderComposites)
     {
     }
+}
+
+public enum BlockItemKind
+{
+    Task,
+    Element
 }
 
 public sealed record RequiredHeaderName(string Name, HeaderRole Role);

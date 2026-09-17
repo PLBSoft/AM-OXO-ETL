@@ -1513,4 +1513,100 @@
   <data name="ImportProfileDetails_GeneralTacheMultipleTypeLabel" xml:space="preserve">
     <value>Une tâche de type {0} est écrite dans la colonne travaux {1}.</value>
   </data>
+  <data name="ImportProfileDetails_SheetSectionTitle" xml:space="preserve">
+    <value>Feuille {0}</value>
+  </data>
+  <data name="ImportProfileDetails_BlockTaskPerLine" xml:space="preserve">
+    <value>Une tâche est lue par ligne à partir de la ligne {0}. La lecture s'arrête à la première ligne dont {1} est vide.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockTaskEveryNLines" xml:space="preserve">
+    <value>Une tâche est lue toutes les {0} lignes à partir de la ligne {1}. La lecture s'arrête au premier bloc dont {2} est vide.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockElementPerLine" xml:space="preserve">
+    <value>Un élément est lu par ligne à partir de la ligne {0}. La lecture s'arrête à la première ligne dont {1} est vide.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockElementEveryNLines" xml:space="preserve">
+    <value>Un élément est lu toutes les {0} lignes à partir de la ligne {1}. La lecture s'arrête au premier bloc dont {2} est vide.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockFirstTaskFields" xml:space="preserve">
+    <value>Pour la première tâche : {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockFirstElementFields" xml:space="preserve">
+    <value>Pour le premier élément : {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockFieldAt" xml:space="preserve">
+    <value>{0} en {1}</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Unknown" xml:space="preserve">
+    <value>champ {0}</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Unknown" xml:space="preserve">
+    <value>le champ {0}</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Identification" xml:space="preserve">
+    <value>identifiant</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Identification" xml:space="preserve">
+    <value>l'identifiant</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Designation" xml:space="preserve">
+    <value>désignation</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Designation" xml:space="preserve">
+    <value>la désignation</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_PositionALaPose" xml:space="preserve">
+    <value>position à la pose</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_PositionALaPose" xml:space="preserve">
+    <value>la position à la pose</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_TypeElement" xml:space="preserve">
+    <value>type d'élément</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_TypeElement" xml:space="preserve">
+    <value>le type d'élément</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_HasZeroEnergie" xml:space="preserve">
+    <value>indicateur zéro énergie</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_HasZeroEnergie" xml:space="preserve">
+    <value>l'indicateur zéro énergie</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Action" xml:space="preserve">
+    <value>action</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Action" xml:space="preserve">
+    <value>l'action</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Ordre" xml:space="preserve">
+    <value>ordre</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Ordre" xml:space="preserve">
+    <value>l'ordre</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Acteur" xml:space="preserve">
+    <value>acteur</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Acteur" xml:space="preserve">
+    <value>l'acteur</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_Risques" xml:space="preserve">
+    <value>risques</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_Risques" xml:space="preserve">
+    <value>le champ risques</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_TypeTacheMultipleAlias" xml:space="preserve">
+    <value>type</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_TypeTacheMultipleAlias" xml:space="preserve">
+    <value>le type</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabel_DateValidation" xml:space="preserve">
+    <value>date de validation</value>
+  </data>
+  <data name="ImportProfileDetails_FieldLabelDefinite_DateValidation" xml:space="preserve">
+    <value>la date de validation</value>
+  </data>
 </root>

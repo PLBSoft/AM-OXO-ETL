@@ -225,7 +225,7 @@ Les phrases marquées « (fixe) » décrivent un comportement codé, non modifia
 - En-tête : la date de révision (« dateRev ») est lue en R2:T2 et écrite au format jj/mm/aaaa. Une date illisible fait refuser le fichier entier (fixe).
 - La désignation de l'équipement suit le modèle « Rév {revision} du {dateRev} », où {revision} et {dateRev} sont remplacés par les valeurs ci-dessus.
 - Une tâche est lue par ligne à partir de la ligne 9. La lecture s'arrête à la première ligne dont l'action est vide.
-- Pour chaque tâche : ordre en B9, action en C9:L9, acteur en M9:N9, risques en O9:Q9, type en R9, date de validation en T9:U9.
+- Pour la première tâche : action en C9:L9, ordre en B9, acteur en M9:N9, risques en O9:Q9, type en R9, date de validation en T9:U9.
 - Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL » (fixe).
 - Une ligne sans ordre est un titre de section, pas une tâche à réaliser (fixe).
 
@@ -434,6 +434,8 @@ ligne de départ, champ d'arrêt ; puis la liste des champs du premier bloc avec
 un nom de champ inconnu, un champ d'arrêt inconnu.
 
 **Vert** : clés `ImportProfileDetails_Block*` et `ImportProfileDetails_FieldLabel_*`.
+
+**Fait (2026-09-17)** : champs listés dans l'ordre du profil ; libellé avec article (`ImportProfileDetails_FieldLabelDefinite_*`) pour le champ d'arrêt, sans article dans la liste ; vocabulaire tâche/élément porté par `ImportSheetUsageEntry.ItemKind` (ajout à la table 78.1, testé). **Écart avec le catalogue §5, corrigé dans le §5** : PROCEDURE dit « Pour la première tâche : action en C9:L9, ordre en B9… » (la plage ne vaut que pour la première ligne ; ordre des champs = ordre du profil). `ImportProfileDescriptionBuilderBlockTests` : 9/9 (rouge vérifié : 9 échecs) ; périmètre filtré : 72/72.
 
 ### 78.4 — En-tête : champs et composites
 
