@@ -579,6 +579,8 @@ charge le profil via `IImportProfileStore.GetByIdAsync` et affiche `Build(...)`.
 
 **Vert** : la page, clés `ImportProfileDetails_PageTitle`/`_NotFound`/`_FixedMarker`.
 
+**Fait (2026-09-17)** : `ImportProfileDetails.razor` ; clés ajoutées aussi `_PageTitleGeneric` (titre de l'onglet et `h1` quand le profil est introuvable), `_BackToListButton`, `_IgnoredHeading` (« Configuré mais ignoré pour cette feuille : »), `_BlockingHeading`. L'alerte « introuvable » garde `role="alert"`, comme celle de l'éditeur ; les alertes ignorés/bloquants n'en ont pas (contenu chargé avec la page). Conteneur `container-fluid px-3 profile-editor-container`, même largeur que l'éditeur. `ImportProfileDetailsTests` : 7/7 (rouge = compilation, page absente) ; `BusinessPageAuthorizationHttpTests` avec la nouvelle route et le test dédié du corps : périmètre filtré 45/45.
+
 ### 78.10 — Bouton « Voir les détails » sur la liste
 
 **Comportement** : `ImportProfiles.razor`, dans le tableau et dans la carte mobile, un bouton icône

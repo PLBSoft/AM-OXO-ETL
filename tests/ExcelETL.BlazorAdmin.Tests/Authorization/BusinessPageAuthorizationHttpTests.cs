@@ -25,6 +25,8 @@ public class BusinessPageAuthorizationHttpTests : IClassFixture<WebApplicationFa
 
     // 52.0 inventory: every business-function route, now Authenticated (no role) per the convention.
     // One assertion per route (a Theory case each), so a failure names the exact route at fault.
+    private const string DetailsRouteWithUnknownId = "/import-profiles/00000000-0000-0000-0000-000000000001/details";
+
     private static readonly string[] BusinessRoutes =
     [
         "/",
@@ -33,6 +35,8 @@ public class BusinessPageAuthorizationHttpTests : IClassFixture<WebApplicationFa
         "/export-profiles",
         "/export-profiles/new",
         "/import-profiles/test",
+        // Lot 078.9: an unknown id still renders the page (not-found alert), see the dedicated test below.
+        DetailsRouteWithUnknownId,
         "/export-profiles/test",
         "/api-test",
         "/generated-files",
@@ -139,6 +143,18 @@ public class BusinessPageAuthorizationHttpTests : IClassFixture<WebApplicationFa
 
         response.StatusCode.Should().Be(HttpStatusCode.Redirect);
         response.Headers.Location!.ToString().Should().Contain("Account/Login");
+    }
+
+    // A 200 alone would also pass on the NotFound page: assert the details page itself was served.
+    [Fact]
+    public async Task ImportProfileDetailsRoute_ServesTheDetailsPage_NotTheNotFoundPage()
+    {
+        var client = await CreateSignedInClientAsync("non_admin_" + Guid.NewGuid().ToString("N")[..8]);
+
+        var response = await client.GetAsync(DetailsRouteWithUnknownId);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("import-profile-details-not-found");
     }
 
     private HttpClient CreateClient() =>

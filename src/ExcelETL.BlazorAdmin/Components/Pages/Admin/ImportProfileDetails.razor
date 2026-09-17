@@ -1,0 +1,107 @@
+@page "/import-profiles/{Id:guid}/details"
+@attribute [Authorize]
+
+@using ExcelETL.Application.Extraction.Oxo
+@using ExcelETL.BlazorAdmin.Formatting
+@using Microsoft.AspNetCore.Authorization
+
+@inject IImportProfileStore ImportProfileStore
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<!-- Lot 078.9 (docs/tickets/tickets-tdd-lot-078-vue-details-langage-courant-profil-import.md): read-only,
+     plain-language description of an import profile for a user who is neither a developer nor an expert
+     of the application. All the wording comes from ImportProfileDescriptionBuilder; this page only renders it. -->
+
+<PageTitle>@Loc["ImportProfileDetails_PageTitleGeneric"]</PageTitle>
+
+<div class="container-fluid px-3 profile-editor-container">
+
+<h1>@(_profileName is null ? Loc["ImportProfileDetails_PageTitleGeneric"] : Loc["ImportProfileDetails_PageTitle", _profileName])</h1>
+
+<PageBackNavLink Id="back-to-import-profiles-button" Label="@Loc["ImportProfileDetails_BackToListButton"]" OnClick="BackToList" />
+
+@if (_notFound)
+{
+    <div id="import-profile-details-not-found" class="alert alert-danger" role="alert">@Loc["ImportProfileDetails_NotFound"]</div>
+}
+else if (_description is not null)
+{
+    @for (var i = 0; i < _description.Sections.Count; i++)
+    {
+        var section = _description.Sections[i];
+        var sectionId = i == 0 ? "details-section-general" : $"details-section-sheet-{i - 1}";
+        <section id="@sectionId" class="mb-4">
+            <h2 class="h4">@section.Title</h2>
+
+            @if (section.Blocking.Count > 0)
+            {
+                <div id="@($"{sectionId}-blocking")" class="alert alert-danger">
+                    <p class="mb-1">@Loc["ImportProfileDetails_BlockingHeading"]</p>
+                    <ul class="mb-0">
+                        @foreach (var problem in section.Blocking)
+                        {
+                            <li>@problem</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (section.Sentences.Count > 0)
+            {
+                <ul class="profile-details-sentences">
+                    @foreach (var sentence in section.Sentences)
+                    {
+                        <li>
+                            @sentence.Text
+                            @if (sentence.IsFixed)
+                            {
+                                <span class="badge text-bg-secondary ms-1">@Loc["ImportProfileDetails_FixedMarker"]</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+
+            @if (section.Ignored.Count > 0)
+            {
+                <!-- Static content loaded with the page: no role="alert" (nothing appears dynamically). -->
+                <div id="@($"{sectionId}-ignored")" class="alert alert-warning">
+                    <p class="mb-1">@Loc["ImportProfileDetails_IgnoredHeading"]</p>
+                    <ul class="mb-0">
+                        @foreach (var setting in section.Ignored)
+                        {
+                            <li>@setting</li>
+                        }
+                    </ul>
+                </div>
+            }
+        </section>
+    }
+}
+
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private ImportProfileDescription? _description;
+    private string? _profileName;
+    private bool _notFound;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profile = await ImportProfileStore.GetByIdAsync(Id);
+        if (profile is null)
+        {
+            _notFound = true;
+            return;
+        }
+
+        _profileName = profile.Name;
+        _description = ImportProfileDescriptionBuilder.Build(profile, Loc);
+    }
+
+    private void BackToList() => NavigationManager.NavigateTo("import-profiles");
+}

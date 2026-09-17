@@ -1768,4 +1768,25 @@
   <data name="ImportProfileDetails_BlockingMissingSheet" xml:space="preserve">
     <value>Feuille {0} absente du profil : l'import échoue.</value>
   </data>
+  <data name="ImportProfileDetails_PageTitle" xml:space="preserve">
+    <value>Détails du profil « {0} »</value>
+  </data>
+  <data name="ImportProfileDetails_PageTitleGeneric" xml:space="preserve">
+    <value>Détails du profil</value>
+  </data>
+  <data name="ImportProfileDetails_NotFound" xml:space="preserve">
+    <value>Profil d'import introuvable.</value>
+  </data>
+  <data name="ImportProfileDetails_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
+  </data>
+  <data name="ImportProfileDetails_FixedMarker" xml:space="preserve">
+    <value>non modifiable</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredHeading" xml:space="preserve">
+    <value>Configuré mais ignoré pour cette feuille :</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingHeading" xml:space="preserve">
+    <value>Problèmes bloquants :</value>
+  </data>
 </root>
