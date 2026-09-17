@@ -75,35 +75,6 @@ public static class ExportProfileDescriptionBuilder
         return blocking;
     }
 
-    // D3: a sheet name ClosedXML refuses. A TacheMultiple rule's name never becomes a sheet name.
-    private static List<string> DescribeSheetNameBlocking(SheetGenerationRule rule, IStringLocalizer<BlazorAdminMessages> loc)
-    {
-        var blocking = new List<string>();
-        if (rule.PivotSource == PivotSource.TacheMultiple)
-        {
-            return blocking;
-        }
-
-        var name = Quote(rule.SheetName, loc);
-        if (ExcelSheetName.IsTooLong(rule.SheetName))
-        {
-            blocking.Add(loc["ExportProfileDetails_BlockingNameTooLong", name, ExcelSheetName.MaxLength, rule.SheetName.Length]);
-        }
-
-        var forbidden = ExcelSheetName.ForbiddenCharactersIn(rule.SheetName);
-        if (forbidden.Count > 0)
-        {
-            blocking.Add(loc["ExportProfileDetails_BlockingNameForbiddenCharacter", name, QuoteList(forbidden.Select(c => c.ToString()), loc)]);
-        }
-
-        if (ExcelSheetName.HasApostropheAtEdge(rule.SheetName))
-        {
-            blocking.Add(loc["ExportProfileDetails_BlockingNameApostrophe", name]);
-        }
-
-        return blocking;
-    }
-
     private static ProfileDescriptionSection BuildSheetSection(SheetGenerationRule rule, IStringLocalizer<BlazorAdminMessages> loc)
     {
         var sentences = new List<ProfileDescriptionSentence>();
@@ -133,7 +104,7 @@ public static class ExportProfileDescriptionBuilder
         }
 
         sentences.AddRange(DescribeColumns(columns, rule.PivotSource == PivotSource.Equipement, loc));
-        return new ProfileDescriptionSection(title, sentences, [], Marked(DescribeSheetNameBlocking(rule, loc)));
+        return new ProfileDescriptionSection(title, sentences, [], []);
     }
 
     private static IEnumerable<ProfileDescriptionSentence> DescribeColumns(

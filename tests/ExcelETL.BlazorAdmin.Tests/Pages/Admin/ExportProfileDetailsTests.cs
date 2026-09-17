@@ -101,13 +101,15 @@ public class ExportProfileDetailsTests : BunitContext
     [Fact]
     public void BlockingProblem_IsShownUnderTheGenerationHeading_AndNoIgnoredBlockExists() => WithFrenchCulture(() =>
     {
-        var profile = Saved(BuildProfile("Feuille:1"));
+        // Lot 080.2: an invalid sheet name can no longer be built, the remaining blocking case is a sheet named
+        // like a known task code next to a TacheMultiple rule.
+        var profile = Saved(BuildProfile("TM_PROC_MAD"));
 
         var cut = RenderDetails(profile.Id);
 
-        var blocking = cut.Find("#details-section-sheet-0-blocking");
+        var blocking = cut.Find("#details-section-general-blocking");
         blocking.ClassList.Should().Contain(["alert", "alert-danger"]);
-        blocking.TextContent.Should().Contain("Problèmes qui empêchent la génération :").And.Contain("contient un caractère interdit par Excel");
+        blocking.TextContent.Should().Contain("Problèmes qui empêchent la génération :").And.Contain("porte le nom d'une feuille de tâches");
         cut.FindAll("[id$='-ignored']").Should().BeEmpty();
     });
 

@@ -1951,15 +1951,6 @@
   <data name="ExportProfileDetails_PointGroupItem" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
-  <data name="ExportProfileDetails_BlockingNameTooLong" xml:space="preserve">
-    <value>Le nom de feuille {0} dépasse {1} caractères ({2}) : la génération échoue.</value>
-  </data>
-  <data name="ExportProfileDetails_BlockingNameForbiddenCharacter" xml:space="preserve">
-    <value>Le nom de feuille {0} contient un caractère interdit par Excel ({1}) : la génération échoue.</value>
-  </data>
-  <data name="ExportProfileDetails_BlockingNameApostrophe" xml:space="preserve">
-    <value>Le nom de feuille {0} commence ou finit par une apostrophe : la génération échoue.</value>
-  </data>
   <data name="ExportProfileDetails_BlockingDuplicateSheetName" xml:space="preserve">
     <value>Les feuilles {0} ont le même nom pour Excel (majuscules et minuscules confondues) : la génération échoue.</value>
   </data>

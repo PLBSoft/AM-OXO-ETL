@@ -166,6 +166,15 @@
   <data name="SheetGenerationRule_EmptySheetName" xml:space="preserve">
     <value>Le nom de la feuille ne doit pas être vide.</value>
   </data>
+  <data name="SheetGenerationRule_SheetNameTooLong" xml:space="preserve">
+    <value>Le nom de la feuille ne doit pas dépasser {0} caractères (limite d'Excel).</value>
+  </data>
+  <data name="SheetGenerationRule_SheetNameForbiddenCharacter" xml:space="preserve">
+    <value>Le nom de la feuille contient des caractères refusés par Excel : {0}.</value>
+  </data>
+  <data name="SheetGenerationRule_SheetNameApostropheAtEdge" xml:space="preserve">
+    <value>Le nom de la feuille ne doit ni commencer ni finir par une apostrophe (limite d'Excel).</value>
+  </data>
   <data name="SheetGenerationRule_DuplicateHeader" xml:space="preserve">
     <value>L'en-tête '{0}' est utilisé plus d'une fois dans cette feuille.</value>
   </data>

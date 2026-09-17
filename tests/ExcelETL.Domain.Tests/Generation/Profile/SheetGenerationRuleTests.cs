@@ -79,6 +79,76 @@ public class SheetGenerationRuleTests
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_EmptySheetName);
     }
 
+    // Lot 080.2 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md): names ClosedXML
+    // refuses are rejected when the rule is built, instead of failing at write time.
+    [Fact]
+    public void Constructor_WithSheetNameOf32Characters_ThrowsSheetNameTooLong()
+    {
+        var act = () => new SheetGenerationRule(new string('A', 32), PivotSource.Equipement, ValidColumns(), [], []);
+
+        var exception = act.Should().Throw<DomainValidationException>().WithParameterName("sheetName").Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_SheetNameTooLong);
+        exception.Args.Should().ContainSingle().Which.Should().Be(ExcelSheetName.MaxLength);
+    }
+
+    [Fact]
+    public void Constructor_WithSheetNameOf31Characters_IsAccepted()
+    {
+        var rule = new SheetGenerationRule(new string('A', 31), PivotSource.Isolement, [], [], []);
+
+        rule.SheetName.Should().HaveLength(31);
+    }
+
+    [Theory]
+    [InlineData("A\\B", "\\")]
+    [InlineData("A/B", "/")]
+    [InlineData("A?B", "?")]
+    [InlineData("A*B", "*")]
+    [InlineData("A[B", "[")]
+    [InlineData("A]B", "]")]
+    [InlineData("A:B", ":")]
+    [InlineData("a:b/c:d", ": /")]
+    public void Constructor_WithForbiddenCharacterInSheetName_ThrowsSheetNameForbiddenCharacter(string sheetName, string expectedCharacters)
+    {
+        var act = () => new SheetGenerationRule(sheetName, PivotSource.Equipement, ValidColumns(), [], []);
+
+        var exception = act.Should().Throw<DomainValidationException>().WithParameterName("sheetName").Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_SheetNameForbiddenCharacter);
+        exception.Args.Should().ContainSingle().Which.Should().Be(expectedCharacters);
+    }
+
+    [Theory]
+    [InlineData("'Parents")]
+    [InlineData("Parents'")]
+    public void Constructor_WithApostropheAtEdgeOfSheetName_ThrowsSheetNameApostropheAtEdge(string sheetName)
+    {
+        var act = () => new SheetGenerationRule(sheetName, PivotSource.Equipement, ValidColumns(), [], []);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("sheetName")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_SheetNameApostropheAtEdge);
+    }
+
+    [Fact]
+    public void Constructor_WithApostropheInsideSheetName_IsAccepted()
+    {
+        var rule = new SheetGenerationRule("Parent's", PivotSource.Equipement, ValidColumns(), [], []);
+
+        rule.SheetName.Should().Be("Parent's");
+    }
+
+    // Non-generalization: a TacheMultiple rule's name is an internal label, never a sheet name (lot 079 §1).
+    [Fact]
+    public void Constructor_WithTacheMultiplePivotSource_AcceptsANameExcelWouldRefuse()
+    {
+        var name = new string('T', 39) + "/";
+
+        var rule = new SheetGenerationRule(
+            name, PivotSource.TacheMultiple, [new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre)], [], []);
+
+        rule.SheetName.Should().Be(name);
+    }
+
     [Fact]
     public void Constructor_WithNullColumnDefinitions_ThrowsArgumentNullException()
     {

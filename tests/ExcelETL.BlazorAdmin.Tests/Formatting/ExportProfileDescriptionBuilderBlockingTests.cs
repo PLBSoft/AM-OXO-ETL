@@ -19,42 +19,6 @@ public class ExportProfileDescriptionBuilderBlockingTests
     private static IEnumerable<string> BlockingTexts(ProfileDescriptionSection section) => section.Blocking.Select(b => b.Text);
 
     [Fact]
-    public void NameLongerThan31Characters_BlocksOnTheRuleSection()
-    {
-        var name = new string('A', 32);
-
-        var description = Describe(ExportProfile(Parents(name)));
-
-        BlockingTexts(description.Sections[1]).Should().Equal(
-            $"Le nom de feuille « {name} » dépasse 31 caractères (32) : la génération échoue.");
-        description.Sections[0].Blocking.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void NameOf31Characters_DoesNotBlock() =>
-        Describe(ExportProfile(Parents(new string('A', 31)))).Sections[1].Blocking.Should().BeEmpty();
-
-    [Fact]
-    public void ForbiddenCharacters_AreCited()
-    {
-        var description = Describe(ExportProfile(Parents("Feuille:1/2:3")));
-
-        BlockingTexts(description.Sections[1]).Should().Equal(
-            "Le nom de feuille « Feuille:1/2:3 » contient un caractère interdit par Excel (« : », « / ») : la génération échoue.");
-    }
-
-    [Theory]
-    [InlineData("'Parents")]
-    [InlineData("Parents'")]
-    public void ApostropheAtTheStartOrEnd_Blocks(string name) =>
-        BlockingTexts(Describe(ExportProfile(Parents(name))).Sections[1]).Should().Equal(
-            $"Le nom de feuille « {name} » commence ou finit par une apostrophe : la génération échoue.");
-
-    [Fact]
-    public void ApostropheInTheMiddle_DoesNotBlock() =>
-        Describe(ExportProfile(Parents("Parent's"))).Sections[1].Blocking.Should().BeEmpty();
-
-    [Fact]
     public void SameNameIgnoringCase_BlocksOnTheWorkbookSection()
     {
         var description = Describe(ExportProfile(Parents(), Parents("parents")));

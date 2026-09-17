@@ -166,6 +166,15 @@
   <data name="SheetGenerationRule_EmptySheetName" xml:space="preserve">
     <value>Sheet name must not be empty.</value>
   </data>
+  <data name="SheetGenerationRule_SheetNameTooLong" xml:space="preserve">
+    <value>The sheet name must not exceed {0} characters (Excel limit).</value>
+  </data>
+  <data name="SheetGenerationRule_SheetNameForbiddenCharacter" xml:space="preserve">
+    <value>The sheet name contains characters Excel refuses: {0}.</value>
+  </data>
+  <data name="SheetGenerationRule_SheetNameApostropheAtEdge" xml:space="preserve">
+    <value>The sheet name must not start or end with an apostrophe (Excel limit).</value>
+  </data>
   <data name="SheetGenerationRule_DuplicateHeader" xml:space="preserve">
     <value>Header '{0}' is used more than once in this sheet.</value>
   </data>

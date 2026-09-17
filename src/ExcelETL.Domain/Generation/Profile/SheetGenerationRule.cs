@@ -46,6 +46,7 @@ public sealed record SheetGenerationRule
         IReadOnlyList<ConstantColumnDefinition>? constantColumnDefinitions = null)
     {
         ValidateSheetNameNotEmpty(sheetName);
+        ValidateSheetNameIsValidExcelName(sheetName, pivotSource);
 
         ArgumentNullException.ThrowIfNull(columnDefinitions);
         ArgumentNullException.ThrowIfNull(pointColumnDefinitions);
@@ -82,6 +83,39 @@ public sealed record SheetGenerationRule
         {
             throw new DomainValidationException(
                 "Sheet name must not be empty.", nameof(sheetName), DomainErrorCode.SheetGenerationRule_EmptySheetName);
+        }
+    }
+
+    // Lot 080.2 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md): the names ClosedXML
+    // refuses (ExcelSheetName). Skipped for TacheMultiple: that rule's name is an internal label, never a sheet name.
+    private static void ValidateSheetNameIsValidExcelName(string sheetName, PivotSource pivotSource)
+    {
+        if (pivotSource == PivotSource.TacheMultiple)
+        {
+            return;
+        }
+
+        if (ExcelSheetName.IsTooLong(sheetName))
+        {
+            throw new DomainValidationException(
+                $"Sheet name must not exceed {ExcelSheetName.MaxLength} characters.", nameof(sheetName),
+                DomainErrorCode.SheetGenerationRule_SheetNameTooLong, ExcelSheetName.MaxLength);
+        }
+
+        var forbiddenCharacters = ExcelSheetName.ForbiddenCharactersIn(sheetName);
+        if (forbiddenCharacters.Count > 0)
+        {
+            var found = string.Join(" ", forbiddenCharacters);
+            throw new DomainValidationException(
+                $"Sheet name must not contain these characters: {found}.", nameof(sheetName),
+                DomainErrorCode.SheetGenerationRule_SheetNameForbiddenCharacter, found);
+        }
+
+        if (ExcelSheetName.HasApostropheAtEdge(sheetName))
+        {
+            throw new DomainValidationException(
+                "Sheet name must not start or end with an apostrophe.", nameof(sheetName),
+                DomainErrorCode.SheetGenerationRule_SheetNameApostropheAtEdge);
         }
     }
 
