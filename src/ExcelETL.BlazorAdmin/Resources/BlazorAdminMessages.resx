@@ -1048,6 +1048,9 @@
   <data name="ExportProfileEditor_NamePlaceholder" xml:space="preserve">
     <value>Profile name</value>
   </data>
+  <data name="ExportProfileEditor_ProfileGeneralSettingsHeading" xml:space="preserve">
+    <value>General profile settings</value>
+  </data>
   <data name="ExportProfileEditor_NameLabel" xml:space="preserve">
     <value>Profile name</value>
   </data>

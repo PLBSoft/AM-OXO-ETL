@@ -66,11 +66,17 @@ else
         <div class="alert alert-danger" role="alert">@_profileErrorMessage</div>
     }
 
-    <div class="mb-3">
-        <div class="form-floating">
-            <input id="export-profile-name-input" class="form-control" @bind="_draft.Name" @bind:after="MarkAsChanged" maxlength="@ExportProfile.MaxNameLength"
-                   placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
-            <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
+    <!-- Lot 077 (suite): same "General profile settings" card as ImportProfileEditor. -->
+    <h2 class="h3">@Loc["ExportProfileEditor_ProfileGeneralSettingsHeading"]</h2>
+    <div class="card bg-light mb-3">
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="form-floating">
+                    <input id="export-profile-name-input" class="form-control" @bind="_draft.Name" @bind:after="MarkAsChanged" maxlength="@ExportProfile.MaxNameLength"
+                           placeholder="@Loc["ExportProfileEditor_NamePlaceholder"]" />
+                    <label for="export-profile-name-input">@Loc["ExportProfileEditor_NameLabel"]</label>
+                </div>
+            </div>
         </div>
     </div>
 

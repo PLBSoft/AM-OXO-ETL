@@ -171,6 +171,20 @@ public class ProfileEditorParityTests : BunitContext
         importContainerClass.Should().Be("mb-3");
     });
 
+    // Lot 077 (suite): the root-field card and its heading are identical on both editors.
+    [Fact]
+    public void RootFieldsCardAndHeading_AreIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
+    {
+        var importCut = Render<ImportProfileEditor>();
+        var exportCut = Render<ExportProfileEditor>();
+
+        var importCard = importCut.Find("#profile-name-input").Closest("div.card")!;
+        var exportCard = exportCut.Find("#export-profile-name-input").Closest("div.card")!;
+
+        importCard.GetAttribute("class").Should().Be(exportCard.GetAttribute("class"));
+        importCard.PreviousElementSibling!.OuterHtml.Should().Be(exportCard.PreviousElementSibling!.OuterHtml);
+    });
+
     [Fact]
     public void SubformCardContainer_CssClass_IsIdenticalBetweenImportAndExportEditors() => WithCulture("en-US", () =>
     {

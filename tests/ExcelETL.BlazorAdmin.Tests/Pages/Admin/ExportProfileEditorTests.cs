@@ -1324,6 +1324,27 @@ public class ExportProfileEditorTests : BunitContext
 
     // --- Lot X (mobile-first polish) ---------------------------------------------------------
 
+    // Lot 077 (suite): the profile name sits in a bg-light card headed by an h2.h3 right above it --
+    // same shape as the import editor's "General profile settings" section.
+    [Theory]
+    [InlineData("en-US", "General profile settings")]
+    [InlineData("fr-FR", "Paramètres généraux du profil")]
+    public void RootField_IsGroupedInABgLightCard_UnderAGeneralSettingsHeading(string culture, string expectedHeading) =>
+        WithCulture(culture, () =>
+        {
+            var cut = Render<ExportProfileEditor>();
+
+            var cardBody = cut.Find("#export-profile-name-input").ParentElement!.ParentElement!.ParentElement!;
+            cardBody.GetAttribute("class").Should().Be("card-body");
+
+            var card = cardBody.ParentElement!;
+            card.GetAttribute("class").Should().Be("card bg-light mb-3");
+            var heading = card.PreviousElementSibling!;
+            heading.TagName.Should().Be("H2");
+            heading.GetAttribute("class").Should().Be("h3");
+            heading.TextContent.Should().Be(expectedHeading);
+        });
+
     // X3: root/subform fields stack full-width (form-floating wrappers, no side-by-side row/col).
     [Fact]
     public void RootAndSubformFields_AreWrappedInFormFloating_NotSideBySideColumns() => WithCulture("en-US", () =>

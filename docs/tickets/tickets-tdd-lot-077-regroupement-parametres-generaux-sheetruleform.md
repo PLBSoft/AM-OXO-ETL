@@ -30,6 +30,13 @@ Non-régression : aucune assertion existante modifiée. `SheetRuleForm_Field_Con
 
 Test : `RootFields_AreGroupedInABgLightCard_UnderAGeneralSettingsHeading` (EN + FR), rouge avant le changement. Aucune assertion existante modifiée (`ShortRootFields_AreDirectChildrenOfTheSameRow`, parité du conteneur racine `mb-3` import/export, audit des titres restent verts). Périmètre filtré : 434/434.
 
+## 3. Même regroupement côté profil d'export — fait (demande de Simon, 17/09)
+
+- `ExportProfileEditor.razor` : le champ « Nom du profil » est dans la même carte `card bg-light mb-3` > `card-body`, précédée du même titre `h2.h3` (clé propre à la page, `ExportProfileEditor_ProfileGeneralSettingsHeading`, même texte EN/FR que l'import — convention des clés par page).
+- Id inchangé ; conteneur `mb-3` du champ inchangé.
+
+Tests : `RootField_IsGroupedInABgLightCard_UnderAGeneralSettingsHeading` (`ExportProfileEditorTests.cs`, EN + FR) et `RootFieldsCardAndHeading_AreIdenticalBetweenImportAndExportEditors` (`ProfileEditorParityTests.cs`, comparaison stricte classe de carte + HTML du titre), rouges avant le changement. Aucune assertion existante modifiée. Périmètre filtré (éditeurs import/export, parité, audits form-floating/titres) : 678/678.
+
 ## Hors périmètre explicite
 
 - `SheetGenerationRuleForm.razor` (export) — reporté, ne pas anticiper.
