@@ -182,7 +182,7 @@ public class ExportProfileEditorLot059Tests : BunitContext
         });
 
     [Fact]
-    public async Task AddSheetRuleToggle_CssClass_IsIdenticalWhetherOpenOrClosed() =>
+    public async Task AddSheetRuleToggle_CssClass_IsFilledWhenClosed_OutlineCancelWhenOpen() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -194,6 +194,8 @@ public class ExportProfileEditorLot059Tests : BunitContext
             cut.Find("#toggle-add-sheet-generation-rule-form-button").Click();
             var openClass = cut.Find("#toggle-add-sheet-generation-rule-form-button").GetAttribute("class");
 
-            openClass.Should().Be(closedClass);
+            closedClass.Should().Be("btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1");
+            // 2026-09-17: the open state reads as a cancel action (outline + X icon), lifting 59.6's same-class rule.
+            openClass.Should().Be("btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1");
         });
 }

@@ -56,7 +56,8 @@ d'icône = décision justifiée par la matrice ci-dessous.
 | :--- | :--- | :--- |
 | Action principale (CTA) | **Oui** | `+ Créer un profil`, `Publier` |
 | Action CRUD standard | **Oui** | `Modifier`, `Supprimer`, `Enregistrer` |
-| Action secondaire | **Non** | `Annuler`, `Fermer`, `Retour` |
+| Annulation | **Oui** (`AdminIconMarkup.X`, classe `btn-outline-secondary`) | `Annuler`, `Annuler l'ajout`, `Annuler` d'une confirmation |
+| Action secondaire | **Non** | `Fermer`, `Rester sur la page` |
 | Ligne de grille/tableau | **Oui** (icône seule ou icône + libellé court) | bouton `Voir` d'une ligne de résultats |
 
 En cas de doute sur une action non listée : se demander si l'icône aide réellement à
@@ -124,3 +125,18 @@ cette dernière.
 Toute nouvelle page ou tout nouveau composant Blazor Admin doit respecter cette convention dès sa
 conception, sans qu'il soit nécessaire de le repréciser dans chaque nouveau ticket — une simple
 référence à ce document suffit.
+
+## Boutons « Annuler » (amendement 17/09/2026)
+
+**Origine** : retour client sur l'éditeur de profil — « Ajouter la feuille » portait une icône,
+mais son état bascule « Annuler l'ajout » n'en avait pas et gardait la même teinte pleine
+(`btn-secondary`), sans rien qui signale une annulation.
+
+**Règle** : tout bouton libellé d'annulation (sous-formulaires, bascule d'ajout de règle de feuille,
+confirmations de suppression/réinitialisation, formulaires utilisateurs) porte l'icône
+`AdminIconMarkup.X` à gauche du libellé, la classe `btn-outline-secondary` (jamais la teinte pleine
+réservée aux actions d'ajout) et le gabarit icône + libellé ci-dessus. Les boutons « Annuler »
+icône seule des lignes d'édition en ligne portaient déjà cette forme. Le bouton bascule d'ajout de
+règle de feuille est la seule classe conditionnelle assumée : `btn-secondary` à l'état « Ajouter »,
+`btn-outline-secondary` à l'état « Annuler l'ajout » (lève la décision « classe identique dans les
+deux états » du lot 059.6).

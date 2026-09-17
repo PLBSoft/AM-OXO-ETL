@@ -458,7 +458,7 @@ public class ProfileEditorParityTests : BunitContext
             var importCancelClass = importCut.Find("#cancel-sheet-rule-button-0").GetAttribute("class");
             var exportCancelClass = exportCut.Find("#cancel-sheet-generation-rule-button-0").GetAttribute("class");
             importCancelClass.Should().Be(exportCancelClass);
-            importCancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            importCancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
 
             importSubmitClass.Should().NotBe(importCancelClass);
         });
@@ -482,7 +482,9 @@ public class ProfileEditorParityTests : BunitContext
         // excepted -- it sits at the top of its own card, not the bottom of a form), rather than a
         // narrower btn-sm/outline treatment that was the only button on the page not full-width and
         // not filled -- matching that gabarit, class-for-class, in both open and closed states.
-        importToggleClass.Should().Be("btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1");
+        // 2026-09-17: rendered on /new, where the add form starts open -- the toggle is then the
+        // "Cancel the addition" state, outline + X icon (convention-ui-blazor-icones-boutons.md).
+        importToggleClass.Should().Be("btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-1");
     });
 
     // Lot 058 (58.4, closing test of the lot): the icon+label gabarit (58.3) on the add-sheet-rule

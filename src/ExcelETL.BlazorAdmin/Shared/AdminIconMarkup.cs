@@ -78,4 +78,10 @@ public static class AdminIconMarkup
     // same "avoid transcription risk on a complex glyph" reason as Key/Clock above.
     public const string Reset =
         """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8A5 5 0 1 1 8 3" /><path d="M13 3v3h-3" /></svg>""";
+
+    // Cancel icon: the Bootstrap Icons bi-x shape already used inline by the icon-only Cancel buttons
+    // of the in-line edit rows -- extended to every labelled Cancel button (client request 2026-09-17,
+    // convention-ui-blazor-icones-boutons.md amended: "Annuler" now carries an icon).
+    public const string X =
+        """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" /></svg>""";
 }

@@ -577,8 +577,8 @@ else
                             <button id="@($"confirm-delete-sheet-rule-button-{index}")" class="btn btn-sm btn-danger" @onclick="() => ConfirmDeleteSheetRule(index)">
                                 @Loc["ImportProfileEditor_ConfirmDeleteButton"]
                             </button>
-                            <button id="@($"cancel-delete-sheet-rule-button-{index}")" class="btn btn-sm btn-secondary" @onclick="() => _pendingDeleteIndex = null">
-                                @Loc["ImportProfileEditor_CancelButton"]
+                            <button id="@($"cancel-delete-sheet-rule-button-{index}")" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1" @onclick="() => _pendingDeleteIndex = null">
+                                @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfileEditor_CancelButton"]
                             </button>
                         </div>
                     }
@@ -612,11 +612,11 @@ else
 <div class="card mb-3">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>@Loc["ImportProfileEditor_AddSheetHeading"]</span>
-        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
+        <button id="toggle-add-sheet-rule-form-button" type="button" class="btn @(_openSheetRuleForm.IsAdd ? "btn-outline-secondary" : "btn-secondary") w-100 d-flex align-items-center justify-content-center gap-1"
                 @onclick="ToggleAddSheetRuleForm">
             @if (_openSheetRuleForm.IsAdd)
             {
-                @Loc["ImportProfileEditor_AddSheetToggleCloseButton"]
+                @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfileEditor_AddSheetToggleCloseButton"]
             }
             else
             {

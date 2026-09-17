@@ -66,9 +66,9 @@ else
                                     @Loc["ExportProfiles_ConfirmDeleteButton"]
                                 </button>
                                 <button id="@($"cancel-delete-export-profile-button-{profile.Id}")" type="button"
-                                        class="btn btn-sm btn-secondary"
+                                        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelDeleteProfile">
-                                    @Loc["ExportProfiles_CancelDeleteButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["ExportProfiles_CancelDeleteButton"]
                                 </button>
                             </div>
                         }
@@ -82,9 +82,9 @@ else
                                     @Loc["ExportProfiles_ConfirmResetButton"]
                                 </button>
                                 <button id="@($"cancel-reset-export-profile-button-{profile.Id}")" type="button"
-                                        class="btn btn-sm btn-secondary"
+                                        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelResetProfile">
-                                    @Loc["ExportProfiles_CancelResetButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["ExportProfiles_CancelResetButton"]
                                 </button>
                             </div>
                         }
@@ -141,9 +141,9 @@ else
                                 @Loc["ExportProfiles_ConfirmDeleteButton"]
                             </button>
                             <button id="@($"cancel-delete-export-profile-button-card-{profile.Id}")" type="button"
-                                    class="btn btn-sm btn-secondary"
+                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelDeleteProfile">
-                                @Loc["ExportProfiles_CancelDeleteButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["ExportProfiles_CancelDeleteButton"]
                             </button>
                         </div>
                     }
@@ -157,9 +157,9 @@ else
                                 @Loc["ExportProfiles_ConfirmResetButton"]
                             </button>
                             <button id="@($"cancel-reset-export-profile-button-card-{profile.Id}")" type="button"
-                                    class="btn btn-sm btn-secondary"
+                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelResetProfile">
-                                @Loc["ExportProfiles_CancelResetButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["ExportProfiles_CancelResetButton"]
                             </button>
                         </div>
                     }

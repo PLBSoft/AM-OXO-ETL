@@ -565,7 +565,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
             var cancelClass = cut.Find("#edit-0-cancel-header-field-button-0").GetAttribute("class");
 
             submitClass.Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
-            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
             submitClass.Should().NotBe(cancelClass);
         });
 
@@ -584,7 +584,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
             var cancelClass = cut.Find("#edit-0-cancel-header-composite-button-0").GetAttribute("class");
 
             submitClass.Should().Be("btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
-            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
             submitClass.Should().NotBe(cancelClass);
         });
 

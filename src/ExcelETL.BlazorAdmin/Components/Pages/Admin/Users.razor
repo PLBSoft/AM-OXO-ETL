@@ -67,8 +67,8 @@
                 <label for="create-user-email-input">@Loc["Users_EmailLabel"]</label>
             </div>
             <div class="right-aligned-actions">
-                <button id="create-user-cancel-button" type="button" class="btn btn-secondary" @onclick="CancelCreate">
-                    @Loc["Users_CreateCancelButton"]
+                <button id="create-user-cancel-button" type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1" @onclick="CancelCreate">
+                    @((MarkupString)AdminIconMarkup.X) @Loc["Users_CreateCancelButton"]
                 </button>
                 <button id="create-user-submit-button" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1" @onclick="SubmitCreateAsync">
                     @((MarkupString)AdminIconMarkup.Check) @Loc["Users_CreateSubmitButton"]
@@ -126,9 +126,9 @@ else
                                         @onclick="() => ConfirmDeleteAsync(user.Id)">
                                     @Loc["Users_ConfirmDeleteButton"]
                                 </button>
-                                <button id="@($"cancel-delete-user-button-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                <button id="@($"cancel-delete-user-button-{user.Id}")" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelDelete">
-                                    @Loc["Users_CancelDeleteButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["Users_CancelDeleteButton"]
                                 </button>
                             </div>
                         }
@@ -140,9 +140,9 @@ else
                                         @onclick="() => ConfirmResetPasswordAsync(user.Id)">
                                     @Loc["Users_ConfirmResetPasswordButton"]
                                 </button>
-                                <button id="@($"cancel-reset-password-button-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                                <button id="@($"cancel-reset-password-button-{user.Id}")" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelResetPassword">
-                                    @Loc["Users_CancelResetPasswordButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["Users_CancelResetPasswordButton"]
                                 </button>
                             </div>
                         }
@@ -177,9 +177,9 @@ else
                                         <label for="@($"edit-user-email-input-{user.Id}")">@Loc["Users_EmailLabel"]</label>
                                     </div>
                                     <div class="right-aligned-actions">
-                                        <button id="@($"cancel-edit-user-button-{user.Id}")" type="button" class="btn btn-secondary"
+                                        <button id="@($"cancel-edit-user-button-{user.Id}")" type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                                 @onclick="CancelEdit">
-                                            @Loc["Users_EditCancelButton"]
+                                            @((MarkupString)AdminIconMarkup.X) @Loc["Users_EditCancelButton"]
                                         </button>
                                         <button id="@($"save-edit-user-button-{user.Id}")" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1"
                                                 @onclick="SubmitEditAsync">
@@ -257,9 +257,9 @@ else
                                     @onclick="() => ConfirmDeleteAsync(user.Id)">
                                 @Loc["Users_ConfirmDeleteButton"]
                             </button>
-                            <button id="@($"cancel-delete-user-button-card-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                            <button id="@($"cancel-delete-user-button-card-{user.Id}")" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelDelete">
-                                @Loc["Users_CancelDeleteButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["Users_CancelDeleteButton"]
                             </button>
                         </div>
                     }
@@ -271,9 +271,9 @@ else
                                     @onclick="() => ConfirmResetPasswordAsync(user.Id)">
                                 @Loc["Users_ConfirmResetPasswordButton"]
                             </button>
-                            <button id="@($"cancel-reset-password-button-card-{user.Id}")" type="button" class="btn btn-sm btn-secondary"
+                            <button id="@($"cancel-reset-password-button-card-{user.Id}")" type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelResetPassword">
-                                @Loc["Users_CancelResetPasswordButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["Users_CancelResetPasswordButton"]
                             </button>
                         </div>
                     }
@@ -307,9 +307,9 @@ else
                                     <label for="@($"edit-user-email-input-card-{user.Id}")">@Loc["Users_EmailLabel"]</label>
                                 </div>
                                 <div class="right-aligned-actions">
-                                    <button id="@($"cancel-edit-user-button-card-{user.Id}")" type="button" class="btn btn-secondary"
+                                    <button id="@($"cancel-edit-user-button-card-{user.Id}")" type="button" class="btn btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                             @onclick="CancelEdit">
-                                        @Loc["Users_EditCancelButton"]
+                                        @((MarkupString)AdminIconMarkup.X) @Loc["Users_EditCancelButton"]
                                     </button>
                                     <button id="@($"save-edit-user-button-card-{user.Id}")" type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-1"
                                             @onclick="SubmitEditAsync">

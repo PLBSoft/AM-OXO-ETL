@@ -173,7 +173,7 @@ public class ImportProfileEditorLot057Tests : BunitContext
         });
 
     [Fact]
-    public async Task ClosedToggle_HasIconAndNonEmptyLabel_OpenToggle_HasNoIcon() =>
+    public async Task ClosedToggle_HasPlusIcon_OpenToggle_HasCancelIcon() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithOneSheetRule();
@@ -188,7 +188,7 @@ public class ImportProfileEditorLot057Tests : BunitContext
             closedToggle.Click();
 
             var openToggle = cut.Find("#toggle-add-sheet-rule-form-button");
-            openToggle.QuerySelector("svg").Should().BeNull();
+            openToggle.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
             openToggle.TextContent.Trim().Should().NotBeEmpty();
         });
 

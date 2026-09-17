@@ -317,7 +317,7 @@ public class ExportProfileEditorLot056Tests : BunitContext
             var cancelClass = cut.Find("#cancel-sheet-generation-rule-button-0").GetAttribute("class");
 
             submitClass.Should().NotBe(cancelClass);
-            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 
     [Fact]
@@ -335,6 +335,6 @@ public class ExportProfileEditorLot056Tests : BunitContext
             var cancelClass = cut.Find("#edit-0-cancel-column-definition-button-0").GetAttribute("class");
 
             submitClass.Should().NotBe(cancelClass);
-            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3");
+            cancelClass.Should().Be("btn btn-outline-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1");
         });
 }

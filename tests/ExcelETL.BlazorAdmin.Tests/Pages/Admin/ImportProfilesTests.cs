@@ -442,6 +442,25 @@ public class ImportProfilesTests : BunitContext
         cut.Find($"#delete-profile-confirm-{profile.Id}").GetAttribute("role").Should().Be("alert");
     });
 
+    // 2026-09-17 (convention-ui-blazor-icones-boutons.md, "Boutons Annuler"): every labelled Cancel
+    // button carries the X icon and the outline treatment, never the filled "Add" tint.
+    [Fact]
+    public void CancelDeleteButton_HasCancelIcon_AndOutlineClass() => WithCulture("en-US", () =>
+    {
+        var profile = BuildProfileWithOneSheetRule();
+        var storeMock = new Mock<IImportProfileStore>();
+        storeMock.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([profile]);
+        Services.AddSingleton(storeMock.Object);
+
+        var cut = Render<ImportProfiles>();
+        cut.Find($"#delete-profile-button-{profile.Id}").Click();
+
+        var cancel = cut.Find($"#cancel-delete-profile-button-{profile.Id}");
+        cancel.QuerySelector("svg[aria-hidden='true']").Should().NotBeNull();
+        cancel.TextContent.Trim().Should().NotBeEmpty();
+        cancel.ClassList.Should().Contain("btn-outline-secondary").And.NotContain("btn-secondary");
+    });
+
     [Fact]
     public void CancelDeleteButton_ClosesConfirmation_WithoutCallingDeleteAsync_AndOtherActionsStillWork() =>
         WithCulture("en-US", () =>

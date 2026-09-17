@@ -71,9 +71,9 @@ else
                                     @Loc["ImportProfiles_ConfirmDeleteButton"]
                                 </button>
                                 <button id="@($"cancel-delete-profile-button-{profile.Id}")" type="button"
-                                        class="btn btn-sm btn-secondary"
+                                        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelDeleteProfile">
-                                    @Loc["ImportProfiles_CancelDeleteButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfiles_CancelDeleteButton"]
                                 </button>
                             </div>
                         }
@@ -87,9 +87,9 @@ else
                                     @Loc["ImportProfiles_ConfirmResetButton"]
                                 </button>
                                 <button id="@($"cancel-reset-profile-button-{profile.Id}")" type="button"
-                                        class="btn btn-sm btn-secondary"
+                                        class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                         @onclick="CancelResetProfile">
-                                    @Loc["ImportProfiles_CancelResetButton"]
+                                    @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfiles_CancelResetButton"]
                                 </button>
                             </div>
                         }
@@ -149,9 +149,9 @@ else
                                 @Loc["ImportProfiles_ConfirmDeleteButton"]
                             </button>
                             <button id="@($"cancel-delete-profile-button-card-{profile.Id}")" type="button"
-                                    class="btn btn-sm btn-secondary"
+                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelDeleteProfile">
-                                @Loc["ImportProfiles_CancelDeleteButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfiles_CancelDeleteButton"]
                             </button>
                         </div>
                     }
@@ -165,9 +165,9 @@ else
                                 @Loc["ImportProfiles_ConfirmResetButton"]
                             </button>
                             <button id="@($"cancel-reset-profile-button-card-{profile.Id}")" type="button"
-                                    class="btn btn-sm btn-secondary"
+                                    class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
                                     @onclick="CancelResetProfile">
-                                @Loc["ImportProfiles_CancelResetButton"]
+                                @((MarkupString)AdminIconMarkup.X) @Loc["ImportProfiles_CancelResetButton"]
                             </button>
                         </div>
                     }
