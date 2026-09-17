@@ -246,7 +246,7 @@ public class ImportProfilesTests : BunitContext
 
             var cut = Render<ImportProfiles>();
 
-            foreach (var idPrefix in new[] { "edit-profile-button", "duplicate-profile-button", "delete-profile-button" })
+            foreach (var idPrefix in new[] { "details-profile-button", "edit-profile-button", "duplicate-profile-button", "delete-profile-button" })
             {
                 foreach (var id in new[] { $"{idPrefix}-{profile.Id}", $"{idPrefix}-card-{profile.Id}" })
                 {
@@ -272,6 +272,56 @@ public class ImportProfilesTests : BunitContext
             cut.Find($"#edit-profile-button-{profile.Id}").Click();
 
             navigationManager.Uri.Should().EndWith($"/import-profiles/{profile.Id}/edit");
+        });
+
+    // Lot 078.10 (docs/tickets/tickets-tdd-lot-078-vue-details-langage-courant-profil-import.md).
+    [Theory]
+    [InlineData("details-profile-button")]
+    [InlineData("details-profile-button-card")]
+    public async Task DetailsButton_NavigatesToDetailsRouteWithProfileId(string idPrefix) =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+            cut.Find($"#{idPrefix}-{profile.Id}").Click();
+
+            navigationManager.Uri.Should().EndWith($"/import-profiles/{profile.Id}/details");
+        });
+
+    [Theory]
+    [InlineData("details-profile-button", "edit-profile-button")]
+    [InlineData("details-profile-button-card", "edit-profile-button-card")]
+    public async Task DetailsButton_ComesRightBeforeTheEditButton(string detailsPrefix, string editPrefix) =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+
+            var details = cut.Find($"#{detailsPrefix}-{profile.Id}");
+            details.NextElementSibling!.Id.Should().Be($"{editPrefix}-{profile.Id}");
+            details.ClassList.Should().Contain(["btn", "btn-outline-secondary", "btn-sm", "block-field-icon-btn"]);
+            details.GetAttribute("aria-label").Should().Be("View details");
+            details.QuerySelector("svg")!.GetAttribute("aria-hidden").Should().Be("true");
+        });
+
+    [Fact]
+    public async Task DetailsButton_IsHidden_WhileADeleteConfirmationIsOpen() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+            cut.Find($"#delete-profile-button-{profile.Id}").Click();
+
+            cut.FindAll($"#details-profile-button-{profile.Id}").Should().BeEmpty();
+            cut.FindAll($"#details-profile-button-card-{profile.Id}").Should().BeEmpty();
         });
 
     // V2: mobile-first table -> card fallback at the md (768px) breakpoint. bUnit doesn't compute

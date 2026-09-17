@@ -1789,4 +1789,7 @@
   <data name="ImportProfileDetails_BlockingHeading" xml:space="preserve">
     <value>Problèmes bloquants :</value>
   </data>
+  <data name="ImportProfiles_Details" xml:space="preserve">
+    <value>Voir les détails</value>
+  </data>
 </root>

@@ -95,6 +95,12 @@ else
                         }
                         else
                         {
+                            <button id="details-profile-button-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Details"]" title="@Loc["ImportProfiles_Details"]"
+                                    @onclick="() => ViewProfileDetails(profile)">
+                                @((MarkupString)AdminIconMarkup.Eye)
+                            </button>
                             <button id="edit-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
@@ -174,6 +180,12 @@ else
                     else
                     {
                         <div class="right-aligned-actions">
+                            <button id="details-profile-button-card-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ImportProfiles_Details"]" title="@Loc["ImportProfiles_Details"]"
+                                    @onclick="() => ViewProfileDetails(profile)">
+                                @((MarkupString)AdminIconMarkup.Eye)
+                            </button>
                             <button id="edit-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ImportProfiles_Edit"]" title="@Loc["ImportProfiles_Edit"]"
@@ -225,6 +237,8 @@ else
     private void TestProfile() => NavigationManager.NavigateTo("import-profiles/test");
 
     private void EditProfile(ImportProfile profile) => NavigationManager.NavigateTo($"import-profiles/{profile.Id}/edit");
+
+    private void ViewProfileDetails(ImportProfile profile) => NavigationManager.NavigateTo($"import-profiles/{profile.Id}/details");
 
     private void RequestDeleteProfile(ImportProfile profile)
     {

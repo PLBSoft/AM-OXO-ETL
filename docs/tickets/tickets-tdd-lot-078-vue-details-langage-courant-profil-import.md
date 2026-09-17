@@ -599,6 +599,8 @@ cellule ; absent pendant une confirmation de suppression.
 
 **Vert** : bouton, constante, clé `ImportProfiles_Details`.
 
+**Fait (2026-09-17)** : bouton ajouté dans le tableau et la carte, `AdminIconMarkup.Eye`, navigation `ViewProfileDetails`. **Écart avec le cadre commun (D5)** : `ImportProfiles_Details` est traduite (EN « View details », FR « Voir les détails ») — c'est un libellé de la page de liste existante, déjà bilingue, pas une phrase du catalogue de la vue Détails. Tests (`ImportProfilesTests.cs`) : navigation tableau/carte, position juste avant « Modifier » et classes, masquage pendant une confirmation de suppression, extension du test icône seule existant (rouge vérifié : 5 échecs). Périmètre filtré (liste, parité des listes, gabarit icône, couleur de suppression) : 58/58.
+
 ### 78.11 — Clôture : catalogue du profil semé
 
 **Comportement** : aucun nouveau code attendu ; ce test fige le catalogue validé.
