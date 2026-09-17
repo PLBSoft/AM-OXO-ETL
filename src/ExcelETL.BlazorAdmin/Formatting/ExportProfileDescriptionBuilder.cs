@@ -43,7 +43,65 @@ public static class ExportProfileDescriptionBuilder
             new(loc["ExportProfileDetails_WorkbookImportProfileDependency"]),
         };
 
-        return new ProfileDescriptionSection(loc["ExportProfileDetails_WorkbookSectionTitle"], sentences, [], []);
+        return new ProfileDescriptionSection(
+            loc["ExportProfileDetails_WorkbookSectionTitle"], sentences, [], Marked(DescribeWorkbookBlocking(profile, loc)));
+    }
+
+    // D3: sheet-name clashes between rules that make ClosedXmlWorkbookWriter fail.
+    private static List<string> DescribeWorkbookBlocking(ExportProfile profile, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var blocking = new List<string>();
+        var namedSheets = profile.SheetRules.Where(r => r.PivotSource != PivotSource.TacheMultiple).Select(r => r.SheetName).ToList();
+        var tacheMultipleRules = profile.SheetRules.Where(r => r.PivotSource == PivotSource.TacheMultiple).ToList();
+
+        blocking.AddRange(namedSheets
+            .GroupBy(name => name, ExcelSheetNameRules.NameComparer)
+            .Where(group => group.Count() > 1)
+            .Select(group => loc["ExportProfileDetails_BlockingDuplicateSheetName", JoinWithAnd([.. group.Select(name => Quote(name, loc))], loc)].Value));
+
+        if (tacheMultipleRules.Count > 1)
+        {
+            blocking.Add(loc["ExportProfileDetails_BlockingSeveralTacheMultipleRules", tacheMultipleRules.Count,
+                QuoteList(tacheMultipleRules.Select(r => r.SheetName), loc)]);
+        }
+
+        if (tacheMultipleRules.Count > 0)
+        {
+            blocking.AddRange(namedSheets
+                .Where(name => KnownTacheMultipleCodes.Contains(name, ExcelSheetNameRules.NameComparer))
+                .Select(name => loc["ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode", Quote(name, loc)].Value));
+        }
+
+        return blocking;
+    }
+
+    // D3: a sheet name ClosedXML refuses. A TacheMultiple rule's name never becomes a sheet name.
+    private static List<string> DescribeSheetNameBlocking(SheetGenerationRule rule, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var blocking = new List<string>();
+        if (rule.PivotSource == PivotSource.TacheMultiple)
+        {
+            return blocking;
+        }
+
+        var name = Quote(rule.SheetName, loc);
+        if (ExcelSheetNameRules.IsTooLong(rule.SheetName))
+        {
+            blocking.Add(loc["ExportProfileDetails_BlockingNameTooLong", name, ExcelSheetNameRules.MaxLength, rule.SheetName.Length]);
+        }
+
+        var forbidden = ExcelSheetNameRules.ForbiddenCharactersIn(rule.SheetName);
+        if (forbidden.Count > 0)
+        {
+            blocking.Add(loc["ExportProfileDetails_BlockingNameForbiddenCharacter", name, QuoteList(forbidden.Select(c => c.ToString()), loc)]);
+        }
+
+        if (ExcelSheetNameRules.HasApostropheAtEdge(rule.SheetName))
+        {
+            blocking.Add(loc["ExportProfileDetails_BlockingNameApostrophe", name]);
+        }
+
+        return blocking;
     }
 
     private static ProfileDescriptionSection BuildSheetSection(SheetGenerationRule rule, IStringLocalizer<BlazorAdminMessages> loc)
@@ -75,7 +133,7 @@ public static class ExportProfileDescriptionBuilder
         }
 
         sentences.AddRange(DescribeColumns(columns, rule.PivotSource == PivotSource.Equipement, loc));
-        return new ProfileDescriptionSection(title, sentences, [], []);
+        return new ProfileDescriptionSection(title, sentences, [], Marked(DescribeSheetNameBlocking(rule, loc)));
     }
 
     private static IEnumerable<ProfileDescriptionSentence> DescribeColumns(

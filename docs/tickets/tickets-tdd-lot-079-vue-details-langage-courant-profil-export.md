@@ -483,6 +483,14 @@ d'export complet : 45/45.
 
 **Vert** : clés `ExportProfileDetails_Blocking*`.
 
+**Fait (2026-09-17)** : `ExcelSheetNameRules.cs`, `DescribeWorkbookBlocking`/`DescribeSheetNameBlocking`
+dans le constructeur, 6 clés (le titre du bloc vient en 79.7). Doublons listés ensemble (« Les feuilles
+« Parents » et « parents » … »). Le garde-fou compte 20 cas (chaque caractère interdit séparément,
+apostrophe au milieu, espaces, nom de règle de tâches trop long, disposition standard) ; un test vérifie
+que les deux issues y sont représentées. Rouge vérifié : 23 échecs, dont les 13 cas bloquants du
+garde-fou (ClosedXML lève bien sur chacun). `ExportProfileDescriptionBuilder*` + `ExcelSheetNameRulesTests` :
+79/79.
+
 ### 79.7 — Page `/export-profiles/{Id:guid}/details`
 
 **Comportement** : `ExportProfileDetails.razor`, `[Authorize]` sans rôle, charge le profil via
