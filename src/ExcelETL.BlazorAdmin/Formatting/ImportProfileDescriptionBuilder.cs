@@ -42,7 +42,7 @@ public static class ImportProfileDescriptionBuilder
                 ? loc["ImportProfileDetails_IgnoredDuplicateSheet"]
                 : loc["ImportProfileDetails_IgnoredUnprocessedSheet"];
             sections.Add(new ProfileDescriptionSection(
-                loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], [], [notice], []));
+                loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], [], Marked([notice]), []));
         }
 
         return new ImportProfileDescription(sections);
@@ -68,7 +68,7 @@ public static class ImportProfileDescriptionBuilder
 
         return new ProfileDescriptionSection(
             loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences,
-            DescribeIgnored(rule, usage, loc), DescribeBlocking(rule, usage, loc));
+            Marked(DescribeIgnored(rule, usage, loc)), Marked(DescribeBlocking(rule, usage, loc)));
     }
 
     // Header rules extraction uses: the composites the sheet requires, and the fields those composites
@@ -400,15 +400,19 @@ public static class ImportProfileDescriptionBuilder
             .Select(sheetName => loc["ImportProfileDetails_BlockingMissingSheet", Quote(sheetName, loc)].Value)
             .ToList();
 
-        return new ProfileDescriptionSection(loc["ImportProfileDetails_GeneralSectionTitle"], sentences, [], blocking);
+        return new ProfileDescriptionSection(loc["ImportProfileDetails_GeneralSectionTitle"], sentences, [], Marked(blocking));
     }
 
     private static string CountedSentence(
         IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string noneKey, string oneKey, string severalKey) =>
         values.Count == 0 ? loc[noneKey] : OneOrSeveral(values, loc, oneKey, severalKey);
 
+    // The value is wrapped in markers so it survives the template formatting as its own segment.
     private static string Quote(string value, IStringLocalizer<BlazorAdminMessages> loc) =>
-        loc["ImportProfileDetails_QuotedValue", value];
+        loc["ImportProfileDetails_QuotedValue", ProfileDescriptionText.ValueStart + value + ProfileDescriptionText.ValueEnd];
+
+    private static List<ProfileDescriptionText> Marked(IEnumerable<string> markedTexts) =>
+        [.. markedTexts.Select(ProfileDescriptionText.FromMarked)];
 
     // "a", "a et b", "a, b et c".
     private static string JoinWithAnd(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>

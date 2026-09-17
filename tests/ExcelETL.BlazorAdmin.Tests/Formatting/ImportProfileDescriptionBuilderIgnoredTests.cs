@@ -53,7 +53,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     {
         var section = Section(ProcedureRule(unconditionalColonneNames: ["VISITE PRÉALABLE CHANTIER"]));
 
-        section.Ignored.Should().Equal("colonne cochée d'office « VISITE PRÉALABLE CHANTIER »");
+        section.Ignored.Select(i => i.Text).Should().Equal("colonne cochée d'office « VISITE PRÉALABLE CHANTIER »");
         section.Texts().Should().NotContain(t => t.Contains("VISITE PRÉALABLE CHANTIER"));
     }
 
@@ -61,13 +61,13 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void ConditionalRuleOnPlatines_IsReportedAsIgnored() =>
         Section(Rule("PLATINES", fields: ElementFields,
                 pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")]))
-            .Ignored.Should().Equal("règle conditionnelle pour la colonne « A »");
+            .Ignored.Select(i => i.Text).Should().Equal("règle conditionnelle pour la colonne « A »");
 
     [Fact]
     public void FieldPresenceRuleOnIsolement_IsReportedAsIgnored() =>
         Section(Rule("ISOLEMENT", fields: IsolementFields,
                 fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "B")]))
-            .Ignored.Should().Equal("règle de cellule pour la colonne « B »");
+            .Ignored.Select(i => i.Text).Should().Equal("règle de cellule pour la colonne « B »");
 
     [Fact]
     public void ColourSettingsOnDivers_AreReportedAsIgnored() =>
@@ -75,7 +75,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
                 headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))],
                 couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
                 defaultCouleurEtiquette: "VERT", allowedCouleursEtiquette: ["ROUGE", "BLANC"]))
-            .Ignored.Should().Equal(
+            .Ignored.Select(i => i.Text).Should().Equal(
                 "cellule de couleur d'étiquette H18:N18",
                 "couleur d'étiquette par défaut « VERT »",
                 "couleurs d'étiquette autorisées « ROUGE », « BLANC »");
@@ -83,14 +83,14 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     [Fact]
     public void ZeroEnergieExpectedValueOnPlatines_IsReportedAsIgnored() =>
         Section(Rule("PLATINES", fields: ElementFields, zeroEnergieExpectedValue: "ZERO ENERGIE"))
-            .Ignored.Should().Equal("valeur zéro énergie attendue « ZERO ENERGIE »");
+            .Ignored.Select(i => i.Text).Should().Equal("valeur zéro énergie attendue « ZERO ENERGIE »");
 
     [Fact]
     public void HeaderOnIsolement_IsReportedAsIgnored() =>
         Section(Rule("ISOLEMENT", fields: IsolementFields,
                 headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "N6"))],
                 headerComposites: [new HeaderCompositeRule("Libelle", "{repereEcho}")]))
-            .Ignored.Should().Equal("champ d'en-tête « repereEcho » lu en N6", "modèle d'en-tête « Libelle »");
+            .Ignored.Select(i => i.Text).Should().Equal("champ d'en-tête « repereEcho » lu en N6", "modèle d'en-tête « Libelle »");
 
     [Fact]
     public void UnreferencedExtraHeaderOnProcedure_IsReportedAsIgnored()
@@ -105,7 +105,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
             ],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}"), new HeaderCompositeRule("Autre", "x")]);
 
-        Section(rule).Ignored.Should().Equal("champ d'en-tête « inutile » lu en A1", "modèle d'en-tête « Autre »");
+        Section(rule).Ignored.Select(i => i.Text).Should().Equal("champ d'en-tête « inutile » lu en A1", "modèle d'en-tête « Autre »");
     }
 
     [Fact]
@@ -113,12 +113,12 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     {
         Section(Rule("PLATINES", fields: ElementFields, couleurEtiquetteCell: new BlockFieldDefinition("C", "H:N", 1, 1),
                 defaultCouleurEtiquette: "BLEUE"))
-            .Ignored.Should().Equal("couleur d'étiquette par défaut « BLEUE » (inutilisée : une cellule de couleur est configurée)");
+            .Ignored.Select(i => i.Text).Should().Equal("couleur d'étiquette par défaut « BLEUE » (inutilisée : une cellule de couleur est configurée)");
 
         Section(Rule("AUTRES JOINTS TOUCHES", fields: ElementFields,
                 headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
                 defaultCouleurEtiquette: "BLEUE", allowedCouleursEtiquette: ["ROUGE"]))
-            .Ignored.Should().Equal("couleurs d'étiquette autorisées « ROUGE » (inutilisées : aucune cellule de couleur configurée)");
+            .Ignored.Select(i => i.Text).Should().Equal("couleurs d'étiquette autorisées « ROUGE » (inutilisées : aucune cellule de couleur configurée)");
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
 
         section.Texts().Should().Contain(
             "Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.");
-        section.Ignored.Should().Equal("champ d'arrêt « Designation » (la lecture s'arrête toujours sur l'identifiant)");
+        section.Ignored.Select(i => i.Text).Should().Equal("champ d'arrêt « Designation » (la lecture s'arrête toujours sur l'identifiant)");
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         description.Sections.Select(s => s.Title).Should().EndWith(["Feuille DIVERS", "Feuille MA FEUILLE"]);
         var section = description.SheetSection("MA FEUILLE");
         section.Sentences.Should().BeEmpty();
-        section.Ignored.Should().Equal("Cette feuille n'est pas traitée par l'import (nom non reconnu).");
+        section.Ignored.Select(i => i.Text).Should().Equal("Cette feuille n'est pas traitée par l'import (nom non reconnu).");
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         var sections = description.Sections.Where(s => s.Title == "Feuille DIVERS").ToList();
         sections.Should().HaveCount(2);
         sections[1].Sentences.Should().BeEmpty();
-        sections[1].Ignored.Should().Equal("Cette règle n'est pas traitée : une règle précédente porte déjà ce nom de feuille.");
+        sections[1].Ignored.Select(i => i.Text).Should().Equal("Cette règle n'est pas traitée : une règle précédente porte déjà ce nom de feuille.");
     }
 
     [Fact]
@@ -161,14 +161,14 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         Section(ProcedureRule(headerFields: [new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
                 new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"))],
                 headerComposites: [new HeaderCompositeRule("Libelle", "{revision}")]))
-            .Blocking.Should().Equal(
+            .Blocking.Select(b => b.Text).Should().Equal(
                 "Champ d'en-tête « nomMAD » absent : l'extraction de cette feuille échoue.",
                 "Modèle d'en-tête « Designation » absent : l'extraction de cette feuille échoue.");
 
     [Fact]
     public void MissingRequiredBlockField_IsBlocking() =>
         Section(Rule("PLATINES", fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]))
-            .Blocking.Should().Equal(
+            .Blocking.Select(b => b.Text).Should().Equal(
                 "Champ de bloc « Designation » absent : l'extraction de cette feuille échoue.",
                 "Champ de bloc « TypeElement » absent : l'extraction de cette feuille échoue.");
 
@@ -176,11 +176,11 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void StopFieldOutsideTheBlock_IsBlocking_OnSheetsThatUseIt() =>
         Section(Rule("DIVERS", fields: ElementFields, stopFieldName: "Repere",
                 headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))]))
-            .Blocking.Should().Equal("Le champ d'arrêt « Repere » ne fait pas partie du bloc : l'extraction de cette feuille échoue.");
+            .Blocking.Select(b => b.Text).Should().Equal("Le champ d'arrêt « Repere » ne fait pas partie du bloc : l'extraction de cette feuille échoue.");
 
     [Fact]
     public void KnownSheetsMissingFromTheProfile_AreBlockingInTheGeneralSection() =>
-        Describe(Profile([ProcedureRule(), Rule("ISOLEMENT", fields: IsolementFields)])).Sections[0].Blocking.Should().Equal(
+        Describe(Profile([ProcedureRule(), Rule("ISOLEMENT", fields: IsolementFields)])).Sections[0].Blocking.Select(b => b.Text).Should().Equal(
             "Feuille « PLATINES » absente du profil : l'import échoue.",
             "Feuille « ORIFICES CAPACITES » absente du profil : l'import échoue.",
             "Feuille « AUTRES JOINTS TOUCHES » absente du profil : l'import échoue.",

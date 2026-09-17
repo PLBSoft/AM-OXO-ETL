@@ -652,3 +652,24 @@ cochées sur l'équipement : « L'équipement et tous ses éléments sont rattac
 (singulier « au tableau « … » » ; liste vide « L'équipement et ses éléments ne sont rattachés à aucun
 tableau. », alignée sur la phrase des applications). Tests de la section générale et catalogue figé
 mis à jour, §5 aligné. Périmètre filtré (constructeur + page) : 80/80.
+
+### 78.12.2 — Valeurs du profil mises en valeur — fait
+
+Demande : mettre en valeur, avec une balise HTML adaptée, les valeurs entre guillemets (ex. « TM_PROC_MAD »,
+« Procédure MAD »).
+
+- **Balise retenue : `<strong class="profile-details-value">`**, guillemets laissés hors de la balise
+  (« <strong>TM_PROC_MAD</strong> »). `<code>` écarté : police à chasse fixe et couleur trop chargées
+  pour de longues listes de noms de colonnes ; `<mark>` écarté : surlignage trop voyant.
+- Le constructeur ne produit toujours aucun HTML. `ProfileDescriptionText` découpe chaque texte en
+  `ProfileDescriptionSegment(Text, IsValue)` ; `ProfileDescriptionSentence.Content` porte ce texte
+  (`Text` reste le texte brut) et `Ignored`/`Blocking` sont des listes de `ProfileDescriptionText`.
+  Mécanique : `Quote` entoure la valeur de deux caractères à usage privé (U+E000/U+E001) avant la
+  mise en forme du gabarit `.resx`, puis `ProfileDescriptionText.FromMarked` les retire et découpe.
+  Une valeur contenant elle-même des guillemets reste correctement découpée (testé).
+- Page : `RenderText` (C#, pas de balisage) rend les segments, pour qu'aucun espace ne s'insère entre
+  une valeur et ses guillemets. Mise en valeur aussi dans les listes « ignorés » et « bloquants ».
+- Tests : `ImportProfileDescriptionValueSegmentsTests` (6, rouge = compilation) et un test de rendu
+  dans `ImportProfileDetailsTests` (rouge vérifié avant `RenderText`) ; les assertions sur `Ignored`/
+  `Blocking` de `ImportProfileDescriptionBuilderIgnoredTests` comparent désormais `.Text`. Périmètre
+  filtré (constructeur, segments, page) : 87/87.

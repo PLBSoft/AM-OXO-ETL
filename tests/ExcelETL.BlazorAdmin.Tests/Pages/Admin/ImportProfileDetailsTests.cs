@@ -111,6 +111,21 @@ public class ImportProfileDetailsTests : BunitContext
         cut.FindAll("#details-section-general-ignored").Should().BeEmpty();
     });
 
+    // Lot 078.12.2: profile values are emphasised, the guillemets stay outside the emphasis.
+    [Fact]
+    public void ProfileValues_AreRenderedInStrong_InSentencesAndInIgnoredItems() => WithFrenchCulture(() =>
+    {
+        var profile = BuildProfile();
+        Store.SaveAsync(profile).GetAwaiter().GetResult();
+
+        var cut = RenderDetails(profile.Id);
+
+        var typeSentence = cut.FindAll("#details-section-general li").Single(li => li.TextContent.StartsWith("L'équipement est créé"));
+        typeSentence.QuerySelectorAll("strong.profile-details-value").Select(s => s.TextContent).Should().Equal("MAD TRAVAUX");
+        typeSentence.InnerHtml.Should().Contain("« <strong class=\"profile-details-value\">MAD TRAVAUX</strong> »");
+        cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("VERT");
+    });
+
     [Fact]
     public void UnknownProfileId_ShowsNotFound_AndNoSection() => WithFrenchCulture(() =>
     {
