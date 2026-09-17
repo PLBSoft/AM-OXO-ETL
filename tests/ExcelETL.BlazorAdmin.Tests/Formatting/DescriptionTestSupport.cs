@@ -3,6 +3,7 @@ using ExcelETL.BlazorAdmin.Formatting;
 using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
+using ExcelETL.Domain.Generation.Profile;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 
@@ -32,6 +33,33 @@ internal static class DescriptionTestSupport
             CultureInfo.CurrentUICulture = originalCulture;
         }
     }
+
+    // Lot 079: same localizer and culture for the export description.
+    public static ProfileDescription Describe(ExportProfile profile)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
+        try
+        {
+            return ExportProfileDescriptionBuilder.Build(profile, Localizer);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    public static SheetGenerationRule ExportRule(
+        string sheetName,
+        PivotSource pivotSource,
+        IReadOnlyList<ColumnDefinition>? columns = null,
+        IReadOnlyList<PointColumnDefinition>? pointColumns = null,
+        IReadOnlyList<ApplicationColumnDefinition>? applicationColumns = null,
+        IReadOnlyList<ConstantColumnDefinition>? constantColumns = null) =>
+        new(sheetName, pivotSource, columns ?? [], pointColumns ?? [], applicationColumns ?? [], constantColumns);
+
+    public static ExportProfile ExportProfile(params SheetGenerationRule[] sheetRules) =>
+        new("Profil d'export de test", sheetRules);
 
     public static IReadOnlyList<string> Texts(this ProfileDescriptionSection section) =>
         [.. section.Sentences.Select(s => s.Text)];

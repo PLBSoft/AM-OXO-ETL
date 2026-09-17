@@ -397,6 +397,14 @@ phrases fixes ; règle sans colonne.
 
 **Vert** : modèle rempli, clés `ExportProfileDetails_Workbook*` et `ExportProfileDetails_Sheet*`.
 
+**Fait (2026-09-17)** : `ExportProfileDescriptionBuilder.cs` (sections classeur et règles), 14 clés.
+Liste des feuilles : phrase au singulier pour une règle (« Le fichier contient la feuille « Parents ». »),
+sinon « Le fichier contient, dans cet ordre : … et … » — **écart avec le §5** (« les feuilles « Parents »,
+« Enfants », puis une feuille par type de tâche »), à aligner en 79.9. Les codes `TM_PROC_MAD`/`TM_PROC_REL`
+de la phrase fixe sont des valeurs mises en évidence. Support de test : `Describe(ExportProfile)`,
+`ExportRule`, `ExportProfile` ajoutés à `DescriptionTestSupport`. `ExportProfileDescriptionBuilderSheetTests` :
+7/7 (rouge = compilation).
+
 ### 79.4 — Colonnes descriptives et constantes (D1)
 
 **Comportement** : une phrase par colonne, dans l'ordre de `ExportColumnLayout`, après les phrases de

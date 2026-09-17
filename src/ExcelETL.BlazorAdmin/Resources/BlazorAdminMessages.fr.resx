@@ -1792,4 +1792,46 @@
   <data name="ImportProfiles_Details" xml:space="preserve">
     <value>Voir les détails</value>
   </data>
+  <data name="ExportProfileDetails_WorkbookSectionTitle" xml:space="preserve">
+    <value>Classeur généré</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookSheetsOne" xml:space="preserve">
+    <value>Le fichier contient {0}.</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookSheetsSeveral" xml:space="preserve">
+    <value>Le fichier contient, dans cet ordre : {0}.</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookItemSheet" xml:space="preserve">
+    <value>la feuille {0}</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookItemTacheMultiple" xml:space="preserve">
+    <value>une feuille par type de tâche (règle {0})</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookHeaderRow" xml:space="preserve">
+    <value>Chaque feuille commence par une ligne de titres ; les données commencent à la ligne 2.</value>
+  </data>
+  <data name="ExportProfileDetails_WorkbookImportProfileDependency" xml:space="preserve">
+    <value>Les points, applications, tableaux et types de tâches viennent du profil d'import utilisé avec ce profil d'export.</value>
+  </data>
+  <data name="ExportProfileDetails_SheetSectionTitle" xml:space="preserve">
+    <value>Feuille {0}</value>
+  </data>
+  <data name="ExportProfileDetails_TacheMultipleSectionTitle" xml:space="preserve">
+    <value>Feuilles par type de tâche (règle « {0} »)</value>
+  </data>
+  <data name="ExportProfileDetails_SheetRowsEquipement" xml:space="preserve">
+    <value>Une seule ligne : l'équipement.</value>
+  </data>
+  <data name="ExportProfileDetails_SheetRowsIsolement" xml:space="preserve">
+    <value>Une ligne par élément, dans l'ordre des feuilles ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS.</value>
+  </data>
+  <data name="ExportProfileDetails_SheetTacheMultipleSheets" xml:space="preserve">
+    <value>Une feuille est créée par type de tâche présent dans le fichier importé, nommée d'après le code du type ({1}, {2}…), par ordre alphabétique. Le nom {0} n'apparaît pas dans le fichier.</value>
+  </data>
+  <data name="ExportProfileDetails_SheetTacheMultipleRows" xml:space="preserve">
+    <value>Chaque feuille contient une ligne par tâche de ce type, titres de section compris, dans l'ordre de la feuille PROCEDURE.</value>
+  </data>
+  <data name="ExportProfileDetails_SheetNoColumn" xml:space="preserve">
+    <value>Aucune colonne.</value>
+  </data>
 </root>
