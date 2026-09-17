@@ -1483,7 +1483,7 @@
   <data name="ImportProfileDetails_GeneralSectionTitle" xml:space="preserve">
     <value>Paramètres généraux</value>
   </data>
-  <data name="ImportProfileDetails_QuotedValue" xml:space="preserve">
+  <data name="ProfileDescription_QuotedValue" xml:space="preserve">
     <value>« {0} »</value>
   </data>
   <data name="ImportProfileDetails_GeneralReperePrefix" xml:space="preserve">
@@ -1642,7 +1642,7 @@
   <data name="ImportProfileDetails_HeaderDesignationSeveralPlaceholders" xml:space="preserve">
     <value>La désignation de l'équipement suit le modèle {0}, où {1} sont remplacés par les valeurs lues ci-dessus.</value>
   </data>
-  <data name="ImportProfileDetails_ListLastSeparator" xml:space="preserve">
+  <data name="ProfileDescription_ListLastSeparator" xml:space="preserve">
     <value> et </value>
   </data>
   <data name="ImportProfileDetails_PointUnconditionalOne" xml:space="preserve">
@@ -1684,7 +1684,7 @@
   <data name="ImportProfileDetails_PointCellFilledIn" xml:space="preserve">
     <value>Si la cellule {0} est renseignée, l'élément est coché dans la colonne {1}.</value>
   </data>
-  <data name="ImportProfileDetails_ListLastOrSeparator" xml:space="preserve">
+  <data name="ProfileDescription_ListLastOrSeparator" xml:space="preserve">
     <value> ou </value>
   </data>
   <data name="ImportProfileDetails_CouleurFromCellWithAllowed" xml:space="preserve">
@@ -1780,7 +1780,7 @@
   <data name="ImportProfileDetails_BackToListButton" xml:space="preserve">
     <value>Retour à la liste</value>
   </data>
-  <data name="ImportProfileDetails_FixedMarker" xml:space="preserve">
+  <data name="ProfileDescription_FixedMarker" xml:space="preserve">
     <value>non modifiable</value>
   </data>
   <data name="ImportProfileDetails_IgnoredHeading" xml:space="preserve">

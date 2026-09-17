@@ -19,7 +19,7 @@ internal static class DescriptionTestSupport
         .BuildServiceProvider()
         .GetRequiredService<IStringLocalizer<BlazorAdminMessages>>();
 
-    public static ImportProfileDescription Describe(ImportProfile profile)
+    public static ProfileDescription Describe(ImportProfile profile)
     {
         var originalCulture = CultureInfo.CurrentUICulture;
         CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
@@ -36,7 +36,7 @@ internal static class DescriptionTestSupport
     public static IReadOnlyList<string> Texts(this ProfileDescriptionSection section) =>
         [.. section.Sentences.Select(s => s.Text)];
 
-    public static ProfileDescriptionSection SheetSection(this ImportProfileDescription description, string sheetName) =>
+    public static ProfileDescriptionSection SheetSection(this ProfileDescription description, string sheetName) =>
         description.Sections.Single(s => s.Title == $"Feuille {sheetName}");
 
     public static SheetExtractionRule Rule(

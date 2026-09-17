@@ -3,6 +3,7 @@ using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using Microsoft.Extensions.Localization;
+using static ExcelETL.BlazorAdmin.Formatting.ProfileDescriptionMarking;
 
 namespace ExcelETL.BlazorAdmin.Formatting;
 
@@ -13,9 +14,7 @@ namespace ExcelETL.BlazorAdmin.Formatting;
 // the .resx (ImportProfileDetails_* keys, French text in both files for now -- decision D5).
 public static class ImportProfileDescriptionBuilder
 {
-    private const string ListSeparator = ", ";
-
-    public static ImportProfileDescription Build(ImportProfile profile, IStringLocalizer<BlazorAdminMessages> loc)
+    public static ProfileDescription Build(ImportProfile profile, IStringLocalizer<BlazorAdminMessages> loc)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(loc);
@@ -45,7 +44,7 @@ public static class ImportProfileDescriptionBuilder
                 loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], [], Marked([notice]), []));
         }
 
-        return new ImportProfileDescription(sections);
+        return new ProfileDescription(sections);
     }
 
     private static ProfileDescriptionSection BuildSheetSection(
@@ -339,10 +338,6 @@ public static class ImportProfileDescriptionBuilder
                 colonnes.Count, QuoteList(colonnes, loc)];
     }
 
-    // One / several: the "several" template takes the count as {0} and the quoted list as {1}.
-    private static string OneOrSeveral(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string oneKey, string severalKey) =>
-        values.Count == 1 ? loc[oneKey, Quote(values[0], loc)] : loc[severalKey, values.Count, QuoteList(values, loc)];
-
     // D1: where the data is read -- step, start row, stop field, then each field's range in the first block.
     private static IEnumerable<ProfileDescriptionSentence> DescribeBlocks(
         RepeatingBlockLocator locator, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
@@ -403,33 +398,7 @@ public static class ImportProfileDescriptionBuilder
         IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string noneKey, string oneKey, string severalKey) =>
         values.Count == 0 ? loc[noneKey] : OneOrSeveral(values, loc, oneKey, severalKey);
 
-    // A cell coordinate, marked the same way as a value (Lot 078.12.3).
-    private static string CellRef(string range) =>
-        ProfileDescriptionText.CellStart + range + ProfileDescriptionText.CellEnd;
-
     // Absolute range of a block cell in the first block.
     private static string CellRange(int firstBlockStartRow, BlockFieldDefinition cell) =>
         CellRef(BlockFieldRangeFormatter.ToAbsoluteRange(firstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd));
-
-    // The value is wrapped in markers so it survives the template formatting as its own segment.
-    private static string Quote(string value, IStringLocalizer<BlazorAdminMessages> loc) =>
-        loc["ImportProfileDetails_QuotedValue", ProfileDescriptionText.ValueStart + value + ProfileDescriptionText.ValueEnd];
-
-    private static List<ProfileDescriptionText> Marked(IEnumerable<string> markedTexts) =>
-        [.. markedTexts.Select(ProfileDescriptionText.FromMarked)];
-
-    // "a", "a et b", "a, b et c".
-    private static string JoinWithAnd(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
-        values.Count == 1
-            ? values[0]
-            : string.Join(ListSeparator, values.Take(values.Count - 1)) + loc["ImportProfileDetails_ListLastSeparator"] + values[^1];
-
-    // "a", "a ou b", "a, b ou c".
-    private static string JoinWithOr(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
-        values.Count == 1
-            ? values[0]
-            : string.Join(ListSeparator, values.Take(values.Count - 1)) + loc["ImportProfileDetails_ListLastOrSeparator"] + values[^1];
-
-    private static string QuoteList(IEnumerable<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
-        string.Join(ListSeparator, values.Select(value => Quote(value, loc)));
 }

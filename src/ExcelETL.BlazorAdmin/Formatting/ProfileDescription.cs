@@ -1,9 +1,9 @@
 namespace ExcelETL.BlazorAdmin.Formatting;
 
 // Lot 078 (docs/tickets/tickets-tdd-lot-078-vue-details-langage-courant-profil-import.md): the plain
-// language description of an ImportProfile, built by ImportProfileDescriptionBuilder. Text only, never
-// markup -- rendering belongs to ImportProfileDetails.razor.
-public sealed record ImportProfileDescription(IReadOnlyList<ProfileDescriptionSection> Sections);
+// language description of a profile, built by ImportProfileDescriptionBuilder (and, since lot 079, by
+// ExportProfileDescriptionBuilder). Text only, never markup -- rendering belongs to ProfileDescriptionView.razor.
+public sealed record ProfileDescription(IReadOnlyList<ProfileDescriptionSection> Sections);
 
 // Ignored: settings stored in the profile that extraction doesn't use for this sheet (D2).
 // Blocking: problems that make extraction fail.

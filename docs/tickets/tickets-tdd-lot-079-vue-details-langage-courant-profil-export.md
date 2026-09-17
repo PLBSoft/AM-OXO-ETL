@@ -343,6 +343,13 @@ de `BusinessPageAuthorizationHttpTests`) reste verte **sans modifier une asserti
 `DescriptionTestSupport` change de type de retour. Vérifier par recherche qu'aucune clé renommée
 n'est encore référencée sous l'ancien nom.
 
+**Fait (2026-09-17)** : `Formatting/ProfileDescription.cs` (renommé), `Formatting/ProfileDescriptionMarking.cs`
+(helpers + `ListSeparator`, importés par `using static`), `Components/Pages/Admin/ProfileDescriptionView.razor`
+(`BlockingHeading` obligatoire, `IgnoredHeading` facultatif). 4 clés renommées dans les deux `.resx`,
+aucune référence restante à l'ancien nom. Aucune assertion modifiée ; seul `DescriptionTestSupport`
+change de type. Périmètre filtré (constructeur et table d'import, page Détails, liste des profils
+d'import, routes HTTP) : 243/243.
+
 ### 79.2 — Lettres de colonnes et disposition des colonnes
 
 **Comportement** :
