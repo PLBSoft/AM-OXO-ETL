@@ -25,15 +25,17 @@ public sealed record ProfileDescriptionSentence(ProfileDescriptionText Content, 
 
     public string Text => Content.Text;
 }
-
-// Lot 078.12.2: a text split into plain parts and profile values (a Tableau name, a compared value...),
-// so the page can emphasise the values. The guillemets around a value belong to the plain parts.
+// Lot 078.12.2/3: a text split into plain parts, profile values (a Tableau name, a compared value...) and
+// cell coordinates, so the page can emphasise each. The guillemets around a value stay plain text.
 public sealed record ProfileDescriptionText(IReadOnlyList<ProfileDescriptionSegment> Segments)
 {
-    // Private-use characters wrapped around a value by the builder while it formats a template, then
-    // removed here -- the only way to keep track of a value through IStringLocalizer's string.Format.
-    internal const char ValueStart = '';
-    internal const char ValueEnd = '';
+    // Private-use characters wrapped around a value or a cell reference by the builder while it formats a
+    // template, then removed here -- the only way to keep track of them through IStringLocalizer's
+    // string.Format.
+    internal const char ValueStart = (char)0xE000;
+    internal const char ValueEnd = (char)0xE001;
+    internal const char CellStart = (char)0xE002;
+    internal const char CellEnd = (char)0xE003;
 
     public string Text => string.Concat(Segments.Select(s => s.Text));
 
@@ -45,20 +47,23 @@ public sealed record ProfileDescriptionText(IReadOnlyList<ProfileDescriptionSegm
         var position = 0;
         while (position < marked.Length)
         {
-            var start = marked.IndexOf(ValueStart, position);
+            var start = marked.IndexOfAny([ValueStart, CellStart], position);
             if (start < 0)
             {
-                segments.Add(new(marked[position..], false));
+                segments.Add(new(marked[position..], ProfileDescriptionSegmentKind.Text));
                 break;
             }
 
             if (start > position)
             {
-                segments.Add(new(marked[position..start], false));
+                segments.Add(new(marked[position..start], ProfileDescriptionSegmentKind.Text));
             }
 
-            var end = marked.IndexOf(ValueEnd, start + 1);
-            segments.Add(new(marked[(start + 1)..end], true));
+            var (endMarker, kind) = marked[start] == ValueStart
+                ? (ValueEnd, ProfileDescriptionSegmentKind.Value)
+                : (CellEnd, ProfileDescriptionSegmentKind.CellReference);
+            var end = marked.IndexOf(endMarker, start + 1);
+            segments.Add(new(marked[(start + 1)..end], kind));
             position = end + 1;
         }
 
@@ -66,4 +71,11 @@ public sealed record ProfileDescriptionText(IReadOnlyList<ProfileDescriptionSegm
     }
 }
 
-public sealed record ProfileDescriptionSegment(string Text, bool IsValue);
+public sealed record ProfileDescriptionSegment(string Text, ProfileDescriptionSegmentKind Kind);
+
+public enum ProfileDescriptionSegmentKind
+{
+    Text,
+    Value,
+    CellReference
+}

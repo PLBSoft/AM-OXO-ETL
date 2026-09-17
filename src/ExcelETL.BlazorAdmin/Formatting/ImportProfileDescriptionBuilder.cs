@@ -59,7 +59,7 @@ public static class ImportProfileDescriptionBuilder
 
         sentences.AddRange(DescribeBlocks(rule.Locator, usage, loc));
         sentences.AddRange(usage.FixedBehaviors.Select(behavior =>
-            new ProfileDescriptionSentence(loc[$"ImportProfileDetails_Fixed_{behavior.Kind}", behavior.Range ?? ""], IsFixed: true)));
+            new ProfileDescriptionSentence(loc[$"ImportProfileDetails_Fixed_{behavior.Kind}", behavior.Range is null ? "" : CellRef(behavior.Range)], IsFixed: true)));
         sentences.AddRange(DescribePoints(rule, usage, loc));
         if (usage.ReadMembers.Contains(SheetRuleMember.CouleurEtiquette))
         {
@@ -100,7 +100,7 @@ public static class ImportProfileDescriptionBuilder
         ignored.AddRange(rule.HeaderFields
             .Where(f => !readsHeader
                 || (usage.RequiredHeaderFields.All(required => required.Name != f.Name) && !referencedFieldNames.Contains(f.Name)))
-            .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), f.Cell.Range].Value));
+            .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), CellRef(f.Cell.Range)].Value));
         ignored.AddRange(rule.HeaderComposites
             .Where(c => !usedComposites.Contains(c))
             .Select(c => loc["ImportProfileDetails_IgnoredHeaderComposite", Quote(c.Name, loc)].Value));
@@ -141,8 +141,7 @@ public static class ImportProfileDescriptionBuilder
         {
             if (rule.CouleurEtiquetteCell is { } cell)
             {
-                yield return loc["ImportProfileDetails_IgnoredCouleurCell", BlockFieldRangeFormatter.ToAbsoluteRange(
-                    rule.Locator.FirstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd)];
+                yield return loc["ImportProfileDetails_IgnoredCouleurCell", CellRange(rule.Locator.FirstBlockStartRow, cell)];
             }
 
             if (rule.DefaultCouleurEtiquette is not null)
@@ -228,7 +227,7 @@ public static class ImportProfileDescriptionBuilder
             }
 
             var key = role is null ? "ImportProfileDetails_HeaderField_Other" : $"ImportProfileDetails_HeaderField_{role}";
-            yield return new(loc[key, Quote(field.Name, loc), field.Cell.Range, options]);
+            yield return new(loc[key, Quote(field.Name, loc), CellRef(field.Cell.Range), options]);
         }
 
         foreach (var composite in usedComposites)
@@ -250,8 +249,7 @@ public static class ImportProfileDescriptionBuilder
     {
         if (rule.CouleurEtiquetteCell is { } cell)
         {
-            var range = BlockFieldRangeFormatter.ToAbsoluteRange(
-                rule.Locator.FirstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd);
+            var range = CellRange(rule.Locator.FirstBlockStartRow, cell);
             yield return new(rule.AllowedCouleursEtiquette is null
                 ? loc["ImportProfileDetails_CouleurFromCellAnyValue", range]
                 : loc["ImportProfileDetails_CouleurFromCellWithAllowed", range, QuoteList(rule.AllowedCouleursEtiquette, loc)]);
@@ -290,8 +288,7 @@ public static class ImportProfileDescriptionBuilder
             foreach (var group in groups)
             {
                 var cells = JoinWithOr(
-                    [.. group.Select(r => BlockFieldRangeFormatter.ToAbsoluteRange(
-                            rule.Locator.FirstBlockStartRow, r.Cell.ColumnRange, r.Cell.RowOffsetStart, r.Cell.RowOffsetEnd))
+                    [.. group.Select(r => CellRange(rule.Locator.FirstBlockStartRow, r.Cell))
                         .Distinct()],
                     loc);
                 var colonne = Quote(group.Key.ColonneName, loc);
@@ -363,8 +360,7 @@ public static class ImportProfileDescriptionBuilder
         var fields = string.Join(ListSeparator, locator.Fields.Select(field => loc[
             "ImportProfileDetails_BlockFieldAt",
             FieldLabel(field.Name, definite: false, loc),
-            BlockFieldRangeFormatter.ToAbsoluteRange(
-                locator.FirstBlockStartRow, field.ColumnRange, field.RowOffsetStart, field.RowOffsetEnd)].Value));
+            CellRange(locator.FirstBlockStartRow, field)].Value));
 
         yield return new(loc[isTask ? "ImportProfileDetails_BlockFirstTaskFields" : "ImportProfileDetails_BlockFirstElementFields", fields]);
     }
@@ -406,6 +402,14 @@ public static class ImportProfileDescriptionBuilder
     private static string CountedSentence(
         IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc, string noneKey, string oneKey, string severalKey) =>
         values.Count == 0 ? loc[noneKey] : OneOrSeveral(values, loc, oneKey, severalKey);
+
+    // A cell coordinate, marked the same way as a value (Lot 078.12.3).
+    private static string CellRef(string range) =>
+        ProfileDescriptionText.CellStart + range + ProfileDescriptionText.CellEnd;
+
+    // Absolute range of a block cell in the first block.
+    private static string CellRange(int firstBlockStartRow, BlockFieldDefinition cell) =>
+        CellRef(BlockFieldRangeFormatter.ToAbsoluteRange(firstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd));
 
     // The value is wrapped in markers so it survives the template formatting as its own segment.
     private static string Quote(string value, IStringLocalizer<BlazorAdminMessages> loc) =>

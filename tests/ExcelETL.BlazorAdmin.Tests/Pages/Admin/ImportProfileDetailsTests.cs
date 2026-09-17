@@ -126,6 +126,20 @@ public class ImportProfileDetailsTests : BunitContext
         cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("VERT");
     });
 
+    // Lot 078.12.3: cell coordinates rendered as <code>.
+    [Fact]
+    public void CellCoordinates_AreRenderedInCode() => WithFrenchCulture(() =>
+    {
+        var profile = BuildProfile();
+        Store.SaveAsync(profile).GetAwaiter().GetResult();
+
+        var cut = RenderDetails(profile.Id);
+
+        var fixedSentence = cut.FindAll("#details-section-sheet-0 li").Single(li => li.TextContent.StartsWith("Le repère de l'élément"));
+        fixedSentence.QuerySelectorAll("code.profile-details-cell").Select(c => c.TextContent).Should().Equal("K6:T6");
+        fixedSentence.InnerHtml.Should().Contain("la cellule <code class=\"profile-details-cell\">K6:T6</code>, un tiret");
+    });
+
     [Fact]
     public void UnknownProfileId_ShowsNotFound_AndNoSection() => WithFrenchCulture(() =>
     {

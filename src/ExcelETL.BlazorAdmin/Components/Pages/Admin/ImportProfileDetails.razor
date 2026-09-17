@@ -105,22 +105,29 @@ else if (_description is not null)
 
     private void BackToList() => NavigationManager.NavigateTo("import-profiles");
 
-    // Lot 078.12.2: profile values in <strong>, the guillemets around them stay plain text. Built in C#
-    // rather than markup so no whitespace sneaks in between a value and its guillemets.
+    // Lot 078.12.2/3: profile values in <strong> (the guillemets around them stay plain text), cell
+    // coordinates in <code>. Built in C# rather than markup so no whitespace sneaks in around a segment.
     private static RenderFragment RenderText(ProfileDescriptionText text) => builder =>
     {
         foreach (var segment in text.Segments)
         {
-            if (segment.IsValue)
+            switch (segment.Kind)
             {
-                builder.OpenElement(0, "strong");
-                builder.AddAttribute(1, "class", "profile-details-value");
-                builder.AddContent(2, segment.Text);
-                builder.CloseElement();
-            }
-            else
-            {
-                builder.AddContent(3, segment.Text);
+                case ProfileDescriptionSegmentKind.Value:
+                    builder.OpenElement(0, "strong");
+                    builder.AddAttribute(1, "class", "profile-details-value");
+                    builder.AddContent(2, segment.Text);
+                    builder.CloseElement();
+                    break;
+                case ProfileDescriptionSegmentKind.CellReference:
+                    builder.OpenElement(3, "code");
+                    builder.AddAttribute(4, "class", "profile-details-cell");
+                    builder.AddContent(5, segment.Text);
+                    builder.CloseElement();
+                    break;
+                default:
+                    builder.AddContent(6, segment.Text);
+                    break;
             }
         }
     };

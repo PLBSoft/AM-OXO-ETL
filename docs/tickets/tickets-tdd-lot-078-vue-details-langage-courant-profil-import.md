@@ -673,3 +673,24 @@ Demande : mettre en valeur, avec une balise HTML adaptée, les valeurs entre gui
   dans `ImportProfileDetailsTests` (rouge vérifié avant `RenderText`) ; les assertions sur `Ignored`/
   `Blocking` de `ImportProfileDescriptionBuilderIgnoredTests` comparent désormais `.Text`. Périmètre
   filtré (constructeur, segments, page) : 87/87.
+
+### 78.12.3 — Coordonnées de cellules mises en évidence — fait
+
+Demande : mettre en évidence les coordonnées (`M2:O2`, `P2:Q2`, `R2:T2`…).
+
+- **Balise retenue : `<code class="profile-details-cell">`** : police à chasse fixe adaptée à des
+  coordonnées courtes (contrairement aux longs noms de colonnes du 78.12.2) ; style Bootstrap par
+  défaut de `<code>`, aucun CSS ajouté.
+- Modèle : `ProfileDescriptionSegment(Text, Kind)` avec l'énumération `ProfileDescriptionSegmentKind`
+  (`Text`, `Value`, `CellReference`), qui remplace le booléen `IsValue` du 78.12.2. Seconde paire de
+  marqueurs à usage privé (U+E002/U+E003), posée par `CellRef` / `CellRange` dans le constructeur.
+- Toutes les plages sont marquées : champs et cellules d'en-tête, champs de bloc, comportements fixes
+  (`K6:T6`, `K6:U6`, `B6:E6`), cellules des règles de cellule, cellule de couleur, et les mêmes plages
+  dans la liste « ignorés ». Les numéros de ligne (« à partir de la ligne 19 ») ne sont pas des
+  coordonnées et restent du texte.
+- Au passage, les deux constantes de marqueurs sont écrites `(char)0xE000` au lieu de caractères
+  invisibles dans la source.
+- Tests : `ImportProfileDescriptionValueSegmentsTests` (+2 : segment de la plage d'en-tête, toutes les
+  sortes de plages ; les 6 tests existants passés à `Kind`) et `ImportProfileDetailsTests` (+1 : rendu
+  `<code>`), rouges avant implémentation (compilation). Texte des phrases inchangé : catalogue figé
+  vert sans modification. Périmètre filtré (constructeur, segments, page) : 90/90.
