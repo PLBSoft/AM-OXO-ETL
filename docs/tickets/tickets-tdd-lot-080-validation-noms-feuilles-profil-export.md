@@ -241,3 +241,35 @@ cas 422 dans `GlobalExceptionHandler.StatusCodeFor`.
   (lots 073-076), `DefaultProfileSeederPipelineIntegrationTests`, `GenerationPipelineIntegrationTests`.
 - Les seules assertions supprimées sont celles de D7, listées dans le commit.
 - Pas de navigateur : Simon vérifie.
+
+---
+
+## Résultat (17/09)
+
+Lot terminé, un commit par sous-ticket (80.0 à 80.6).
+
+- **80.1** : `ExcelSheetName` (domaine) remplace `ExcelSheetNameRules`. `ExcelSheetNameWriterAgreementTests`
+  (18 listes de noms, `GeneratedWorkbook` construit directement) : vert ; passer `MaxLength` à 32 le remet au
+  rouge.
+- **80.2 / 80.3** : validations au constructeur, 5 codes localisés EN/FR, prouvés par
+  `DomainErrorMessagesExportSheetNameLocalizationTests` (messages réels et différents dans les deux
+  langues). `Args` du caractère interdit : les caractères trouvés joints par une espace (`": /"`). `Args`
+  du doublon : le second nom rencontré.
+- **80.4** : vert sans code de production (constat 6 confirmé).
+- **80.5** : 422 localisé sur `POST /api/oxo/process` (EN et FR, sans `exceptionType`) ; message localisé sur
+  la page de test, rouge si l'appel du validateur est retiré du moteur. Le moteur journalise ce rejet comme
+  toute autre exception de génération (`LogError`, puis relance) : inchangé.
+- **Écart d'ordre avec le ticket (D7)** : les retraits de la page Détails ont été faits dans les commits de
+  80.2 (longueur, caractère, apostrophe) et 80.3 (doublon, plusieurs règles `TacheMultiple`), avec le
+  changement de domaine qui rendait ces cas impossibles à construire, pour que chaque commit reste vert.
+  Assertions supprimées : `NameLongerThan31Characters_BlocksOnTheRuleSection`,
+  `NameOf31Characters_DoesNotBlock`, `ForbiddenCharacters_AreCited`, `ApostropheAtTheStartOrEnd_Blocks`
+  (2 cas), `ApostropheInTheMiddle_DoesNotBlock`, `SameNameIgnoringCase_BlocksOnTheWorkbookSection`,
+  `SeveralTacheMultipleRules_BlockOnTheWorkbookSection`, et les 21 cas d'`ExcelSheetNameRulesTests`.
+  `ExportProfileDetailsTests.BlockingProblem_IsShownUnderTheGenerationHeading_AndNoIgnoredBlockExists` vise
+  désormais le cas restant (feuille nommée `TM_PROC_MAD`, section générale).
+- **80.6** : ticket 079 (§2, D3, 79.6, hors périmètre) et `CLAUDE.md` mis à jour en place.
+- Suites complètes : Domain 458, Application 312, Infrastructure 277, WebAPI 75, BlazorAdmin 1587 (1613
+  avant le lot) — toutes vertes. Tests aller-retour (lots 073-076), `DefaultProfileSeederPipelineIntegrationTests`
+  et `GenerationPipelineIntegrationTests` verts sans changement.
+- Non vérifié dans un navigateur : Simon vérifie.

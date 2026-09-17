@@ -139,6 +139,13 @@ Ces cas sont décrits en bloc « Problèmes qui empêchent la génération » (m
 bloc bloquant du lot 078). Ils sont **signalés**, pas corrigés : ajouter une validation au domaine
 ou nettoyer les noms est un autre lot.
 
+**Mis à jour par le lot 080** (`tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md`) : les
+cinq premières lignes du tableau sont désormais **refusées par le domaine** à l'enregistrement du profil
+(message localisé dans l'éditeur) et ne peuvent plus se construire. La ligne « nommée comme un code de
+type de tâche » reste signalée par la page ; à la génération, tout conflit de nom (y compris avec un code
+inconnu et pour un profil enregistré avant le lot 080) est rejeté en 422 avec un message localisé, au
+lieu de l'erreur 500 de ClosedXML. Le tableau ci-dessus décrit l'état avant le lot 080.
+
 #### 3. Ce qui se reprend du lot 078
 
 - **Modèle** : `ProfileDescriptionSection`/`Sentence`/`Text`/`Segment` sont déjà neutres. Seul
@@ -280,7 +287,9 @@ Le profil semé ne déclenche aucun cas du §2 : aucun bloc bloquant sur cette p
   colonnes de points ont chacune leur phrase.
 - **D3 — acté : oui, bloc rouge.** Les cas du §2 sont listés sous « Problèmes qui empêchent la
   génération ». Les règles de nom de feuille d'Excel sont dupliquées côté `BlazorAdmin` et
-  vérifiées par test contre ClosedXML.
+  vérifiées par test contre ClosedXML. **Revu par le lot 080 (D1, D7)** : ces règles vivent dans le
+  domaine (`ExcelSheetName`), `ExcelSheetNameRules` est supprimé ; le bloc ne garde que l'alerte
+  « feuille nommée comme un code de tâche connu ».
 - **D4 — acté : non.** Pas de contrôle croisé avec les profils d'import dans ce lot.
 - **D5, D6, D7 — actés (Simon, 2026-09-17)** : reprise du lot 078 par éléments partagés (renommage
   `ProfileDescription`, helpers et rendu extraits, tests du lot 078 inchangés), id
@@ -493,6 +502,10 @@ que les deux issues y sont représentées. Rouge vérifié : 23 échecs, dont le
 garde-fou (ClosedXML lève bien sur chacun). `ExportProfileDescriptionBuilder*` + `ExcelSheetNameRulesTests` :
 79/79.
 
+**Revu par le lot 080** : contrôles longueur/caractère/apostrophe/doublon/plusieurs règles `TacheMultiple`
+retirés de la page (refusés par le domaine), avec leurs 5 clés et leurs tests ; `ExcelSheetNameRulesTests`
+remplacé par `ExcelSheetNameWriterAgreementTests` (Infrastructure.Tests).
+
 ### 79.7 — Page `/export-profiles/{Id:guid}/details`
 
 **Comportement** : `ExportProfileDetails.razor`, `[Authorize]` sans rôle, charge le profil via
@@ -570,5 +583,6 @@ attendue (`R` → `S`) : le test échoue. `CLAUDE.md` et le tableau des routes d
 - Traduction anglaise des clés `ExportProfileDetails_*` (D7, lot ultérieur).
 - Contrôle croisé avec les profils d'import (D4).
 - Toute correction des cas bloquants ou de l'écart de comparaison des points (§1, §2) : domaine,
-  moteur, écriture et éditeur inchangés.
+  moteur, écriture et éditeur inchangés. Cas bloquants corrigés depuis par le lot 080 ; écart de
+  comparaison des points traité par le lot 081.
 - Lien vers la vue Détails depuis l'éditeur ou les pages de test ; export PDF/impression.
