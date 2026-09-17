@@ -163,6 +163,12 @@
   <data name="ExportProfile_NameTooLong" xml:space="preserve">
     <value>Name must not exceed {0} characters.</value>
   </data>
+  <data name="ExportProfile_DuplicateSheetName" xml:space="preserve">
+    <value>The sheet name '{0}' is used by more than one sheet (Excel ignores upper and lower case).</value>
+  </data>
+  <data name="ExportProfile_SeveralTacheMultipleRules" xml:space="preserve">
+    <value>A profile can contain only one multiple-task rule.</value>
+  </data>
   <data name="SheetGenerationRule_EmptySheetName" xml:space="preserve">
     <value>Sheet name must not be empty.</value>
   </data>

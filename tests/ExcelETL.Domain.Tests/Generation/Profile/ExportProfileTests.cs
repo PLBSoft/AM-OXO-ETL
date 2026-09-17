@@ -135,4 +135,50 @@ public class ExportProfileTests
 
         profile.Name.Should().Be(name);
     }
+
+    // Lot 080.3 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md): checks between the
+    // profile's rules that make ClosedXmlWorkbookWriter fail.
+    private static SheetGenerationRule IsolementRule(string sheetName) => new(
+        sheetName, PivotSource.Isolement, [new ColumnDefinition("Numéro", PivotFieldRef.IsolementRepere)], [], []);
+
+    private static SheetGenerationRule TacheMultipleRule(string sheetName = "Tâches multiples") => new(
+        sheetName, PivotSource.TacheMultiple, [new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre)], [], []);
+
+    [Fact]
+    public void Constructor_WithTwoSheetNamesEqualIgnoringCase_ThrowsDuplicateSheetName()
+    {
+        var act = () => new ExportProfile("Profil export OXO standard", [ValidRule("Parents"), IsolementRule("parents")]);
+
+        var exception = act.Should().Throw<DomainValidationException>().WithParameterName("sheetRules").Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ExportProfile_DuplicateSheetName);
+        exception.Args.Should().ContainSingle().Which.Should().Be("parents");
+    }
+
+    [Fact]
+    public void Constructor_WithSheetNamesDifferingOnlyBySurroundingSpaces_IsAccepted()
+    {
+        var profile = new ExportProfile("Profil export OXO standard", [ValidRule(" Parents "), IsolementRule("Parents")]);
+
+        profile.SheetRules.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void Constructor_WithTwoTacheMultipleRules_ThrowsSeveralTacheMultipleRules()
+    {
+        var act = () => new ExportProfile(
+            "Profil export OXO standard", [ValidRule(), TacheMultipleRule("Tâches A"), TacheMultipleRule("Tâches B")]);
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("sheetRules")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ExportProfile_SeveralTacheMultipleRules);
+    }
+
+    // Non-generalization: a TacheMultiple rule's label is never a sheet name, so it can't clash with one.
+    [Fact]
+    public void Constructor_WithTacheMultipleLabelEqualToASheetName_IsAccepted()
+    {
+        var profile = new ExportProfile("Profil export OXO standard", [ValidRule("Parents"), TacheMultipleRule("Parents")]);
+
+        profile.SheetRules.Should().HaveCount(2);
+    }
 }

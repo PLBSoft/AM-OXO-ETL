@@ -47,32 +47,22 @@ public static class ExportProfileDescriptionBuilder
             loc["ExportProfileDetails_WorkbookSectionTitle"], sentences, [], Marked(DescribeWorkbookBlocking(profile, loc)));
     }
 
-    // D3: sheet-name clashes between rules that make ClosedXmlWorkbookWriter fail.
+    // Lot 079 D3, reduced by lot 080 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md,
+    // D7): invalid names, duplicates and several TacheMultiple rules are now refused by the domain. What remains
+    // is a sheet named like a known task code next to a TacheMultiple rule: the clash only happens if the imported
+    // file contains that task type, so the profile itself stays valid.
     private static List<string> DescribeWorkbookBlocking(ExportProfile profile, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        var blocking = new List<string>();
-        var namedSheets = profile.SheetRules.Where(r => r.PivotSource != PivotSource.TacheMultiple).Select(r => r.SheetName).ToList();
-        var tacheMultipleRules = profile.SheetRules.Where(r => r.PivotSource == PivotSource.TacheMultiple).ToList();
-
-        blocking.AddRange(namedSheets
-            .GroupBy(name => name, ExcelSheetName.NameComparer)
-            .Where(group => group.Count() > 1)
-            .Select(group => loc["ExportProfileDetails_BlockingDuplicateSheetName", JoinWithAnd([.. group.Select(name => Quote(name, loc))], loc)].Value));
-
-        if (tacheMultipleRules.Count > 1)
+        if (!profile.SheetRules.Any(r => r.PivotSource == PivotSource.TacheMultiple))
         {
-            blocking.Add(loc["ExportProfileDetails_BlockingSeveralTacheMultipleRules", tacheMultipleRules.Count,
-                QuoteList(tacheMultipleRules.Select(r => r.SheetName), loc)]);
+            return [];
         }
 
-        if (tacheMultipleRules.Count > 0)
-        {
-            blocking.AddRange(namedSheets
-                .Where(name => KnownTacheMultipleCodes.Contains(name, ExcelSheetName.NameComparer))
-                .Select(name => loc["ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode", Quote(name, loc)].Value));
-        }
-
-        return blocking;
+        return [.. profile.SheetRules
+            .Where(r => r.PivotSource != PivotSource.TacheMultiple)
+            .Select(r => r.SheetName)
+            .Where(name => KnownTacheMultipleCodes.Contains(name, ExcelSheetName.NameComparer))
+            .Select(name => loc["ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode", Quote(name, loc)].Value)];
     }
 
     private static ProfileDescriptionSection BuildSheetSection(SheetGenerationRule rule, IStringLocalizer<BlazorAdminMessages> loc)

@@ -63,6 +63,8 @@ public enum DomainErrorCode
     ExportProfile_EmptyName,
     ExportProfile_NoSheetRules,
     ExportProfile_NameTooLong,
+    ExportProfile_DuplicateSheetName,
+    ExportProfile_SeveralTacheMultipleRules,
     SheetGenerationRule_EmptySheetName,
     SheetGenerationRule_SheetNameTooLong,
     SheetGenerationRule_SheetNameForbiddenCharacter,

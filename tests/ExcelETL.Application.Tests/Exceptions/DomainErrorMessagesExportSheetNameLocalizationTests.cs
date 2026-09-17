@@ -26,6 +26,12 @@ public class DomainErrorMessagesExportSheetNameLocalizationTests
         yield return ["SheetGenerationRule_SheetNameTooLong", () => Sheet(new string('A', 32))];
         yield return ["SheetGenerationRule_SheetNameForbiddenCharacter", () => Sheet("A/B")];
         yield return ["SheetGenerationRule_SheetNameApostropheAtEdge", () => Sheet("'Parents")];
+        yield return ["ExportProfile_DuplicateSheetName", () => new ExportProfile("Profil", [Sheet("Parents"), Sheet("parents", PivotSource.Isolement)])];
+        yield return
+        [
+            "ExportProfile_SeveralTacheMultipleRules",
+            () => new ExportProfile("Profil", [Sheet("Tâches A", PivotSource.TacheMultiple), Sheet("Tâches B", PivotSource.TacheMultiple)])
+        ];
     }
 
     [Theory]

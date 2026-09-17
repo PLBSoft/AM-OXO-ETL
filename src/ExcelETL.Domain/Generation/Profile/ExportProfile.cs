@@ -58,6 +58,9 @@ public sealed record ExportProfile
                 "Sheet rules must contain at least one rule.", nameof(sheetRules), DomainErrorCode.ExportProfile_NoSheetRules);
         }
 
+        ValidateNoDuplicateSheetName(sheetRules);
+        ValidateAtMostOneTacheMultipleRule(sheetRules);
+
         Id = id;
         Name = name;
         _sheetRules = [.. sheetRules];
@@ -68,6 +71,37 @@ public sealed record ExportProfile
     private ExportProfile()
     {
         Name = string.Empty;
+    }
+
+    // Lot 080.3 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md): two worksheets can't
+    // share a name, case ignored (ExcelSheetName.NameComparer). A TacheMultiple rule's name is an internal label,
+    // never a sheet name: it takes no part in this check. The sheets named after task codes are only known once
+    // a file is imported -- checked at generation time instead.
+    private static void ValidateNoDuplicateSheetName(IReadOnlyList<SheetGenerationRule> sheetRules)
+    {
+        var seen = new HashSet<string>(ExcelSheetName.NameComparer);
+        var duplicate = sheetRules
+            .Where(rule => rule.PivotSource != PivotSource.TacheMultiple)
+            .Select(rule => rule.SheetName)
+            .FirstOrDefault(sheetName => !seen.Add(sheetName));
+
+        if (duplicate is not null)
+        {
+            throw new DomainValidationException(
+                $"Sheet name '{duplicate}' is used by more than one sheet (case ignored).", nameof(sheetRules),
+                DomainErrorCode.ExportProfile_DuplicateSheetName, duplicate);
+        }
+    }
+
+    // Two TacheMultiple rules would both create one sheet per task code, with the same names.
+    private static void ValidateAtMostOneTacheMultipleRule(IReadOnlyList<SheetGenerationRule> sheetRules)
+    {
+        if (sheetRules.Count(rule => rule.PivotSource == PivotSource.TacheMultiple) > 1)
+        {
+            throw new DomainValidationException(
+                "A profile must not contain more than one task (TacheMultiple) rule.", nameof(sheetRules),
+                DomainErrorCode.ExportProfile_SeveralTacheMultipleRules);
+        }
     }
 
     public bool Equals(ExportProfile? other) =>

@@ -1951,12 +1951,6 @@
   <data name="ExportProfileDetails_PointGroupItem" xml:space="preserve">
     <value>{0} ({1})</value>
   </data>
-  <data name="ExportProfileDetails_BlockingDuplicateSheetName" xml:space="preserve">
-    <value>Les feuilles {0} ont le même nom pour Excel (majuscules et minuscules confondues) : la génération échoue.</value>
-  </data>
-  <data name="ExportProfileDetails_BlockingSeveralTacheMultipleRules" xml:space="preserve">
-    <value>Le profil contient {0} règles de tâches multiples ({1}) : elles créent des feuilles de même nom, la génération échoue dès que le fichier contient une tâche.</value>
-  </data>
   <data name="ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode" xml:space="preserve">
     <value>La feuille {0} porte le nom d'une feuille de tâches : la génération échoue si le fichier contient des tâches de ce type.</value>
   </data>

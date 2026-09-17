@@ -18,24 +18,6 @@ public class ExportProfileDescriptionBuilderBlockingTests
 
     private static IEnumerable<string> BlockingTexts(ProfileDescriptionSection section) => section.Blocking.Select(b => b.Text);
 
-    [Fact]
-    public void SameNameIgnoringCase_BlocksOnTheWorkbookSection()
-    {
-        var description = Describe(ExportProfile(Parents(), Parents("parents")));
-
-        BlockingTexts(description.Sections[0]).Should().Equal(
-            "Les feuilles « Parents » et « parents » ont le même nom pour Excel (majuscules et minuscules confondues) : la génération échoue.");
-    }
-
-    [Fact]
-    public void SeveralTacheMultipleRules_BlockOnTheWorkbookSection()
-    {
-        var description = Describe(ExportProfile(Taches("Tâches A"), Taches("Tâches B")));
-
-        BlockingTexts(description.Sections[0]).Should().Equal(
-            "Le profil contient 2 règles de tâches multiples (« Tâches A », « Tâches B ») : elles créent des feuilles de même nom, la génération échoue dès que le fichier contient une tâche.");
-    }
-
     [Theory]
     [InlineData("TM_PROC_MAD")]
     [InlineData("tm_proc_rel")]
