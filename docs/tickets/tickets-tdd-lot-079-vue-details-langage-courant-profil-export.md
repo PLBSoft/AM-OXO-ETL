@@ -68,8 +68,9 @@ La lettre de colonne Excel de chaque colonne est donc calculable à partir du pr
 - `Isolement` : **une ligne par élément**, dans l'ordre des feuilles ISOLEMENT, PLATINES, ORIFICES
   CAPACITES, AUTRES JOINTS TOUCHES, DIVERS (`ImportPipelineOrchestrator`). Une colonne de point est
   cochée si l'élément porte le point, **comparaison exacte** (majuscules et espaces compris).
-  **Écart** : la feuille Équipement tolère casse et espaces pour les points hérités des éléments,
-  la feuille Éléments non. Signalé, pas corrigé (hors périmètre).
+  **Écart, corrigé au lot 081** (`tickets-tdd-lot-081-comparaison-noms-colonne-points-export.md`) :
+  une seule règle de comparaison (`ColonneNameComparer` : `Trim` puis `OrdinalIgnoreCase`) partout où
+  le moteur coche un point ou une application, sur les deux feuilles, voie directe comme voie agrégée.
 - `TacheMultiple` : **une feuille par type de tâche** présent dans le fichier importé, nommée
   d'après le code du type (caractères interdits remplacés par `_`, 31 caractères au plus), feuilles
   classées par ordre alphabétique du code. Chaque feuille contient toutes les tâches de ce type,
@@ -204,7 +205,7 @@ colonnes de points sont regroupées en une phrase (D2).*
 - Colonne L « ADR Email » : toujours vide.
 - Colonne M « COMMENTAIRES » : toujours vide.
 - Colonne N « PROGRESS » : « O » si l'équipement est rattaché à l'application « PROGRESS », sinon vide.
-- Colonnes O à AD : « X » si l'équipement, ou au moins un de ses éléments, est coché dans la colonne du même nom à l'import, sinon vide : « PROLOCK VANNES » (O), « DEPROLOCK VANNES » (P), « ZÉRO ENERGIE EN PRESENCE EE (PS941) » (Q), « POSE ÉTIQUETTES » (R), « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS » (S), « CONTRÔLE ETANCHÉITÉS » (T), « RECEPTION DEBUT MAD » (U), « RÉCEPTION PLATINES/TAMPONS PLEINS » (V), « RECEPTION DEBUT REL » (W), « PLATINES / TAMPONS PLEINS » (X), « SYNCHRONISATION INSTRUMENTATION » (Y), « SOUPAPE : CONSTAT ENCRASSEMENT » (Z), « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS » (AA), « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES » (AB), « PF : VALIDATION CONSTAT ENCRASSEMENT » (AC), « PF : ACCORD TRAVAUX FEU » (AD).
+- Colonnes O à AD : « X » si l'équipement, ou au moins un de ses éléments, est coché dans la colonne du même nom à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide : « PROLOCK VANNES » (O), « DEPROLOCK VANNES » (P), « ZÉRO ENERGIE EN PRESENCE EE (PS941) » (Q), « POSE ÉTIQUETTES » (R), « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS » (S), « CONTRÔLE ETANCHÉITÉS » (T), « RECEPTION DEBUT MAD » (U), « RÉCEPTION PLATINES/TAMPONS PLEINS » (V), « RECEPTION DEBUT REL » (W), « PLATINES / TAMPONS PLEINS » (X), « SYNCHRONISATION INSTRUMENTATION » (Y), « SOUPAPE : CONSTAT ENCRASSEMENT » (Z), « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS » (AA), « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES » (AB), « PF : VALIDATION CONSTAT ENCRASSEMENT » (AC), « PF : ACCORD TRAVAUX FEU » (AD).
 
 **Feuille Enfants**
 - Une ligne par élément, dans l'ordre des feuilles ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS. (fixe)
@@ -228,7 +229,7 @@ colonnes de points sont regroupées en une phrase (D2).*
 - Colonne R « Tableaux » : les tableaux de l'élément, séparés par une virgule.
 - Colonne S « SUPPRESSION » : toujours vide.
 - Colonne T « PROGRESS » : « O » si l'élément est rattaché à l'application « PROGRESS », sinon vide.
-- Colonnes U à AJ : « X » si l'élément est coché dans la colonne du même nom à l'import (nom identique, majuscules comprises), sinon vide : « PROLOCK VANNES » (U), « DEPROLOCK VANNES » (V), « ZÉRO ENERGIE EN PRESENCE EE (PS941) » (W), « POSE ÉTIQUETTES » (X), « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS » (Y), « CONTRÔLE ETANCHÉITÉS » (Z), « RECEPTION DEBUT MAD » (AA), « RÉCEPTION PLATINES/TAMPONS PLEINS » (AB), « RECEPTION DEBUT REL » (AC), « PLATINES / TAMPONS PLEINS » (AD), « SYNCHRONISATION INSTRUMENTATION » (AE), « SOUPAPE : CONSTAT ENCRASSEMENT » (AF), « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS » (AG), « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES » (AH), « PF : VALIDATION CONSTAT ENCRASSEMENT » (AI), « PF : ACCORD TRAVAUX FEU » (AJ).
+- Colonnes U à AJ : « X » si l'élément est coché dans la colonne du même nom à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide : « PROLOCK VANNES » (U), « DEPROLOCK VANNES » (V), « ZÉRO ENERGIE EN PRESENCE EE (PS941) » (W), « POSE ÉTIQUETTES » (X), « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS » (Y), « CONTRÔLE ETANCHÉITÉS » (Z), « RECEPTION DEBUT MAD » (AA), « RÉCEPTION PLATINES/TAMPONS PLEINS » (AB), « RECEPTION DEBUT REL » (AC), « PLATINES / TAMPONS PLEINS » (AD), « SYNCHRONISATION INSTRUMENTATION » (AE), « SOUPAPE : CONSTAT ENCRASSEMENT » (AF), « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS » (AG), « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES » (AH), « PF : VALIDATION CONSTAT ENCRASSEMENT » (AI), « PF : ACCORD TRAVAUX FEU » (AJ).
 
 **Feuilles par type de tâche (règle « Tâches multiples »)**
 - Une feuille est créée par type de tâche présent dans le fichier importé, nommée d'après le code du type (« TM_PROC_MAD », « TM_PROC_REL »…), par ordre alphabétique. Le nom « Tâches multiples » n'apparaît pas dans le fichier. (fixe)
@@ -454,7 +455,9 @@ différent du nom de clé) — un nouveau champ ajouté au domaine sans libellé
   chacune, « Colonne {lettre} « {titre} » : « {coche} » si … est coché dans la colonne « {nom} » à
   l'import, sinon vide. » ;
 - sujet selon la source : Équipement « l'équipement, ou au moins un de ses éléments, » ; Élément
-  « l'élément », avec « (nom identique, majuscules comprises) » (écart du §1).
+  « l'élément » ; les deux avec « (sans tenir compte des majuscules ni des espaces en début ou fin) »,
+  depuis le lot 081 (la note de l'écart du §1 « (nom identique, majuscules comprises) », propre à
+  l'ancienne comparaison stricte côté Élément, est retirée).
 
 **Rouge** (`ExportProfileDescriptionBuilderPointTests`) : Parents et Enfants du §5 réduits à trois
 colonnes de points ; deux valeurs de coche → deux groupes ; une colonne dont le titre diffère du
