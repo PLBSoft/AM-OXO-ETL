@@ -38,13 +38,21 @@ public static class ImportSheetUsage
                 new(ProcedureHeaderFieldNames.Revision, HeaderRole.Revision),
                 new(ProcedureHeaderFieldNames.DateRev, HeaderRole.RevisionDate)
             ],
-            [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) { ItemKind = BlockItemKind.Task },
+            [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) {
+                ItemKind = BlockItemKind.Task,
+                FixedBehaviors =
+                [
+                    new(FixedBehaviorKind.UnreadableRevisionDateRejectsFile),
+                    new(FixedBehaviorKind.TaskTypeMadRelMapping),
+                    new(FixedBehaviorKind.TaskWithoutOrdreIsSectionTitle)
+                ]
+            },
         [Isolement] = new(
             [
                 SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
                 SheetRuleMember.ZeroEnergieExpectedValue
             ],
-            [], []),
+            [], []) { FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:T6")] },
         [Platines] = PlatinesStyle(),
         [OrificesCapacites] = PlatinesStyle(),
         [AutresJointsTouches] = new(
@@ -58,7 +66,7 @@ public static class ImportSheetUsage
                 SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
                 SheetRuleMember.ConditionalPointRules
             ],
-            RepereEchoOnly, []),
+            RepereEchoOnly, []) { FixedBehaviors = [new(FixedBehaviorKind.ZoneFromCell, "B6:E6")] },
     };
 
     // PLATINES and ORIFICES CAPACITES share UnconditionalIsolementSheetExtractionService.
@@ -67,7 +75,7 @@ public static class ImportSheetUsage
             SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.FieldPresencePointRules,
             SheetRuleMember.CouleurEtiquette
         ],
-        [], []);
+        [], []) { FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:U6")] };
 
     // Null when the sheet name isn't one the import pipeline processes.
     public static ImportSheetUsageEntry? For(string sheetName) => BySheetName.GetValueOrDefault(sheetName);
@@ -83,6 +91,11 @@ public sealed record ImportSheetUsageEntry(
     // What one repeating block holds, for the Details page vocabulary ("une tâche" / "un élément").
     public BlockItemKind ItemKind { get; init; } = BlockItemKind.Element;
 
+    // Behaviors coded in the extraction service, not editable in the profile (D3). Ranges copied from
+    // IsolementExtractionService (K6:T6), UnconditionalIsolementSheetExtractionService (K6:U6) and
+    // DiversExtractionService (B6:E6); the others from ProcedureExtractionService.
+    public IReadOnlyList<FixedBehavior> FixedBehaviors { get; init; } = [];
+
     public ImportSheetUsageEntry(
         SheetRuleMember[] readMembers, RequiredHeaderName[] requiredHeaderFields, RequiredHeaderName[] requiredHeaderComposites)
         : this(new HashSet<SheetRuleMember>(readMembers), requiredHeaderFields, requiredHeaderComposites)
@@ -94,6 +107,17 @@ public enum BlockItemKind
 {
     Task,
     Element
+}
+
+public sealed record FixedBehavior(FixedBehaviorKind Kind, string? Range = null);
+
+public enum FixedBehaviorKind
+{
+    ElementRepereFromCell,
+    ZoneFromCell,
+    UnreadableRevisionDateRejectsFile,
+    TaskTypeMadRelMapping,
+    TaskWithoutOrdreIsSectionTitle
 }
 
 public sealed record RequiredHeaderName(string Name, HeaderRole Role);

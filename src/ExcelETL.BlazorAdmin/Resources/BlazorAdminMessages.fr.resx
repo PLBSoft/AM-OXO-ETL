@@ -1696,4 +1696,19 @@
   <data name="ImportProfileDetails_CouleurDefault" xml:space="preserve">
     <value>La couleur d'étiquette de chaque élément est toujours {0}.</value>
   </data>
+  <data name="ImportProfileDetails_Fixed_ElementRepereFromCell" xml:space="preserve">
+    <value>Le repère de l'élément est la cellule {0}, un tiret, puis l'identifiant.</value>
+  </data>
+  <data name="ImportProfileDetails_Fixed_ZoneFromCell" xml:space="preserve">
+    <value>La zone lue en {0} est appliquée à l'équipement et à tous les éléments du fichier.</value>
+  </data>
+  <data name="ImportProfileDetails_Fixed_UnreadableRevisionDateRejectsFile" xml:space="preserve">
+    <value>Une date de révision illisible fait refuser le fichier entier.</value>
+  </data>
+  <data name="ImportProfileDetails_Fixed_TaskTypeMadRelMapping" xml:space="preserve">
+    <value>Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ».</value>
+  </data>
+  <data name="ImportProfileDetails_Fixed_TaskWithoutOrdreIsSectionTitle" xml:space="preserve">
+    <value>Une ligne sans ordre est un titre de section, pas une tâche à réaliser.</value>
+  </data>
 </root>

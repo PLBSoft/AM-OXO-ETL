@@ -109,7 +109,7 @@ public class ImportProfileDescriptionBuilderPointTests
             new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A"),
             new ConditionalPointRule("TypeElement", ConditionOperator.Equals, " soupape  ", "B")
         ])).Should().Contain("Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes « A », « B ».")
-            .And.HaveCount(2 + 2);
+            .And.ContainSingle(t => t.StartsWith("Si le type"));
 
     [Fact]
     public void SameColonneForTwoValues_GivesTwoSentences() =>

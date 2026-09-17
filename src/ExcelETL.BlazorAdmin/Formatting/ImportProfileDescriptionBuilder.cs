@@ -46,6 +46,8 @@ public static class ImportProfileDescriptionBuilder
         }
 
         sentences.AddRange(DescribeBlocks(rule.Locator, usage.ItemKind, loc));
+        sentences.AddRange(usage.FixedBehaviors.Select(behavior =>
+            new ProfileDescriptionSentence(loc[$"ImportProfileDetails_Fixed_{behavior.Kind}", behavior.Range ?? ""], IsFixed: true)));
         sentences.AddRange(DescribePoints(rule, usage, loc));
         if (usage.ReadMembers.Contains(SheetRuleMember.CouleurEtiquette))
         {

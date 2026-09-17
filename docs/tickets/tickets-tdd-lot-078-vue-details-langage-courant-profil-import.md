@@ -519,6 +519,8 @@ feuille inconnue.
 
 **Vert** : clés `ImportProfileDetails_Fixed*`.
 
+**Fait (2026-09-17)** : `ImportSheetUsageEntry.FixedBehaviors` (liste de `FixedBehavior(Kind, Range?)`, enum `FixedBehaviorKind`) ; clé `ImportProfileDetails_Fixed_{Kind}`. Phrases fixes placées juste après les phrases de blocs, pour toutes les feuilles (**écart avec le §5**, où la date illisible suit l'en-tête et la zone DIVERS suit `repereEcho` — à aligner en 78.11). AUTRES JOINTS TOUCHES n'a aucun comportement fixe. Un test du 78.5 qui comptait toutes les phrases de DIVERS a été recentré sur le seul groupe vérifié. `ImportProfileDescriptionBuilderFixedBehaviorTests` : 8/8 (rouge = compilation) ; périmètre filtré (constructeur + table) : 107/107.
+
 ### 78.8 — Réglages ignorés et problèmes bloquants (D2)
 
 **Comportement** :
