@@ -182,11 +182,14 @@ public sealed record SheetGenerationRule
         }
     }
 
+    // Lot 081 (docs/tickets/tickets-tdd-lot-081-comparaison-noms-colonne-points-export.md, 81.3):
+    // ColonneNameComparer, the same rule SheetGenerationEngine uses to decide whether a Point column is
+    // marked -- two names the engine treats as identical must be refused as duplicates.
     private static void ValidateNoDuplicateColonneNom(
         string sheetName, IReadOnlyList<PointColumnDefinition> pointColumnDefinitions)
     {
         var duplicateColonneNom = pointColumnDefinitions
-            .GroupBy(point => point.ColonneNom)
+            .GroupBy(point => point.ColonneNom, ColonneNameComparer.Instance)
             .FirstOrDefault(group => group.Count() > 1);
 
         if (duplicateColonneNom is not null)
@@ -197,11 +200,13 @@ public sealed record SheetGenerationRule
         }
     }
 
+    // Same rule as ValidateNoDuplicateColonneNom above (Lot 081) -- ColonneNameComparer, the one the
+    // engine also uses for HasApplication.
     private static void ValidateNoDuplicateApplicationNom(
         string sheetName, IReadOnlyList<ApplicationColumnDefinition> applicationColumnDefinitions)
     {
         var duplicateApplicationNom = applicationColumnDefinitions
-            .GroupBy(application => application.ApplicationNom)
+            .GroupBy(application => application.ApplicationNom, ColonneNameComparer.Instance)
             .FirstOrDefault(group => group.Count() > 1);
 
         if (duplicateApplicationNom is not null)

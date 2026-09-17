@@ -265,6 +265,55 @@ public class SheetGenerationRuleTests
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom);
     }
 
+    // Lot 081 (docs/tickets/tickets-tdd-lot-081-comparaison-noms-colonne-points-export.md, 81.3): the
+    // same ColonneNameComparer the generation engine uses to decide whether a Point/Application column
+    // is marked -- two names the engine would treat as identical must be refused as duplicates too.
+    [Fact]
+    public void Constructor_WithColonneNomDifferingOnlyByCaseAndSpaces_ThrowsDomainValidationException()
+    {
+        IReadOnlyList<PointColumnDefinition> points =
+        [
+            new PointColumnDefinition("ZÉRO ENERGIE", "Zéro énergie"),
+            new PointColumnDefinition("zéro energie ", "Zéro énergie (bis)")
+        ];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, [], points, []);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateColonneNom);
+    }
+
+    [Fact]
+    public void Constructor_WithApplicationNomDifferingOnlyByCaseAndSpaces_ThrowsDomainValidationException()
+    {
+        IReadOnlyList<ApplicationColumnDefinition> applications =
+        [
+            new ApplicationColumnDefinition("PROGRESS", "PROGRESS"),
+            new ApplicationColumnDefinition("progress", "PROGRESS (bis)")
+        ];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, [], [], applications);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetGenerationRule_DuplicateApplicationNom);
+    }
+
+    // Non-generalization (D4): only ColonneNom/ApplicationNom are aligned on ColonneNameComparer --
+    // Header uniqueness (ValidateNoDuplicateHeaders) is untouched, still the default (strict) comparer.
+    [Fact]
+    public void Constructor_WithHeadersDifferingOnlyByCaseAndAccent_DoesNotThrow()
+    {
+        IReadOnlyList<ColumnDefinition> columns =
+        [
+            new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere),
+            new ColumnDefinition("repère", PivotFieldRef.EquipementDesignation)
+        ];
+
+        var act = () => new SheetGenerationRule("Parents", PivotSource.Equipement, columns, [], []);
+
+        act.Should().NotThrow();
+    }
+
     [Fact]
     public void Constructor_WithTacheMultiplePivotSourceAndEquipementColumnSource_ThrowsDomainRuleViolationException()
     {
