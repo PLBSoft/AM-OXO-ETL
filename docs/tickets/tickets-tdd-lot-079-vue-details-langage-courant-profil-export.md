@@ -512,6 +512,11 @@ section ; conteneur `container-fluid px-3 profile-editor-container` ; aucun cont
 **Vert** : la page, clés `ExportProfileDetails_PageTitle` / `_PageTitleGeneric` / `_NotFound` /
 `_BackToListButton` / `_BlockingHeading`.
 
+**Fait (2026-09-17)** : `ExportProfileDetails.razor` (rendu par `ProfileDescriptionView`, sans titre de bloc
+ignoré), 5 clés. `ExportProfileDetailsTests` : 10/10 (rouge = compilation) ; `BusinessPageAuthorizationHttpTests`
+avec la nouvelle route et le test du corps : rouge vérifié (3 échecs, test bUnit mis de côté le temps du
+passage), puis vert. Périmètre filtré (routes HTTP, pages Détails d'import et d'export) : 61/61.
+
 ### 79.8 — Bouton « Voir les détails » sur la liste des profils d'export (D6)
 
 **Comportement** : `ExportProfiles.razor`, tableau et carte mobile, bouton icône seule placé avant

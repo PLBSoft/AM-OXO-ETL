@@ -1,0 +1,57 @@
+@page "/export-profiles/{Id:guid}/details"
+@attribute [Authorize]
+
+@using ExcelETL.Application.Generation
+@using ExcelETL.BlazorAdmin.Formatting
+@using Microsoft.AspNetCore.Authorization
+
+@inject IExportProfileStore ExportProfileStore
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+@inject NavigationManager NavigationManager
+
+<!-- Lot 079.7 (docs/tickets/tickets-tdd-lot-079-vue-details-langage-courant-profil-export.md): read-only,
+     plain-language description of the workbook an export profile generates. All the wording comes from
+     ExportProfileDescriptionBuilder; ProfileDescriptionView renders it. -->
+
+<PageTitle>@Loc["ExportProfileDetails_PageTitleGeneric"]</PageTitle>
+
+<div class="container-fluid px-3 profile-editor-container">
+
+<h1>@(_profileName is null ? Loc["ExportProfileDetails_PageTitleGeneric"] : Loc["ExportProfileDetails_PageTitle", _profileName])</h1>
+
+<PageBackNavLink Id="back-to-export-profiles-button" Label="@Loc["ExportProfileDetails_BackToListButton"]" OnClick="BackToList" />
+
+@if (_notFound)
+{
+    <div id="export-profile-details-not-found" class="alert alert-danger" role="alert">@Loc["ExportProfileDetails_NotFound"]</div>
+}
+else if (_description is not null)
+{
+    <ProfileDescriptionView Description="_description" BlockingHeading="@Loc["ExportProfileDetails_BlockingHeading"]" />
+}
+
+</div>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private ProfileDescription? _description;
+    private string? _profileName;
+    private bool _notFound;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profile = await ExportProfileStore.GetByIdAsync(Id);
+        if (profile is null)
+        {
+            _notFound = true;
+            return;
+        }
+
+        _profileName = profile.Name;
+        _description = ExportProfileDescriptionBuilder.Build(profile, Loc);
+    }
+
+    private void BackToList() => NavigationManager.NavigateTo("export-profiles");
+}

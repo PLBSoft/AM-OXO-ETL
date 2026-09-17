@@ -1969,4 +1969,19 @@
   <data name="ExportProfileDetails_BlockingSheetNamedLikeTacheMultipleCode" xml:space="preserve">
     <value>La feuille {0} porte le nom d'une feuille de tâches : la génération échoue si le fichier contient des tâches de ce type.</value>
   </data>
+  <data name="ExportProfileDetails_PageTitle" xml:space="preserve">
+    <value>Détails du profil « {0} »</value>
+  </data>
+  <data name="ExportProfileDetails_PageTitleGeneric" xml:space="preserve">
+    <value>Détails du profil</value>
+  </data>
+  <data name="ExportProfileDetails_NotFound" xml:space="preserve">
+    <value>Profil d'export introuvable.</value>
+  </data>
+  <data name="ExportProfileDetails_BackToListButton" xml:space="preserve">
+    <value>Retour à la liste</value>
+  </data>
+  <data name="ExportProfileDetails_BlockingHeading" xml:space="preserve">
+    <value>Problèmes qui empêchent la génération :</value>
+  </data>
 </root>
