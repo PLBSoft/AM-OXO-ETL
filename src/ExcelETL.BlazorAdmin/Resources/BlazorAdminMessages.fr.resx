@@ -1931,16 +1931,16 @@
     <value>{0} si l'élément est rattaché à l'application {1}, sinon vide</value>
   </data>
   <data name="ExportProfileDetails_PointEquipement" xml:space="preserve">
-    <value>{0} si l'équipement, ou au moins un de ses éléments, est coché dans la colonne {1} à l'import, sinon vide</value>
+    <value>{0} si l'équipement, ou au moins un de ses éléments, est coché dans la colonne {1} à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide</value>
   </data>
   <data name="ExportProfileDetails_PointIsolement" xml:space="preserve">
-    <value>{0} si l'élément est coché dans la colonne {1} à l'import (nom identique, majuscules comprises), sinon vide</value>
+    <value>{0} si l'élément est coché dans la colonne {1} à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide</value>
   </data>
   <data name="ExportProfileDetails_PointGroupEquipement" xml:space="preserve">
-    <value>{0} : {1} si l'équipement, ou au moins un de ses éléments, est coché dans la colonne du même nom à l'import, sinon vide : {2}.</value>
+    <value>{0} : {1} si l'équipement, ou au moins un de ses éléments, est coché dans la colonne du même nom à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide : {2}.</value>
   </data>
   <data name="ExportProfileDetails_PointGroupIsolement" xml:space="preserve">
-    <value>{0} : {1} si l'élément est coché dans la colonne du même nom à l'import (nom identique, majuscules comprises), sinon vide : {2}.</value>
+    <value>{0} : {1} si l'élément est coché dans la colonne du même nom à l'import (sans tenir compte des majuscules ni des espaces en début ou fin), sinon vide : {2}.</value>
   </data>
   <data name="ExportProfileDetails_PointGroupRange" xml:space="preserve">
     <value>Colonnes {0} à {1}</value>
