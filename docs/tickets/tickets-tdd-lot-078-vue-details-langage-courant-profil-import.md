@@ -217,7 +217,7 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 **Paramètres généraux**
 - Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.
 - L'équipement est créé avec le type d'élément « MAD TRAVAUX ».
-- L'équipement est coché dans les 3 colonnes « TRAVAUX COMPLET », « TRAVAUX DETAIL », « VISITE PRÉALABLE CHANTIER ». L'équipement et tous ses éléments sont rattachés à ces 3 tableaux.
+- L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL », « VISITE PRÉALABLE CHANTIER ».
 - L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».
 - Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».
 - Une tâche de type « TM_PROC_REL » est écrite dans la colonne travaux « Procédure REL ».
@@ -637,3 +637,18 @@ tableau des routes de `convention-autorisation-pages-blazoradmin.md` mis à jour
   corriger un réglage « ignoré » : la page le signale, elle ne le corrige pas.
 - Lien vers la vue Détails depuis l'éditeur ou depuis les pages de test ; export PDF/impression.
 - Exemples de valeurs lues dans un vrai fichier (la vue décrit les règles, pas un import donné).
+
+---
+
+## 78.12 — Retours UI de Simon sur la page livrée (2026-09-17)
+
+Revue sur capture d'écran de `/import-profiles/{id}/details` (profil standard).
+
+### 78.12.1 — Phrase des tableaux par défaut raccourcie — fait
+
+Demande : « L'équipement est coché dans les 3 colonnes … L'équipement et tous ses éléments sont
+rattachés à ces 3 tableaux. » trop longue. Nouvelle forme, sans le nombre ni la mention des colonnes
+cochées sur l'équipement : « L'équipement et tous ses éléments sont rattachés aux tableaux « … », « … ». »
+(singulier « au tableau « … » » ; liste vide « L'équipement et ses éléments ne sont rattachés à aucun
+tableau. », alignée sur la phrase des applications). Tests de la section générale et catalogue figé
+mis à jour, §5 aligné. Périmètre filtré (constructeur + page) : 80/80.

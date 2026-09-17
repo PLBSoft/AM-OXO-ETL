@@ -33,19 +33,18 @@ public class ImportProfileDescriptionBuilderGeneralTests
 
     [Fact]
     public void NoDefaultTableau_SaysSo() =>
-        GeneralTexts(Profile(defaultTableaux: [])).Should().Contain("L'équipement n'est rattaché à aucun tableau.");
+        GeneralTexts(Profile(defaultTableaux: [])).Should().Contain("L'équipement et ses éléments ne sont rattachés à aucun tableau.");
 
     [Fact]
     public void OneDefaultTableau_UsesTheSingular() =>
         GeneralTexts(Profile(defaultTableaux: ["TRAVAUX COMPLET"])).Should().Contain(
-            "L'équipement est coché dans la colonne « TRAVAUX COMPLET ». " +
-            "L'équipement et tous ses éléments sont rattachés à ce tableau.");
+            "L'équipement et tous ses éléments sont rattachés au tableau « TRAVAUX COMPLET ».");
 
     [Fact]
     public void SeveralDefaultTableaux_UseThePlural() =>
         GeneralTexts(Profile(defaultTableaux: ["TRAVAUX COMPLET", "TRAVAUX DETAIL", "VISITE PRÉALABLE CHANTIER"])).Should().Contain(
-                "L'équipement est coché dans les 3 colonnes « TRAVAUX COMPLET », « TRAVAUX DETAIL », " +
-                "« VISITE PRÉALABLE CHANTIER ». L'équipement et tous ses éléments sont rattachés à ces 3 tableaux.");
+                "L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL », " +
+                "« VISITE PRÉALABLE CHANTIER ».");
 
     [Fact]
     public void NoDefaultApplication_SaysSo() =>
@@ -80,7 +79,7 @@ public class ImportProfileDescriptionBuilderGeneralTests
             .And.SatisfyRespectively(
                 t => t.Should().StartWith("Le repère de l'équipement"),
                 t => t.Should().StartWith("L'équipement est créé"),
-                t => t.Should().StartWith("L'équipement est coché"),
+                t => t.Should().StartWith("L'équipement et tous ses éléments sont rattachés au tableau"),
                 t => t.Should().Contain("application"),
                 t => t.Should().StartWith("Une tâche"));
 }

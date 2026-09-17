@@ -1493,13 +1493,13 @@
     <value>L'équipement est créé avec le type d'élément {0}.</value>
   </data>
   <data name="ImportProfileDetails_GeneralNoTableau" xml:space="preserve">
-    <value>L'équipement n'est rattaché à aucun tableau.</value>
+    <value>L'équipement et ses éléments ne sont rattachés à aucun tableau.</value>
   </data>
   <data name="ImportProfileDetails_GeneralOneTableau" xml:space="preserve">
-    <value>L'équipement est coché dans la colonne {0}. L'équipement et tous ses éléments sont rattachés à ce tableau.</value>
+    <value>L'équipement et tous ses éléments sont rattachés au tableau {0}.</value>
   </data>
   <data name="ImportProfileDetails_GeneralSeveralTableaux" xml:space="preserve">
-    <value>L'équipement est coché dans les {0} colonnes {1}. L'équipement et tous ses éléments sont rattachés à ces {0} tableaux.</value>
+    <value>L'équipement et tous ses éléments sont rattachés aux tableaux {1}.</value>
   </data>
   <data name="ImportProfileDetails_GeneralNoApplication" xml:space="preserve">
     <value>L'équipement et ses éléments ne sont rattachés à aucune application.</value>

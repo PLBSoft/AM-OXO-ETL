@@ -19,7 +19,7 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.", false),
                 ("L'équipement est créé avec le type d'élément « MAD TRAVAUX ».", false),
-                ("L'équipement est coché dans les 3 colonnes « TRAVAUX COMPLET », « TRAVAUX DETAIL », « VISITE PRÉALABLE CHANTIER ». L'équipement et tous ses éléments sont rattachés à ces 3 tableaux.", false),
+                ("L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL », « VISITE PRÉALABLE CHANTIER ».", false),
                 ("L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».", false),
                 ("Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».", false),
                 ("Une tâche de type « TM_PROC_REL » est écrite dans la colonne travaux « Procédure REL ».", false),
