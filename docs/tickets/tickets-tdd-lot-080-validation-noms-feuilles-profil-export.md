@@ -126,6 +126,21 @@ moyen propre de **construire** un tel profil dans un test.
 3. `grep` de toute construction de `SheetGenerationRule`/`ExportProfile` dans `src/` et `tests/` avec
    un nom invalide selon D2, hors les deux fichiers du constat 3. Attendu : aucune.
 
+**Résultat (17/09)** — décisions D1-D8 validées par Simon telles que recommandées.
+
+1. `History` : ClosedXML 0.105.1 écrit et relit un classeur avec une feuille `History` (et `history`)
+   sans erreur ; LibreOffice l'ouvre normalement. Excel n'est pas installé sur le poste, son
+   comportement n'a pas été vérifié. Décision de Simon : **aucun contrôle** ajouté à `ExcelSheetName`.
+2. `StatusCodeFor` est un `switch` d'expressions sur le type : l'ajout prend la forme
+   `GeneratedSheetNameException => StatusCodes.Status422UnprocessableEntity`. L'exception doit
+   implémenter `IHasApplicationErrorCode` pour atteindre ce `switch` (sinon `TryLocalize` renvoie
+   `null` et la réponse reste un 500).
+3. `grep` des noms passés à `SheetGenerationRule` (constructeur direct, `ExportRule(...)`, saisies bUnit
+   dans `sheet-generation-rule-name-input`, `SheetName = ...` des brouillons) : aucun nom trop long, à
+   caractère interdit ou à apostrophe de bord hors des deux fichiers du constat 3. Les doublons de nom
+   entre règles d'un même profil ne se voient pas au `grep` : vérifiés par l'exécution des suites en
+   80.3.
+
 ---
 
 ## 80.1. Règles de nom de feuille dans le domaine
