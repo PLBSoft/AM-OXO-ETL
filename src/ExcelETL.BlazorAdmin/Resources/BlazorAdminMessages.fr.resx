@@ -1609,4 +1609,40 @@
   <data name="ImportProfileDetails_FieldLabelDefinite_DateValidation" xml:space="preserve">
     <value>la date de validation</value>
   </data>
+  <data name="ImportProfileDetails_HeaderField_EquipementRepere" xml:space="preserve">
+    <value>En-tête : le repère de l'équipement ({0}) est lu en {1}{2}.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderField_Revision" xml:space="preserve">
+    <value>En-tête : la révision ({0}) est lue en {1}{2}.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderField_RevisionDate" xml:space="preserve">
+    <value>En-tête : la date de révision ({0}) est lue en {1}{2}.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderField_RepereEcho" xml:space="preserve">
+    <value>En-tête : le repère de l'équipement ({0}) est lu en {1}{2}. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderField_Other" xml:space="preserve">
+    <value>En-tête : le champ {0} est lu en {1}{2}.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderOptionOtherSheet" xml:space="preserve">
+    <value> de la feuille {0}</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderOptionStripPrefix" xml:space="preserve">
+    <value>, préfixe {0} retiré</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderOptionDateFormat" xml:space="preserve">
+    <value>, au format {0}</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderDesignationNoPlaceholder" xml:space="preserve">
+    <value>La désignation de l'équipement est toujours {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderDesignationOnePlaceholder" xml:space="preserve">
+    <value>La désignation de l'équipement suit le modèle {0}, où {1} est remplacé par la valeur lue ci-dessus.</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderDesignationSeveralPlaceholders" xml:space="preserve">
+    <value>La désignation de l'équipement suit le modèle {0}, où {1} sont remplacés par les valeurs lues ci-dessus.</value>
+  </data>
+  <data name="ImportProfileDetails_ListLastSeparator" xml:space="preserve">
+    <value> et </value>
+  </data>
 </root>

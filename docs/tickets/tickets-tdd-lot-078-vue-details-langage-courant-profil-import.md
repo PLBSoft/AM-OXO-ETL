@@ -454,6 +454,8 @@ supplémentaire non référencé (**non** décrit ici — il apparaît en 78.8).
 
 **Vert** : clés `ImportProfileDetails_Header*`.
 
+**Fait (2026-09-17)** : ordre fixe dans une section de feuille : en-tête, puis blocs (puis les parties suivantes). Le format de date est affiché tel que saisi (« dd/MM/yyyy »), pas traduit en « jj/mm/aaaa » : un format .NET quelconque ne se traduit pas proprement. **Écarts avec le catalogue §5, à aligner en 78.11** : ordre des phrases d'AUTRES JOINTS TOUCHES et DIVERS (en-tête avant les blocs) et formulation des options (« …est lue en R2:T2, au format « dd/MM/yyyy ». », « …où {revision} et {dateRev} sont remplacés par les valeurs lues ci-dessus. »). `ImportProfileDescriptionBuilderHeaderTests` : 8/8 (rouge vérifié : 5 échecs, les 3 autres sont des cas « rien à décrire ») ; périmètre filtré : 29/29.
+
 ### 78.5 — Points : colonnes cochées d'office, conditions, cellules à valeur attendue
 
 **Comportement** (uniquement les membres que la feuille lit, selon 78.1) :

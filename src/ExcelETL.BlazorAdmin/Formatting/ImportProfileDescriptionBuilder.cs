@@ -28,7 +28,7 @@ public static class ImportProfileDescriptionBuilder
             var rule = profile.SheetRules.FirstOrDefault(r => r.SheetName == sheetName);
             if (rule is not null)
             {
-                sections.Add(BuildSheetSection(rule, ImportSheetUsage.For(sheetName)!, loc));
+                sections.Add(BuildSheetSection(rule, ImportSheetUsage.For(sheetName)!, profile, loc));
             }
         }
 
@@ -36,12 +36,68 @@ public static class ImportProfileDescriptionBuilder
     }
 
     private static ProfileDescriptionSection BuildSheetSection(
-        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, ImportProfile profile, IStringLocalizer<BlazorAdminMessages> loc)
     {
         var sentences = new List<ProfileDescriptionSentence>();
+        if (usage.ReadMembers.Contains(SheetRuleMember.HeaderRules))
+        {
+            sentences.AddRange(DescribeHeader(rule, usage, profile.ReperePrefix, loc));
+        }
+
         sentences.AddRange(DescribeBlocks(rule.Locator, usage.ItemKind, loc));
 
         return new ProfileDescriptionSection(loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences, [], []);
+    }
+
+    // Only what extraction uses: the header names the sheet requires, plus any field a used composite
+    // references. Anything else is stored but unused (reported separately, D2).
+    private static IEnumerable<ProfileDescriptionSentence> DescribeHeader(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, string reperePrefix, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var usedComposites = rule.HeaderComposites
+            .Where(c => usage.RequiredHeaderComposites.Any(required => required.Name == c.Name))
+            .ToList();
+        var referencedFieldNames = usedComposites.SelectMany(c => c.PlaceholderNames()).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var field in rule.HeaderFields)
+        {
+            var role = usage.RequiredHeaderFields.FirstOrDefault(required => required.Name == field.Name)?.Role;
+            if (role is null && !referencedFieldNames.Contains(field.Name))
+            {
+                continue;
+            }
+
+            var options = "";
+            if (field.Cell.Sheet != rule.SheetName)
+            {
+                options += loc["ImportProfileDetails_HeaderOptionOtherSheet", Quote(field.Cell.Sheet, loc)];
+            }
+
+            if (field.StripReperePrefix)
+            {
+                options += loc["ImportProfileDetails_HeaderOptionStripPrefix", Quote(reperePrefix, loc)];
+            }
+
+            if (field.DateFormat is not null)
+            {
+                options += loc["ImportProfileDetails_HeaderOptionDateFormat", Quote(field.DateFormat, loc)];
+            }
+
+            var key = role is null ? "ImportProfileDetails_HeaderField_Other" : $"ImportProfileDetails_HeaderField_{role}";
+            yield return new(loc[key, Quote(field.Name, loc), field.Cell.Range, options]);
+        }
+
+        foreach (var composite in usedComposites)
+        {
+            var placeholders = composite.PlaceholderNames().Select(name => "{" + name + "}").ToList();
+            yield return new(placeholders.Count switch
+            {
+                0 => loc["ImportProfileDetails_HeaderDesignationNoPlaceholder", Quote(composite.Template, loc)],
+                1 => loc["ImportProfileDetails_HeaderDesignationOnePlaceholder", Quote(composite.Template, loc), placeholders[0]],
+                _ => loc["ImportProfileDetails_HeaderDesignationSeveralPlaceholders", Quote(composite.Template, loc),
+                    JoinWithAnd(placeholders, loc)],
+            });
+        }
     }
 
     // D1: where the data is read -- step, start row, stop field, then each field's range in the first block.
@@ -106,6 +162,12 @@ public static class ImportProfileDescriptionBuilder
 
     private static string Quote(string value, IStringLocalizer<BlazorAdminMessages> loc) =>
         loc["ImportProfileDetails_QuotedValue", value];
+
+    // "a", "a et b", "a, b et c".
+    private static string JoinWithAnd(IReadOnlyList<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
+        values.Count == 1
+            ? values[0]
+            : string.Join(ListSeparator, values.Take(values.Count - 1)) + loc["ImportProfileDetails_ListLastSeparator"] + values[^1];
 
     private static string QuoteList(IEnumerable<string> values, IStringLocalizer<BlazorAdminMessages> loc) =>
         string.Join(ListSeparator, values.Select(value => Quote(value, loc)));
