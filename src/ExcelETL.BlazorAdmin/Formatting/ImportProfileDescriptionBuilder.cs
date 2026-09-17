@@ -47,6 +47,10 @@ public static class ImportProfileDescriptionBuilder
 
         sentences.AddRange(DescribeBlocks(rule.Locator, usage.ItemKind, loc));
         sentences.AddRange(DescribePoints(rule, usage, loc));
+        if (usage.ReadMembers.Contains(SheetRuleMember.CouleurEtiquette))
+        {
+            sentences.AddRange(DescribeCouleur(rule, loc));
+        }
 
         return new ProfileDescriptionSection(loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences, [], []);
     }
@@ -99,6 +103,24 @@ public static class ImportProfileDescriptionBuilder
                 _ => loc["ImportProfileDetails_HeaderDesignationSeveralPlaceholders", Quote(composite.Template, loc),
                     JoinWithAnd(placeholders, loc)],
             });
+        }
+    }
+
+    // Mirrors CouleurEtiquetteResolver: a configured cell wins, and the default is then never used (even for
+    // a blank cell); the allowed list only filters a cell's value.
+    private static IEnumerable<ProfileDescriptionSentence> DescribeCouleur(SheetExtractionRule rule, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        if (rule.CouleurEtiquetteCell is { } cell)
+        {
+            var range = BlockFieldRangeFormatter.ToAbsoluteRange(
+                rule.Locator.FirstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd);
+            yield return new(rule.AllowedCouleursEtiquette is null
+                ? loc["ImportProfileDetails_CouleurFromCellAnyValue", range]
+                : loc["ImportProfileDetails_CouleurFromCellWithAllowed", range, QuoteList(rule.AllowedCouleursEtiquette, loc)]);
+        }
+        else if (rule.DefaultCouleurEtiquette is not null)
+        {
+            yield return new(loc["ImportProfileDetails_CouleurDefault", Quote(rule.DefaultCouleurEtiquette, loc)]);
         }
     }
 

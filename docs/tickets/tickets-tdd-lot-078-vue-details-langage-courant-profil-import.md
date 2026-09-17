@@ -502,6 +502,8 @@ cellule : ignorée aussi. Rien de renseigné → aucune phrase.
 
 **Vert** : clés `ImportProfileDetails_Couleur*`.
 
+**Fait (2026-09-17)** : phrase de couleur placée en dernier dans la section. Couleurs autorisées affichées entre guillemets (« ROUGE », « BLANC »…), comme toute autre valeur du profil — **écart avec le §5** (sans guillemets), à aligner en 78.11. `ImportProfileDescriptionBuilderCouleurTests` : 7/7 (rouge vérifié : 4 échecs, 3 cas « rien à décrire ») ; périmètre filtré : 48/48.
+
 ### 78.7 — Comportements fixes (D3)
 
 **Comportement** : phrases `IsFixed = true`, ajoutées à la section de chaque feuille traitée, textes

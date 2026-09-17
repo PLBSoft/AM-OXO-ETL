@@ -1687,4 +1687,13 @@
   <data name="ImportProfileDetails_ListLastOrSeparator" xml:space="preserve">
     <value> ou </value>
   </data>
+  <data name="ImportProfileDetails_CouleurFromCellWithAllowed" xml:space="preserve">
+    <value>La couleur d'étiquette est lue en {0}. Couleurs acceptées : {1}. Une autre valeur est ignorée, avec un avertissement.</value>
+  </data>
+  <data name="ImportProfileDetails_CouleurFromCellAnyValue" xml:space="preserve">
+    <value>La couleur d'étiquette est lue en {0}. Toute valeur est acceptée.</value>
+  </data>
+  <data name="ImportProfileDetails_CouleurDefault" xml:space="preserve">
+    <value>La couleur d'étiquette de chaque élément est toujours {0}.</value>
+  </data>
 </root>
