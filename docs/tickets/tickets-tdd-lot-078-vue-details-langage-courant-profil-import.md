@@ -375,6 +375,24 @@ membre. Si le pipeline change un jour de comportement, ce test casse avant que l
 table (une seule source côté BlazorAdmin) sans toucher à son comportement dans `SheetRuleForm`
 (les tests du lot 048 doivent rester verts sans modification).
 
+**Fait (2026-09-17)** :
+- `src/ExcelETL.BlazorAdmin/Formatting/ImportSheetUsage.cs` : `For(nom)` (nul si la feuille n'est
+  pas traitée), `IsProcessed`, `KnownSheetNames` (ordre du pipeline), enums `SheetRuleMember` (les 3
+  réglages de couleur forment un seul membre `CouleurEtiquette`, lus ensemble par
+  `CouleurEtiquetteResolver`) et `HeaderRole`, record `RequiredHeaderName(Name, Role)`.
+- **Écart avec le ticket** : le garde-fou tourne sur `Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx`,
+  pas C7401 — les feuilles ORIFICES CAPACITES, AUTRES JOINTS TOUCHES et DIVERS de C7401 ne produisent
+  aucun élément, le test y aurait été vide de sens.
+- Ajout d'un test symétrique `ReadMember_WhenFilledIn_ChangesTheRealPipelineOutput` (6 cas) qui prouve
+  que chaque modification injectée change bien la sortie sur une feuille qui lit le membre. Pas de cas
+  symétrique pour `HeaderRules` et `ZeroEnergieExpectedValue` (aucune modification simple n'a d'effet
+  visible sur D8570).
+- Non-vacuité vérifiée : retirer `UnconditionalColonnes` de la ligne ISOLEMENT du tableau attendu fait
+  échouer exactement le cas `(ISOLEMENT, UnconditionalColonnes)`.
+- Refactor fait : `KnownHeaderFieldNames.For` lit `ImportSheetUsage` ; tests de l'éditeur d'import
+  inchangés et verts.
+- `ImportSheetUsageTests` : 45 tests ; périmètre filtré (table + `ImportProfileEditor*`) : 440/440.
+
 ### 78.2 — Section « Paramètres généraux »
 
 **Comportement** : première section du modèle, phrases du bloc « Paramètres généraux » du catalogue §5.
