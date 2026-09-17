@@ -452,6 +452,11 @@ source.
 
 **Vert** : clés `ExportProfileDetails_Application*` et `ExportProfileDetails_Point*`.
 
+**Fait (2026-09-17)** : `GroupPointColumns`/`DescribePointGroup` dans `ExportProfileDescriptionBuilder`, 9 clés.
+Groupe par valeur de coche exacte ; lettres non consécutives jointes par « , » et « et » (« Colonnes A, C
+et D »). `ExportProfileDescriptionBuilderPointTests` : 6/6 (rouge vérifié : 6 échecs) ; constructeur
+d'export complet : 45/45.
+
 ### 79.6 — Configurations qui empêchent la génération (D3)
 
 **Comportement** :

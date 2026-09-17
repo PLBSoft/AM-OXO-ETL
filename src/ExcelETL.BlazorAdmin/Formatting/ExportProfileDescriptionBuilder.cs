@@ -74,17 +74,35 @@ public static class ExportProfileDescriptionBuilder
             sentences.Add(new(loc["ExportProfileDetails_SheetNoColumn"]));
         }
 
-        sentences.AddRange(DescribeColumns(columns, loc));
+        sentences.AddRange(DescribeColumns(columns, rule.PivotSource == PivotSource.Equipement, loc));
         return new ProfileDescriptionSection(title, sentences, [], []);
     }
 
     private static IEnumerable<ProfileDescriptionSentence> DescribeColumns(
-        IReadOnlyList<ExportColumn> columns, IStringLocalizer<BlazorAdminMessages> loc)
+        IReadOnlyList<ExportColumn> columns, bool isEquipement, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        foreach (var column in columns)
+        var pointGroups = GroupPointColumns(columns);
+
+        for (var index = 0; index < columns.Count; index++)
         {
+            var column = columns[index];
             switch (column.Definition)
             {
+                case PointColumnDefinition point when pointGroups.TryGetValue(index, out var group):
+                    if (group[0] == index)
+                    {
+                        yield return DescribePointGroup(columns, group, point.MarkValue, isEquipement, loc);
+                    }
+
+                    break;
+                case PointColumnDefinition point:
+                    yield return ColumnSentence(column, loc[isEquipement ? "ExportProfileDetails_PointEquipement" : "ExportProfileDetails_PointIsolement",
+                        Quote(point.MarkValue, loc), Quote(point.ColonneNom, loc)], loc);
+                    break;
+                case ApplicationColumnDefinition application:
+                    yield return ColumnSentence(column, loc[isEquipement ? "ExportProfileDetails_ApplicationEquipement" : "ExportProfileDetails_ApplicationIsolement",
+                        Quote(application.MarkValue, loc), Quote(application.ApplicationNom, loc)], loc);
+                    break;
                 case ColumnDefinition { Source: null }:
                     yield return ColumnSentence(column, loc["ExportProfileDetails_ColumnEmpty"], loc);
                     break;
@@ -99,6 +117,34 @@ public static class ExportProfileDescriptionBuilder
                     break;
             }
         }
+    }
+
+    // D2: point columns whose header is their Colonne name, grouped by mark value; only groups of two or more
+    // columns are described together. Key: column index; value: the indexes of its group, in order.
+    private static Dictionary<int, List<int>> GroupPointColumns(IReadOnlyList<ExportColumn> columns)
+    {
+        var groups = columns
+            .Select((column, index) => (Point: column.Definition as PointColumnDefinition, Index: index))
+            .Where(c => c.Point is not null && c.Point.Header == c.Point.ColonneNom)
+            .GroupBy(c => c.Point!.MarkValue, StringComparer.Ordinal)
+            .Select(g => g.Select(c => c.Index).ToList())
+            .Where(indexes => indexes.Count >= 2);
+
+        return groups.SelectMany(indexes => indexes.Select(index => (index, indexes))).ToDictionary(p => p.index, p => p.indexes);
+    }
+
+    private static ProfileDescriptionSentence DescribePointGroup(
+        IReadOnlyList<ExportColumn> columns, List<int> group, string markValue, bool isEquipement, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var isConsecutive = group[^1] - group[0] == group.Count - 1;
+        var letters = isConsecutive
+            ? loc["ExportProfileDetails_PointGroupRange", CellRef(columns[group[0]].Letter), CellRef(columns[group[^1]].Letter)].Value
+            : loc["ExportProfileDetails_PointGroupLetters", JoinWithAnd([.. group.Select(i => CellRef(columns[i].Letter))], loc)].Value;
+        var items = string.Join(ListSeparator, group.Select(i =>
+            loc["ExportProfileDetails_PointGroupItem", Quote(columns[i].Header, loc), CellRef(columns[i].Letter)].Value));
+
+        return new(loc[isEquipement ? "ExportProfileDetails_PointGroupEquipement" : "ExportProfileDetails_PointGroupIsolement",
+            letters, Quote(markValue, loc), items]);
     }
 
     // "Colonne A « Repère » : {content}." -- the letter marked as a cell coordinate (D1).
