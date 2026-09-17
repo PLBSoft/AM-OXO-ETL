@@ -619,4 +619,48 @@ public class SheetGenerationEngineTests
         sheet.Headers.Should().Equal("Ordre", "Action", "Acteur", "Risques", "Date de validation");
         sheet.Rows.Should().ContainSingle().Which.Cells.Should().Equal("1", "Consigner", "ADF", "Aucun", "20/07/2026");
     }
+
+    // Lot 080.5 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md, D4): name clashes that
+    // only depend on the imported task codes are rejected explicitly instead of failing in the writer.
+    private static SheetGenerationRule EquipementRuleNamed(string sheetName) => new(
+        sheetName, PivotSource.Equipement, [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)], [], []);
+
+    [Fact]
+    public void Generate_WithASheetNamedLikeAnImportedTaskCode_ThrowsGeneratedSheetNameConflict()
+    {
+        var profile = new ExportProfile("Profil export test", [EquipementRuleNamed("TM_PROC_MAD"), TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52));
+
+        var act = () => _sut.Generate(importResult, profile);
+
+        act.Should().Throw<ExcelETL.Application.Exceptions.GeneratedSheetNameException>()
+            .Which.ErrorCode.Should().Be(ExcelETL.Application.Exceptions.ApplicationErrorCode.GeneratedSheetNameConflict);
+    }
+
+    [Fact]
+    public void Generate_WithTwoTaskCodesSanitizedToTheSameName_ThrowsGeneratedSheetNameConflict()
+    {
+        var profile = new ExportProfile("Profil export test", [TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "A/B", null, false, 52),
+            new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "A:B", null, false, 53));
+
+        var act = () => _sut.Generate(importResult, profile);
+
+        act.Should().Throw<ExcelETL.Application.Exceptions.GeneratedSheetNameException>()
+            .Which.SheetName.Should().Be("A_B");
+    }
+
+    [Fact]
+    public void Generate_WithASheetNamedLikeATaskCodeTheFileDoesNotContain_DoesNotThrow()
+    {
+        var profile = new ExportProfile("Profil export test", [EquipementRuleNamed("TM_PROC_MAD"), TachesMultiplesRule()]);
+        var importResult = ImportResultWith(
+            new TacheMultiplePivot(1, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false, 53));
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets.Select(sheet => sheet.Name).Should().Equal("TM_PROC_MAD", "TM_PROC_REL");
+    }
 }

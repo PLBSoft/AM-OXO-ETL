@@ -9,5 +9,7 @@ public enum ApplicationErrorCode
     UnknownFieldReference,
     ImportProfileNotFound,
     ExportProfileNotFound,
-    ProfileNameAlreadyExists
+    ProfileNameAlreadyExists,
+    GeneratedSheetNameInvalid,
+    GeneratedSheetNameConflict
 }

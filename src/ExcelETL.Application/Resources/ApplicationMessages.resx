@@ -58,4 +58,10 @@
   <data name="InvalidExcelFileFormat" xml:space="preserve">
     <value>The uploaded file is not a valid Excel workbook or is corrupted.</value>
   </data>
+  <data name="GeneratedSheetNameInvalid" xml:space="preserve">
+    <value>The generated workbook would contain a sheet named '{0}', which Excel refuses. Check the sheet names of the export profile.</value>
+  </data>
+  <data name="GeneratedSheetNameConflict" xml:space="preserve">
+    <value>The generated workbook would contain two sheets named '{0}' (Excel ignores upper and lower case): a sheet name of the export profile matches a task type of the imported file.</value>
+  </data>
 </root>

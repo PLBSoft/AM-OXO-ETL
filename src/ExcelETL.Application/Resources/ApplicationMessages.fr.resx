@@ -58,4 +58,10 @@
   <data name="InvalidExcelFileFormat" xml:space="preserve">
     <value>Le fichier envoyé n'est pas un classeur Excel valide ou est corrompu.</value>
   </data>
+  <data name="GeneratedSheetNameInvalid" xml:space="preserve">
+    <value>Le classeur généré contiendrait une feuille nommée '{0}', refusée par Excel. Vérifiez les noms de feuilles du profil d'export.</value>
+  </data>
+  <data name="GeneratedSheetNameConflict" xml:space="preserve">
+    <value>Le classeur généré contiendrait deux feuilles nommées '{0}' (Excel ne distingue pas majuscules et minuscules) : un nom de feuille du profil d'export correspond à un type de tâche du fichier importé.</value>
+  </data>
 </root>

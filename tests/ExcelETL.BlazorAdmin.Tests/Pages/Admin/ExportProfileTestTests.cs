@@ -592,6 +592,36 @@ public class ExportProfileTestTests : BunitContext
                 "Ordre", "Action", "Acteur", "Risques", "Date de validation");
         });
 
+    // Lot 080.5 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md, D4): a sheet named like a
+    // task code of the file used to surface ClosedXML's raw technical message here.
+    [Fact]
+    public async Task Run_C7401Fixture_WithASheetNamedLikeAnImportedTaskCode_ShowsLocalizedMessage_NotTheClosedXmlText() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = new ExportProfile("Profil export en conflit",
+            [
+                new SheetGenerationRule("TM_PROC_MAD", PivotSource.Equipement,
+                    [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)], [], []),
+                new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple,
+                    [new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre)], [], [])
+            ]);
+            await Services.GetRequiredService<IExportProfileStore>().SaveAsync(exportProfile);
+            var cut = Render<ExportProfileTest>();
+
+            SelectImportProfile(cut, importProfile.Id);
+            cut.FindComponent<InputFile>().UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+            cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+
+            cut.WaitForAssertion(() => cut.Find(".alert.alert-danger[role='alert']").TextContent.Should().StartWith(
+                "The generated workbook would contain two sheets named 'TM_PROC_MAD'"));
+            cut.FindAll("#generated-sheet-TM_PROC_MAD-table").Should().BeEmpty();
+            cut.Markup.Should().NotContain("worksheet");
+        });
+
     [Fact]
     public async Task Run_C7401Fixture_WithoutTacheMultipleRuleInProfile_RendersNoTacheMultipleTables() =>
         await WithCultureAsync("en-US", async () =>

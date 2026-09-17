@@ -76,6 +76,9 @@ public sealed class GlobalExceptionHandler(
             or DomainArgumentOutOfRangeException
             or WorksheetNotFoundInWorkbookException => StatusCodes.Status400BadRequest,
         DomainRuleViolationException => StatusCodes.Status409Conflict,
+        // Lot 080.5 (D5): the imported file and the export profile are incompatible -- same status as a
+        // business rejection of the file.
+        GeneratedSheetNameException => StatusCodes.Status422UnprocessableEntity,
         _ => StatusCodes.Status500InternalServerError
     };
 }

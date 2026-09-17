@@ -33,4 +33,31 @@ public class ExcelSheetNameSanitizerTests
     {
         ExcelSheetNameSanitizer.Sanitize(realCode).Should().Be(realCode);
     }
+
+    // Lot 080.5 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md, D6): the remaining
+    // names Excel refuses.
+    [Theory]
+    [InlineData("'TM'", "TM")]
+    [InlineData("'TM_PROC_MAD", "TM_PROC_MAD")]
+    [InlineData("TM's", "TM's")]
+    public void Sanitize_WithApostropheAtEdge_RemovesIt(string rawName, string expected)
+    {
+        ExcelSheetNameSanitizer.Sanitize(rawName).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("''")]
+    public void Sanitize_WhenNothingIsLeft_ReturnsUnderscore(string rawName)
+    {
+        ExcelSheetNameSanitizer.Sanitize(rawName).Should().Be("_");
+    }
+
+    [Fact]
+    public void Sanitize_WhenTruncationLeavesATrailingApostrophe_RemovesIt()
+    {
+        var rawName = new string('A', 30) + "'B";
+
+        ExcelSheetNameSanitizer.Sanitize(rawName).Should().Be(new string('A', 30));
+    }
 }

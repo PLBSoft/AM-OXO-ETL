@@ -381,6 +381,57 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     // (the "POINT DE FEU"/"POINT FEU" spelling mismatch, Lot 055) -- used here instead of a
     // synthetic ImportResult so this proves the real pipeline's own warning reaches the header.
 
+    // Lot 080.5 (docs/tickets/tickets-tdd-lot-080-validation-noms-feuilles-profil-export.md, D4/D5): a sheet name of
+    // the export profile clashing with a task type of the imported file used to fail in ClosedXML with a 500. It is
+    // now an explicit, localized 422 rejection.
+    [Theory]
+    [InlineData("en-US", "The generated workbook would contain two sheets named 'TM_PROC_MAD'")]
+    [InlineData("fr-FR", "Le classeur généré contiendrait deux feuilles nommées 'TM_PROC_MAD'")]
+    public async Task Process_WhenAGeneratedSheetNameClashes_ReturnsUnprocessableEntityWithLocalizedMessage(
+        string culture, string expectedMessageStart)
+    {
+        using var clashFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var orchestrator = new Mock<IImportPipelineOrchestrator>();
+                orchestrator
+                    .Setup(o => o.Run(It.IsAny<IWorkbookReader>(), It.IsAny<ImportProfile>()))
+                    .Returns(new ImportResult(
+                        new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"), [], [],
+                        [new TacheMultiplePivot(1, "Consigner", "ADF", "Aucun", "TM_PROC_MAD", null, false, 52)], []));
+                services.RemoveAll<IImportPipelineOrchestrator>();
+                services.AddSingleton(orchestrator.Object);
+            });
+        });
+        var client = clashFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue(culture));
+
+        var (importProfileId, _) = await SeedProfilesAsync(clashFactory);
+        var clashingExportProfile = new ExportProfile("Profil export en conflit",
+        [
+            new SheetGenerationRule("TM_PROC_MAD", PivotSource.Equipement,
+                [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)], [], []),
+            new SheetGenerationRule("Tâches multiples", PivotSource.TacheMultiple,
+                [new ColumnDefinition("Ordre", PivotFieldRef.TacheMultipleOrdre)], [], [])
+        ]);
+        using (var scope = clashFactory.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IExportProfileStore>().SaveAsync(clashingExportProfile);
+        }
+
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, clashingExportProfile.Id, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(expectedMessageStart);
+        body.Should().NotContain("exceptionType").And.NotContain("exceptionMessage");
+    }
+
     [Fact]
     public async Task Process_WithValidRequestProducingNoWarnings_ReturnsZeroWarningCountHeaderAndGeneratedFileIdHeader()
     {

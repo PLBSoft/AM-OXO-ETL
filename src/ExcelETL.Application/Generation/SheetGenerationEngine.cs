@@ -32,6 +32,7 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
         try
         {
             var sheets = profile.SheetRules.SelectMany(rule => GenerateSheets(rule, importResult)).ToList();
+            GeneratedSheetNameValidator.Validate(sheets.Select(sheet => sheet.Name));
             var totalRowCount = sheets.Sum(sheet => sheet.Rows.Count);
 
             logger.LogInformation(
