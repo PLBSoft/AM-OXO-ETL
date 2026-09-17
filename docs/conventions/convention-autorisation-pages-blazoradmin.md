@@ -47,6 +47,7 @@ comptes ni consulter les journaux système.
 | `/import-profiles/{Id}/details` | Authentifié | Vue « Détails » en lecture seule, en langage courant (lot 078) |
 | `/export-profiles` | Authentifié | |
 | `/export-profiles/new`, `/export-profiles/{Id:guid}/edit` | Authentifié | Éditeur complet |
+| `/export-profiles/{Id}/details` | Authentifié | Vue « Détails » en lecture seule, en langage courant (lot 079) |
 | `/import-profiles/test`, `/export-profiles/test` | Authentifié | Pages de test des pipelines d'import/export ; c'est l'outil de travail principal d'un utilisateur non-Admin |
 | `/api-test` | Authentifié | Page de test M2M (appel HTTP réel vers le Web API, lot 038) |
 | `/generated-files` | Authentifié | Consultation des fichiers archivés (lot 034) |

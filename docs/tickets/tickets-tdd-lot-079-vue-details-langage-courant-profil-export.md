@@ -170,12 +170,14 @@ ou nettoyer les noms est un autre lot.
 
 #### 5. Catalogue rendu sur le profil seedé « Profil OXO standard »
 
-*Proposition de rédaction, à valider. Lettres de colonnes calculées selon l'ordre fixe du §1.
-« (fixe) » = comportement codé, affiché avec le badge « non modifiable ». Les colonnes de points sont
-regroupées en une phrase (proposition D2).*
+*Sortie réelle de `ExportProfileDescriptionBuilder` sur le profil d'export semé, figée par
+`ExportProfileDescriptionBuilderSeededProfileTests` (79.9) — les deux doivent rester identiques. Mise à
+jour le 2026-09-17 à la clôture du lot (phrase de liste des feuilles). Lettres de colonnes calculées
+selon l'ordre fixe du §1. « (fixe) » = comportement codé, affiché avec le badge « non modifiable ». Les
+colonnes de points sont regroupées en une phrase (D2).*
 
 **Classeur généré**
-- Le fichier contient les feuilles « Parents », « Enfants », puis une feuille par type de tâche (règle « Tâches multiples »), dans cet ordre.
+- Le fichier contient, dans cet ordre : la feuille « Parents », la feuille « Enfants » et une feuille par type de tâche (règle « Tâches multiples »).
 - Chaque feuille commence par une ligne de titres ; les données commencent à la ligne 2. (fixe)
 - Les points, applications, tableaux et types de tâches viennent du profil d'import utilisé avec ce profil d'export.
 
@@ -553,6 +555,15 @@ confronté à la sortie réelle et réécrit pour lui être identique si un éca
 
 **Puis** : suite `ExcelETL.BlazorAdmin.Tests` complète ; `CLAUDE.md` (« CURRENT SOLUTION STATE ») ;
 route ajoutée au tableau de `convention-autorisation-pages-blazoradmin.md`.
+
+**Fait (2026-09-17)** : le §5 confronté à la sortie réelle : seul écart, la phrase de liste des feuilles
+(79.3), réécrite dans le §5. Le test fige titre, texte et `IsFixed` de chaque section, `Ignored` et
+`Blocking` vides. Pas d'étape rouge (aucun code neuf) ; non-vacuité vérifiée en changeant une lettre
+attendue (`R` → `S`) : le test échoue. `CLAUDE.md` et le tableau des routes de
+`convention-autorisation-pages-blazoradmin.md` mis à jour. Suite `ExcelETL.BlazorAdmin.Tests` complète : 1613/1613
+(1490 avant le lot). Aucun autre projet modifié par le lot.
+
+**Lot 079 terminé.**
 
 ### Hors périmètre de 79.1 à 79.9
 
