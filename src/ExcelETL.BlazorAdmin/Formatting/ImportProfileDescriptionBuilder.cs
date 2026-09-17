@@ -21,6 +21,7 @@ public static class ImportProfileDescriptionBuilder
         ArgumentNullException.ThrowIfNull(loc);
 
         var sections = new List<ProfileDescriptionSection> { BuildGeneralSection(profile, loc) };
+        var processedRules = new HashSet<SheetExtractionRule>(ReferenceEqualityComparer.Instance);
 
         // Pipeline order, never the profile's own SheetRules order (not guaranteed after an EF round trip).
         // Like ImportPipelineOrchestrator.FindRule, only the first rule of a given name is processed.
@@ -29,8 +30,19 @@ public static class ImportProfileDescriptionBuilder
             var rule = profile.SheetRules.FirstOrDefault(r => r.SheetName == sheetName);
             if (rule is not null)
             {
+                processedRules.Add(rule);
                 sections.Add(BuildSheetSection(rule, ImportSheetUsage.For(sheetName)!, profile, loc));
             }
+        }
+
+        // Rules extraction never reaches: an unknown sheet name, or a second rule with a known one.
+        foreach (var rule in profile.SheetRules.Where(r => !processedRules.Contains(r)))
+        {
+            var notice = ImportSheetUsage.IsProcessed(rule.SheetName)
+                ? loc["ImportProfileDetails_IgnoredDuplicateSheet"]
+                : loc["ImportProfileDetails_IgnoredUnprocessedSheet"];
+            sections.Add(new ProfileDescriptionSection(
+                loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], [], [notice], []));
         }
 
         return new ImportProfileDescription(sections);
@@ -45,7 +57,7 @@ public static class ImportProfileDescriptionBuilder
             sentences.AddRange(DescribeHeader(rule, usage, profile.ReperePrefix, loc));
         }
 
-        sentences.AddRange(DescribeBlocks(rule.Locator, usage.ItemKind, loc));
+        sentences.AddRange(DescribeBlocks(rule.Locator, usage, loc));
         sentences.AddRange(usage.FixedBehaviors.Select(behavior =>
             new ProfileDescriptionSentence(loc[$"ImportProfileDetails_Fixed_{behavior.Kind}", behavior.Range ?? ""], IsFixed: true)));
         sentences.AddRange(DescribePoints(rule, usage, loc));
@@ -54,7 +66,134 @@ public static class ImportProfileDescriptionBuilder
             sentences.AddRange(DescribeCouleur(rule, loc));
         }
 
-        return new ProfileDescriptionSection(loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences, [], []);
+        return new ProfileDescriptionSection(
+            loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences,
+            DescribeIgnored(rule, usage, loc), DescribeBlocking(rule, usage, loc));
+    }
+
+    // Header rules extraction uses: the composites the sheet requires, and the fields those composites
+    // reference (required fields are matched by name separately).
+    private static (List<HeaderCompositeRule> UsedComposites, HashSet<string> ReferencedFieldNames) UsedHeaderRules(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage)
+    {
+        var usedComposites = rule.HeaderComposites
+            .Where(c => usage.RequiredHeaderComposites.Any(required => required.Name == c.Name))
+            .ToList();
+        return (usedComposites, usedComposites.SelectMany(c => c.PlaceholderNames()).ToHashSet(StringComparer.Ordinal));
+    }
+
+    // D2: every setting stored in the rule that this sheet's extraction never uses.
+    private static List<string> DescribeIgnored(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var ignored = new List<string>();
+        bool Reads(SheetRuleMember member) => usage.ReadMembers.Contains(member);
+
+        if (usage.FixedStopFieldName is { } fixedStopField && rule.Locator.StopFieldName != fixedStopField)
+        {
+            ignored.Add(loc["ImportProfileDetails_IgnoredStopField", Quote(rule.Locator.StopFieldName, loc),
+                FieldLabel(fixedStopField, definite: true, loc)]);
+        }
+
+        var readsHeader = Reads(SheetRuleMember.HeaderRules);
+        var (usedComposites, referencedFieldNames) = readsHeader ? UsedHeaderRules(rule, usage) : ([], []);
+        ignored.AddRange(rule.HeaderFields
+            .Where(f => !readsHeader
+                || (usage.RequiredHeaderFields.All(required => required.Name != f.Name) && !referencedFieldNames.Contains(f.Name)))
+            .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), f.Cell.Range].Value));
+        ignored.AddRange(rule.HeaderComposites
+            .Where(c => !usedComposites.Contains(c))
+            .Select(c => loc["ImportProfileDetails_IgnoredHeaderComposite", Quote(c.Name, loc)].Value));
+
+        if (!Reads(SheetRuleMember.UnconditionalColonnes))
+        {
+            ignored.AddRange(rule.UnconditionalColonneNames.Select(name =>
+                loc["ImportProfileDetails_IgnoredUnconditionalColonne", Quote(name, loc)].Value));
+        }
+
+        if (!Reads(SheetRuleMember.ConditionalPointRules))
+        {
+            ignored.AddRange(rule.PointRules.Select(r =>
+                loc["ImportProfileDetails_IgnoredConditionalRule", Quote(r.ColonneName, loc)].Value));
+        }
+
+        if (!Reads(SheetRuleMember.FieldPresencePointRules))
+        {
+            ignored.AddRange(rule.FieldPresencePointRules.Select(r =>
+                loc["ImportProfileDetails_IgnoredFieldPresenceRule", Quote(r.ColonneName, loc)].Value));
+        }
+
+        if (!Reads(SheetRuleMember.ZeroEnergieExpectedValue) && rule.ZeroEnergieExpectedValue is not null)
+        {
+            ignored.Add(loc["ImportProfileDetails_IgnoredZeroEnergieExpectedValue", Quote(rule.ZeroEnergieExpectedValue, loc)]);
+        }
+
+        ignored.AddRange(DescribeIgnoredCouleur(rule, Reads(SheetRuleMember.CouleurEtiquette), loc));
+        return ignored;
+    }
+
+    // Mirrors CouleurEtiquetteResolver: with a cell the default is never used; without one the allowed
+    // list has nothing to filter.
+    private static IEnumerable<string> DescribeIgnoredCouleur(
+        SheetExtractionRule rule, bool isRead, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        if (!isRead)
+        {
+            if (rule.CouleurEtiquetteCell is { } cell)
+            {
+                yield return loc["ImportProfileDetails_IgnoredCouleurCell", BlockFieldRangeFormatter.ToAbsoluteRange(
+                    rule.Locator.FirstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd)];
+            }
+
+            if (rule.DefaultCouleurEtiquette is not null)
+            {
+                yield return loc["ImportProfileDetails_IgnoredDefaultCouleur", Quote(rule.DefaultCouleurEtiquette, loc)];
+            }
+
+            if (rule.AllowedCouleursEtiquette is not null)
+            {
+                yield return loc["ImportProfileDetails_IgnoredAllowedCouleurs", QuoteList(rule.AllowedCouleursEtiquette, loc)];
+            }
+
+            yield break;
+        }
+
+        if (rule.CouleurEtiquetteCell is not null && rule.DefaultCouleurEtiquette is not null)
+        {
+            yield return loc["ImportProfileDetails_IgnoredDefaultCouleurBecauseCell", Quote(rule.DefaultCouleurEtiquette, loc)];
+        }
+
+        if (rule.CouleurEtiquetteCell is null && rule.AllowedCouleursEtiquette is not null)
+        {
+            yield return loc["ImportProfileDetails_IgnoredAllowedCouleursWithoutCell", QuoteList(rule.AllowedCouleursEtiquette, loc)];
+        }
+    }
+
+    // Names the extraction service looks up by name: a missing one makes it fail.
+    private static List<string> DescribeBlocking(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var blocking = new List<string>();
+        if (usage.ReadMembers.Contains(SheetRuleMember.HeaderRules))
+        {
+            blocking.AddRange(usage.RequiredHeaderFields
+                .Where(required => rule.HeaderFields.All(f => f.Name != required.Name))
+                .Select(required => loc["ImportProfileDetails_BlockingMissingHeaderField", Quote(required.Name, loc)].Value));
+            blocking.AddRange(usage.RequiredHeaderComposites
+                .Where(required => rule.HeaderComposites.All(c => c.Name != required.Name))
+                .Select(required => loc["ImportProfileDetails_BlockingMissingHeaderComposite", Quote(required.Name, loc)].Value));
+        }
+
+        blocking.AddRange(usage.RequiredBlockFieldNames
+            .Where(name => rule.Locator.Fields.All(f => f.Name != name))
+            .Select(name => loc["ImportProfileDetails_BlockingMissingBlockField", Quote(name, loc)].Value));
+
+        if (usage.FixedStopFieldName is null && rule.Locator.Fields.All(f => f.Name != rule.Locator.StopFieldName))
+        {
+            blocking.Add(loc["ImportProfileDetails_BlockingStopFieldNotInBlock", Quote(rule.Locator.StopFieldName, loc)]);
+        }
+
+        return blocking;
     }
 
     // Only what extraction uses: the header names the sheet requires, plus any field a used composite
@@ -62,10 +201,7 @@ public static class ImportProfileDescriptionBuilder
     private static IEnumerable<ProfileDescriptionSentence> DescribeHeader(
         SheetExtractionRule rule, ImportSheetUsageEntry usage, string reperePrefix, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        var usedComposites = rule.HeaderComposites
-            .Where(c => usage.RequiredHeaderComposites.Any(required => required.Name == c.Name))
-            .ToList();
-        var referencedFieldNames = usedComposites.SelectMany(c => c.PlaceholderNames()).ToHashSet(StringComparer.Ordinal);
+        var (usedComposites, referencedFieldNames) = UsedHeaderRules(rule, usage);
 
         foreach (var field in rule.HeaderFields)
         {
@@ -212,10 +348,11 @@ public static class ImportProfileDescriptionBuilder
 
     // D1: where the data is read -- step, start row, stop field, then each field's range in the first block.
     private static IEnumerable<ProfileDescriptionSentence> DescribeBlocks(
-        RepeatingBlockLocator locator, BlockItemKind itemKind, IStringLocalizer<BlazorAdminMessages> loc)
+        RepeatingBlockLocator locator, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        var stopField = FieldLabel(locator.StopFieldName, definite: true, loc);
-        var isTask = itemKind == BlockItemKind.Task;
+        // The field reading really stops on -- not the configured one when the service ignores it.
+        var stopField = FieldLabel(usage.FixedStopFieldName ?? locator.StopFieldName, definite: true, loc);
+        var isTask = usage.ItemKind == BlockItemKind.Task;
 
         yield return new(locator.Step == 1
             ? loc[isTask ? "ImportProfileDetails_BlockTaskPerLine" : "ImportProfileDetails_BlockElementPerLine",
@@ -257,7 +394,13 @@ public static class ImportProfileDescriptionBuilder
         sentences.AddRange(profile.TacheMultipleTypeLabels.Select(label => new ProfileDescriptionSentence(
             loc["ImportProfileDetails_GeneralTacheMultipleTypeLabel", Quote(label.Code, loc), Quote(label.Label, loc)])));
 
-        return new ProfileDescriptionSection(loc["ImportProfileDetails_GeneralSectionTitle"], sentences, [], []);
+        // ImportPipelineOrchestrator.FindRule requires all 6 sheets: a missing one makes the import fail.
+        var blocking = ImportSheetUsage.KnownSheetNames
+            .Where(sheetName => profile.SheetRules.All(r => r.SheetName != sheetName))
+            .Select(sheetName => loc["ImportProfileDetails_BlockingMissingSheet", Quote(sheetName, loc)].Value)
+            .ToList();
+
+        return new ProfileDescriptionSection(loc["ImportProfileDetails_GeneralSectionTitle"], sentences, [], blocking);
     }
 
     private static string CountedSentence(

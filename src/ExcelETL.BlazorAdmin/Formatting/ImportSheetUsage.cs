@@ -1,4 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 
 namespace ExcelETL.BlazorAdmin.Formatting;
@@ -40,6 +41,12 @@ public static class ImportSheetUsage
             ],
             [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) {
                 ItemKind = BlockItemKind.Task,
+                FixedStopFieldName = ProcedureFieldNames.Action,
+                RequiredBlockFieldNames =
+                [
+                    ProcedureFieldNames.Action, ProcedureFieldNames.Ordre, ProcedureFieldNames.Acteur, ProcedureFieldNames.Risques,
+                    ProcedureFieldNames.TypeTacheMultipleAlias, ProcedureFieldNames.DateValidation
+                ],
                 FixedBehaviors =
                 [
                     new(FixedBehaviorKind.UnreadableRevisionDateRejectsFile),
@@ -52,7 +59,15 @@ public static class ImportSheetUsage
                 SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
                 SheetRuleMember.ZeroEnergieExpectedValue
             ],
-            [], []) { FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:T6")] },
+            [], []) {
+                FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:T6")],
+                FixedStopFieldName = IsolementFieldNames.Identification,
+                RequiredBlockFieldNames =
+                [
+                    IsolementFieldNames.Identification, IsolementFieldNames.Designation, IsolementFieldNames.PositionALaPose,
+                    IsolementFieldNames.TypeElement
+                ]
+            },
         [Platines] = PlatinesStyle(),
         [OrificesCapacites] = PlatinesStyle(),
         [AutresJointsTouches] = new(
@@ -95,6 +110,16 @@ public sealed record ImportSheetUsageEntry(
     // IsolementExtractionService (K6:T6), UnconditionalIsolementSheetExtractionService (K6:U6) and
     // DiversExtractionService (B6:E6); the others from ProcedureExtractionService.
     public IReadOnlyList<FixedBehavior> FixedBehaviors { get; init; } = [];
+
+    // Block field names the service looks up by name -- a missing one makes extraction fail.
+    public IReadOnlyList<string> RequiredBlockFieldNames { get; init; } = ElementBlockFieldNames;
+
+    // Non-null when the service walks the block itself and always stops on this field, ignoring the
+    // locator's StopFieldName (ProcedureExtractionService, IsolementExtractionService).
+    public string? FixedStopFieldName { get; init; }
+
+    private static readonly string[] ElementBlockFieldNames =
+        [IsolementFieldNames.Identification, IsolementFieldNames.Designation, IsolementFieldNames.TypeElement];
 
     public ImportSheetUsageEntry(
         SheetRuleMember[] readMembers, RequiredHeaderName[] requiredHeaderFields, RequiredHeaderName[] requiredHeaderComposites)

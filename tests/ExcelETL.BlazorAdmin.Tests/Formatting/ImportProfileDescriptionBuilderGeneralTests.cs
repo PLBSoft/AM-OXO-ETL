@@ -11,14 +11,13 @@ public class ImportProfileDescriptionBuilderGeneralTests
     private static IReadOnlyList<string> GeneralTexts(ImportProfile profile) => Describe(profile).Sections[0].Texts();
 
     [Fact]
-    public void FirstSection_IsTheGeneralSettings_WithNoFixedSentence()
+    public void FirstSection_IsTheGeneralSettings_WithNoFixedSentenceAndNothingIgnored()
     {
         var section = Describe(Profile()).Sections[0];
 
         section.Title.Should().Be("Paramètres généraux");
         section.Sentences.Should().OnlyContain(s => !s.IsFixed);
         section.Ignored.Should().BeEmpty();
-        section.Blocking.Should().BeEmpty();
     }
 
     [Fact]

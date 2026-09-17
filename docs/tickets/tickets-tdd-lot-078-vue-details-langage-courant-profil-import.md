@@ -544,6 +544,14 @@ feuille inconnu ; `nomMAD` absent ; feuille DIVERS absente du profil ; profil se
 **Refactor (effort élevé)** : vérifier qu'aucune phrase n'est produite pour un membre ignoré (78.4 à
 78.6 et 78.8 lisent la même table, pas deux conditions écrites séparément).
 
+**Fait (2026-09-17)** :
+- **Constat en cours de route** : `ProcedureExtractionService` et `IsolementExtractionService` parcourent leur bloc eux-mêmes et s'arrêtent **toujours** sur `Action` / `Identification`, en ignorant le `StopFieldName` configuré. Ajouts à la table 78.1 : `FixedStopFieldName` (la phrase de lecture du 78.3 nomme le vrai champ d'arrêt ; un champ d'arrêt configuré différent part dans `Ignored`) et `RequiredBlockFieldNames` (champs de bloc cherchés par nom : absents = `Blocking`), avec leurs garde-fous sur le vrai import dans `ImportSheetUsageTests` (changer le champ d'arrêt de PROCEDURE/ISOLEMENT ne change rien ; retirer chaque champ exigé fait échouer l'import).
+- `Blocking` couvre aussi le champ d'arrêt absent du bloc sur les feuilles qui l'utilisent (`RepeatingBlockReader` le cherche par nom).
+- Une seconde règle portant le nom d'une feuille connue a sa propre section, avec la notice « règle non traitée ».
+- Refactor : la sélection des règles d'en-tête utilisées est commune à la description et aux ignorés (`UsedHeaderRules`) ; les points, la couleur et les ignorés testent tous `ReadMembers`.
+- Deux tests antérieurs ajustés à ces changements voulus : le champ d'arrêt inconnu est testé sur DIVERS (ISOLEMENT a désormais un champ d'arrêt fixe) ; le test de la section générale ne vérifie plus `Blocking` (le profil minimal n'a aucune des 6 feuilles).
+- `ImportProfileDescriptionBuilderIgnoredTests` : 16/16 (rouge vérifié : 15 échecs) ; périmètre filtré (table, constructeur, éditeur d'import) : 545/545.
+
 ### 78.9 — Page `/import-profiles/{Id:guid}/details`
 
 **Comportement** : `ImportProfileDetails.razor` (`Components/Pages/Admin/`), `[Authorize]` sans rôle,

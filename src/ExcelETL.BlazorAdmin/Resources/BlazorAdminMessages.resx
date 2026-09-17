@@ -1711,4 +1711,61 @@
   <data name="ImportProfileDetails_Fixed_TaskWithoutOrdreIsSectionTitle" xml:space="preserve">
     <value>Une ligne sans ordre est un titre de section, pas une tâche à réaliser.</value>
   </data>
+  <data name="ImportProfileDetails_IgnoredHeaderField" xml:space="preserve">
+    <value>champ d'en-tête {0} lu en {1}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredHeaderComposite" xml:space="preserve">
+    <value>modèle d'en-tête {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredUnconditionalColonne" xml:space="preserve">
+    <value>colonne cochée d'office {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredConditionalRule" xml:space="preserve">
+    <value>règle conditionnelle pour la colonne {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredFieldPresenceRule" xml:space="preserve">
+    <value>règle de cellule pour la colonne {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredZeroEnergieExpectedValue" xml:space="preserve">
+    <value>valeur zéro énergie attendue {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredCouleurCell" xml:space="preserve">
+    <value>cellule de couleur d'étiquette {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredDefaultCouleur" xml:space="preserve">
+    <value>couleur d'étiquette par défaut {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredAllowedCouleurs" xml:space="preserve">
+    <value>couleurs d'étiquette autorisées {0}</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredDefaultCouleurBecauseCell" xml:space="preserve">
+    <value>couleur d'étiquette par défaut {0} (inutilisée : une cellule de couleur est configurée)</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredAllowedCouleursWithoutCell" xml:space="preserve">
+    <value>couleurs d'étiquette autorisées {0} (inutilisées : aucune cellule de couleur configurée)</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredStopField" xml:space="preserve">
+    <value>champ d'arrêt {0} (la lecture s'arrête toujours sur {1})</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredUnprocessedSheet" xml:space="preserve">
+    <value>Cette feuille n'est pas traitée par l'import (nom non reconnu).</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredDuplicateSheet" xml:space="preserve">
+    <value>Cette règle n'est pas traitée : une règle précédente porte déjà ce nom de feuille.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingMissingHeaderField" xml:space="preserve">
+    <value>Champ d'en-tête {0} absent : l'extraction de cette feuille échoue.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingMissingHeaderComposite" xml:space="preserve">
+    <value>Modèle d'en-tête {0} absent : l'extraction de cette feuille échoue.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingMissingBlockField" xml:space="preserve">
+    <value>Champ de bloc {0} absent : l'extraction de cette feuille échoue.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingStopFieldNotInBlock" xml:space="preserve">
+    <value>Le champ d'arrêt {0} ne fait pas partie du bloc : l'extraction de cette feuille échoue.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockingMissingSheet" xml:space="preserve">
+    <value>Feuille {0} absente du profil : l'import échoue.</value>
+  </data>
 </root>

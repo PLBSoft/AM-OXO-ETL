@@ -210,6 +210,73 @@ public class ImportSheetUsageTests
         unchanged.Should().BeFalse();
     }
 
+    // Lot 078.8: PROCEDURE and ISOLEMENT walk their block themselves and always stop on a fixed field.
+    [Theory]
+    [InlineData(Procedure, "Ordre")]
+    [InlineData(Isolement, "Designation")]
+    public void FixedStopField_WhenAnotherStopFieldIsConfigured_DoesNotChangeTheRealPipelineOutput(string sheetName, string otherStopField)
+    {
+        ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().NotBeNull().And.NotBe(otherStopField);
+        var profile = LoadSeededDefaultProfile();
+
+        var baseline = RunPipeline(profile);
+        var mutated = RunPipeline(WithLocator(profile, sheetName, locator =>
+            new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step, otherStopField, locator.Fields)));
+
+        mutated.Isolements.Should().BeEquivalentTo(baseline.Isolements, o => o.WithStrictOrdering());
+        mutated.TachesMultiples.Should().BeEquivalentTo(baseline.TachesMultiples, o => o.WithStrictOrdering());
+    }
+
+    [Theory]
+    [InlineData(AutresJointsTouches)]
+    [InlineData(Divers)]
+    [InlineData(Platines)]
+    public void SheetsUsingTheConfiguredStopField_HaveNoFixedStopField(string sheetName) =>
+        ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().BeNull();
+
+    public static TheoryData<string, string> RequiredBlockFieldCases()
+    {
+        var cases = new TheoryData<string, string>();
+        foreach (var sheetName in ImportSheetUsage.KnownSheetNames)
+        {
+            foreach (var fieldName in ImportSheetUsage.For(sheetName)!.RequiredBlockFieldNames)
+            {
+                cases.Add(sheetName, fieldName);
+            }
+        }
+
+        return cases;
+    }
+
+    [Theory]
+    [MemberData(nameof(RequiredBlockFieldCases))]
+    public void RequiredBlockField_WhenRemoved_MakesTheRealPipelineFail(string sheetName, string fieldName)
+    {
+        var profile = WithLocator(LoadSeededDefaultProfile(), sheetName, locator =>
+            new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step,
+                locator.StopFieldName == fieldName ? locator.Fields.First(f => f.Name != fieldName).Name : locator.StopFieldName,
+                [.. locator.Fields.Where(f => f.Name != fieldName)]));
+
+        var run = () => RunPipeline(profile);
+
+        run.Should().Throw<Exception>("the extraction service looks the field up by name (First() or an indexer)");
+    }
+
+    private static ImportProfile WithLocator(
+        ImportProfile profile, string sheetName, Func<RepeatingBlockLocator, RepeatingBlockLocator> change) =>
+        new(
+            profile.Id, profile.Name, profile.ReperePrefix, profile.EquipementTypeElementNom,
+            profile.DefaultTableaux, profile.DefaultApplicationNames,
+            [
+                .. profile.SheetRules.Select(rule => rule.SheetName != sheetName
+                    ? rule
+                    : new SheetExtractionRule(
+                        rule.SheetName, change(rule.Locator), rule.PointRules, rule.UnconditionalColonneNames, rule.HeaderFields,
+                        rule.HeaderComposites, rule.ZeroEnergieExpectedValue, rule.FieldPresencePointRules, rule.CouleurEtiquetteCell,
+                        rule.DefaultCouleurEtiquette, rule.AllowedCouleursEtiquette))
+            ],
+            profile.TacheMultipleTypeLabels);
+
     private static readonly SheetRuleMember[] MutableMembers =
     [
         SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,

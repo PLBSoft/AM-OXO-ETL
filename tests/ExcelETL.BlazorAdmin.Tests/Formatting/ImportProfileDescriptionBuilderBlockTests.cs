@@ -84,8 +84,8 @@ public class ImportProfileDescriptionBuilderBlockTests
 
     [Fact]
     public void UnknownStopFieldName_IsShownQuoted() =>
-        Describe(Profile([Rule("ISOLEMENT", firstBlockStartRow: 19, step: 7, fields: [new BlockFieldDefinition("Repere", "B:E", 0, 1)])]))
-            .SheetSection("ISOLEMENT").Texts().Should().Contain(
+        Describe(Profile([Rule("DIVERS", firstBlockStartRow: 19, step: 7, fields: [new BlockFieldDefinition("Repere", "B:E", 0, 1)])]))
+            .SheetSection("DIVERS").Texts().Should().Contain(
                 "Un élément est lu toutes les 7 lignes à partir de la ligne 19. " +
                 "La lecture s'arrête au premier bloc dont le champ « Repere » est vide.");
 
