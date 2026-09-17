@@ -268,3 +268,18 @@ Le profil semé ne déclenche aucun cas du §2 : aucun bloc bloquant sur cette p
   page). À confirmer.
 - **D7 — Anglais** : comme le lot 078, français seulement ; les clés `ExportProfileDetails_*`
   reprennent le texte français dans les deux `.resx`. À confirmer.
+
+#### 7. Décisions actées (Simon, 2026-09-17)
+
+- **D1 — acté : oui.** Chaque colonne est précédée de sa lettre Excel, mise en évidence en `<code>`
+  comme les coordonnées de cellules du lot 078.
+- **D2 — acté : phrase groupée.** Les colonnes de points de même valeur de coche dont le titre est
+  égal au nom de colonne forment une seule phrase par règle, avec la lettre de chacune ; les autres
+  colonnes de points ont chacune leur phrase.
+- **D3 — acté : oui, bloc rouge.** Les cas du §2 sont listés sous « Problèmes qui empêchent la
+  génération ». Les règles de nom de feuille d'Excel sont dupliquées côté `BlazorAdmin` et
+  vérifiées par test contre ClosedXML.
+- **D4 — acté : non.** Pas de contrôle croisé avec les profils d'import dans ce lot.
+- **D5, D6, D7 — recommandations du §6 retenues, à confirmer** : reprise du lot 078 par éléments
+  partagés (renommage `ProfileDescription`, helpers et rendu extraits, tests du lot 078 inchangés),
+  id `details-export-profile-button-{id}` / `-card-{id}`, français seulement.
