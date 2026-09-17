@@ -140,18 +140,21 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
             return new GeneratedRow([.. descriptiveCells, .. constantCells, .. applicationCells, .. pointCells]);
         }).ToList();
 
+    // Lot 081 (docs/tickets/tickets-tdd-lot-081-comparaison-noms-colonne-points-export.md, 81.2):
+    // ColonneNom compared via ColonneNameComparer (Trim + OrdinalIgnoreCase) -- same rule everywhere the
+    // engine checks a Colonne/Application name, including this direct path (previously an exact `==`,
+    // the one remaining strict comparison, see the ticket's own constat 1). ParentRepere stays an exact
+    // comparison (D3): it's pipeline-produced, never a user-entered name.
     private static bool HasPoint(IReadOnlyList<PointPivot> points, string parentRepere, string colonneNom) =>
-        points.Any(point => point.ParentRepere == parentRepere && point.ColonneNom == colonneNom);
+        points.Any(point =>
+            point.ParentRepere == parentRepere && ColonneNameComparer.Instance.Equals(point.ColonneNom, colonneNom));
 
     // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md, 66.3):
     // a Point column on an Equipement-sourced sheet is marked either by a Point directly attached to
     // the Equipement itself (the historical mechanism above, unchanged -- e.g. PROCEDURE's own
     // unconditional Points), OR -- new -- by aggregation: at least one IsolementPivot of this run whose
     // RepereParent equals this Equipement's Repere carries a matching Point. "At least one", not "all"
-    // -- a single child isolement marking a Point is enough to mark the parent row. ColonneNom is
-    // compared trimmed and case-insensitively for this aggregated path only (spec §7 convention),
-    // unlike the direct HasPoint check above, which stays untouched/exact per the ticket's own
-    // non-regression requirement.
+    // -- a single child isolement marking a Point is enough to mark the parent row.
     private static bool HasPointForEquipement(ImportResult importResult, string equipementRepere, string colonneNom)
     {
         if (HasPoint(importResult.Points, equipementRepere, colonneNom))
@@ -159,7 +162,6 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
             return true;
         }
 
-        var normalizedColonneNom = colonneNom.Trim();
         var childRepères = importResult.Isolements
             .Where(isolement => isolement.RepereParent == equipementRepere)
             .Select(isolement => isolement.Repere)
@@ -167,12 +169,11 @@ public sealed class SheetGenerationEngine(ILogger<SheetGenerationEngine> logger)
 
         return importResult.Points.Any(point =>
             childRepères.Contains(point.ParentRepere)
-            && string.Equals(point.ColonneNom.Trim(), normalizedColonneNom, StringComparison.OrdinalIgnoreCase));
+            && ColonneNameComparer.Instance.Equals(point.ColonneNom, colonneNom));
     }
 
-    // Trimmed + case-insensitive, same recommendation transverse as TypeElement/Colonne.Nom comparisons
-    // elsewhere in the pipeline (spec §7) -- real fixtures/profiles can differ by trailing whitespace or
-    // casing.
+    // Same rule as HasPoint/HasPointForEquipement above (Lot 081) -- one comparison, everywhere the
+    // engine checks a Colonne/Application name.
     private static bool HasApplication(IReadOnlyList<string> applications, string applicationNom) =>
-        applications.Any(application => string.Equals(application.Trim(), applicationNom.Trim(), StringComparison.OrdinalIgnoreCase));
+        applications.Any(application => ColonneNameComparer.Instance.Equals(application, applicationNom));
 }

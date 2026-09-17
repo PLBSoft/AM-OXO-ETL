@@ -511,6 +511,83 @@ public class SheetGenerationEngineTests
         workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[1].Should().Be("O");
     }
 
+    // Lot 081 (docs/tickets/tickets-tdd-lot-081-comparaison-noms-colonne-points-export.md, 81.2): the
+    // Isolement sheet's direct HasPoint check now compares Colonne names via ColonneNameComparer, same
+    // as the Equipement aggregated path already did -- trimmed, case-insensitive.
+    [Fact]
+    public void Generate_ForIsolementSheet_MarksPointColumn_TrimmedAndCaseInsensitive()
+    {
+        var profile = new ExportProfile("Profil export test", [EnfantsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "")],
+            [new PointPivot("prolock vannes ", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("X");
+    }
+
+    // Same tolerance on the Equipement sheet's direct (non-aggregated) HasPoint check.
+    [Fact]
+    public void Generate_ForEquipementSheet_MarksPointColumn_DirectPath_TrimmedAndCaseInsensitive()
+    {
+        var profile = new ExportProfile("Profil export test", [ParentsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [],
+            [new PointPivot("travaux complet", "38-C7401")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[3].Should().Be("X");
+    }
+
+    // Non-generalization: tolerance is on the Colonne name only, never on the repère/ParentRepere
+    // comparison (D3 -- pipeline-produced, never a formatting variance).
+    [Fact]
+    public void Generate_ForIsolementSheet_DoesNotMatchPoint_CarriedByADifferentElement()
+    {
+        var profile = new ExportProfile("Profil export test", [EnfantsRule()]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "")],
+            [new PointPivot("PROLOCK VANNES", "C7401-V2")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[2].Should().Be("");
+    }
+
+    // Non-generalization: no diacritics normalization -- a genuine spelling difference stays a real
+    // mismatch, same guard-rail as Lot 055.
+    [Fact]
+    public void Generate_ForIsolementSheet_DoesNotMatchPoint_GenuineSpellingDifference()
+    {
+        var rule = new SheetGenerationRule(
+            "Enfants", PivotSource.Isolement,
+            [new ColumnDefinition("Repère", PivotFieldRef.IsolementRepere)],
+            [new PointColumnDefinition("POINT FEU", "Point feu")],
+            []);
+        var profile = new ExportProfile("Profil export test", [rule]);
+        var importResult = new ImportResult(
+            new EquipementPivot("38-C7401", "Compresseur C7401", "MAD TRAVAUX"),
+            [new IsolementPivot("C7401-V1", "Vanne 1", "VANNE", "MAD", "")],
+            [new PointPivot("POINT DE FEU", "C7401-V1")],
+            [],
+            []);
+
+        var workbook = _sut.Generate(importResult, profile);
+
+        workbook.Sheets[0].Rows.Should().ContainSingle().Which.Cells[1].Should().Be("");
+    }
+
     // Lot 069 (docs/tickets/tickets-tdd-lot-069-completion-colonnes-taches-multiples-export.md):
     // ConstantColumnDefinitions write the same literal on every row, regardless of PivotSource.
     [Fact]
