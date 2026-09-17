@@ -90,6 +90,12 @@ else
                         }
                         else
                         {
+                            <button id="details-export-profile-button-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ExportProfiles_Details"]" title="@Loc["ExportProfiles_Details"]"
+                                    @onclick="() => ViewProfileDetails(profile)">
+                                @((MarkupString)AdminIconMarkup.Eye)
+                            </button>
                             <button id="edit-export-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Edit"]" title="@Loc["ExportProfiles_Edit"]"
@@ -166,6 +172,12 @@ else
                     else
                     {
                         <div class="right-aligned-actions">
+                            <button id="details-export-profile-button-card-@profile.Id" type="button"
+                                    class="btn btn-outline-secondary btn-sm block-field-icon-btn"
+                                    aria-label="@Loc["ExportProfiles_Details"]" title="@Loc["ExportProfiles_Details"]"
+                                    @onclick="() => ViewProfileDetails(profile)">
+                                @((MarkupString)AdminIconMarkup.Eye)
+                            </button>
                             <button id="edit-export-profile-button-card-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Edit"]" title="@Loc["ExportProfiles_Edit"]"
@@ -217,6 +229,9 @@ else
     private void TestProfile() => NavigationManager.NavigateTo("export-profiles/test");
 
     private void EditProfile(ExportProfile profile) => NavigationManager.NavigateTo($"export-profiles/{profile.Id}/edit");
+
+    // Lot 079.8 (docs/tickets/tickets-tdd-lot-079-vue-details-langage-courant-profil-export.md).
+    private void ViewProfileDetails(ExportProfile profile) => NavigationManager.NavigateTo($"export-profiles/{profile.Id}/details");
 
     private void RequestDeleteProfile(ExportProfile profile)
     {

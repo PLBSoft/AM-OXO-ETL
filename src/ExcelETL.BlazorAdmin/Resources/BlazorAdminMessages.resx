@@ -1984,4 +1984,7 @@
   <data name="ExportProfileDetails_BlockingHeading" xml:space="preserve">
     <value>Problèmes qui empêchent la génération :</value>
   </data>
+  <data name="ExportProfiles_Details" xml:space="preserve">
+    <value>View details</value>
+  </data>
 </root>

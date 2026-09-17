@@ -150,6 +150,9 @@ public class ProfileListPageParityTests : BunitContext
 
             const string nonDestructiveClass = "btn btn-outline-secondary btn-sm block-field-icon-btn";
 
+            // Lot 079.8: the "view details" button, first of the row on both lists.
+            importCut.Find($"#details-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
+            exportCut.Find($"#details-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
             importCut.Find($"#edit-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
             importCut.Find($"#duplicate-profile-button-{importProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);
             exportCut.Find($"#edit-export-profile-button-{exportProfile.Id}").GetAttribute("class").Should().Be(nonDestructiveClass);

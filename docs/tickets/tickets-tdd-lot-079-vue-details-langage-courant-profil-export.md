@@ -534,6 +534,13 @@ avant `edit-export-profile-button-{id}` ; absent pendant une confirmation de sup
 
 **Vert** : bouton, clé `ExportProfiles_Details`.
 
+**Fait (2026-09-17)** : bouton dans le tableau et la carte, `ViewProfileDetails`, clé bilingue. Tests
+(`ExportProfilesTests.cs`) : navigation tableau/carte, position et classes, masquage pendant une
+confirmation de suppression, extension du test icône seule ; `ProfileListPageParityTests` : classe du
+bouton détails ajoutée au test Modifier/Dupliquer existant (extension, pas un doublon). Rouge vérifié :
+6 échecs (le masquage passe déjà, le bouton n'existant pas). Périmètre filtré (liste, parité des listes,
+gabarit icône, couleur de suppression) : 56/56.
+
 ### 79.9 — Clôture : catalogue du profil semé
 
 **Comportement** : aucun nouveau code attendu ; le test fige le catalogue.

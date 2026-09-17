@@ -228,7 +228,7 @@ public class ExportProfilesTests : BunitContext
 
             var cut = Render<ExportProfiles>();
 
-            foreach (var idPrefix in new[] { "edit-export-profile-button", "duplicate-export-profile-button", "delete-export-profile-button" })
+            foreach (var idPrefix in new[] { "details-export-profile-button", "edit-export-profile-button", "duplicate-export-profile-button", "delete-export-profile-button" })
             {
                 foreach (var id in new[] { $"{idPrefix}-{profile.Id}", $"{idPrefix}-card-{profile.Id}" })
                 {
@@ -239,6 +239,56 @@ public class ExportProfilesTests : BunitContext
                     button.GetAttribute("title").Should().NotBeNullOrWhiteSpace();
                 }
             }
+        });
+
+    // Lot 079.8 (docs/tickets/tickets-tdd-lot-079-vue-details-langage-courant-profil-export.md).
+    [Theory]
+    [InlineData("details-export-profile-button")]
+    [InlineData("details-export-profile-button-card")]
+    public async Task DetailsButton_NavigatesToDetailsRouteWithProfileId(string idPrefix) =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ExportProfiles>();
+            var navigationManager = Services.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+
+            cut.Find($"#{idPrefix}-{profile.Id}").Click();
+
+            navigationManager.Uri.Should().EndWith($"/export-profiles/{profile.Id}/details");
+        });
+
+    [Theory]
+    [InlineData("details-export-profile-button", "edit-export-profile-button")]
+    [InlineData("details-export-profile-button-card", "edit-export-profile-button-card")]
+    public async Task DetailsButton_ComesRightBeforeTheEditButton(string detailsPrefix, string editPrefix) =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ExportProfiles>();
+
+            var details = cut.Find($"#{detailsPrefix}-{profile.Id}");
+            details.NextElementSibling!.Id.Should().Be($"{editPrefix}-{profile.Id}");
+            details.ClassList.Should().Contain(["btn", "btn-outline-secondary", "btn-sm", "block-field-icon-btn"]);
+            details.GetAttribute("aria-label").Should().Be("View details");
+            details.QuerySelector("svg")!.GetAttribute("aria-hidden").Should().Be("true");
+        });
+
+    [Fact]
+    public async Task DetailsButton_IsHidden_WhileADeleteConfirmationIsOpen() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ExportProfiles>();
+            cut.Find($"#delete-export-profile-button-{profile.Id}").Click();
+
+            cut.FindAll($"#details-export-profile-button-{profile.Id}").Should().BeEmpty();
+            cut.FindAll($"#details-export-profile-button-card-{profile.Id}").Should().BeEmpty();
         });
 
     [Fact]
