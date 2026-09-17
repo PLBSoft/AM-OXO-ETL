@@ -290,3 +290,23 @@ Les phrases marquées « (fixe) » décrivent un comportement codé, non modifia
   `details-profile-button-{id}` (convention de la page), avec la variante `-card-`.
 - **D5 — Anglais** : le catalogue est rédigé en français ; l'anglais suivra les mêmes gabarits via
   le `.resx`, sans relecture séparée prévue. À confirmer.
+
+#### 7. Décisions actées (Simon, 2026-09-17)
+
+- **D1 — acté : oui, avec plages Excel.** Chaque feuille décrit le pas, la ligne de départ, la
+  condition d'arrêt et les cellules du premier bloc, affichés directement (pas de section repliée).
+- **D2 — acté : effet réel + avertissement.** La vue ne décrit que ce que la feuille utilise
+  réellement ; les réglages enregistrés mais ignorés sont listés à part sous « Configuré mais ignoré
+  pour cette feuille ». La connaissance « quelle feuille lit quoi » (tableau du §1) est dupliquée côté
+  `BlazorAdmin`, sur le modèle de `KnownHeaderFieldNames`.
+- **D3 — acté : oui, marqués « non modifiable ».** Les comportements codés en dur sont mêlés aux
+  autres phrases de la feuille, avec cette mention.
+- **D4 — acté : `details-profile-button-{id}`**, et `details-profile-button-card-{id}` pour la carte
+  mobile. Remplace l'id `import-profile-details-button-{id}` de l'objet du ticket.
+- **D5 — acté : français seulement pour l'instant.** Les clés anglaises (`BlazorAdminMessages.resx`)
+  reprennent provisoirement le texte français ; traduction à faire dans un lot ultérieur.
+  **Conséquence connue et acceptée** : `en-US` est la culture par défaut de BlazorAdmin, donc un
+  utilisateur qui n'a pas choisi le français sur `/profile` verra cette page en français, au milieu
+  d'une interface en anglais.
+
+Prochaine étape : rédiger les sous-tickets 78.1+ à partir de cette note.
