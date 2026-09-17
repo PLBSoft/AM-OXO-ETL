@@ -309,4 +309,271 @@ Les phrases marquées « (fixe) » décrivent un comportement codé, non modifia
   utilisateur qui n'a pas choisi le français sur `/profile` verra cette page en français, au milieu
   d'une interface en anglais.
 
-Prochaine étape : rédiger les sous-tickets 78.1+ à partir de cette note.
+---
+
+## Sous-tickets 78.1 à 78.11
+
+*Rédigés le 2026-09-17 à partir de la note ci-dessus (§1 à §7), qui reste la référence : les phrases
+attendues sont celles du catalogue §5, citées ici par feuille plutôt que recopiées.*
+
+### Cadre commun à tous les sous-tickets
+
+- **Emplacement** : `src/ExcelETL.BlazorAdmin/Formatting/` pour le code non visuel,
+  `Components/Pages/Admin/` pour la page ; tests en miroir sous `tests/ExcelETL.BlazorAdmin.Tests/`.
+- **Modèle de sortie** (créé en 78.2, étendu ensuite, jamais de markup) :
+  `ImportProfileDescription(IReadOnlyList<ProfileDescriptionSection> Sections)` ;
+  `ProfileDescriptionSection(string Title, IReadOnlyList<ProfileDescriptionSentence> Sentences,
+  IReadOnlyList<string> Ignored, IReadOnlyList<string> Blocking)` ;
+  `ProfileDescriptionSentence(string Text, bool IsFixed)`. `IsFixed` porte D3 : c'est la page qui
+  affiche la mention « non modifiable », pas le texte de la phrase.
+- **Point d'entrée** : `ImportProfileDescriptionBuilder.Build(ImportProfile, IStringLocalizer<BlazorAdminMessages>)`,
+  classe statique ; une méthode privée par partie (générale, blocs, en-tête, points, couleur,
+  comportements fixes, ignorés).
+- **Ordre des sections** : paramètres généraux, puis les 6 feuilles connues dans l'ordre du pipeline
+  (PROCEDURE, ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS), puis les
+  règles au nom inconnu dans l'ordre du profil. Jamais l'ordre brut de `SheetRules` pour les feuilles
+  connues : l'ordre d'une collection possédée n'est pas garanti après un aller-retour EF.
+- **Ressources** : clés `ImportProfileDetails_*` (et `ImportProfiles_Details` pour le bouton) ajoutées
+  dans `BlazorAdminMessages.resx` **et** `.fr.resx` avec **le même texte français** (D5). Les valeurs
+  du profil restent des données, jamais traduites. Guillemets français « … » dans les gabarits.
+- **Tests du constructeur** : xUnit pur, sans bUnit. Localiseur réel obtenu par
+  `new ServiceCollection().AddLocalization().BuildServiceProvider().GetRequiredService<IStringLocalizer<BlazorAdminMessages>>()`,
+  culture `fr-FR` imposée pendant le test (restaurée ensuite). Profils construits à la main, minimaux,
+  pour chaque cas ; le profil semé n'arrive qu'en 78.11. Assertions FluentAssertions sur le texte
+  exact des phrases.
+- **Exécution** : `dotnet test tests/ExcelETL.BlazorAdmin.Tests --filter <classe> --verbosity quiet`
+  pendant les cycles ; projet complet seulement en 78.11.
+- **Effort** : standard pour rouge et vert ; élevé réservé aux refactors signalés (78.1, 78.5, 78.8).
+- **Commit** : un commit par sous-ticket passé au vert.
+
+### 78.1 — Table d'usage des feuilles (D2, D3)
+
+**Comportement** : une table de données, `ImportSheetUsage`, répond pour un nom de feuille à trois
+questions : la feuille est-elle traitée par l'import ; quels membres de `SheetExtractionRule` elle lit
+(tableau du §1) ; quels noms d'en-tête elle exige et quel sens métier ils ont (`nomMAD` = repère de
+l'équipement, `dateRev` = date de révision, `Designation` = désignation de l'équipement, `repereEcho`
+= repère repris pour les éléments). Comparaison du nom de feuille ordinale, comme l'orchestrateur.
+
+**Rouge** (`ImportSheetUsageTests`) :
+- chacune des 6 feuilles connues renvoie exactement la ligne du tableau §1 (`[Theory]`, une ligne par
+  feuille) ;
+- un nom inconnu (ex. « MA FEUILLE ») et un nom à la casse différente (« procedure ») sont non traités ;
+- les noms d'en-tête exigés égalent ceux de `KnownHeaderFieldNames.For(...)` pour chaque feuille
+  (pas de seconde source qui divergerait).
+
+**Garde-fou contre la dérive avec les services** (rouge aussi, test d'intégration dans le même
+fichier) : pour chaque case « non » du tableau, prendre le profil semé (`DefaultProfileSeeder`,
+EF InMemory, comme `ImportProfileDraftMapperTests`), renseigner le membre ignoré sur la règle de la
+feuille (ex. une colonne inconditionnelle sur PROCEDURE, une `ConditionalPointRule` sur PLATINES, une
+couleur par défaut sur DIVERS), lancer le vrai pipeline sur `Dossier.de.MaD.IDL.-.C7401.xlsx` et
+vérifier que `Isolements`/`Points`/`TachesMultiples`/`Errors` sont équivalents au passage sans ce
+membre. Si le pipeline change un jour de comportement, ce test casse avant que la page ne mente.
+
+**Vert** : `src/ExcelETL.BlazorAdmin/Formatting/ImportSheetUsage.cs`, dictionnaire statique en dur.
+
+**Refactor (effort élevé)** : décider si `KnownHeaderFieldNames` devient une simple lecture de cette
+table (une seule source côté BlazorAdmin) sans toucher à son comportement dans `SheetRuleForm`
+(les tests du lot 048 doivent rester verts sans modification).
+
+### 78.2 — Section « Paramètres généraux »
+
+**Comportement** : première section du modèle, phrases du bloc « Paramètres généraux » du catalogue §5.
+- préfixe : repère lu dans PROCEDURE, doit commencer par le préfixe (sensible à la casse), sinon
+  fichier refusé ;
+- type d'élément de l'équipement ;
+- tableaux par défaut : liste vide → phrase « aucun tableau » ; sinon la phrase à N colonnes du §5 ;
+- applications par défaut : liste vide → « aucune application » ;
+- une phrase par `TacheMultipleTypeLabel` ; liste vide → aucune phrase.
+
+**Rouge** (`ImportProfileDescriptionBuilderGeneralTests`) : un cas par puce, dont les listes vides,
+le singulier (1 tableau → « la colonne ») et le pluriel (N → « les N colonnes »). Le titre de la
+section est « Paramètres généraux ».
+
+**Vert** : modèle de sortie, `Build`, clés `ImportProfileDetails_General*`. Aucune phrase de cette
+section n'est `IsFixed`.
+
+### 78.3 — Lecture des blocs répétés (D1)
+
+**Comportement** : pour chaque feuille traitée, les deux premières phrases du catalogue §5 : pas,
+ligne de départ, champ d'arrêt ; puis la liste des champs du premier bloc avec leur plage absolue
+(`BlockFieldRangeFormatter.ToAbsoluteRange`, réutilisé tel quel).
+- libellés métier des noms de champs connus (table du §3 de la note), nom inconnu affiché entre
+  guillemets ;
+- PROCEDURE : vocabulaire « tâche », « par ligne » quand le pas vaut 1 ; autres feuilles : « élément »,
+  « toutes les N lignes » ;
+- le champ d'arrêt est désigné par son libellé métier ;
+- le champ `HasZeroEnergie` est listé comme « indicateur zéro énergie » (sa signification vient en 78.5).
+
+**Rouge** (`ImportProfileDescriptionBuilderBlockTests`) : ISOLEMENT (pas 7, champ à décalage négatif
+`H18:U19`, champ mono-colonne `V18:V19`), PROCEDURE (pas 1, cellule unique `B9`), DIVERS (pas 3),
+un nom de champ inconnu, un champ d'arrêt inconnu.
+
+**Vert** : clés `ImportProfileDetails_Block*` et `ImportProfileDetails_FieldLabel_*`.
+
+### 78.4 — En-tête : champs et composites
+
+**Comportement** : pour chaque `HeaderFieldRule` **utilisé** par la feuille (nom exigé par
+`ImportSheetUsage`, ou placeholder d'un composite utilisé), une phrase « {libellé} (« {nom} ») est lu
+en {plage} » ; complétée par « préfixe « {préfixe} » retiré » si `StripReperePrefix`, par « écrit au
+format {format} » si `DateFormat`, et par « de la feuille {feuille} » si `Cell.Sheet` diffère du nom
+de la règle. Un composite utilisé donne la phrase « La désignation de l'équipement suit le modèle… »
+du §5. AUTRES JOINTS TOUCHES et DIVERS : `repereEcho` donne la phrase « Le repère de l'élément est
+cette valeur, un tiret, puis l'identifiant ».
+
+**Rouge** (`ImportProfileDescriptionBuilderHeaderTests`) : PROCEDURE (3 champs + composite, avec les
+options préfixe et format de date), AUTRES JOINTS TOUCHES (`repereEcho`), un champ lu sur une autre
+feuille, un champ d'en-tête supplémentaire référencé par le composite (décrit), un champ d'en-tête
+supplémentaire non référencé (**non** décrit ici — il apparaît en 78.8).
+
+**Vert** : clés `ImportProfileDetails_Header*`.
+
+### 78.5 — Points : colonnes cochées d'office, conditions, cellules à valeur attendue
+
+**Comportement** (uniquement les membres que la feuille lit, selon 78.1) :
+- `UnconditionalColonneNames` : phrase unique à 1 ou N colonnes ;
+- `PointRules` regroupées par (`SourceFieldName`, `Operator`, `ComparisonValue` rogné, insensible à la
+  casse), ordre de première apparition, gabarits `Equals`/`NotEquals` × 1/N du §4 ;
+- phrase de clôture « Un élément qui ne remplit aucune de ces conditions… » dès qu'il y a au moins
+  une règle conditionnelle lue ;
+- **fusion zéro énergie** (ISOLEMENT) : une règle `HasZeroEnergie Equals "true"` devient la phrase du
+  §5 « Si l'indicateur zéro énergie contient « {ZeroEnergieExpectedValue} »… Toute autre valeur non
+  vide donne un avertissement ». Si `ZeroEnergieExpectedValue` est nul ou si le champ `HasZeroEnergie`
+  n'est pas dans le bloc, la phrase dit que la colonne n'est jamais cochée (l'indicateur n'est jamais
+  évalué) ;
+- `FieldPresencePointRules` regroupées par (`ColonneName`, `ExpectedValue`) : « Si la cellule {c1} ou
+  {c2} contient « {valeur} »… » ; sans valeur attendue : « …est renseignée… ».
+
+**Rouge** (`ImportProfileDescriptionBuilderPointTests`) : DIVERS réel du §4 (7 règles → 4 phrases,
+SOUPAPE à 2 colonnes, POINT DE FEU à 3) ; AUTRES JOINTS TOUCHES (`NotEquals` TUBING) ; ISOLEMENT
+(fusion, puis valeur attendue nulle, puis champ absent du bloc) ; PLATINES (4 règles → 2 phrases à
+deux cellules) ; règle `FieldPresence` sans valeur attendue ; clé de regroupement insensible à la
+casse et aux espaces (« soupape » et « SOUPAPE  » → un seul groupe) ; une même colonne visée par deux
+valeurs → deux phrases ; aucune phrase de points si la feuille n'en a pas.
+
+**Vert** : clés `ImportProfileDetails_Point*`.
+
+**Refactor (effort élevé)** : un seul algorithme de regroupement générique pour les deux types de
+règles si le code s'y prête, sans rendre les gabarits illisibles.
+
+### 78.6 — Couleur d'étiquette
+
+**Comportement** (PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES) : cellule renseignée → « La
+couleur d'étiquette est lue en {plage}. » ; couleurs autorisées → « Couleurs acceptées : {liste}. Une
+autre valeur est ignorée, avec un avertissement. » ; sans liste → « Toute valeur est acceptée. » ;
+couleur par défaut seule → « La couleur d'étiquette de chaque élément est toujours « {valeur} ». ».
+Cellule **et** défaut renseignés : seule la cellule est décrite — `CouleurEtiquetteResolver` n'utilise
+jamais la valeur par défaut quand une cellule est configurée, même si elle est vide (vérifié dans le
+code le 17/09) ; la valeur par défaut part dans `Ignored` (78.8). Liste de couleurs autorisées sans
+cellule : ignorée aussi. Rien de renseigné → aucune phrase.
+
+**Rouge** (`ImportProfileDescriptionBuilderCouleurTests`) : PLATINES et AUTRES JOINTS TOUCHES du
+§5, cellule sans liste, cellule + défaut (pas de phrase sur le défaut), rien.
+
+**Vert** : clés `ImportProfileDetails_Couleur*`.
+
+### 78.7 — Comportements fixes (D3)
+
+**Comportement** : phrases `IsFixed = true`, ajoutées à la section de chaque feuille traitée, textes
+du §5 marqués « (fixe) » : repère `K6:T6` (ISOLEMENT) / `K6:U6` (PLATINES, ORIFICES CAPACITES) ; zone
+`B6:E6` (DIVERS) ; conversion MAD/REL, ligne sans ordre = titre de section, date de révision
+illisible = fichier refusé (PROCEDURE). Plages codées en dur dans la table 78.1 (colonne
+« comportements fixes »), recopiées des services : `IsolementExtractionService`,
+`UnconditionalIsolementSheetExtractionService`, `DiversExtractionService`, `ProcedureExtractionService`.
+
+**Rouge** (`ImportProfileDescriptionBuilderFixedBehaviorTests`) : une feuille par cas, `IsFixed`
+vrai sur ces phrases et faux sur toutes les autres phrases de la section ; aucune phrase fixe sur une
+feuille inconnue.
+
+**Vert** : clés `ImportProfileDetails_Fixed*`.
+
+### 78.8 — Réglages ignorés et problèmes bloquants (D2)
+
+**Comportement** :
+- `Ignored` d'une feuille traitée : chaque membre renseigné qu'elle ne lit pas (tableau §1), avec sa
+  valeur (ex. « colonne cochée d'office « VISITE PRÉALABLE CHANTIER » »), plus chaque champ ou
+  composite d'en-tête ni exigé ni référencé, plus la couleur par défaut quand une cellule de couleur
+  est configurée et la liste de couleurs autorisées quand il n'y a pas de cellule (78.6) ;
+- règle au nom inconnu : section sans phrases, `Ignored` = « Cette feuille n'est pas traitée par
+  l'import (nom non reconnu). » ;
+- `Blocking` : sur la section d'une feuille, chaque nom d'en-tête exigé absent (l'extraction échoue) ;
+  sur la section générale, chaque feuille connue absente du profil (l'import échoue).
+
+**Rouge** (`ImportProfileDescriptionBuilderIgnoredTests`) : le cas réel du 16/09 (colonne cochée
+d'office sur PROCEDURE) ; `PointRules` sur PLATINES ; couleur sur DIVERS ; `ZeroEnergieExpectedValue`
+sur PLATINES ; en-tête sur ISOLEMENT ; en-tête supplémentaire non référencé sur PROCEDURE ; nom de
+feuille inconnu ; `nomMAD` absent ; feuille DIVERS absente du profil ; profil semé → `Ignored` et
+`Blocking` vides partout (garde-fou : pas de faux positif sur le profil de référence).
+
+**Vert** : clés `ImportProfileDetails_Ignored*`/`_Blocking*`.
+
+**Refactor (effort élevé)** : vérifier qu'aucune phrase n'est produite pour un membre ignoré (78.4 à
+78.6 et 78.8 lisent la même table, pas deux conditions écrites séparément).
+
+### 78.9 — Page `/import-profiles/{Id:guid}/details`
+
+**Comportement** : `ImportProfileDetails.razor` (`Components/Pages/Admin/`), `[Authorize]` sans rôle,
+charge le profil via `IImportProfileStore.GetByIdAsync` et affiche `Build(...)`.
+- `PageBackNavLink` (id `back-to-import-profiles-button`) vers `import-profiles` ;
+- `h1` : « Détails du profil « {nom} » » ; un `h2` par section ;
+- id de section : `details-section-general`, `details-section-sheet-{index}` (index dans l'ordre
+  d'affichage, les noms de feuille contenant des espaces) ; phrases en `<ul><li>` ;
+- phrase fixe : suffixe `<span class="badge text-bg-secondary">non modifiable</span>` ;
+- `Ignored` : `div.alert.alert-warning` (id `details-section-sheet-{index}-ignored`), sans
+  `role="alert"` (contenu statique chargé avec la page) ; `Blocking` : `div.alert.alert-danger`
+  (id `…-blocking`) ;
+- id inconnu : `div#import-profile-details-not-found.alert.alert-danger`, aucune section rendue ;
+- aucun bouton, aucun champ, aucun `@onclick` hors `PageBackNavLink`.
+
+**Rouge** :
+- bUnit (`ImportProfileDetailsTests`) : sections et phrases rendues depuis un profil minimal en
+  store EF InMemory ; badge sur une phrase fixe seulement ; alertes ignorés/bloquants présentes ou
+  absentes ; profil introuvable ; retour à la liste ; `HeadingHierarchyAssertions.AssertNoHeadingLevelSkip`.
+- HTTP (section 6 de `recommandations-tickets-tdd.md`) : ajouter à `BusinessRoutes` de
+  `BusinessPageAuthorizationHttpTests` la route `/import-profiles/00000000-0000-0000-0000-000000000001/details`
+  (200 pour un compte non-Admin, redirection vers la connexion sans authentification), et vérifier
+  dans un test dédié que le corps contient `import-profile-details-not-found` — un 200 seul passerait
+  aussi sur la page NotFound.
+
+**Vert** : la page, clés `ImportProfileDetails_PageTitle`/`_NotFound`/`_FixedMarker`.
+
+### 78.10 — Bouton « Voir les détails » sur la liste
+
+**Comportement** : `ImportProfiles.razor`, dans le tableau et dans la carte mobile, un bouton icône
+seule **placé avant** « Modifier » : ids `details-profile-button-{id}` et
+`details-profile-button-card-{id}` (D4), classe `btn btn-outline-secondary btn-sm
+block-field-icon-btn`, `aria-label`/`title` = `ImportProfiles_Details` (« Voir les détails »), icône
+nouvelle constante `AdminIconMarkup.Eye` (forme `bi-eye` de Bootstrap Icons, `aria-hidden="true"`).
+Clic → `import-profiles/{id}/details`. Masqué pendant une confirmation de suppression ou de
+réinitialisation, comme les autres boutons de la ligne.
+
+**Rouge** (`ImportProfilesTests.cs`) : navigation depuis le tableau et depuis la carte ; ajout de
+`details-profile-button` aux boutons couverts par
+`RowActionButtons_AreIconOnly_WithAriaLabelAndTitle_InBothTableAndCardTemplates` (extension de ce
+test, pas un doublon) ; ordre : le bouton détails précède `edit-profile-button-{id}` dans la même
+cellule ; absent pendant une confirmation de suppression.
+
+**Vert** : bouton, constante, clé `ImportProfiles_Details`.
+
+### 78.11 — Clôture : catalogue du profil semé
+
+**Comportement** : aucun nouveau code attendu ; ce test fige le catalogue validé.
+
+**Rouge/vert** (`ImportProfileDescriptionBuilderSeededProfileTests`) : profil semé via
+`DefaultProfileSeeder` + EF InMemory relu par `IImportProfileStore`, `Build` en `fr-FR` : chaque
+section produit **exactement** les phrases du §5, dans l'ordre, avec `IsFixed` sur les phrases
+marquées « (fixe) », `Ignored` et `Blocking` vides. Un écart = soit un défaut à corriger, soit une
+évolution du profil semé à reporter dans le §5 (le catalogue est vivant, pas figé à cette date).
+
+**Puis** : suite `ExcelETL.BlazorAdmin.Tests` complète ; mise à jour de la section
+« CURRENT SOLUTION STATE » de `CLAUDE.md` (nouvelle page, nouvelle table, D5 et sa conséquence) ;
+ajout de `/import-profiles/{id}/details` au tableau des routes de
+`convention-autorisation-pages-blazoradmin.md`.
+
+### Hors périmètre de 78.1 à 78.11
+
+- Traduction anglaise des clés `ImportProfileDetails_*` (D5, lot ultérieur).
+- `ExportProfile` et sa propre vue Détails (lot séparé après validation de celle-ci).
+- Toute modification du domaine, des services d'extraction ou de l'éditeur d'import, y compris pour
+  corriger un réglage « ignoré » : la page le signale, elle ne le corrige pas.
+- Lien vers la vue Détails depuis l'éditeur ou depuis les pages de test ; export PDF/impression.
+- Exemples de valeurs lues dans un vrai fichier (la vue décrit les règles, pas un import donné).
