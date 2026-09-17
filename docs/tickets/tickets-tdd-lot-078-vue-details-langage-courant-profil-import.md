@@ -410,6 +410,13 @@ section est « Paramètres généraux ».
 **Vert** : modèle de sortie, `Build`, clés `ImportProfileDetails_General*`. Aucune phrase de cette
 section n'est `IsFixed`.
 
+**Fait (2026-09-17)** : `ImportProfileDescription.cs` (modèle), `ImportProfileDescriptionBuilder.cs`
+(section générale), 11 clés dont `ImportProfileDetails_QuotedValue` (« {0} », guillemets eux aussi
+dans le `.resx`). Support de test partagé par les fichiers de 78.2 à 78.8 :
+`tests/ExcelETL.BlazorAdmin.Tests/Formatting/DescriptionTestSupport.cs` (localiseur réel, culture
+`fr-FR`, fabriques de règle et de profil minimaux). `ImportProfileDescriptionBuilderGeneralTests` :
+12/12 (rouge = compilation, types absents).
+
 ### 78.3 — Lecture des blocs répétés (D1)
 
 **Comportement** : pour chaque feuille traitée, les deux premières phrases du catalogue §5 : pas,

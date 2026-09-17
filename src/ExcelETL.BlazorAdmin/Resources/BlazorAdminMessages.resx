@@ -1480,4 +1480,37 @@
   <data name="Home_GlobalErrorMessage" xml:space="preserve">
     <value>Indicators could not be loaded.</value>
   </data>
+  <data name="ImportProfileDetails_GeneralSectionTitle" xml:space="preserve">
+    <value>Paramètres généraux</value>
+  </data>
+  <data name="ImportProfileDetails_QuotedValue" xml:space="preserve">
+    <value>« {0} »</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralReperePrefix" xml:space="preserve">
+    <value>Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par {0} (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralEquipementTypeElement" xml:space="preserve">
+    <value>L'équipement est créé avec le type d'élément {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralNoTableau" xml:space="preserve">
+    <value>L'équipement n'est rattaché à aucun tableau.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralOneTableau" xml:space="preserve">
+    <value>L'équipement est coché dans la colonne {0}. L'équipement et tous ses éléments sont rattachés à ce tableau.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralSeveralTableaux" xml:space="preserve">
+    <value>L'équipement est coché dans les {0} colonnes {1}. L'équipement et tous ses éléments sont rattachés à ces {0} tableaux.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralNoApplication" xml:space="preserve">
+    <value>L'équipement et ses éléments ne sont rattachés à aucune application.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralOneApplication" xml:space="preserve">
+    <value>L'équipement et tous ses éléments sont rattachés à l'application {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralSeveralApplications" xml:space="preserve">
+    <value>L'équipement et tous ses éléments sont rattachés aux {0} applications {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralTacheMultipleTypeLabel" xml:space="preserve">
+    <value>Une tâche de type {0} est écrite dans la colonne travaux {1}.</value>
+  </data>
 </root>
