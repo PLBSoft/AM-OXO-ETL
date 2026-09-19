@@ -76,6 +76,23 @@ Choix techniques pris en autonomie (non tranchés avec Simon, faute d'enjeu mét
 - Toute condition autre que « au moins une vraie tâche satisfait la règle » (comptage, toutes les tâches…).
 - Migration d'un profil existant : boutons « Réinitialiser » (D7 du lot 082).
 
-## 4. Résultat
+## 4. Résultat (19/09)
 
-*(rempli à la clôture du lot)*
+- **83.1** (`58d1602`) : `ProcedureExtractionService` reçoit `IConditionalPointRuleEvaluator` ;
+  `ReadTachesMultiples` renvoie aussi les valeurs brutes de chaque vraie tâche ; une colonne
+  conditionnelle est cochée si au moins une tâche satisfait une de ses règles. 9 tests unitaires +
+  intégration sur C7401/D8570/G6306B (MAD+REL / MAD seul / MAD+REL). **83.3 livré dans le même commit**
+  (le garde-fou `ImportSheetUsageTests` exigeait la table d'usage à jour) : PROCEDURE lit
+  `ConditionalPointRules`, propriété renommée `PointsTickTheEquipement`, phrases « Si au moins une tâche
+  a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ». » (clés
+  `ImportProfileDetails_PointTask*`), pas de phrase d'avertissement pour PROCEDURE. Le test du lot 082
+  « règle conditionnelle sur PROCEDURE signalée ignorée » est remplacé.
+- **83.2** (`a473321`) : profil standard (§2). Intégration : C7401 → 6 colonnes cochées sur Parents ;
+  D8570 → PROCÉDURE REL vide, les 5 autres cochées. Catalogues Détails import/export mis à jour
+  (colonnes de points de Parents : O à AJ).
+- **Bug existant découvert, hors lot** : le contrôle de cohérence des types (lot 032) plante
+  (`ExtractionError` à identifiant vide) quand les premières tâches n'ont pas de titre de section et que
+  MAD/REL sont à égalité. Signalé en tâche séparée ; le test concerné ajoute une ligne de titre.
+- Suites complètes : voir `CLAUDE.md` (bullet du lot 083).
+- **Mise en service** : boutons « Réinitialiser » sur les deux profils standard (D7 du lot 082).
+- Non vérifié dans un navigateur.

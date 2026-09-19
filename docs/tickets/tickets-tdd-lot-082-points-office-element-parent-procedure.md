@@ -32,7 +32,7 @@ créés d'office sur l'élément parent se déclarent dans les colonnes cochées
 | D2 | TRAVAUX COMPLET / TRAVAUX DETAIL | Des tableaux seulement. Ils restent dans « Tableaux » et ne créent plus de point. L'app legacy ne s'en sert pas. |
 | D3 | Diffusion de « Tableaux » aux enfants | Inchangée (colonne « Tableaux » d'Enfants toujours remplie). |
 | D4 | Points d'office du parent | Déclarés dans `UnconditionalColonneNames` de la règle PROCEDURE, créés sur l'Équipement uniquement. |
-| D5 | Points conditionnels sur PROCEDURE | Non. `PointRules` reste ignoré sur PROCEDURE (pas de besoin exprimé). |
+| D5 | Points conditionnels sur PROCEDURE | ~~Non. `PointRules` reste ignoré sur PROCEDURE.~~ **Annulée le jour même par le lot 083** (`tickets-tdd-lot-083-points-conditionnels-procedure-taches.md`) : le client a demandé PROCÉDURE MAD/REL « que si il y a des TM ». |
 | D6 | Export, feuille Parents | Une colonne cochée (« X ») par point d'office, placée avant les 16 colonnes de points remontées des enfants. |
 | D7 | Profil standard déjà en base | Aucune migration : le client utilise les boutons « Réinitialiser » (`reset-profile-button-*`, `reset-export-profile-button-*`) sur les deux profils standard. |
 

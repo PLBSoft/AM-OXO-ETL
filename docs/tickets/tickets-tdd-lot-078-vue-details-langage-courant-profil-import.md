@@ -120,7 +120,7 @@ uniquement de son `SheetName` (6 noms littéraux dans `ImportPipelineOrchestrato
 | `Locator` (+ `Fields` par nom) | oui | oui | oui | oui | oui |
 | `HeaderFields`/`HeaderComposites` | oui (`nomMAD`, `dateRev`, `Designation`) | **non** | **non** | oui (`repereEcho`) | oui (`repereEcho`) |
 | `UnconditionalColonneNames` | oui depuis le lot 082 (points de l'équipement) | oui | oui | oui | oui |
-| `PointRules` | **non** | oui | **non** | oui | oui |
+| `PointRules` | oui depuis le lot 083 (au moins une tâche) | oui | **non** | oui | oui |
 | `FieldPresencePointRules` | non | non | oui | non | non |
 | `ZeroEnergieExpectedValue` | non | oui | non | non | non |
 | Couleur (cellule/défaut/autorisées) | non | non | oui | oui | non |
@@ -233,7 +233,9 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 - Une date de révision illisible fait refuser le fichier entier. (fixe)
 - Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ». (fixe)
 - Une ligne sans ordre est un titre de section, pas une tâche à réaliser. (fixe)
-- L'équipement est coché dans la colonne « VISITE PRÉALABLE CHANTIER ».
+- L'équipement est coché dans les 4 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER ».
+- Si au moins une tâche a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ».
+- Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».
 
 **Feuille ISOLEMENT**
 - Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.
