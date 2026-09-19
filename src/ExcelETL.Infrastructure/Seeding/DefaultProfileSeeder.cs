@@ -55,6 +55,21 @@ public class DefaultProfileSeeder(
     // and no longer in DefaultTableaux, which only names the tables the element belongs to.
     private const string VisitePrealableChantierColonneName = "VISITE PRÉALABLE CHANTIER";
 
+    // Lot 083 (docs/tickets/tickets-tdd-lot-083-points-conditionnels-procedure-taches.md): the client's
+    // full list of Equipement Points, in his order (E4). PROCÉDURE MAD/REL only when at least one real
+    // task of that type exists -- PROCEDURE's conditional rules on the raw TYPE column.
+    private const string ProcedureMadColonneName = "PROCÉDURE MAD";
+    private const string AutorisationDeplatinagesColonneName = "AUTORISATION DÉPLATINAGES";
+    private const string ProcedureRelColonneName = "PROCÉDURE REL";
+    private const string AutorisationRemiseEnServiceColonneName = "AUTORISATION DE REMISE EN SERVICE";
+    private const string ReceptionFinaleChantierColonneName = "RÉCEPTION FINALE CHANTIER";
+
+    private static readonly string[] EquipementPointColonneNames =
+    [
+        VisitePrealableChantierColonneName, ProcedureMadColonneName, AutorisationDeplatinagesColonneName,
+        ProcedureRelColonneName, AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName
+    ];
+
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), decision #4: the only
     // Application name seeded by default. "PROGRESS" is the legacy EF6 AMProgress Application name
     // this deployment cares about today -- an admin can add more via the profile editor.
@@ -176,8 +191,16 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
                     new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
                 ]),
-                [],
-                [VisitePrealableChantierColonneName],
+                [
+                    new ConditionalPointRule(
+                        ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", ProcedureMadColonneName),
+                    new ConditionalPointRule(
+                        ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", ProcedureRelColonneName)
+                ],
+                [
+                    VisitePrealableChantierColonneName, AutorisationDeplatinagesColonneName,
+                    AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName
+                ],
                 [
                     new HeaderFieldRule(
                         ProcedureHeaderFieldNames.NomMad, new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
@@ -433,7 +456,7 @@ public class DefaultProfileSeeder(
                 // Lot 082 (D6): the Equipement's own Points first, then the ones aggregated from its
                 // children (66.4).
                 [
-                    new PointColumnDefinition(VisitePrealableChantierColonneName, VisitePrealableChantierColonneName),
+                    .. EquipementPointColonneNames.Select(name => new PointColumnDefinition(name, name)),
                     .. BuildIsolementStylePointColumnDefinitions()
                 ],
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),

@@ -1,5 +1,7 @@
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Procedure;
+using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Fields;
@@ -107,8 +109,14 @@ public class DefaultProfileSeederTests
         // unconditional Colonnes.
         profile.DefaultTableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
         var procedure = profile.SheetRules.Single(r => r.SheetName == "PROCEDURE");
-        procedure.UnconditionalColonneNames.Should().Equal("VISITE PRÉALABLE CHANTIER");
-        procedure.PointRules.Should().BeEmpty();
+        // Lot 083: the client's 6 Equipement Points -- 4 unconditional, 2 when at least one task of the type
+        // exists.
+        procedure.UnconditionalColonneNames.Should().Equal(
+            "VISITE PRÉALABLE CHANTIER", "AUTORISATION DÉPLATINAGES", "AUTORISATION DE REMISE EN SERVICE",
+            "RÉCEPTION FINALE CHANTIER");
+        procedure.PointRules.Should().Equal(
+            new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", "PROCÉDURE MAD"),
+            new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", "PROCÉDURE REL"));
 
         var isolement = profile.SheetRules.Single(r => r.SheetName == "ISOLEMENT");
         isolement.Locator.FirstBlockStartRow.Should().Be(19);
@@ -413,10 +421,16 @@ public class DefaultProfileSeederTests
         var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
 
-        parents.PointColumnDefinitions.First().Should().Be(
-            new PointColumnDefinition("VISITE PRÉALABLE CHANTIER", "VISITE PRÉALABLE CHANTIER"));
-        parents.PointColumnDefinitions.Skip(1).Should().Equal(enfants.PointColumnDefinitions);
-        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotContain("VISITE PRÉALABLE CHANTIER");
+        // Lot 083 (E4): the client's order.
+        string[] equipementColonnes =
+        [
+            "VISITE PRÉALABLE CHANTIER", "PROCÉDURE MAD", "AUTORISATION DÉPLATINAGES", "PROCÉDURE REL",
+            "AUTORISATION DE REMISE EN SERVICE", "RÉCEPTION FINALE CHANTIER"
+        ];
+        parents.PointColumnDefinitions.Take(6).Should().Equal(
+            equipementColonnes.Select(name => new PointColumnDefinition(name, name)));
+        parents.PointColumnDefinitions.Skip(6).Should().Equal(enfants.PointColumnDefinitions);
+        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotIntersectWith(equipementColonnes);
     }
 
     [Fact]

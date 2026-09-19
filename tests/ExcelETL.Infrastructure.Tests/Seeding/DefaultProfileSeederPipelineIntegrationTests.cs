@@ -369,8 +369,16 @@ public class DefaultProfileSeederPipelineIntegrationTests
         parents.Cell(2, ParentsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
         // Lot 082: the Equipement's own Point, declared on PROCEDURE, is ticked through the direct match
         // (PointPivot.ParentRepere == Equipement.Repere) -- no longer carried by "Tableaux".
-        parents.Cell(1, ParentsCol("VISITE PRÉALABLE CHANTIER")).GetString().Should().Be("VISITE PRÉALABLE CHANTIER");
-        parents.Cell(2, ParentsCol("VISITE PRÉALABLE CHANTIER")).GetString().Should().Be("X");
+        // Lot 083: C7401 has MAD and REL tasks -- all 6 Equipement Points ticked.
+        foreach (var colonne in new[]
+        {
+            "VISITE PRÉALABLE CHANTIER", "PROCÉDURE MAD", "AUTORISATION DÉPLATINAGES", "PROCÉDURE REL",
+            "AUTORISATION DE REMISE EN SERVICE", "RÉCEPTION FINALE CHANTIER"
+        })
+        {
+            parents.Cell(1, ParentsCol(colonne)).GetString().Should().Be(colonne);
+            parents.Cell(2, ParentsCol(colonne)).GetString().Should().Be("X", colonne);
+        }
         parents.Cell(2, ParentsCol("PROGRESS")).GetString().Should().Be("O");
         // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): the
         // Equipement is always read from PROCEDURE.
@@ -450,6 +458,17 @@ public class DefaultProfileSeederPipelineIntegrationTests
         parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("644-D8570");
         parents.Cell(2, ParentsCol("LOC2")).GetString().Should().Be("");
         parents.Cell(2, ParentsCol("COMMENTAIRES")).GetString().Should().Be("");
+
+        // Lot 083: D8570 has MAD tasks only -- "PROCÉDURE REL" stays empty, the other 5 are ticked.
+        parents.Cell(2, ParentsCol("PROCÉDURE REL")).GetString().Should().Be("");
+        foreach (var colonne in new[]
+        {
+            "VISITE PRÉALABLE CHANTIER", "PROCÉDURE MAD", "AUTORISATION DÉPLATINAGES",
+            "AUTORISATION DE REMISE EN SERVICE", "RÉCEPTION FINALE CHANTIER"
+        })
+        {
+            parents.Cell(2, ParentsCol(colonne)).GetString().Should().Be("X", colonne);
+        }
 
         // DIVERS' 13 "ZERO ENERGIE" isolements now target the same "(PS941)" Colonne as ISOLEMENT
         // (66.1's merge) -- none of them is ISOLEMENT's own repère, so this column is marked on

@@ -35,7 +35,9 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("Une date de révision illisible fait refuser le fichier entier.", true),
                 ("Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ».", true),
                 ("Une ligne sans ordre est un titre de section, pas une tâche à réaliser.", true),
-                ("L'équipement est coché dans la colonne « VISITE PRÉALABLE CHANTIER ».", false),
+                ("L'équipement est coché dans les 4 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER ».", false),
+                ("Si au moins une tâche a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ».", false),
+                ("Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».", false),
             ]),
         ("Feuille ISOLEMENT",
             [
