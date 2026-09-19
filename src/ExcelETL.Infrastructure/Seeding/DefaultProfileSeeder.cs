@@ -43,18 +43,16 @@ public class DefaultProfileSeeder(
     private const string IsolementZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
-    // PROCEDURE's 2 unconditional Points are driven by ImportProfile.DefaultTableaux since Lot U3 (no
-    // longer hardcoded in ProcedureExtractionService) -- these two consts are transcribed here purely
-    // so the default export profile can reference the same Colonne names, and are also the literal
-    // DefaultTableaux value seeded below.
+    // The two tables every element of a MAD dossier belongs to -- the DefaultTableaux value seeded
+    // below. Since lot 082 they only fill the "Tableaux" column; they create no Point (lot U3 used to
+    // turn each Tableau name into an Equipement Point).
     private const string TravauxCompletColonneName = "TRAVAUX COMPLET";
     private const string TravauxDetailColonneName = "TRAVAUX DETAIL";
 
-    // Client feedback (2026-09-16): a 3rd unconditional PROCEDURE Point the client wants alongside the
-    // two above -- same mechanism (ImportProfile.DefaultTableaux -> ProcedureExtractionService, never
-    // SheetExtractionRule.UnconditionalColonneNames, which PROCEDURE's own extraction service never
-    // reads at all; the client had tried adding it there in the editor, which is why it silently had
-    // no effect).
+    // Client feedback (2026-09-16): a Point created for every Equipement. Lot 082
+    // (docs/tickets/tickets-tdd-lot-082-points-office-element-parent-procedure.md): declared as an
+    // unconditional Colonne of the PROCEDURE rule -- the only source of the Equipement's own Points --
+    // and no longer in DefaultTableaux, which only names the tables the element belongs to.
     private const string VisitePrealableChantierColonneName = "VISITE PRÉALABLE CHANTIER";
 
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), decision #4: the only
@@ -164,7 +162,7 @@ public class DefaultProfileSeeder(
     // checklist (docs/tickets-tdd-seed-profils-defaut.md, closing section) -- zero divergence found.
     private static ImportProfile BuildDefaultImportProfile() => new(
         ImportProfileId, ProfileName, ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
-        [TravauxCompletColonneName, TravauxDetailColonneName, VisitePrealableChantierColonneName],
+        [TravauxCompletColonneName, TravauxDetailColonneName],
         [ProgressApplicationName],
         [
             new SheetExtractionRule(
@@ -179,7 +177,7 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
                 ]),
                 [],
-                [],
+                [VisitePrealableChantierColonneName],
                 [
                     new HeaderFieldRule(
                         ProcedureHeaderFieldNames.NomMad, new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
@@ -432,7 +430,12 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("ADR Email", null),
                     new ColumnDefinition("COMMENTAIRES", null)
                 ],
-                BuildIsolementStylePointColumnDefinitions(),
+                // Lot 082 (D6): the Equipement's own Points first, then the ones aggregated from its
+                // children (66.4).
+                [
+                    new PointColumnDefinition(VisitePrealableChantierColonneName, VisitePrealableChantierColonneName),
+                    .. BuildIsolementStylePointColumnDefinitions()
+                ],
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             new SheetGenerationRule(
                 "Enfants",

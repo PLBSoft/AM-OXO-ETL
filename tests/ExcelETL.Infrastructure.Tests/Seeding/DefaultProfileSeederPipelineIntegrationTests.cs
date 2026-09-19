@@ -366,7 +366,11 @@ public class DefaultProfileSeederPipelineIntegrationTests
         int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
         parents.Cell(1, ParentsCol("Repère")).GetString().Should().Be("Repère");
         parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("38-C7401");
-        parents.Cell(2, ParentsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL, VISITE PRÉALABLE CHANTIER");
+        parents.Cell(2, ParentsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
+        // Lot 082: the Equipement's own Point, declared on PROCEDURE, is ticked through the direct match
+        // (PointPivot.ParentRepere == Equipement.Repere) -- no longer carried by "Tableaux".
+        parents.Cell(1, ParentsCol("VISITE PRÉALABLE CHANTIER")).GetString().Should().Be("VISITE PRÉALABLE CHANTIER");
+        parents.Cell(2, ParentsCol("VISITE PRÉALABLE CHANTIER")).GetString().Should().Be("X");
         parents.Cell(2, ParentsCol("PROGRESS")).GetString().Should().Be("O");
         // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): the
         // Equipement is always read from PROCEDURE.
@@ -398,7 +402,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
         foreach (var row in enfants.RowsUsed().Skip(1))
         {
             row.Cell(EnfantsCol("ELEMENT PARENT")).GetString().Should().Be("38-C7401");
-            row.Cell(EnfantsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL, VISITE PRÉALABLE CHANTIER");
+            row.Cell(EnfantsCol("Tableaux")).GetString().Should().Be("TRAVAUX COMPLET, TRAVAUX DETAIL");
             row.Cell(EnfantsCol("PROGRESS")).GetString().Should().Be("O");
         }
 

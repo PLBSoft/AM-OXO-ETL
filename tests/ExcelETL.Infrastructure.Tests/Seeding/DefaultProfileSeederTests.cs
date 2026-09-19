@@ -103,6 +103,13 @@ public class DefaultProfileSeederTests
         profile.SheetRules.Select(r => r.SheetName).Should().Equal(
             "PROCEDURE", "ISOLEMENT", "PLATINES", "ORIFICES CAPACITES", "AUTRES JOINTS TOUCHES", "DIVERS");
 
+        // Lot 082: "Tableaux" only names the tables -- the Equipement's Points are PROCEDURE's own
+        // unconditional Colonnes.
+        profile.DefaultTableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
+        var procedure = profile.SheetRules.Single(r => r.SheetName == "PROCEDURE");
+        procedure.UnconditionalColonneNames.Should().Equal("VISITE PRÉALABLE CHANTIER");
+        procedure.PointRules.Should().BeEmpty();
+
         var isolement = profile.SheetRules.Single(r => r.SheetName == "ISOLEMENT");
         isolement.Locator.FirstBlockStartRow.Should().Be(19);
         isolement.Locator.Step.Should().Be(7);
@@ -392,10 +399,11 @@ public class DefaultProfileSeederTests
             .Which.Source.Should().Be(PivotFieldRef.IsolementCouleurEtiquette);
     }
 
-    // Lot 066, 66.4: the same 24 Point columns (16 after 66.1's dedup) now live on Parents too, in the
-    // same order as Enfants -- marked via SheetGenerationEngine's aggregation mechanism (66.3).
+    // Lot 066, 66.4: the same 16 Point columns live on Parents too, in the same order as Enfants --
+    // marked via SheetGenerationEngine's aggregation mechanism (66.3). Lot 082 (D6): Parents' own
+    // Equipement Point ("VISITE PRÉALABLE CHANTIER") comes first, before them.
     [Fact]
-    public async Task SeedAsync_CreatesExportProfile_WithParentsPointColumns_MatchingEnfantsExactly()
+    public async Task SeedAsync_CreatesExportProfile_WithParentsPointColumns_EquipementPointThenEnfantsOnes()
     {
         var seeder = CreateSeeder(out _, out var exportProfileStore);
         await seeder.SeedAsync();
@@ -405,7 +413,30 @@ public class DefaultProfileSeederTests
         var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
 
-        parents.PointColumnDefinitions.Should().Equal(enfants.PointColumnDefinitions);
+        parents.PointColumnDefinitions.First().Should().Be(
+            new PointColumnDefinition("VISITE PRÉALABLE CHANTIER", "VISITE PRÉALABLE CHANTIER"));
+        parents.PointColumnDefinitions.Skip(1).Should().Equal(enfants.PointColumnDefinitions);
+        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotContain("VISITE PRÉALABLE CHANTIER");
+    }
+
+    [Fact]
+    public async Task SeedAsync_ExportParentsPointColumns_AllReferenceColonneNamesTheImportProfileActuallyProduces()
+    {
+        var seeder = CreateSeeder(out var importProfileStore, out var exportProfileStore);
+        await seeder.SeedAsync();
+
+        var importProfile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
+        var exportProfile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
+
+        var producedColonneNames = importProfile!.SheetRules
+            .SelectMany(r => r.UnconditionalColonneNames
+                .Concat(r.PointRules.Select(p => p.ColonneName))
+                .Concat(r.FieldPresencePointRules.Select(f => f.ColonneName)))
+            .ToHashSet();
+
+        var parents = exportProfile!.SheetRules.Single(r => r.SheetName == "Parents");
+        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().OnlyContain(
+            colonneNom => producedColonneNames.Contains(colonneNom));
     }
 
     [Fact]
