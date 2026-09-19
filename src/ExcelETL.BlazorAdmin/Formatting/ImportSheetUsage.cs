@@ -33,7 +33,10 @@ public static class ImportSheetUsage
     private static readonly Dictionary<string, ImportSheetUsageEntry> BySheetName = new(StringComparer.Ordinal)
     {
         [Procedure] = new(
-            [SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes],
+            [
+                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
+                SheetRuleMember.ConditionalPointRules
+            ],
             [
                 new(ProcedureHeaderFieldNames.NomMad, HeaderRole.EquipementRepere),
                 new(ProcedureHeaderFieldNames.Revision, HeaderRole.Revision),
@@ -41,7 +44,7 @@ public static class ImportSheetUsage
             ],
             [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) {
                 ItemKind = BlockItemKind.Task,
-                UnconditionalColonnesTickTheEquipement = true,
+                PointsTickTheEquipement = true,
                 FixedStopFieldName = ProcedureFieldNames.Action,
                 RequiredBlockFieldNames =
                 [
@@ -107,9 +110,10 @@ public sealed record ImportSheetUsageEntry(
     // What one repeating block holds, for the Details page vocabulary ("une tâche" / "un élément").
     public BlockItemKind ItemKind { get; init; } = BlockItemKind.Element;
 
-    // True when the unconditional Colonnes create a Point on the Equipement itself rather than on each
-    // block item (PROCEDURE, lot 082 -- ProcedureExtractionService).
-    public bool UnconditionalColonnesTickTheEquipement { get; init; }
+    // True when the Points are created on the Equipement itself rather than on each block item: PROCEDURE's
+    // unconditional Colonnes (lot 082) and its conditional rules, satisfied when at least one real task
+    // matches, with no warning otherwise (lot 083) -- ProcedureExtractionService.
+    public bool PointsTickTheEquipement { get; init; }
 
     // Behaviors coded in the extraction service, not editable in the profile (D3). Ranges copied from
     // IsolementExtractionService (K6:T6), UnconditionalIsolementSheetExtractionService (K6:U6) and

@@ -23,11 +23,12 @@ public class ProcedureExtractionServiceIntegrationTests
     private const string VisitePrealableChantier = "VISITE PRÉALABLE CHANTIER";
 
     private readonly ProcedureExtractionService _sut =
-        new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
+        new(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(),
+            NullLogger<ProcedureExtractionService>.Instance);
 
     // Lot 047: PROCEDURE's header rules, transcribed from the coordinates/template previously
     // hardcoded in ProcedureExtractionService -- same values as DefaultProfileSeeder's own seeded rule.
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
         [
@@ -38,7 +39,7 @@ public class ProcedureExtractionServiceIntegrationTests
             new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
-        [],
+        pointRules ?? [],
         [VisitePrealableChantier],
         [
             new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
@@ -138,6 +139,31 @@ public class ProcedureExtractionServiceIntegrationTests
         var result = ExtractFromFixture(fileName);
 
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.TacheMultipleTypeMismatch);
+    }
+
+
+    // Lot 083: PROCÉDURE MAD/REL only when at least one real task of that type exists. C7401 and G6306B
+    // have both types; D8570 has MAD tasks only (see CLAUDE.md, Lot T5).
+    private static readonly ConditionalPointRule[] MadAndRelRules =
+    [
+        new(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", "PROCÉDURE MAD"),
+        new(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", "PROCÉDURE REL")
+    ];
+
+    [Theory]
+    [InlineData("Dossier.de.MaD.IDL.-.C7401.xlsx", new[] { "PROCÉDURE MAD", "PROCÉDURE REL" })]
+    [InlineData("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx", new[] { "PROCÉDURE MAD" })]
+    [InlineData("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx", new[] { "PROCÉDURE MAD", "PROCÉDURE REL" })]
+    public void Extract_RealFixture_CreatesProcedureMadAndRelPointsOnlyForTheTaskTypesPresent(
+        string fixtureFileName, string[] expectedConditionalColonnes)
+    {
+        using var stream = File.OpenRead(FixturePath(fixtureFileName));
+        using var workbookReader = new ClosedXmlWorkbookReader(stream);
+
+        var result = _sut.Extract(workbookReader, CreateSheetRule(MadAndRelRules), ReperePrefix, EquipementTypeElementNom);
+
+        result.Points.Select(p => p.ColonneNom).Should().Equal([VisitePrealableChantier, .. expectedConditionalColonnes]);
+        result.Errors.Where(e => e.Code != ExtractionErrorCode.TacheMultipleTypeMismatch).Should().BeEmpty();
     }
 
     private ImportResult ExtractFromFixture(string fileName)

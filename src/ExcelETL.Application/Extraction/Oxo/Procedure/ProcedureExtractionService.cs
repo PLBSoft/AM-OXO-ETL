@@ -19,7 +19,8 @@ namespace ExcelETL.Application.Extraction.Oxo.Procedure;
 // ImportProfile.EquipementTypeElementNom (model doc v2 §2.1), since the client confirmed this value
 // varies by profile, not by any cell in PROCEDURE.
 public sealed class ProcedureExtractionService(
-    IHeaderRuleResolver headerRuleResolver, ILogger<ProcedureExtractionService> logger)
+    IHeaderRuleResolver headerRuleResolver, IConditionalPointRuleEvaluator conditionalPointRuleEvaluator,
+    ILogger<ProcedureExtractionService> logger)
     : IProcedureExtractionService
 {
     // Input date parsing for TacheMultiple's own DateValidation field stays a fixed, hardcoded format
@@ -64,11 +65,15 @@ public sealed class ProcedureExtractionService(
         var designation = header.Composites[ProcedureHeaderFieldNames.Designation]!;
 
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom, sourceSheetName: sheet);
+        var (tachesMultiples, realTaskFields) = ReadTachesMultiples(workbookReader, sheetRule.Locator);
+
         // Lot 082: the Equipement's Points are the PROCEDURE rule's own unconditional Colonnes -- never
         // ImportProfile.DefaultTableaux, which only fills the "Tableaux" column (lot U3 used to turn
-        // every Tableau name into a Point, mixing the two notions).
+        // every Tableau name into a Point, mixing the two notions). Lot 083: plus one Point per
+        // conditional Colonne satisfied by at least one real task.
         var points = sheetRule.UnconditionalColonneNames.Select(colonneName => new PointPivot(colonneName, repere)).ToList();
-        var tachesMultiples = ReadTachesMultiples(workbookReader, sheetRule.Locator);
+        points.AddRange(ConditionalColonnesMatchedByAnyTask(sheetRule.PointRules, realTaskFields)
+            .Select(colonneName => new PointPivot(colonneName, repere)));
         var typeCoherenceErrors = DetectTypeIncoherences(sheet, tachesMultiples);
 
         return new ImportResult(equipement, [], points, tachesMultiples, typeCoherenceErrors);
@@ -143,7 +148,22 @@ public sealed class ProcedureExtractionService(
     private static string FindHeaderFieldCellRange(SheetExtractionRule sheetRule, string headerFieldName) =>
         sheetRule.HeaderFields.First(f => f.Name == headerFieldName).Cell.Range;
 
-    private List<TacheMultiplePivot> ReadTachesMultiples(IWorkbookReader workbookReader, RepeatingBlockLocator locator)
+    // Lot 083 (docs/tickets/tickets-tdd-lot-083-points-conditionnels-procedure-taches.md): a Colonne's
+    // rules are satisfied when at least one real task matches one of them (E1/E3). No warning when none
+    // does -- a dossier without REL tasks is normal, unlike an element matching no rule on the other
+    // sheets.
+    private IEnumerable<string> ConditionalColonnesMatchedByAnyTask(
+        IReadOnlyList<ConditionalPointRule> pointRules, IReadOnlyList<IReadOnlyDictionary<string, string>> realTaskFields) =>
+        pointRules
+            .GroupBy(rule => rule.ColonneName)
+            .Where(group => realTaskFields.Any(fields =>
+                conditionalPointRuleEvaluator.Evaluate([.. group], fields).ShouldCreatePoint))
+            .Select(group => group.Key);
+
+    // Also returns, for each real task (Ordre filled in -- section-title rows excluded, lot 083 E2),
+    // its raw block field values keyed by field name, for the conditional Point rules.
+    private (List<TacheMultiplePivot> TachesMultiples, List<IReadOnlyDictionary<string, string>> RealTaskFields)
+        ReadTachesMultiples(IWorkbookReader workbookReader, RepeatingBlockLocator locator)
     {
         var actionField = FindField(locator, ProcedureFieldNames.Action);
         var ordreField = FindField(locator, ProcedureFieldNames.Ordre);
@@ -153,6 +173,7 @@ public sealed class ProcedureExtractionService(
         var dateValidationField = FindField(locator, ProcedureFieldNames.DateValidation);
 
         var tachesMultiples = new List<TacheMultiplePivot>();
+        var realTaskFields = new List<IReadOnlyDictionary<string, string>>();
         var blockIndex = 0;
 
         while (true)
@@ -184,11 +205,23 @@ public sealed class ProcedureExtractionService(
 
             tachesMultiples.Add(new TacheMultiplePivot(
                 ordre, action, acteur, risques, typeTacheMultipleCode, dateValidation, estFactice, blockStartRow));
+            if (!estFactice)
+            {
+                realTaskFields.Add(new Dictionary<string, string>
+                {
+                    [actionField.Name] = action,
+                    [ordreField.Name] = ordreRaw ?? "",
+                    [acteurField.Name] = acteur,
+                    [risquesField.Name] = risques,
+                    [aliasField.Name] = aliasRaw ?? "",
+                    [dateValidationField.Name] = dateValidationRaw ?? ""
+                });
+            }
 
             blockIndex++;
         }
 
-        return tachesMultiples;
+        return (tachesMultiples, realTaskFields);
     }
 
     private static string MapTypeTacheMultipleAlias(string? aliasRaw)

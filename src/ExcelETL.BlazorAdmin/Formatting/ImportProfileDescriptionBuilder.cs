@@ -266,7 +266,7 @@ public static class ImportProfileDescriptionBuilder
     {
         if (usage.ReadMembers.Contains(SheetRuleMember.UnconditionalColonnes) && rule.UnconditionalColonneNames.Count > 0)
         {
-            yield return new(usage.UnconditionalColonnesTickTheEquipement
+            yield return new(usage.PointsTickTheEquipement
                 ? OneOrSeveral(rule.UnconditionalColonneNames, loc,
                     "ImportProfileDetails_PointEquipementUnconditionalOne", "ImportProfileDetails_PointEquipementUnconditionalSeveral")
                 : OneOrSeveral(rule.UnconditionalColonneNames, loc,
@@ -277,10 +277,14 @@ public static class ImportProfileDescriptionBuilder
         {
             foreach (var group in GroupConditionalRules(rule.PointRules))
             {
-                yield return new(DescribeConditionalGroup(rule, group, loc));
+                yield return new(DescribeConditionalGroup(rule, group, usage.PointsTickTheEquipement, loc));
             }
 
-            yield return new(loc["ImportProfileDetails_PointNoConditionMet"]);
+            // PROCEDURE: no Point when no task matches is normal, not a warning (lot 083).
+            if (!usage.PointsTickTheEquipement)
+            {
+                yield return new(loc["ImportProfileDetails_PointNoConditionMet"]);
+            }
         }
 
         if (usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules))
@@ -310,6 +314,7 @@ public static class ImportProfileDescriptionBuilder
     private static string DescribeConditionalGroup(
         SheetExtractionRule rule,
         IGrouping<(string SourceFieldName, ConditionOperator Operator, string Value), ConditionalPointRule> group,
+        bool anyTask,
         IStringLocalizer<BlazorAdminMessages> loc)
     {
         var colonnes = group.Select(r => r.ColonneName).Distinct(StringComparer.Ordinal).ToList();
@@ -335,9 +340,11 @@ public static class ImportProfileDescriptionBuilder
         var field = FieldLabel(first.SourceFieldName, definite: true, loc);
         var value = Quote(first.ComparisonValue.Trim(), loc);
         var isEquals = first.Operator == ConditionOperator.Equals;
+        // PROCEDURE (lot 083): the rule ticks the Equipement when at least one real task matches.
+        var prefix = anyTask ? "ImportProfileDetails_PointTask" : "ImportProfileDetails_Point";
         return colonnes.Count == 1
-            ? loc[isEquals ? "ImportProfileDetails_PointEqualsOne" : "ImportProfileDetails_PointNotEqualsOne", field, value, Quote(colonnes[0], loc)]
-            : loc[isEquals ? "ImportProfileDetails_PointEqualsSeveral" : "ImportProfileDetails_PointNotEqualsSeveral", field, value,
+            ? loc[prefix + (isEquals ? "EqualsOne" : "NotEqualsOne"), field, value, Quote(colonnes[0], loc)]
+            : loc[prefix + (isEquals ? "EqualsSeveral" : "NotEqualsSeveral"), field, value,
                 colonnes.Count, QuoteList(colonnes, loc)];
     }
 

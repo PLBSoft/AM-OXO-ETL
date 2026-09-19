@@ -34,7 +34,7 @@ public class ImportPipelineOrchestratorLoggingIntegrationTests
     public ImportPipelineOrchestratorLoggingIntegrationTests()
     {
         _sut = new ImportPipelineOrchestrator(
-            new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance),
+            new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
             new IsolementExtractionService(
                 new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
                 new CapturingLogger<IsolementExtractionService>(_isolementLog)),

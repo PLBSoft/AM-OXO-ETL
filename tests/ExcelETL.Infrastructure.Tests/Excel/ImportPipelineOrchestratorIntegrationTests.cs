@@ -27,7 +27,7 @@ public class ImportPipelineOrchestratorIntegrationTests
     private static readonly string[] DefaultApplicationNames = ["PROGRESS"];
 
     private readonly ImportPipelineOrchestrator _sut = new(
-        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance),
+        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
         new IsolementExtractionService(
             new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance),
         new UnconditionalIsolementSheetExtractionService(

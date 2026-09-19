@@ -35,7 +35,14 @@ public class ImportSheetUsageTests
     public static TheoryData<string, SheetRuleMember[]> ReadMembersBySheet => new()
     {
         // Lot 082: PROCEDURE's unconditional Colonnes create Points on the Equipement.
-        { Procedure, [SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes] },
+        // Lot 083: and its conditional rules, satisfied by at least one real task.
+        {
+            Procedure,
+            [
+                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
+                SheetRuleMember.ConditionalPointRules
+            ]
+        },
         {
             Isolement,
             [
@@ -176,6 +183,7 @@ public class ImportSheetUsageTests
         { Procedure, SheetRuleMember.UnconditionalColonnes },
         { Isolement, SheetRuleMember.UnconditionalColonnes },
         { Divers, SheetRuleMember.UnconditionalColonnes },
+        { Procedure, SheetRuleMember.ConditionalPointRules },
         { Isolement, SheetRuleMember.ConditionalPointRules },
         { AutresJointsTouches, SheetRuleMember.ConditionalPointRules },
         { Platines, SheetRuleMember.FieldPresencePointRules },
@@ -294,7 +302,10 @@ public class ImportSheetUsageTests
             rule.SheetName,
             rule.Locator,
             member == SheetRuleMember.ConditionalPointRules
-                ? [.. rule.PointRules, new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "__JAMAIS__", TestColonneName)]
+                // PROCEDURE's rules compare a task field (lot 083); every other sheet an element field.
+                ? [.. rule.PointRules, new ConditionalPointRule(
+                    rule.SheetName == Procedure ? ProcedureFieldNames.TypeTacheMultipleAlias : IsolementFieldNames.TypeElement,
+                    ConditionOperator.NotEquals, "__JAMAIS__", TestColonneName)]
                 : rule.PointRules,
             member == SheetRuleMember.UnconditionalColonnes
                 ? [.. rule.UnconditionalColonneNames, TestColonneName]
@@ -342,7 +353,7 @@ public class ImportSheetUsageTests
         var repeatingBlockReader = new RepeatingBlockReader();
         var headerRuleResolver = new HeaderRuleResolver(textTransformEvaluator);
         var orchestrator = new ImportPipelineOrchestrator(
-            new ProcedureExtractionService(headerRuleResolver, NullLogger<ProcedureExtractionService>.Instance),
+            new ProcedureExtractionService(headerRuleResolver, conditionalPointRuleEvaluator, NullLogger<ProcedureExtractionService>.Instance),
             new IsolementExtractionService(
                 textTransformEvaluator, conditionalPointRuleEvaluator, NullLogger<IsolementExtractionService>.Instance),
             new UnconditionalIsolementSheetExtractionService(

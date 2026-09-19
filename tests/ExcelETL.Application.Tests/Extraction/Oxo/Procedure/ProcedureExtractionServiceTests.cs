@@ -18,12 +18,14 @@ public class ProcedureExtractionServiceTests
     private const string VisitePrealableChantier = "VISITE PRÉALABLE CHANTIER";
 
     private readonly ProcedureExtractionService _sut =
-        new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
+        new(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(),
+            NullLogger<ProcedureExtractionService>.Instance);
 
     // Lot 047: PROCEDURE's header rules -- transcribed from the coordinates/template previously
     // hardcoded in ProcedureExtractionService (M2:O2/P2:Q2/R2:T2, "Rév {revision} du {dateRev}") so
     // this test's Mock<IWorkbookReader> cell keys (BaseHeaderCells) stay exactly as before the lot.
-    private static SheetExtractionRule CreateSheetRule(IReadOnlyList<string>? unconditionalColonneNames = null) => new(
+    private static SheetExtractionRule CreateSheetRule(
+        IReadOnlyList<string>? unconditionalColonneNames = null, IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
         [
@@ -34,7 +36,7 @@ public class ProcedureExtractionServiceTests
             new BlockFieldDefinition(ProcedureFieldNames.TypeTacheMultipleAlias, "R", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
-        [],
+        pointRules ?? [],
         unconditionalColonneNames ?? [],
         [
             new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
@@ -127,6 +129,125 @@ public class ProcedureExtractionServiceTests
 
         result.Equipement.Should().BeNull();
         result.Points.Should().BeEmpty();
+    }
+
+    // Lot 083 (docs/tickets/tickets-tdd-lot-083-points-conditionnels-procedure-taches.md): PROCEDURE's
+    // conditional rules are evaluated on each real task -- the Equipement Point is created when at least
+    // one task matches (E1/E3), section-title rows never count (E2).
+    private const string ProcedureMad = "PROCÉDURE MAD";
+    private const string ProcedureRel = "PROCÉDURE REL";
+
+    private static ConditionalPointRule[] MadAndRelRules() =>
+    [
+        new(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", ProcedureMad),
+        new(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", ProcedureRel)
+    ];
+
+    // One row per (ordre, alias); a null ordre makes a section-title row. Rows start at 9, step 1.
+    private static Dictionary<string, string?> CellsWithTasks(params (string? Ordre, string Alias)[] tasks)
+    {
+        var cells = BaseHeaderCells();
+        for (var i = 0; i < tasks.Length; i++)
+        {
+            var row = 9 + i;
+            cells[$"B{row}"] = tasks[i].Ordre;
+            cells[$"C{row}:L{row}"] = $"Action {row}";
+            cells[$"R{row}"] = tasks[i].Alias;
+        }
+
+        cells[$"C{9 + tasks.Length}:L{9 + tasks.Length}"] = null;
+        return cells;
+    }
+
+    private ImportResult ExtractWithTasks(ConditionalPointRule[] rules, params (string? Ordre, string Alias)[] tasks) =>
+        _sut.Extract(
+            CreateWorkbookReader(CellsWithTasks(tasks)).Object, CreateSheetRule(pointRules: rules), ReperePrefix,
+            EquipementTypeElementNom);
+
+    [Fact]
+    public void Extract_ConditionalRule_CreatesThePointWhenAtLeastOneTaskMatches()
+    {
+        var result = ExtractWithTasks(MadAndRelRules(), ("1", "MAD"), ("2", "MAD"));
+
+        result.Points.Should().BeEquivalentTo([new PointPivot(ProcedureMad, "38-C7401")]);
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_ConditionalRules_CreateBothPointsWhenMadAndRelTasksExist()
+    {
+        var result = ExtractWithTasks(MadAndRelRules(), ("1", "MAD"), ("2", "REL"), ("3", "REL"));
+
+        result.Points.Select(p => p.ColonneNom).Should().BeEquivalentTo([ProcedureMad, ProcedureRel]);
+    }
+
+    [Fact]
+    public void Extract_ConditionalRule_CreatesNoPointWhenNoTaskMatches_AndNoWarning()
+    {
+        var result = ExtractWithTasks(
+            [new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", ProcedureRel)],
+            ("1", "MAD"));
+
+        result.Points.Should().BeEmpty();
+        result.Errors.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_ConditionalRule_IgnoresSectionTitleRows()
+    {
+        var result = ExtractWithTasks(MadAndRelRules(), (null, "REL"), ("1", "MAD"));
+
+        result.Points.Select(p => p.ColonneNom).Should().Equal(ProcedureMad);
+    }
+
+    [Fact]
+    public void Extract_ConditionalRule_IgnoresCaseAndSurroundingSpaces()
+    {
+        var result = ExtractWithTasks(MadAndRelRules(), ("1", " mad "));
+
+        result.Points.Select(p => p.ColonneNom).Should().Equal(ProcedureMad);
+    }
+
+    [Fact]
+    public void Extract_ConditionalRule_NotEquals_CreatesThePointWhenOneTaskDiffers()
+    {
+        var result = ExtractWithTasks(
+            [new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.NotEquals, "MAD", "AUTRE")],
+            (null, ""), ("1", "MAD"), ("2", "REL"));
+
+        result.Points.Select(p => p.ColonneNom).Should().Equal("AUTRE");
+    }
+
+    [Fact]
+    public void Extract_UnconditionalAndConditionalPoints_AreBothCreated()
+    {
+        var result = _sut.Extract(
+            CreateWorkbookReader(CellsWithTasks(("1", "MAD"))).Object,
+            CreateSheetRule([VisitePrealableChantier], MadAndRelRules()), ReperePrefix, EquipementTypeElementNom);
+
+        result.Points.Select(p => p.ColonneNom).Should().Equal(VisitePrealableChantier, ProcedureMad);
+    }
+
+    [Fact]
+    public void Extract_WhenTheFileIsRejected_CreatesNoConditionalPoint()
+    {
+        var cells = CellsWithTasks(("1", "MAD"));
+        cells["M2:O2"] = null;
+
+        var result = _sut.Extract(
+            CreateWorkbookReader(cells).Object, CreateSheetRule(pointRules: MadAndRelRules()), ReperePrefix,
+            EquipementTypeElementNom);
+
+        result.Points.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_ConditionalRuleOnAnUnknownField_Throws()
+    {
+        var act = () => ExtractWithTasks(
+            [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "X", "A")], ("1", "MAD"));
+
+        act.Should().Throw<UnknownFieldReferenceException>();
     }
 
     [Theory]

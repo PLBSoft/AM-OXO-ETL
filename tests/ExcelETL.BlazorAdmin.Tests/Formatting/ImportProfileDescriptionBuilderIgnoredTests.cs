@@ -65,15 +65,29 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         Section(ProcedureRule(unconditionalColonneNames: ["A", "B"])).Texts()
             .Should().Contain("L'équipement est coché dans les 2 colonnes « A », « B ».");
 
+    // Lot 083: PROCEDURE's conditional rules tick the Equipement when at least one real task matches,
+    // with no "no condition met" warning sentence.
     [Fact]
-    public void ConditionalRuleOnProcedure_IsStillReportedAsIgnored()
+    public void ConditionalRulesOnProcedure_AreDescribedAsAnyTaskConditions_WithoutTheWarningSentence()
     {
+        var baseRule = ProcedureRule();
         var rule = new SheetExtractionRule(
-            "PROCEDURE", ProcedureRule().Locator,
-            [new ConditionalPointRule("Action", ConditionOperator.Equals, "X", "A")], [],
-            ProcedureRule().HeaderFields, ProcedureRule().HeaderComposites);
+            "PROCEDURE", baseRule.Locator,
+            [
+                new ConditionalPointRule("TypeTacheMultipleAlias", ConditionOperator.Equals, "MAD", "PROCÉDURE MAD"),
+                new ConditionalPointRule("TypeTacheMultipleAlias", ConditionOperator.NotEquals, "REL", "AUTRE")
+            ],
+            [], baseRule.HeaderFields, baseRule.HeaderComposites);
 
-        Section(rule).Ignored.Select(i => i.Text).Should().Equal("règle conditionnelle pour la colonne « A »");
+        var section = Section(rule);
+
+        section.Ignored.Should().BeEmpty();
+        section.Texts().Should().Contain(t =>
+            t.StartsWith("Si au moins une tâche a ") && t.Contains("« MAD »")
+            && t.EndsWith("l'équipement est coché dans la colonne « PROCÉDURE MAD »."));
+        section.Texts().Should().Contain(t =>
+            t.StartsWith("Si au moins une tâche n'a pas ") && t.EndsWith("l'équipement est coché dans la colonne « AUTRE »."));
+        section.Texts().Should().NotContain(t => t.Contains("avertissement"));
     }
 
     [Fact]

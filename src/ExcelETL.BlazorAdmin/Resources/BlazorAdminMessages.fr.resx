@@ -1657,6 +1657,18 @@
   <data name="ImportProfileDetails_PointEquipementUnconditionalSeveral" xml:space="preserve">
     <value>L'équipement est coché dans les {0} colonnes {1}.</value>
   </data>
+  <data name="ImportProfileDetails_PointTaskEqualsOne" xml:space="preserve">
+    <value>Si au moins une tâche a {0} {1}, l'équipement est coché dans la colonne {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointTaskEqualsSeveral" xml:space="preserve">
+    <value>Si au moins une tâche a {0} {1}, l'équipement est coché dans les {2} colonnes {3}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointTaskNotEqualsOne" xml:space="preserve">
+    <value>Si au moins une tâche n'a pas {0} {1}, l'équipement est coché dans la colonne {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointTaskNotEqualsSeveral" xml:space="preserve">
+    <value>Si au moins une tâche n'a pas {0} {1}, l'équipement est coché dans les {2} colonnes {3}.</value>
+  </data>
   <data name="ImportProfileDetails_PointEqualsOne" xml:space="preserve">
     <value>Si {0} est {1}, l'élément est coché dans la colonne {2}.</value>
   </data>
