@@ -90,6 +90,7 @@ else
                         }
                         else
                         {
+                            <div class="right-aligned-actions">
                             <button id="details-export-profile-button-@profile.Id" type="button"
                                     class="btn btn-outline-secondary btn-sm block-field-icon-btn"
                                     aria-label="@Loc["ExportProfiles_Details"]" title="@Loc["ExportProfiles_Details"]"
@@ -123,6 +124,7 @@ else
                                     @onclick="() => RequestDeleteProfile(profile)">
                                 @((MarkupString)AdminIconMarkup.Trash)
                             </button>
+                            </div>
                         }
                     </td>
                 </tr>

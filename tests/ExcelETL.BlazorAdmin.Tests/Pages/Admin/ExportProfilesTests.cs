@@ -292,6 +292,21 @@ public class ExportProfilesTests : BunitContext
         });
 
     [Fact]
+    public async Task TableRowActionButtons_ShareOneRightAlignedFlexContainer_WithUniformSpacing() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ExportProfiles>();
+
+            var container = cut.Find($"#details-export-profile-button-{profile.Id}").ParentElement!;
+            container.GetAttribute("class").Should().Contain("right-aligned-actions");
+            container.QuerySelectorAll("button").Should().HaveCount(4);
+            cut.Find($"#delete-export-profile-button-{profile.Id}").ParentElement.Should().BeSameAs(container);
+        });
+
+    [Fact]
     public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
         await WithCultureAsync("en-US", async () =>
         {

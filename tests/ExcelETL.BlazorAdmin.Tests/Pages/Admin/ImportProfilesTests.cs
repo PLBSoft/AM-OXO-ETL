@@ -259,6 +259,23 @@ public class ImportProfilesTests : BunitContext
             }
         });
 
+    // Table row buttons must share one flex container (uniform gap), not sit as loose inline
+    // siblings whose spacing depends on source whitespace (a conditional button broke it).
+    [Fact]
+    public async Task TableRowActionButtons_ShareOneRightAlignedFlexContainer_WithUniformSpacing() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = BuildProfileWithOneSheetRule();
+            await SeedProfileAsync(profile);
+
+            var cut = Render<ImportProfiles>();
+
+            var container = cut.Find($"#details-profile-button-{profile.Id}").ParentElement!;
+            container.GetAttribute("class").Should().Contain("right-aligned-actions");
+            container.QuerySelectorAll("button").Should().HaveCount(4);
+            cut.Find($"#delete-profile-button-{profile.Id}").ParentElement.Should().BeSameAs(container);
+        });
+
     [Fact]
     public async Task EditButton_NavigatesToEditRouteWithProfileId() =>
         await WithCultureAsync("en-US", async () =>
