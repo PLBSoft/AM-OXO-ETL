@@ -63,10 +63,10 @@ OXO fournit un fichier Excel source. AM-OXO-ETL en extrait les données pour pro
 - `BaseElement.Designation` = `"Rév {Numéro de révision} du {Date de révision}"` (date au format `dd/mm/aaaa`)
 - `BaseElement.TypeElement.Nom` = valeur du profil d'import actif (`ImportProfile.EquipementTypeElementNom`) — **`"MAD TRAVAUX"`**, toujours cette seule valeur (pas de dossier REL distinct, voir §0). Cette valeur **n'est jamais codée en dur** dans le service d'extraction.
 - `BaseElement.Visible = true`
-- Associé aux entités `Tableau` : `"TRAVAUX COMPLET"` et `"TRAVAUX DETAIL"`
+- Associé aux entités `Tableau` : `"TRAVAUX COMPLET"` et `"TRAVAUX DETAIL"` (liste « Tableaux » du profil d'import, `ImportProfile.DefaultTableaux`, recopiée aussi sur chaque élément enfant). Cette liste **ne crée aucun point** (lot 082).
 - Associé à l'entité `Application` : `"AMProgress"`
 - Alias `TypeTacheMultiple.Code` (lu en `R9`) : `"MAD"` → `TM_PROC_MAD`, `"REL"` → `TM_PROC_REL` — codes déjà existants côté legacy, pas de création nécessaire. **Valeur distincte** de `TypeElement.Nom` de l'Équipement parent (`"MAD TRAVAUX"`) : les deux champs source portent des valeurs voisines (`"MAD"` vs `"MAD TRAVAUX"`) mais alimentent des cibles différentes — ne pas les fusionner dans le moteur d'extraction. Les tâches `TM_PROC_REL` sont extraites de la même feuille PROCEDURE du même fichier MAD — pas un dossier ou fichier séparé.
-- Des `Point` sont créés pour chaque `Colonne` associée aux Tableaux `"TRAVAUX COMPLET"` **et** `"TRAVAUX DETAIL"` (création de Points dans les deux cas, pas seulement une association d'entité).
+- Les `Point` créés d'office sur l'Équipement sont les colonnes cochées d'office de la règle PROCEDURE (`SheetExtractionRule.UnconditionalColonneNames`) — profil standard : `"VISITE PRÉALABLE CHANTIER"`. Décision du 19/09 (lot 082, `tickets-tdd-lot-082-points-office-element-parent-procedure.md`) : jusque-là, le code créait un point nommé d'après chaque Tableau, ce qui mélangeait les deux notions ; TRAVAUX COMPLET/TRAVAUX DETAIL sont des tableaux seulement. Les règles conditionnelles (`PointRules`) restent sans effet sur PROCEDURE.
 
 ---
 

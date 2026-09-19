@@ -44,7 +44,7 @@ public sealed class ImportProfile : Entity
     // ImportPipelineOrchestrator), resolving TacheMultipleColonneTravaux for export. Deliberately
     // optional (last parameter, default null -> []) unlike DefaultTableaux/DefaultApplicationNames
     // above -- those are required with no default specifically because an accidental empty value would
-    // silently break a load-bearing extraction behavior (PROCEDURE's own unconditional Points); an
+    // silently break a load-bearing behavior (the "Tableaux" column of every generated row); an
     // empty TacheMultipleTypeLabels list is instead a legitimate, client-confirmed default (every
     // "Colonne Travaux" cell stays blank), so making it required would have forced touching ~72
     // pre-existing call sites for no safety benefit. See the ticket doc's decision 5.

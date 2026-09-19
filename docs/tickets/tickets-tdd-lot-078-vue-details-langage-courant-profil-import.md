@@ -119,7 +119,7 @@ uniquement de son `SheetName` (6 noms littéraux dans `ImportPipelineOrchestrato
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | `Locator` (+ `Fields` par nom) | oui | oui | oui | oui | oui |
 | `HeaderFields`/`HeaderComposites` | oui (`nomMAD`, `dateRev`, `Designation`) | **non** | **non** | oui (`repereEcho`) | oui (`repereEcho`) |
-| `UnconditionalColonneNames` | **non** | oui | oui | oui | oui |
+| `UnconditionalColonneNames` | oui depuis le lot 082 (points de l'équipement) | oui | oui | oui | oui |
 | `PointRules` | **non** | oui | **non** | oui | oui |
 | `FieldPresencePointRules` | non | non | oui | non | non |
 | `ZeroEnergieExpectedValue` | non | oui | non | non | non |
@@ -127,7 +127,8 @@ uniquement de son `SheetName` (6 noms littéraux dans `ImportPipelineOrchestrato
 
 Un membre renseigné dans une case « non » est **enregistré mais sans effet**. Cas réel : le 16/09 le
 client avait ajouté « VISITE PRÉALABLE CHANTIER » aux colonnes inconditionnelles de PROCEDURE, sans
-effet (voir le commentaire de `DefaultProfileSeeder`). Le profil seedé actuel, lui, ne contient aucun
+effet. Le lot 082 a changé la règle : ces colonnes créent désormais les points de l'équipement
+(`tickets-tdd-lot-082-points-office-element-parent-procedure.md`). Le profil seedé actuel, lui, ne contient aucun
 membre sans effet.
 
 **Comportements fixes, hors profil** (codés dans les services, non modifiables par l'admin) :
@@ -217,7 +218,7 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 **Paramètres généraux**
 - Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.
 - L'équipement est créé avec le type d'élément « MAD TRAVAUX ».
-- L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL », « VISITE PRÉALABLE CHANTIER ».
+- L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL ».
 - L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».
 - Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».
 - Une tâche de type « TM_PROC_REL » est écrite dans la colonne travaux « Procédure REL ».
@@ -232,6 +233,7 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 - Une date de révision illisible fait refuser le fichier entier. (fixe)
 - Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ». (fixe)
 - Une ligne sans ordre est un titre de section, pas une tâche à réaliser. (fixe)
+- L'équipement est coché dans la colonne « VISITE PRÉALABLE CHANTIER ».
 
 **Feuille ISOLEMENT**
 - Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.

@@ -86,6 +86,33 @@ a au moins un autre ; il sera ajouté au profil standard quand il sera connu (ch
 - Changement du moteur de génération : la voie directe (`PointPivot.ParentRepere == Equipement.Repere`)
   coche déjà un point du parent.
 
-## 5. Résultat
+## 5. Résultat (19/09)
 
-*(rempli à la clôture du lot)*
+- **82.1** (`3041a1b`) : `ProcedureExtractionService` crée les points de l'équipement depuis
+  `sheetRule.UnconditionalColonneNames` ; le paramètre `defaultTableaux` est retiré de
+  `IProcedureExtractionService.Extract`. **82.3 livré dans le même commit**, parce que le garde-fou
+  `ImportSheetUsageTests` (vrai pipeline sur D8570) passait au rouge dès 82.1 : `ImportSheetUsage`
+  marque PROCEDURE comme lisant `UnconditionalColonnes` (nouvelle propriété
+  `UnconditionalColonnesTickTheEquipement`), et la vue Détails dit « L'équipement est coché dans la
+  colonne … » (clés `ImportProfileDetails_PointEquipementUnconditionalOne`/`Several`, même texte français
+  dans les deux `.resx`, décision D5 du lot 078). Une règle conditionnelle sur PROCEDURE reste signalée
+  ignorée (test ajouté).
+- **82.2** (`f83be62`) : profil standard mis à jour (§3). Test de cohérence croisée ajouté pour Parents.
+  Intégration C7401 : colonne « VISITE PRÉALABLE CHANTIER » de Parents = « X », colonne « Tableaux » =
+  « TRAVAUX COMPLET, TRAVAUX DETAIL » sur Parents et sur chaque ligne d'Enfants. Catalogues des vues
+  Détails import et export (tickets 078 et 079 §5) mis à jour, lettres des colonnes de points de Parents
+  décalées d'un rang (O à AE).
+- **82.4** : spec §1.3, tickets 078/079, commentaire d'`ImportProfile`, `CLAUDE.md`.
+- Tests existants modifiés : ceux qui attendaient les points TRAVAUX COMPLET/DETAIL ou « VISITE » dans
+  « Tableaux », et le test du lot 078 qui figeait « VISITE PRÉALABLE CHANTIER » comme ignorée sur
+  PROCEDURE (comportement volontairement changé, D2/D4). Supprimé :
+  `Run_PassesProfileDefaultTableauxToProcedureService_NotAHardcodedConstant` (l'orchestrateur ne passe
+  plus cette liste au service ; sa diffusion reste couverte par
+  `Run_BroadcastsDefaultTableauxApplicationsAndRepereParentFromProfileOntoEquipementAndEveryIsolement`).
+- Suites complètes : Domain 468, Application 316, Infrastructure 278, WebAPI 75, Hosting 15,
+  BlazorAdmin 1592, legacy 9+15 — toutes vertes.
+- **Mise en service** : sur un environnement existant, cliquer « Réinitialiser » sur le profil d'import
+  standard **et** sur le profil d'export standard (D7). Sans ça, l'ancien profil garde « VISITE »
+  dans « Tableaux » : la valeur reste affichée dans la colonne Tableaux et aucun point n'est plus créé
+  sur l'équipement.
+- Non vérifié dans un navigateur.
