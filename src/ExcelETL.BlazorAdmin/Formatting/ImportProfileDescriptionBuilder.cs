@@ -266,8 +266,11 @@ public static class ImportProfileDescriptionBuilder
     {
         if (usage.ReadMembers.Contains(SheetRuleMember.UnconditionalColonnes) && rule.UnconditionalColonneNames.Count > 0)
         {
-            yield return new(OneOrSeveral(rule.UnconditionalColonneNames, loc,
-                "ImportProfileDetails_PointUnconditionalOne", "ImportProfileDetails_PointUnconditionalSeveral"));
+            yield return new(usage.UnconditionalColonnesTickTheEquipement
+                ? OneOrSeveral(rule.UnconditionalColonneNames, loc,
+                    "ImportProfileDetails_PointEquipementUnconditionalOne", "ImportProfileDetails_PointEquipementUnconditionalSeveral")
+                : OneOrSeveral(rule.UnconditionalColonneNames, loc,
+                    "ImportProfileDetails_PointUnconditionalOne", "ImportProfileDetails_PointUnconditionalSeveral"));
         }
 
         if (usage.ReadMembers.Contains(SheetRuleMember.ConditionalPointRules) && rule.PointRules.Count > 0)

@@ -53,8 +53,7 @@ public sealed class ImportPipelineOrchestrator(
         try
         {
             var procedureResult = procedureExtractionService.Extract(
-                workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom,
-                profile.DefaultTableaux);
+                workbookReader, FindRule(profile, ProcedureSheetName), profile.ReperePrefix, profile.EquipementTypeElementNom);
 
             if (procedureResult.Equipement is null)
             {

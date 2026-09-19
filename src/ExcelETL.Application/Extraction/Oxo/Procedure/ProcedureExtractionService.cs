@@ -29,12 +29,10 @@ public sealed class ProcedureExtractionService(
     private static readonly string[] DateFormats = ["dd/MM/yyyy HH:mm:ss", "dd/MM/yyyy"];
 
     public ImportResult Extract(
-        IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix, string equipementTypeElementNom,
-        IReadOnlyList<string> defaultTableaux)
+        IWorkbookReader workbookReader, SheetExtractionRule sheetRule, string reperePrefix, string equipementTypeElementNom)
     {
         ArgumentNullException.ThrowIfNull(workbookReader);
         ArgumentNullException.ThrowIfNull(sheetRule);
-        ArgumentNullException.ThrowIfNull(defaultTableaux);
 
         var sheet = sheetRule.SheetName;
         var header = headerRuleResolver.Resolve(workbookReader, sheetRule, reperePrefix);
@@ -66,7 +64,10 @@ public sealed class ProcedureExtractionService(
         var designation = header.Composites[ProcedureHeaderFieldNames.Designation]!;
 
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom, sourceSheetName: sheet);
-        var points = defaultTableaux.Select(tableauName => new PointPivot(tableauName, repere)).ToList();
+        // Lot 082: the Equipement's Points are the PROCEDURE rule's own unconditional Colonnes -- never
+        // ImportProfile.DefaultTableaux, which only fills the "Tableaux" column (lot U3 used to turn
+        // every Tableau name into a Point, mixing the two notions).
+        var points = sheetRule.UnconditionalColonneNames.Select(colonneName => new PointPivot(colonneName, repere)).ToList();
         var tachesMultiples = ReadTachesMultiples(workbookReader, sheetRule.Locator);
         var typeCoherenceErrors = DetectTypeIncoherences(sheet, tachesMultiples);
 

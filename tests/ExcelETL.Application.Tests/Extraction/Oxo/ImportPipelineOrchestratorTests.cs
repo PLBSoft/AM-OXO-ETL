@@ -59,7 +59,7 @@ public class ImportPipelineOrchestratorTests
     private static ImportResult ValidProcedureResult() => new(
         new EquipementPivot("38-C7401", "Rév 2 du 12/12/2025", EquipementTypeElementNom),
         [],
-        [new PointPivot("TRAVAUX COMPLET", "38-C7401"), new PointPivot("TRAVAUX DETAIL", "38-C7401")],
+        [new PointPivot("VISITE PRÉALABLE CHANTIER", "38-C7401")],
         [new TacheMultiplePivot(1, "Action", "Acteur", "Risques", "TM_PROC_MAD", null, false, 52)],
         []);
 
@@ -68,8 +68,7 @@ public class ImportPipelineOrchestratorTests
     {
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(RejectedProcedureResult());
         var workbookReader = Mock.Of<IWorkbookReader>();
 
@@ -94,8 +93,7 @@ public class ImportPipelineOrchestratorTests
     {
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -137,7 +135,7 @@ public class ImportPipelineOrchestratorTests
             "38-C7401-V1", "38-C7401-PT1", "38-C7401-TH1", "38-C7401-J1", "38-C7401-LT1"
         ]);
         // 2 from PROCEDURE + 1 each from the 5 other sheets.
-        result.Points.Should().HaveCount(7);
+        result.Points.Should().HaveCount(6);
         result.TachesMultiples.Should().ContainSingle();
         result.Errors.Should().ContainSingle();
 
@@ -150,8 +148,7 @@ public class ImportPipelineOrchestratorTests
     {
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -175,41 +172,13 @@ public class ImportPipelineOrchestratorTests
     }
 
     [Fact]
-    public void Run_PassesProfileDefaultTableauxToProcedureService_NotAHardcodedConstant()
-    {
-        // Lot U, U3: architecture guard-rail mirroring the existing EquipementTypeElementNom one --
-        // the orchestrator must pass through whatever the active profile carries.
-        var defaultTableaux = new[] { "FOO", "BAR" };
-        _procedureService
-            .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                defaultTableaux))
-            .Returns(ValidProcedureResult());
-        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService.Setup(
-                s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("", [], [], []));
-        var workbookReader = Mock.Of<IWorkbookReader>();
-
-        var result = _sut.Run(workbookReader, CreateProfile(defaultTableaux: defaultTableaux));
-
-        result.Equipement.Should().NotBeNull();
-    }
-
-    [Fact]
     public void Run_BroadcastsDefaultTableauxApplicationsAndRepereParentFromProfileOntoEquipementAndEveryIsolement()
     {
         var defaultTableaux = new[] { "TRAVAUX COMPLET", "TRAVAUX DETAIL" };
         var defaultApplicationNames = new[] { "PROGRESS" };
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -243,8 +212,7 @@ public class ImportPipelineOrchestratorTests
     {
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
         _isolementService
             .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
@@ -281,8 +249,7 @@ public class ImportPipelineOrchestratorTests
 
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(procedureResult);
         _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
             .Returns(new IsolementSheetExtractionResult([], [], []));
@@ -320,8 +287,7 @@ public class ImportPipelineOrchestratorTests
     {
         _procedureService
             .Setup(s => s.Extract(
-                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom,
-                It.IsAny<IReadOnlyList<string>>()))
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(new ImportResult(
                 new EquipementPivot("38-C7401", "Rév 2 du 12/12/2025", EquipementTypeElementNom), [], [],
                 [

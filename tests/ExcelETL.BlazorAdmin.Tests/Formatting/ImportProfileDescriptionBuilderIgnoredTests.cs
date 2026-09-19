@@ -48,13 +48,32 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     private static ProfileDescriptionSection Section(SheetExtractionRule rule) =>
         Describe(Profile([rule])).SheetSection(rule.SheetName);
 
+    // Lot 082 (docs/tickets/tickets-tdd-lot-082-points-office-element-parent-procedure.md): the real case
+    // of September 16 used to be reported as ignored -- PROCEDURE's unconditional Colonnes now create
+    // Points on the Equipement.
     [Fact]
-    public void RealCaseOfSeptember16_UnconditionalColonneOnProcedure_IsReportedAsIgnored()
+    public void UnconditionalColonneOnProcedure_IsDescribedAsAPointOnTheEquipement_NotIgnored()
     {
         var section = Section(ProcedureRule(unconditionalColonneNames: ["VISITE PRÉALABLE CHANTIER"]));
 
-        section.Ignored.Select(i => i.Text).Should().Equal("colonne cochée d'office « VISITE PRÉALABLE CHANTIER »");
-        section.Texts().Should().NotContain(t => t.Contains("VISITE PRÉALABLE CHANTIER"));
+        section.Ignored.Should().BeEmpty();
+        section.Texts().Should().Contain("L'équipement est coché dans la colonne « VISITE PRÉALABLE CHANTIER ».");
+    }
+
+    [Fact]
+    public void SeveralUnconditionalColonnesOnProcedure_AreDescribedInOneSentence() =>
+        Section(ProcedureRule(unconditionalColonneNames: ["A", "B"])).Texts()
+            .Should().Contain("L'équipement est coché dans les 2 colonnes « A », « B ».");
+
+    [Fact]
+    public void ConditionalRuleOnProcedure_IsStillReportedAsIgnored()
+    {
+        var rule = new SheetExtractionRule(
+            "PROCEDURE", ProcedureRule().Locator,
+            [new ConditionalPointRule("Action", ConditionOperator.Equals, "X", "A")], [],
+            ProcedureRule().HeaderFields, ProcedureRule().HeaderComposites);
+
+        Section(rule).Ignored.Select(i => i.Text).Should().Equal("règle conditionnelle pour la colonne « A »");
     }
 
     [Fact]

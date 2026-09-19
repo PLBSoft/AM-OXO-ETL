@@ -34,7 +34,8 @@ public class ImportSheetUsageTests
 
     public static TheoryData<string, SheetRuleMember[]> ReadMembersBySheet => new()
     {
-        { Procedure, [SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules] },
+        // Lot 082: PROCEDURE's unconditional Colonnes create Points on the Equipement.
+        { Procedure, [SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes] },
         {
             Isolement,
             [
@@ -172,6 +173,7 @@ public class ImportSheetUsageTests
     // this fixture (adding a header field changes nothing; no ISOLEMENT zero-energie cell is filled).
     public static TheoryData<string, SheetRuleMember> ReadCases() => new()
     {
+        { Procedure, SheetRuleMember.UnconditionalColonnes },
         { Isolement, SheetRuleMember.UnconditionalColonnes },
         { Divers, SheetRuleMember.UnconditionalColonnes },
         { Isolement, SheetRuleMember.ConditionalPointRules },

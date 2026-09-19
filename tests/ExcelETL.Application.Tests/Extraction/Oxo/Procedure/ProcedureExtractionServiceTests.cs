@@ -15,7 +15,7 @@ public class ProcedureExtractionServiceTests
     private const string Sheet = "PROCEDURE";
     private const string ReperePrefix = "MAD-OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
-    private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
+    private const string VisitePrealableChantier = "VISITE PRÉALABLE CHANTIER";
 
     private readonly ProcedureExtractionService _sut =
         new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
@@ -23,7 +23,7 @@ public class ProcedureExtractionServiceTests
     // Lot 047: PROCEDURE's header rules -- transcribed from the coordinates/template previously
     // hardcoded in ProcedureExtractionService (M2:O2/P2:Q2/R2:T2, "Rév {revision} du {dateRev}") so
     // this test's Mock<IWorkbookReader> cell keys (BaseHeaderCells) stay exactly as before the lot.
-    private static SheetExtractionRule CreateSheetRule() => new(
+    private static SheetExtractionRule CreateSheetRule(IReadOnlyList<string>? unconditionalColonneNames = null) => new(
         Sheet,
         new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
         [
@@ -35,7 +35,7 @@ public class ProcedureExtractionServiceTests
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
         [],
-        [],
+        unconditionalColonneNames ?? [],
         [
             new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
             new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
@@ -69,35 +69,32 @@ public class ProcedureExtractionServiceTests
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(
+            workbookReader.Object, CreateSheetRule([VisitePrealableChantier]), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement.Should().NotBeNull();
         result.Equipement!.Repere.Should().Be("38-C7401");
         result.Equipement.Designation.Should().Be("Rév 2 du 16/07/2026");
         result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
-        result.Points.Should().BeEquivalentTo(
-        [
-            new PointPivot("TRAVAUX COMPLET", "38-C7401"),
-            new PointPivot("TRAVAUX DETAIL", "38-C7401")
-        ]);
+        result.Points.Should().BeEquivalentTo([new PointPivot(VisitePrealableChantier, "38-C7401")]);
         result.TachesMultiples.Should().BeEmpty();
         result.Isolements.Should().BeEmpty();
         result.Errors.Should().BeEmpty();
     }
 
     [Fact]
-    public void Extract_BuildsUnconditionalPointsFromProfileDefaultTableaux_NotHardcodedConstants()
+    public void Extract_BuildsEquipementPointsFromTheSheetRulesUnconditionalColonneNames_NotHardcodedConstants()
     {
-        // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), U3: the 2 PROCEDURE Points
-        // used to come from private consts -- same architecture guard-rail as
-        // Extract_UsesEquipementTypeElementNomFromProfile_NotAHardcodedConstant above, now applied to
-        // the Tableau names too.
+        // Lot 082: the Equipement's Points come from the PROCEDURE rule's own UnconditionalColonneNames
+        // (never from ImportProfile.DefaultTableaux, which only fills the "Tableaux" column since this
+        // lot). Same architecture guard-rail as
+        // Extract_UsesEquipementTypeElementNomFromProfile_NotAHardcodedConstant below.
         var cells = BaseHeaderCells();
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
         var result = _sut.Extract(
-            workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, ["FOO", "BAR"]);
+            workbookReader.Object, CreateSheetRule(["FOO", "BAR"]), ReperePrefix, EquipementTypeElementNom);
 
         result.Points.Should().BeEquivalentTo(
         [
@@ -107,14 +104,28 @@ public class ProcedureExtractionServiceTests
     }
 
     [Fact]
-    public void Extract_WithEmptyDefaultTableaux_ProducesNoPoints()
+    public void Extract_WithNoUnconditionalColonneNames_ProducesNoPoints()
     {
         var cells = BaseHeaderCells();
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, []);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule([]), ReperePrefix, EquipementTypeElementNom);
 
+        result.Points.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Extract_WhenTheFileIsRejected_ProducesNoPoints_EvenWithUnconditionalColonneNames()
+    {
+        var cells = BaseHeaderCells();
+        cells["M2:O2"] = null;
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Extract(
+            workbookReader.Object, CreateSheetRule([VisitePrealableChantier]), ReperePrefix, EquipementTypeElementNom);
+
+        result.Equipement.Should().BeNull();
         result.Points.Should().BeEmpty();
     }
 
@@ -129,7 +140,7 @@ public class ProcedureExtractionServiceTests
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, profileValue, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, profileValue);
 
         result.Equipement!.TypeElementNom.Should().Be(profileValue);
     }
@@ -172,7 +183,7 @@ public class ProcedureExtractionServiceTests
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement!.SourceSheetName.Should().Be(AlternateSheetName);
     }
@@ -216,7 +227,7 @@ public class ProcedureExtractionServiceTests
         };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement!.Repere.Should().Be("99-OTHER");
         result.Equipement.Designation.Should().Be("Rév 7 du 01/01/2020");
@@ -253,7 +264,7 @@ public class ProcedureExtractionServiceTests
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement!.Designation.Should().Be("Version 2 (16/07/2026)");
     }
@@ -271,7 +282,7 @@ public class ProcedureExtractionServiceTests
         cells["C10:L10"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.TachesMultiples.Should().ContainSingle().Which.Should().BeEquivalentTo(new TacheMultiplePivot(
             1, "Some action", "Acteur1", "RisqueX", "TM_PROC_MAD", new DateOnly(2026, 7, 16), estFactice: false,
@@ -286,7 +297,7 @@ public class ProcedureExtractionServiceTests
         cells["C10:L10"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.TachesMultiples.Should().ContainSingle().Which.Should().BeEquivalentTo(new TacheMultiplePivot(
             null, "1-SECTION TITLE", "", "", "", null, estFactice: true, ligneSource: 9));
@@ -307,7 +318,7 @@ public class ProcedureExtractionServiceTests
         cells["C10:L10"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.TachesMultiples.Should().ContainSingle().Which.TypeTacheMultipleCode.Should().Be(expectedCode);
     }
@@ -322,7 +333,7 @@ public class ProcedureExtractionServiceTests
         cells["C10:L10"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.TachesMultiples.Should().ContainSingle().Which.TypeTacheMultipleCode.Should().Be("XYZ");
     }
@@ -336,7 +347,7 @@ public class ProcedureExtractionServiceTests
         cells["C10:L10"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         workbookReader.Verify(r => r.ReadCellValue(Sheet, "C11:L11"), Times.Never);
     }
@@ -354,7 +365,7 @@ public class ProcedureExtractionServiceTests
         cells["C12:L12"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.TachesMultiples.Should().HaveCount(3);
         result.TachesMultiples[0].Ordre.Should().Be(1);
@@ -375,7 +386,7 @@ public class ProcedureExtractionServiceTests
         cells["M2:O2"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement.Should().BeNull();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
@@ -391,7 +402,7 @@ public class ProcedureExtractionServiceTests
         cells["M2:O2"] = "OTHER-38-C7401";
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement.Should().BeNull();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnparsableValue);
@@ -403,7 +414,7 @@ public class ProcedureExtractionServiceTests
         var cells = BaseHeaderCells(dateRevision: null!);
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement.Should().BeNull();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnparsableValue);
@@ -415,7 +426,7 @@ public class ProcedureExtractionServiceTests
         var cells = BaseHeaderCells(dateRevision: "not-a-date");
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement.Should().BeNull();
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.UnparsableValue);
@@ -428,7 +439,7 @@ public class ProcedureExtractionServiceTests
         cells["C9:L9"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Equipement!.Designation.Should().Be("Rév 2 du 12/12/2025");
     }
@@ -456,7 +467,7 @@ public class ProcedureExtractionServiceTests
         cells["C13:L13"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
@@ -481,7 +492,7 @@ public class ProcedureExtractionServiceTests
         cells["C13:L13"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
@@ -503,7 +514,7 @@ public class ProcedureExtractionServiceTests
         cells["C13:L13"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
@@ -524,7 +535,7 @@ public class ProcedureExtractionServiceTests
         cells["C12:L12"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Errors.Should().ContainSingle();
         var error = result.Errors[0];
@@ -548,7 +559,7 @@ public class ProcedureExtractionServiceTests
         cells["C12:L12"] = null;
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        var result = _sut.Extract(workbookReader.Object, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
 
         result.Errors.Should().BeEmpty();
     }

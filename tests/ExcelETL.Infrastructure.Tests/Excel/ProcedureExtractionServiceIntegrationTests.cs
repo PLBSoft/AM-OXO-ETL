@@ -20,7 +20,7 @@ public class ProcedureExtractionServiceIntegrationTests
     private const string Sheet = "PROCEDURE";
     private const string ReperePrefix = "OXO-";
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
-    private static readonly string[] DefaultTableaux = ["TRAVAUX COMPLET", "TRAVAUX DETAIL"];
+    private const string VisitePrealableChantier = "VISITE PRÉALABLE CHANTIER";
 
     private readonly ProcedureExtractionService _sut =
         new(new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ProcedureExtractionService>.Instance);
@@ -39,7 +39,7 @@ public class ProcedureExtractionServiceIntegrationTests
             new BlockFieldDefinition(ProcedureFieldNames.DateValidation, "T:U", 0, 0)
         ]),
         [],
-        [],
+        [VisitePrealableChantier],
         [
             new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
             new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
@@ -60,11 +60,7 @@ public class ProcedureExtractionServiceIntegrationTests
         result.Equipement!.Repere.Should().Be("38-C7401");
         result.Equipement.Designation.Should().Be("Rév 2 du 12/12/2025");
         result.Equipement.TypeElementNom.Should().Be(EquipementTypeElementNom);
-        result.Points.Should().BeEquivalentTo(
-        [
-            new PointPivot("TRAVAUX COMPLET", "38-C7401"),
-            new PointPivot("TRAVAUX DETAIL", "38-C7401")
-        ]);
+        result.Points.Should().BeEquivalentTo([new PointPivot(VisitePrealableChantier, "38-C7401")]);
 
         result.TachesMultiples.Should().HaveCount(98);
         result.TachesMultiples[0].EstFactice.Should().BeTrue();
@@ -148,7 +144,7 @@ public class ProcedureExtractionServiceIntegrationTests
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom, DefaultTableaux);
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix, EquipementTypeElementNom);
     }
 
     private static string FixturePath(string fileName)

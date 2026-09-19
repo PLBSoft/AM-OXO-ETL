@@ -1651,6 +1651,12 @@
   <data name="ImportProfileDetails_PointUnconditionalSeveral" xml:space="preserve">
     <value>Chaque élément est coché dans les {0} colonnes {1}.</value>
   </data>
+  <data name="ImportProfileDetails_PointEquipementUnconditionalOne" xml:space="preserve">
+    <value>L'équipement est coché dans la colonne {0}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointEquipementUnconditionalSeveral" xml:space="preserve">
+    <value>L'équipement est coché dans les {0} colonnes {1}.</value>
+  </data>
   <data name="ImportProfileDetails_PointEqualsOne" xml:space="preserve">
     <value>Si {0} est {1}, l'élément est coché dans la colonne {2}.</value>
   </data>
