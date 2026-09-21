@@ -599,7 +599,7 @@
     <value>Ajouter le champ</value>
   </data>
   <data name="ImportProfileEditor_UnconditionalColonnesHeading" xml:space="preserve">
-    <value>Colonnes inconditionnelles (créer le Point systématiquement)</value>
+    <value>Créer le Point pour les colonnes</value>
   </data>
   <data name="ImportProfileEditor_ColonneNameLabel" xml:space="preserve">
     <value>Nom de la colonne</value>

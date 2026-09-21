@@ -932,11 +932,11 @@ public class ImportProfileEditorTests : BunitContext
             // below it -- that card's own SheetRuleForm renders these same two headings unconditionally.
             var summaryItem = cut.Find("li.sheet-rule-card");
             var headings = summaryItem.QuerySelectorAll("h4").Select(h => h.TextContent).ToList();
-            headings.Should().Contain("Unconditional colonnes (always create the Point)");
+            headings.Should().Contain("Create the Point for the colonnes");
             headings.Should().Contain("Conditional point rules");
 
             var unconditionalHeading = summaryItem.QuerySelectorAll("h4")
-                .Single(h => h.TextContent == "Unconditional colonnes (always create the Point)");
+                .Single(h => h.TextContent == "Create the Point for the colonnes");
             var unconditionalList = unconditionalHeading.NextElementSibling!;
             unconditionalList.TagName.Should().Be("UL");
             unconditionalList.Children.Select(li => li.TextContent).Should().BeEquivalentTo("PROLOCK VANNES", "DEPROLOCK VANNES");
@@ -966,7 +966,7 @@ public class ImportProfileEditorTests : BunitContext
 
             var summaryItem = cut.Find("li.sheet-rule-card");
             var headings = summaryItem.QuerySelectorAll("h4").Select(h => h.TextContent).ToList();
-            headings.Should().Contain("Unconditional colonnes (always create the Point)");
+            headings.Should().Contain("Create the Point for the colonnes");
             headings.Should().NotContain("Conditional point rules");
         });
 
