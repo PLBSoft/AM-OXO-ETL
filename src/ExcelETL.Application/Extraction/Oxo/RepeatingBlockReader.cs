@@ -38,7 +38,15 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
                     locator.Sheet, BlockFieldRangeCalculator.BuildRange(field, blockStartRow));
                 if (string.IsNullOrWhiteSpace(value))
                 {
-                    blankFieldNames.Add(field.Name);
+                    // Lot 084 (G4): an optional field left blank is read as "" and keeps the block.
+                    if (field.IsRequired)
+                    {
+                        blankFieldNames.Add(field.Name);
+                    }
+                    else
+                    {
+                        rawValues[field.Name] = "";
+                    }
                 }
                 else
                 {

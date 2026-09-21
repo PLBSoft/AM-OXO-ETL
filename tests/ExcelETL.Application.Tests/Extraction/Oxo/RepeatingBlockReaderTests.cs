@@ -136,4 +136,81 @@ public class RepeatingBlockReaderTests
             ["Designation"] = "Vanne 2"
         });
     }
+
+    // Lot 084.3 (G4): an optional field left blank keeps the block, read as "".
+    private static RepeatingBlockLocator PlatinesLocator() => new("PLATINES", 17, 8, "Identification",
+    [
+        new BlockFieldDefinition("Identification", "B:E", 0, 1),
+        new BlockFieldDefinition("TypeElement", "B:E", 3, 5),
+        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)
+    ]);
+
+    [Fact]
+    public void Read_WithBlankOptionalField_KeepsTheBlock_WithAnEmptyValue_AndNoError()
+    {
+        var cells = new Dictionary<(string, string), string?>
+        {
+            [("PLATINES", "B17:E18")] = "PT1",
+            [("PLATINES", "B20:E22")] = "PLATINE",
+            [("PLATINES", "H19:N19")] = null,
+            [("PLATINES", "B25:E26")] = null
+        };
+
+        var result = _sut.Read(PlatinesLocator(), CreateWorkbookReader(cells).Object);
+
+        result.Errors.Should().BeEmpty();
+        result.Blocks.Should().ContainSingle().Which.Fields.Should().BeEquivalentTo(new Dictionary<string, string>
+        {
+            ["Identification"] = "PT1",
+            ["TypeElement"] = "PLATINE",
+            ["PoseeLe"] = ""
+        });
+    }
+
+    [Fact]
+    public void Read_WithFilledOptionalField_KeepsItsValue()
+    {
+        var cells = new Dictionary<(string, string), string?>
+        {
+            [("PLATINES", "B17:E18")] = "PT1",
+            [("PLATINES", "B20:E22")] = "PLATINE",
+            [("PLATINES", "H19:N19")] = "DEBUT MAD",
+            [("PLATINES", "B25:E26")] = null
+        };
+
+        var result = _sut.Read(PlatinesLocator(), CreateWorkbookReader(cells).Object);
+
+        result.Blocks.Should().ContainSingle().Which.Fields["PoseeLe"].Should().Be("DEBUT MAD");
+    }
+
+    [Fact]
+    public void Read_WithBlankRequiredField_StillDropsTheBlock_EvenWhenAnOptionalFieldIsBlankToo()
+    {
+        var cells = new Dictionary<(string, string), string?>
+        {
+            [("PLATINES", "B17:E18")] = "PT1",
+            [("PLATINES", "B20:E22")] = null,
+            [("PLATINES", "H19:N19")] = null,
+            [("PLATINES", "B25:E26")] = null
+        };
+
+        var result = _sut.Read(PlatinesLocator(), CreateWorkbookReader(cells).Object);
+
+        result.Blocks.Should().BeEmpty();
+        var error = result.Errors.Should().ContainSingle().Which;
+        error.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
+        error.Message.Should().Contain("'TypeElement'").And.NotContain("PoseeLe");
+    }
+
+    [Fact]
+    public void Read_WithOptionalFields_StillReadsTheStopFieldFirst()
+    {
+        var cells = new Dictionary<(string, string), string?> { [("PLATINES", "B17:E18")] = null };
+        var workbookReader = CreateWorkbookReader(cells);
+
+        var result = _sut.Read(PlatinesLocator(), workbookReader.Object);
+
+        result.Blocks.Should().BeEmpty();
+        workbookReader.Verify(r => r.ReadCellValue("PLATINES", It.IsAny<string>()), Times.Once);
+    }
 }
