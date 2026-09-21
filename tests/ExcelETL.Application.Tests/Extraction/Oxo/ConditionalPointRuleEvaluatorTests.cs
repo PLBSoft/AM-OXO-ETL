@@ -145,4 +145,17 @@ public class ConditionalPointRuleEvaluatorTests
         act.Should().Throw<UnknownFieldReferenceException>()
             .Which.FieldName.Should().Be("DoesNotExist");
     }
+
+    // Lot 084.4 (G2)
+    [Theory]
+    [InlineData("DEBUT MAD", true)]
+    [InlineData("  x ", true)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    public void Evaluate_IsNotBlank_IsSatisfiedByAnyTrimmedNonEmptyValue(string value, bool expected)
+    {
+        var rule = new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "RECEPTION DEBUT MAD");
+
+        _sut.Evaluate([rule], new Dictionary<string, string> { ["PoseeLe"] = value }).ShouldCreatePoint.Should().Be(expected);
+    }
 }

@@ -30,6 +30,12 @@ public sealed class ConditionalPointRuleEvaluator : IConditionalPointRuleEvaluat
         // vs. the base's confirmed values -- see spec §7. A genuine spelling difference (e.g.
         // "POINT DE FEU" vs "POINT FEU") is not normalized away by this and remains a legitimate
         // non-match, covered by the non-blocking warning policy.
+        if (rule.Operator == ConditionOperator.IsNotBlank)
+        {
+            // Lot 084 (G2): the field holds something once trimmed.
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
         var isEqual = string.Equals(value.Trim(), (rule.ComparisonValue ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
 
         return rule.Operator switch
