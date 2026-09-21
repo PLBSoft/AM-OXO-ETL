@@ -1,0 +1,387 @@
+# Fixture: Dossier.de.MaD.IDL.-.C7401.xlsx
+
+## Equipement
+38-C7401 | Rév 2 du 12/12/2025 | MAD TRAVAUX | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | PROCEDURE
+
+## Elements (23)
+ISOLEMENT | C7401-V1 | Aspiration 1 er étage C7401 | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V2 | Refoulement 3 eme en amont HSCV7421 | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V4 | Event vers atmosphere  | PROLOCK | OUVERT | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V5 | PRC7429 vers F7501 (recyclage) | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V6 | Refoulement 3 eme vers torche  | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V7 | By pass du S7405 | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V9 | Décompression clapets vers torche  | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+ISOLEMENT | C7401-V13 | Azote vers caisse à huile  | PROLOCK | FERMÉE | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | 
+PLATINES | C7401-PT1 | Aspiration 1 er étage C7401 | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT2 | By pass du S7405 | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT4 | Azote 6 b vers clapets et chambres  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT5 | Décompression clapets vers torche  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT6 | Azote vers caisse à huile  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT7 | Refoulement 3 eme en amont HSCV7421 | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT8 | Refoulement 3 eme vers torche  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT9 | Ligne recyclage compresseur  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT10 | Event vers atmosphere  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT11 | Soupape refoulement 1 er  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT12 | Soupape refoulement 2 eme | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT13 | Soupape refoulement 3 ème | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT14 | Dégazage S7405 vers torche  | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT15A | Azote balayage en amont S7405 | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+PLATINES | C7401-PT15B | Azote balayage en amont S7405 | PLATINE |  | ZONE 1 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 38-C7401 | ROUGE
+
+## Points (100)
+38-C7401 | VISITE PRÉALABLE CHANTIER
+38-C7401 | AUTORISATION DÉPLATINAGES
+38-C7401 | AUTORISATION DE REMISE EN SERVICE
+38-C7401 | RÉCEPTION FINALE CHANTIER
+38-C7401 | PROCÉDURE MAD
+38-C7401 | PROCÉDURE REL
+C7401-V1 | PROLOCK VANNES
+C7401-V1 | DEPROLOCK VANNES
+C7401-V2 | PROLOCK VANNES
+C7401-V2 | DEPROLOCK VANNES
+C7401-V4 | PROLOCK VANNES
+C7401-V4 | DEPROLOCK VANNES
+C7401-V4 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+C7401-V5 | PROLOCK VANNES
+C7401-V5 | DEPROLOCK VANNES
+C7401-V6 | PROLOCK VANNES
+C7401-V6 | DEPROLOCK VANNES
+C7401-V7 | PROLOCK VANNES
+C7401-V7 | DEPROLOCK VANNES
+C7401-V9 | PROLOCK VANNES
+C7401-V9 | DEPROLOCK VANNES
+C7401-V13 | PROLOCK VANNES
+C7401-V13 | DEPROLOCK VANNES
+C7401-PT1 | POSE ÉTIQUETTES
+C7401-PT1 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT1 | CONTRÔLE ETANCHÉITÉS
+C7401-PT1 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT1 | PLATINES / TAMPONS PLEINS
+C7401-PT2 | POSE ÉTIQUETTES
+C7401-PT2 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT2 | CONTRÔLE ETANCHÉITÉS
+C7401-PT2 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT2 | PLATINES / TAMPONS PLEINS
+C7401-PT4 | POSE ÉTIQUETTES
+C7401-PT4 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT4 | CONTRÔLE ETANCHÉITÉS
+C7401-PT4 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT4 | PLATINES / TAMPONS PLEINS
+C7401-PT5 | POSE ÉTIQUETTES
+C7401-PT5 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT5 | CONTRÔLE ETANCHÉITÉS
+C7401-PT5 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT5 | PLATINES / TAMPONS PLEINS
+C7401-PT6 | POSE ÉTIQUETTES
+C7401-PT6 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT6 | CONTRÔLE ETANCHÉITÉS
+C7401-PT6 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT6 | PLATINES / TAMPONS PLEINS
+C7401-PT7 | POSE ÉTIQUETTES
+C7401-PT7 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT7 | CONTRÔLE ETANCHÉITÉS
+C7401-PT7 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT7 | PLATINES / TAMPONS PLEINS
+C7401-PT8 | POSE ÉTIQUETTES
+C7401-PT8 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT8 | CONTRÔLE ETANCHÉITÉS
+C7401-PT8 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT8 | PLATINES / TAMPONS PLEINS
+C7401-PT9 | POSE ÉTIQUETTES
+C7401-PT9 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT9 | CONTRÔLE ETANCHÉITÉS
+C7401-PT9 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT9 | PLATINES / TAMPONS PLEINS
+C7401-PT10 | POSE ÉTIQUETTES
+C7401-PT10 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT10 | CONTRÔLE ETANCHÉITÉS
+C7401-PT10 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT10 | PLATINES / TAMPONS PLEINS
+C7401-PT11 | POSE ÉTIQUETTES
+C7401-PT11 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT11 | CONTRÔLE ETANCHÉITÉS
+C7401-PT11 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT11 | PLATINES / TAMPONS PLEINS
+C7401-PT12 | POSE ÉTIQUETTES
+C7401-PT12 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT12 | CONTRÔLE ETANCHÉITÉS
+C7401-PT12 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT12 | PLATINES / TAMPONS PLEINS
+C7401-PT13 | POSE ÉTIQUETTES
+C7401-PT13 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT13 | CONTRÔLE ETANCHÉITÉS
+C7401-PT13 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT13 | PLATINES / TAMPONS PLEINS
+C7401-PT14 | POSE ÉTIQUETTES
+C7401-PT14 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT14 | CONTRÔLE ETANCHÉITÉS
+C7401-PT14 | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT14 | PLATINES / TAMPONS PLEINS
+C7401-PT15A | POSE ÉTIQUETTES
+C7401-PT15A | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT15A | CONTRÔLE ETANCHÉITÉS
+C7401-PT15A | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT15A | PLATINES / TAMPONS PLEINS
+C7401-PT15A | RECEPTION DEBUT MAD
+C7401-PT15B | POSE ÉTIQUETTES
+C7401-PT15B | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+C7401-PT15B | CONTRÔLE ETANCHÉITÉS
+C7401-PT15B | RÉCEPTION PLATINES/TAMPONS PLEINS
+C7401-PT15B | PLATINES / TAMPONS PLEINS
+C7401-PT15B | RECEPTION DEBUT REL
+
+## Tasks (98)
+9 |  | 1-MANOEUVRES PREPARATOIRES |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+10 | 1 | Déplatiner l’azote platine PT15 en veillant que V11 et V12 soient bien fermées | ADF | Retour produit | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+11 | 2 | Verifier  le déplatinage  torche (PT8 ) en s'assurant que V3 et V6 soient fermées 	 |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+12 | 3 | Baisser PRC7422 à 0.2b  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+13 | 4 | PRC 7429 en auto local  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+14 | 5 | Augmenter progressivement le SP de PRC7429 par paliers de 0.05 pour une ouverture totale de la vanne de recyclage  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+15 | 6 | Réduire simultanément l’ouverture de HSCV7421 (par pas de 10 %) jusqu’à 80 %. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+16 | 7 | Surveiller la pression de refoulement du C7401. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+17 | 8 | Fermer HSCV7421 par étages de 10 % jusqu’à 30%. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+18 | 9 | Fermer HSV7440 (injection azote sur clapets) à 0% pour débrayer C7401. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+19 | 10 | Fermer HSCV7421 à –14%. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+20 |  | 2-ARRET DU COMPRESSEUR |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+21 | 11 | Arrêter le compresseur par SNCC. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+22 | 12 | A l’arrêt du compresseur le système (SNCC) va modifier automatiquement et la hausse (plus 1 bar) la PRC7413 de façon à maintenir le ratio H2/CO vers la section Rhodium. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+23 | 13 | Augmenter ou baisser PRC7413 pour affiner le ratio H2/CO |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+24 | 14 | Vérifier le fonctionnement de la pompe à huile auxiliaire C7401XM et confirmer la marche. |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+25 |  | 3-ISOLEMENT DES CIRCUITS PRINCIPAUX |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+26 | 15 | Fermer les vannes asp V1 et V7 et mise en place des prolocks |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+27 | 16 | Fermer la vanne V2 et mise en place prolock  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+28 | 17 | Fermer la vanne V5 et mise en place prolock |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+29 |  | 4-ISOLEMENT DU CIRCUIT DE REFROIDISSEMENT DU COMPRESSEUR |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+30 | 18 | Fermer les vannes d'entree et sortie des réfrigérants C7401E1 et C7401 E2  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+31 | 19 | Fermer les vannes d'entree et sortie des réfrigérants C7401E4 |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+32 | 20 | Isolement  E.R sur E7403 |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+33 | 21 | Isolement réfrigérant d'huile C7401E3 A/B |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+34 | 22 | Isolement refroidissement des cylindres  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+35 | 23 | Arret pompe à huile auxiliaire C7401XM |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+36 | 24 | Isoler l'azote de balayage sur la caisse à huile , fermer V13 et mise en place prolock  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+37 | 25 | Isoler l'azote sur les chambres intermédiaires et clapet  , fermer  V10  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+38 |  | 5-ISOLEMENT AR7401-3 |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+39 | 26 | Si besoin 
+- Isoler AR7401-3 manuellement et à l'arret sur SNCC 
+- Sur vue '' analyseur '' du SNCC ( overview Rhodium analyseur 1 ) 
+- Mettre AZ7401.3 sur manu arret  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+40 |  | 6-BALAYAGE AZOTE |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+41 | 27 | Ouvrir PRC 7429  à 100%  ainsi que les vannes d encadrement  |  | Asphyxie | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+42 | 28 | Dégazer le C7401 à la torche par V3 et V6 |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+43 | 29 | Fermer les vannes V9 et V8, prolocker V9  (chambres  vers torche) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+44 | 30 | Faire 15 gonflages et dégonflages à l’azote en ouvrant les vannes azote V11 et V12 et dégazer à la torche par V3 et V6 (ATTENTION NE PAS DEPASSER 0.4 B POUR FAIRE LES GONFLAGES ET DEGONFLAGES) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+45 | 31 | Si teneur inférieur à 50 ppm de CO à la prise d’échantillon au refoulement, fermer V3 et V6, et prolocker V6 |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+46 | 32 | Fermer les vannes  V11 / V12  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+47 |  | 7-PLATINAGE |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+48 | 33 | Condamner les moteurs electriques ( compresseur , pompe à huile et resistance sur huile ) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+49 | 34 | Faire poser la platine PT8  | ADF |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+50 | 35 | Fermer V4 et faire déposer PT10  | ADF |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+51 | 36 | Ouvrir V4 et contrôle zéro énergie avec l'entreprise  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+52 | 37 | Mettre un très léger balayage d’azote en ouvrant V11 , V12 et V4 ouverte.  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+53 | 38 | Faire platiner sous ARI à l’ouverture des brides PT1 / PT2 / PT9 / PT7 | ADF | Asphyxie | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+54 | 39 | Faires des 5 gonflages et dégonflages à l’azote en ouvrant les vannes azote V11 et V12 et dégazer à l’atmos par V4 (ATTENTION NE PAS DEPASSER 0.4 B POUR FAIRE LES GONFLAGES ET DEGONFLAGES) |  | Asphyxie | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+55 | 40 | Si teneur inférieur à 50 ppm de CO à la prise d’échantillon au refoulement et plus de présence de LIE, procéder au reste du platinage  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+56 | 41 | Fermer V11 / V12  (azote vers apiration C7401) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+57 | 42 | Ouvrir V4 et prolocker la vanne (zéro énergie) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+58 | 43 | Faire poser les platines PT5 / PT4 / PT6 / PT11 / PT12 / PT13 / PT15 | ADF |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+59 | 44 | S’assurer que la platine PT14  (S7405 vers TH ) est bien fermée |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+60 | 45 | PT10 reste en position ouverte  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+61 |  | 8-LE C7401 EST DISPONIBLE POUR MECANIQUE |  |  | TM_PROC_MAD |  | factice | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+62 |  | 9-TEST ETANCHEITE DES CLAPETS APRES FIN TRAVAUX  |  |  | TM_PROC_REL |  | factice | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+63 | 46 | Faire déplatiné l’azote la platine PT15 | ADF |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+64 | 47 | Les autres platines restent en place  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+65 | 48 | Gonfler le compresseur à 0.4b maximum et procéder au test des joints des clapets avec le S/M si ok faire la suite |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+66 |  | 10-MISE EN SERVICE DU COMPRESSEUR |  |  | TM_PROC_REL |  | factice | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+67 | 49 | Une fois la clôture des permis mécanique ,procéder au déplatinage du compresseur sauf PT8 / PT 5 / PT14 (platine torche) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+68 | 50 | Gonfler le C7401 à 0.4b est procéder à l’épreuve des joints selon la liste ci-joint en annexe  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+69 | 51 | Si ok faire une série de 8 gonflages / dégonflages à l’azote par V11 / V12 et V4 |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+70 | 52 | Faire un orsat au niveau de la prise d’échantillon au refoulement du C7401 |  | Explosion | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+71 | 53 | Si orsat inf à 0.5% ,Dégonfler le compresseur par V4  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+72 | 54 | Fermer V4 et faire platiner PT10  (vers atm) | ADF |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+73 | 55 | Faire déplatiner PT8 (torche ) et  PT5 (chambre vers torche ) | ADF |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+74 | 56 | La platine PT14  (S7405 vers TH ) reste en position fermée |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+75 | 57 | Vérifier la fermeture des vannes de purge des entretoises du compresseur (vanne de purge au niveau garnitures)  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+76 | 58 | Mettre le compresseur sous léger balayage azote à la torche par V3 ET V6 (max 0.4b) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+77 | 59 | Décondamner les moteurs electriques ( compresseur , pompe à huile et resistance sur huile ) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+78 | 60 | Redisposer le refroidissement                                                                                                                             
+-Ouvrir les vannes d'entree et sortie des réfrigérants C7401E1 et C7401 E2                            |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+79 | 61 | Redisposer le refroidissement                                                                                                                                                  -Ouvrir les vannes d'entree et sortie des réfrigérants C7401E4         |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+80 | 62 | Redisposer le refroidissement sur E7403          |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+81 | 63 | Redisposer le refroidissement sur le réfrigérant d'huile C7401E3 A/B |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+82 | 64 | Redisposer le refroidissement des cylindres  |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+83 | 65 | Ouvrir la vanne  V13 ( azote de balayage sur la caisse à huile ) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+84 | 66 | Ouvrir la vanne V10  (azote vers clapets et chambres ) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+85 | 67 | Ouvrir les vannes V8 / V9 (chambres vers torche ) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+86 | 68 | Démarrer la pompe à huile auxiliaire , contrôler le niveau de la caisse à huile  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+87 | 69 | Vérifier la pression de refoulement de la pompe à huile  (supérieur à 2.5b) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+88 | 70 | Fermer V11 / V12 (N2 aspiration C7401) et fermer V3 / V6 vers torche |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+89 | 71 | Faire platiner PT15 (N2 aspiration C7401)  | ADF |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+90 | 72 | Ouvrir V1 (vanne aspiration ) et dépose  prolock  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+91 | 73 | Ouvrir V2 (vanne refoulement) et dépose prolock ( en amont HSCV 7421) |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+92 | 74 | Ouvrir V5 en aval PRC7429 et dépose prolock ( recyclage ),                           |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+93 | 75 | Mettre PRC 7429 en mode MANU , OP à 114% ,s'assurer que la vanne auto est bien ouverte |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+94 | 76 | Disposer manuellement AR7401-3  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+95 | 77 | Vérifier que le bouton d arret d'urgence sur pupitre HSC7401 et local AU7401 est déverouillé |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+96 | 78 | Démarrage C7401 par bouton poussoir en local  |  |  | TM_PROC_MAD |  |  | 38-C7401 | MAD TRAVAUX | Procédure MAD | ZONE 1
+97 | 79 | Simultanément ouvrir HSCV7421 à 100% (sinon déclenchement par pression haute car ligne de recyclage trop petite) |  | Détérioration matériau | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+98 | 80 | Vérifier que l 'intensité se stabilise après 15 secondes  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+99 | 81 | Vérifier le démarrage de la pompe à huile attelée et l'arret de la pompe auxilaire |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+100 | 82 | Faire une tournée du compresseur pour veiller à l absence de fuite ou de bruit anormale |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+101 | 83 | Mettre en charge le compresseur par injection d azote sur les clapets (ouverture HSV7440 ) |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+102 | 84 | Réduire PRCV 7429 à 95% d'ouverture en manuel  |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+103 | 85 | Passer PRCV 7429 en AUTO/LOCAL et baisser progressivement la pression vers 0.12b |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+104 | 86 | Remonter le SP du PRC 7422 vers 0.3b |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+105 | 87 | Baisser progressivement PRC 7413 pour maintenir le ratio H2/CO |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+106 | 88 | Remettre en service  sur SNCC 
+- Sur vue '' analyseur '' du SNCC ( overview Rhodium analyseur 1 ) 
+- Mettre AZ7401.3 en auto sur marche |  |  | TM_PROC_REL |  |  | 38-C7401 | MAD TRAVAUX | Procédure REL | ZONE 1
+
+## Errors (2)
+NoConditionalPointCreated | ISOLEMENT | PROLOCK
+TacheMultipleTypeMismatch | PROCEDURE | (null)
+
+## Error block identifiers and messages
+NoConditionalPointCreated | ISOLEMENT | C7401-V1 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
+TacheMultipleTypeMismatch | PROCEDURE | 10-MISE EN SERVICE DU COMPRESSEUR (tâches 73-78) | Incohérence de TYPE détectée dans la tâche multiple "10-MISE EN SERVICE DU COMPRESSEUR" : tâches 73–78 en TM_PROC_MAD, encadrées par des tâches en TM_PROC_REL — vérifier une possible erreur de saisie.
+
+## Generated workbook
+
+### Sheet: Parents
+Repère | Feuille | Type Elément | Zone | LOC2 | LOC3 | Désignation | FLUIDE | RECURRENT | Tableaux | SUPPRESSION | ADR Email | COMMENTAIRES | PROGRESS | VISITE PRÉALABLE CHANTIER | PROCÉDURE MAD | AUTORISATION DÉPLATINAGES | PROCÉDURE REL | AUTORISATION DE REMISE EN SERVICE | RÉCEPTION FINALE CHANTIER | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+38-C7401 | PROCEDURE | MAD TRAVAUX | ZONE 1 |  |  | Rév 2 du 12/12/2025 |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  |  |  | O | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X | X |  |  |  |  |  | 
+
+### Sheet: Enfants
+Numéro | Feuille | Type Elément | Zone | LOC2 | LOC3 | ELEMENT PARENT | Désignation | Position à la pose | POSITION A LA DEPOSE | PHASE PROCESS | REMARQUES | ETIQUETTE | DIAMETRE INCH | SERIE LBS | NATURE JOINT | BESOIN ECHAF | Tableaux | SUPPRESSION | PROGRESS | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+C7401-V1 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Aspiration 1 er étage C7401 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V2 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Refoulement 3 eme en amont HSCV7421 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V4 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Event vers atmosphere  | OUVERT |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V5 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | PRC7429 vers F7501 (recyclage) | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V6 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Refoulement 3 eme vers torche  | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V7 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | By pass du S7405 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V9 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Décompression clapets vers torche  | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-V13 | ISOLEMENT | PROLOCK | ZONE 1 |  |  | 38-C7401 | Azote vers caisse à huile  | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+C7401-PT1 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Aspiration 1 er étage C7401 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT2 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | By pass du S7405 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT4 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Azote 6 b vers clapets et chambres  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT5 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Décompression clapets vers torche  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT6 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Azote vers caisse à huile  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT7 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Refoulement 3 eme en amont HSCV7421 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT8 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Refoulement 3 eme vers torche  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT9 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Ligne recyclage compresseur  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT10 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Event vers atmosphere  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT11 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Soupape refoulement 1 er  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT12 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Soupape refoulement 2 eme |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT13 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Soupape refoulement 3 ème |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT14 | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Dégazage S7405 vers torche  |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+C7401-PT15A | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Azote balayage en amont S7405 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X | X | X |  | X |  |  |  |  |  | 
+C7401-PT15B | PLATINES | PLATINE | ZONE 1 |  |  | 38-C7401 | Azote balayage en amont S7405 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X | X | X |  |  |  |  |  | 
+
+### Sheet: TM_PROC_MAD
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 9 |  | 1-MANOEUVRES PREPARATOIRES |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 10 | 1 | Déplatiner l’azote platine PT15 en veillant que V11 et V12 soient bien fermées | ADF | Retour produit |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 11 | 2 | Verifier  le déplatinage  torche (PT8 ) en s'assurant que V3 et V6 soient fermées 	 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 12 | 3 | Baisser PRC7422 à 0.2b  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 13 | 4 | PRC 7429 en auto local  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 14 | 5 | Augmenter progressivement le SP de PRC7429 par paliers de 0.05 pour une ouverture totale de la vanne de recyclage  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 15 | 6 | Réduire simultanément l’ouverture de HSCV7421 (par pas de 10 %) jusqu’à 80 %. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 16 | 7 | Surveiller la pression de refoulement du C7401. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 17 | 8 | Fermer HSCV7421 par étages de 10 % jusqu’à 30%. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 18 | 9 | Fermer HSV7440 (injection azote sur clapets) à 0% pour débrayer C7401. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 19 | 10 | Fermer HSCV7421 à –14%. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 20 |  | 2-ARRET DU COMPRESSEUR |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 21 | 11 | Arrêter le compresseur par SNCC. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 22 | 12 | A l’arrêt du compresseur le système (SNCC) va modifier automatiquement et la hausse (plus 1 bar) la PRC7413 de façon à maintenir le ratio H2/CO vers la section Rhodium. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 23 | 13 | Augmenter ou baisser PRC7413 pour affiner le ratio H2/CO |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 24 | 14 | Vérifier le fonctionnement de la pompe à huile auxiliaire C7401XM et confirmer la marche. |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 25 |  | 3-ISOLEMENT DES CIRCUITS PRINCIPAUX |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 26 | 15 | Fermer les vannes asp V1 et V7 et mise en place des prolocks |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 27 | 16 | Fermer la vanne V2 et mise en place prolock  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 28 | 17 | Fermer la vanne V5 et mise en place prolock |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 29 |  | 4-ISOLEMENT DU CIRCUIT DE REFROIDISSEMENT DU COMPRESSEUR |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 30 | 18 | Fermer les vannes d'entree et sortie des réfrigérants C7401E1 et C7401 E2  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 31 | 19 | Fermer les vannes d'entree et sortie des réfrigérants C7401E4 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 32 | 20 | Isolement  E.R sur E7403 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 33 | 21 | Isolement réfrigérant d'huile C7401E3 A/B |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 34 | 22 | Isolement refroidissement des cylindres  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 35 | 23 | Arret pompe à huile auxiliaire C7401XM |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 36 | 24 | Isoler l'azote de balayage sur la caisse à huile , fermer V13 et mise en place prolock  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 37 | 25 | Isoler l'azote sur les chambres intermédiaires et clapet  , fermer  V10  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 38 |  | 5-ISOLEMENT AR7401-3 |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 39 | 26 | Si besoin 
+- Isoler AR7401-3 manuellement et à l'arret sur SNCC 
+- Sur vue '' analyseur '' du SNCC ( overview Rhodium analyseur 1 ) 
+- Mettre AZ7401.3 sur manu arret  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 40 |  | 6-BALAYAGE AZOTE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 41 | 27 | Ouvrir PRC 7429  à 100%  ainsi que les vannes d encadrement  |  | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 42 | 28 | Dégazer le C7401 à la torche par V3 et V6 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 43 | 29 | Fermer les vannes V9 et V8, prolocker V9  (chambres  vers torche) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 44 | 30 | Faire 15 gonflages et dégonflages à l’azote en ouvrant les vannes azote V11 et V12 et dégazer à la torche par V3 et V6 (ATTENTION NE PAS DEPASSER 0.4 B POUR FAIRE LES GONFLAGES ET DEGONFLAGES) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 45 | 31 | Si teneur inférieur à 50 ppm de CO à la prise d’échantillon au refoulement, fermer V3 et V6, et prolocker V6 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 46 | 32 | Fermer les vannes  V11 / V12  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 47 |  | 7-PLATINAGE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 48 | 33 | Condamner les moteurs electriques ( compresseur , pompe à huile et resistance sur huile ) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 49 | 34 | Faire poser la platine PT8  | ADF |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 50 | 35 | Fermer V4 et faire déposer PT10  | ADF |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 51 | 36 | Ouvrir V4 et contrôle zéro énergie avec l'entreprise  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 52 | 37 | Mettre un très léger balayage d’azote en ouvrant V11 , V12 et V4 ouverte.  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 53 | 38 | Faire platiner sous ARI à l’ouverture des brides PT1 / PT2 / PT9 / PT7 | ADF | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 54 | 39 | Faires des 5 gonflages et dégonflages à l’azote en ouvrant les vannes azote V11 et V12 et dégazer à l’atmos par V4 (ATTENTION NE PAS DEPASSER 0.4 B POUR FAIRE LES GONFLAGES ET DEGONFLAGES) |  | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 55 | 40 | Si teneur inférieur à 50 ppm de CO à la prise d’échantillon au refoulement et plus de présence de LIE, procéder au reste du platinage  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 56 | 41 | Fermer V11 / V12  (azote vers apiration C7401) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 57 | 42 | Ouvrir V4 et prolocker la vanne (zéro énergie) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 58 | 43 | Faire poser les platines PT5 / PT4 / PT6 / PT11 / PT12 / PT13 / PT15 | ADF |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 59 | 44 | S’assurer que la platine PT14  (S7405 vers TH ) est bien fermée |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 60 | 45 | PT10 reste en position ouverte  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 61 |  | 8-LE C7401 EST DISPONIBLE POUR MECANIQUE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 91 | 73 | Ouvrir V2 (vanne refoulement) et dépose prolock ( en amont HSCV 7421) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 92 | 74 | Ouvrir V5 en aval PRC7429 et dépose prolock ( recyclage ),                           |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 93 | 75 | Mettre PRC 7429 en mode MANU , OP à 114% ,s'assurer que la vanne auto est bien ouverte |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 94 | 76 | Disposer manuellement AR7401-3  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 95 | 77 | Vérifier que le bouton d arret d'urgence sur pupitre HSC7401 et local AU7401 est déverouillé |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 96 | 78 | Démarrage C7401 par bouton poussoir en local  |  |  |  | Procédure MAD | A faire | N
+
+### Sheet: TM_PROC_REL
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 62 |  | 9-TEST ETANCHEITE DES CLAPETS APRES FIN TRAVAUX  |  |  |  | Procédure REL | Pour info | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 63 | 46 | Faire déplatiné l’azote la platine PT15 | ADF |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 64 | 47 | Les autres platines restent en place  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 65 | 48 | Gonfler le compresseur à 0.4b maximum et procéder au test des joints des clapets avec le S/M si ok faire la suite |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 66 |  | 10-MISE EN SERVICE DU COMPRESSEUR |  |  |  | Procédure REL | Pour info | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 67 | 49 | Une fois la clôture des permis mécanique ,procéder au déplatinage du compresseur sauf PT8 / PT 5 / PT14 (platine torche) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 68 | 50 | Gonfler le C7401 à 0.4b est procéder à l’épreuve des joints selon la liste ci-joint en annexe  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 69 | 51 | Si ok faire une série de 8 gonflages / dégonflages à l’azote par V11 / V12 et V4 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 70 | 52 | Faire un orsat au niveau de la prise d’échantillon au refoulement du C7401 |  | Explosion |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 71 | 53 | Si orsat inf à 0.5% ,Dégonfler le compresseur par V4  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 72 | 54 | Fermer V4 et faire platiner PT10  (vers atm) | ADF |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 73 | 55 | Faire déplatiner PT8 (torche ) et  PT5 (chambre vers torche ) | ADF |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 74 | 56 | La platine PT14  (S7405 vers TH ) reste en position fermée |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 75 | 57 | Vérifier la fermeture des vannes de purge des entretoises du compresseur (vanne de purge au niveau garnitures)  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 76 | 58 | Mettre le compresseur sous léger balayage azote à la torche par V3 ET V6 (max 0.4b) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 77 | 59 | Décondamner les moteurs electriques ( compresseur , pompe à huile et resistance sur huile ) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 78 | 60 | Redisposer le refroidissement                                                                                                                             
+-Ouvrir les vannes d'entree et sortie des réfrigérants C7401E1 et C7401 E2                            |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 79 | 61 | Redisposer le refroidissement                                                                                                                                                  -Ouvrir les vannes d'entree et sortie des réfrigérants C7401E4         |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 80 | 62 | Redisposer le refroidissement sur E7403          |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 81 | 63 | Redisposer le refroidissement sur le réfrigérant d'huile C7401E3 A/B |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 82 | 64 | Redisposer le refroidissement des cylindres  |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 83 | 65 | Ouvrir la vanne  V13 ( azote de balayage sur la caisse à huile ) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 84 | 66 | Ouvrir la vanne V10  (azote vers clapets et chambres ) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 85 | 67 | Ouvrir les vannes V8 / V9 (chambres vers torche ) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 86 | 68 | Démarrer la pompe à huile auxiliaire , contrôler le niveau de la caisse à huile  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 87 | 69 | Vérifier la pression de refoulement de la pompe à huile  (supérieur à 2.5b) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 88 | 70 | Fermer V11 / V12 (N2 aspiration C7401) et fermer V3 / V6 vers torche |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 89 | 71 | Faire platiner PT15 (N2 aspiration C7401)  | ADF |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 90 | 72 | Ouvrir V1 (vanne aspiration ) et dépose  prolock  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 97 | 79 | Simultanément ouvrir HSCV7421 à 100% (sinon déclenchement par pression haute car ligne de recyclage trop petite) |  | Détérioration matériau |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 98 | 80 | Vérifier que l 'intensité se stabilise après 15 secondes  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 99 | 81 | Vérifier le démarrage de la pompe à huile attelée et l'arret de la pompe auxilaire |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 100 | 82 | Faire une tournée du compresseur pour veiller à l absence de fuite ou de bruit anormale |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 101 | 83 | Mettre en charge le compresseur par injection d azote sur les clapets (ouverture HSV7440 ) |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 102 | 84 | Réduire PRCV 7429 à 95% d'ouverture en manuel  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 103 | 85 | Passer PRCV 7429 en AUTO/LOCAL et baisser progressivement la pression vers 0.12b |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 104 | 86 | Remonter le SP du PRC 7422 vers 0.3b |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 105 | 87 | Baisser progressivement PRC 7413 pour maintenir le ratio H2/CO |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 38-C7401 | ZONE 1 |  |  | MAD TRAVAUX |  |  | 106 | 88 | Remettre en service  sur SNCC 
+- Sur vue '' analyseur '' du SNCC ( overview Rhodium analyseur 1 ) 
+- Mettre AZ7401.3 en auto sur marche |  |  |  | Procédure REL | A faire | N

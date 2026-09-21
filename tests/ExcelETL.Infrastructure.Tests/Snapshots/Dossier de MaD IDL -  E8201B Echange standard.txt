@@ -1,0 +1,125 @@
+# Fixture: Dossier de MaD IDL -  E8201B Echange standard.xlsx
+
+## Equipement
+806-E8201B | Rév 0 du 01/07/2026 | MAD TRAVAUX | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | PROCEDURE
+
+## Elements (12)
+ISOLEMENT | E8201-V2 | LIGNE G2916 vers E8201B | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+ISOLEMENT | E8201-V3 | SORTIE E8201B vers E8201 | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+ISOLEMENT | E8201-V5 | FOND D8201 vers E8201B | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+ISOLEMENT | E8201-V6 | SORTIE E8201B VERS EGOUT | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+AUTRES JOINTS TOUCHES | E8201B-JT2 | ENTREE E8201B VENANT DE G2916  | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | BLEUE
+AUTRES JOINTS TOUCHES | E8201B-JT3 | SORTIE VERS D8201 | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | BLEUE
+AUTRES JOINTS TOUCHES | E8201B-JT5 | FOND D8201 VERS E8201B | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | BLEUE
+AUTRES JOINTS TOUCHES | E8201B-JT6 | SORTIE E8201B VERS EGOUT CHIMIQUE | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | BLEUE
+DIVERS | RANGEE N°1-V7 | VANNE PURGE E8201B | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+DIVERS | RANGEE N°1-V8 | VANNE PURGE E8201B | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+DIVERS | RANGEE N°1-V9 | VANNE PURGE E8201B | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+DIVERS | RANGEE N°1-V10 | VANNE PURGE E8201B | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 806-E8201B | 
+
+## Points (30)
+806-E8201B | VISITE PRÉALABLE CHANTIER
+806-E8201B | AUTORISATION DÉPLATINAGES
+806-E8201B | AUTORISATION DE REMISE EN SERVICE
+806-E8201B | RÉCEPTION FINALE CHANTIER
+806-E8201B | PROCÉDURE MAD
+806-E8201B | PROCÉDURE REL
+E8201-V2 | PROLOCK VANNES
+E8201-V2 | DEPROLOCK VANNES
+E8201-V3 | PROLOCK VANNES
+E8201-V3 | DEPROLOCK VANNES
+E8201-V5 | PROLOCK VANNES
+E8201-V5 | DEPROLOCK VANNES
+E8201-V6 | PROLOCK VANNES
+E8201-V6 | DEPROLOCK VANNES
+E8201B-JT2 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E8201B-JT2 | CONTRÔLE ETANCHÉITÉS
+E8201B-JT2 | POSE ÉTIQUETTES
+E8201B-JT3 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E8201B-JT3 | CONTRÔLE ETANCHÉITÉS
+E8201B-JT3 | POSE ÉTIQUETTES
+E8201B-JT5 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E8201B-JT5 | CONTRÔLE ETANCHÉITÉS
+E8201B-JT5 | POSE ÉTIQUETTES
+E8201B-JT6 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E8201B-JT6 | CONTRÔLE ETANCHÉITÉS
+E8201B-JT6 | POSE ÉTIQUETTES
+RANGEE N°1-V7 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+RANGEE N°1-V8 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+RANGEE N°1-V9 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+RANGEE N°1-V10 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+
+## Tasks (20)
+9 |  | 1-ISOLEMENT ET ZERO ENERGIE |  |  | TM_PROC_MAD |  | factice | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+10 | 1 | Ouvrir V1 (by-pass entrée E8201B) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+11 | 2 | Fermer et prolocker V2 (G2916 vers E8201B) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+12 | 3 | Fermer et prolocker V3 (sortie E8201B vers E8201) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+13 | 4 | Ouvrir V4 (by-pass sortie E8201B) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+14 | 5 | Fermer et prolocker V5 (fond D8201 vers E8201B) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+15 | 6 | Fermer et prolocker V6 (sortie E8201B vers égout) |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+16 | 7 | Ouvrir V7, V8, V9 et V10 et purger vers l'égout chimique |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+17 | 8 | Constater le zéro énergie en présence de l'entreprise |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+18 | 9 | Echange standard de E8201B |  |  | TM_PROC_MAD |  |  | 806-E8201B | MAD TRAVAUX | Procédure MAD | ZONE 4
+19 |  | 2-TEST D'ETANCHEITE ET REMISE EN SERVICE |  |  | TM_PROC_REL |  | factice | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+20 | 10 | Fermer V6, V7, V8 et V9 |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+21 | 11 | Enlever le prolock de V2 et l'ouvrir  |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+22 | 12 | Enlever le prolock de V3 et l'ouvrir  |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+23 | 13 | Constater l'absence de fuite au niveau des plaques et procéder au tet d'étanchéité de JT2 et JT3 |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+24 | 14 | Enlever le prolock de V5 et l'ouvrir |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+25 | 15 | Enlever le prolock de V6 et l'ouvrir |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+26 | 16 | Constater l'absence de fuite au niveau des plaques et procéder au tet d'étanchéité de JT5 et JT6 |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+27 | 17 | Fermer V1 et V4 |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+28 | 18 | Clôture du dossier MaD |  |  | TM_PROC_REL |  |  | 806-E8201B | MAD TRAVAUX | Procédure REL | ZONE 4
+
+## Errors (1)
+NoConditionalPointCreated | ISOLEMENT | PROLOCK
+
+## Error block identifiers and messages
+NoConditionalPointCreated | ISOLEMENT | E8201-V2 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
+
+## Generated workbook
+
+### Sheet: Parents
+Repère | Feuille | Type Elément | Zone | LOC2 | LOC3 | Désignation | FLUIDE | RECURRENT | Tableaux | SUPPRESSION | ADR Email | COMMENTAIRES | PROGRESS | VISITE PRÉALABLE CHANTIER | PROCÉDURE MAD | AUTORISATION DÉPLATINAGES | PROCÉDURE REL | AUTORISATION DE REMISE EN SERVICE | RÉCEPTION FINALE CHANTIER | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+806-E8201B | PROCEDURE | MAD TRAVAUX | ZONE 4 |  |  | Rév 0 du 01/07/2026 |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  |  |  | O | X | X | X | X | X | X | X | X | X | X | X | X |  |  |  |  |  |  |  |  |  | 
+
+### Sheet: Enfants
+Numéro | Feuille | Type Elément | Zone | LOC2 | LOC3 | ELEMENT PARENT | Désignation | Position à la pose | POSITION A LA DEPOSE | PHASE PROCESS | REMARQUES | ETIQUETTE | DIAMETRE INCH | SERIE LBS | NATURE JOINT | BESOIN ECHAF | Tableaux | SUPPRESSION | PROGRESS | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+E8201-V2 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 806-E8201B | LIGNE G2916 vers E8201B | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E8201-V3 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 806-E8201B | SORTIE E8201B vers E8201 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E8201-V5 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 806-E8201B | FOND D8201 vers E8201B | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E8201-V6 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 806-E8201B | SORTIE E8201B VERS EGOUT | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E8201B-JT2 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 806-E8201B | ENTREE E8201B VENANT DE G2916  |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+E8201B-JT3 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 806-E8201B | SORTIE VERS D8201 |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+E8201B-JT5 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 806-E8201B | FOND D8201 VERS E8201B |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+E8201B-JT6 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 806-E8201B | SORTIE E8201B VERS EGOUT CHIMIQUE |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-V7 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 806-E8201B | VANNE PURGE E8201B |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-V8 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 806-E8201B | VANNE PURGE E8201B |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-V9 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 806-E8201B | VANNE PURGE E8201B |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-V10 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 806-E8201B | VANNE PURGE E8201B |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+
+### Sheet: TM_PROC_MAD
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 9 |  | 1-ISOLEMENT ET ZERO ENERGIE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 10 | 1 | Ouvrir V1 (by-pass entrée E8201B) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 11 | 2 | Fermer et prolocker V2 (G2916 vers E8201B) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 12 | 3 | Fermer et prolocker V3 (sortie E8201B vers E8201) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 13 | 4 | Ouvrir V4 (by-pass sortie E8201B) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 14 | 5 | Fermer et prolocker V5 (fond D8201 vers E8201B) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 15 | 6 | Fermer et prolocker V6 (sortie E8201B vers égout) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 16 | 7 | Ouvrir V7, V8, V9 et V10 et purger vers l'égout chimique |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 17 | 8 | Constater le zéro énergie en présence de l'entreprise |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 18 | 9 | Echange standard de E8201B |  |  |  | Procédure MAD | A faire | N
+
+### Sheet: TM_PROC_REL
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 19 |  | 2-TEST D'ETANCHEITE ET REMISE EN SERVICE |  |  |  | Procédure REL | Pour info | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 20 | 10 | Fermer V6, V7, V8 et V9 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 21 | 11 | Enlever le prolock de V2 et l'ouvrir  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 22 | 12 | Enlever le prolock de V3 et l'ouvrir  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 23 | 13 | Constater l'absence de fuite au niveau des plaques et procéder au tet d'étanchéité de JT2 et JT3 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 24 | 14 | Enlever le prolock de V5 et l'ouvrir |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 25 | 15 | Enlever le prolock de V6 et l'ouvrir |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 26 | 16 | Constater l'absence de fuite au niveau des plaques et procéder au tet d'étanchéité de JT5 et JT6 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 27 | 17 | Fermer V1 et V4 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 806-E8201B | ZONE 4 |  |  | MAD TRAVAUX |  |  | 28 | 18 | Clôture du dossier MaD |  |  |  | Procédure REL | A faire | N

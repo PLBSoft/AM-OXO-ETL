@@ -1,0 +1,110 @@
+# Fixture: Dossier de MaD IDL -  E3201B condensats.xlsx
+
+## Equipement
+810-E3201B CDTS | Rév 0 du 08/07/2026 | MAD TRAVAUX | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | PROCEDURE
+
+## Elements (5)
+ISOLEMENT | E3201B-V2 | SORTIE CONDENSATS E3201B | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 810-E3201B CDTS | 
+ISOLEMENT | E3201B-V3 | ARRIVEE CONDENSATS E3201 B ET D SUR F2109  | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 810-E3201B CDTS | 
+PLATINES | E3201B-TP7 | BRIDE AMONT V7 | TAMPON PLEIN |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 810-E3201B CDTS | ROUGE
+PLATINES | E3201B-TP8 | BRIDE AVAL V7 | TAMPON PLEIN |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 810-E3201B CDTS | ROUGE
+DIVERS | E6423B-V4 | Mise à la terre avant F2109 des condensats de E3201B et D | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 810-E3201B CDTS | 
+
+## Points (23)
+810-E3201B CDTS | VISITE PRÉALABLE CHANTIER
+810-E3201B CDTS | AUTORISATION DÉPLATINAGES
+810-E3201B CDTS | AUTORISATION DE REMISE EN SERVICE
+810-E3201B CDTS | RÉCEPTION FINALE CHANTIER
+810-E3201B CDTS | PROCÉDURE MAD
+810-E3201B CDTS | PROCÉDURE REL
+E3201B-V2 | PROLOCK VANNES
+E3201B-V2 | DEPROLOCK VANNES
+E3201B-V3 | PROLOCK VANNES
+E3201B-V3 | DEPROLOCK VANNES
+E3201B-TP7 | POSE ÉTIQUETTES
+E3201B-TP7 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E3201B-TP7 | CONTRÔLE ETANCHÉITÉS
+E3201B-TP7 | RÉCEPTION PLATINES/TAMPONS PLEINS
+E3201B-TP7 | PLATINES / TAMPONS PLEINS
+E3201B-TP7 | RECEPTION DEBUT MAD
+E3201B-TP8 | POSE ÉTIQUETTES
+E3201B-TP8 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+E3201B-TP8 | CONTRÔLE ETANCHÉITÉS
+E3201B-TP8 | RÉCEPTION PLATINES/TAMPONS PLEINS
+E3201B-TP8 | PLATINES / TAMPONS PLEINS
+E3201B-TP8 | RECEPTION DEBUT MAD
+E6423B-V4 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+
+## Tasks (23)
+9 |  | 1-ISOLEMENT, ZERO ENERGIE ET REPOSE DE LA CELLULE |  |  | TM_PROC_MAD |  | factice | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+10 | 1 | Le Four B est à l'arrêt |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+11 | 2 | Fermer LV3201B à -14% et sa vanne aval V1 |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+12 | 3 | Sur la sortie condensats, fermer et prolocker V2 |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+13 | 4 | S'assurer que V5 et V6 (amont et aval purgeur) soient ouvertes |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+14 | 5 | Ouvrir V7 (by-pass) |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+15 | 6 | Fermer et prolocker V3 (arrivée condensats E3201B et D sur F2109) |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+16 | 7 | Ouvrir V4 (mise à la terre avant F2109 des condensats de E3201B et D) |  |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+17 | 8 | Constater le zéro énergie en présence de l'entreprise en V4  |  | Brulure | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+18 | 9 | Dépose de V7 | ADF EG | Brulure | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+19 | 10 | Pose de TP7 et TP8 | ADF EG |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+20 | 11 | Lorsque la vanne sera disponible, déposer TP7 et TP8 | ADF EG |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+21 | 12 | Pose de la nouvelle vanne V7 | ADF EG |  | TM_PROC_MAD |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure MAD | ZONE 4
+22 |  | 2-TEST D'ETANCHEITE ET REMISE EN SERVICE |  |  | TM_PROC_REL |  | factice | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+23 | 13 | Enlever le prolock de V3 et l'ouvrir  |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+24 | 14 | Fermer V4 |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+25 | 15 | Enlever le prolock et ouvrir V2 |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+26 | 16 | Ouvrir V1 |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+27 | 17 | Démarrer G3201A ou B |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+28 | 18 | Chauffer en ouvrant LV3201A |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+29 | 19 | Procéder au test d'étanchéité visuel des brides de V7 (Se tenir à distance d'une fuite éventuelle) |  | Brulure | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+30 | 20 | Fermer V7 |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+31 | 21 | Clôture du dossier MaD |  |  | TM_PROC_REL |  |  | 810-E3201B CDTS | MAD TRAVAUX | Procédure REL | ZONE 4
+
+## Errors (1)
+NoConditionalPointCreated | ISOLEMENT | PROLOCK
+
+## Error block identifiers and messages
+NoConditionalPointCreated | ISOLEMENT | E3201B-V2 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
+
+## Generated workbook
+
+### Sheet: Parents
+Repère | Feuille | Type Elément | Zone | LOC2 | LOC3 | Désignation | FLUIDE | RECURRENT | Tableaux | SUPPRESSION | ADR Email | COMMENTAIRES | PROGRESS | VISITE PRÉALABLE CHANTIER | PROCÉDURE MAD | AUTORISATION DÉPLATINAGES | PROCÉDURE REL | AUTORISATION DE REMISE EN SERVICE | RÉCEPTION FINALE CHANTIER | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+810-E3201B CDTS | PROCEDURE | MAD TRAVAUX | ZONE 4 |  |  | Rév 0 du 08/07/2026 |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  |  |  | O | X | X | X | X | X | X | X | X | X | X | X | X | X | X |  | X |  |  |  |  |  | 
+
+### Sheet: Enfants
+Numéro | Feuille | Type Elément | Zone | LOC2 | LOC3 | ELEMENT PARENT | Désignation | Position à la pose | POSITION A LA DEPOSE | PHASE PROCESS | REMARQUES | ETIQUETTE | DIAMETRE INCH | SERIE LBS | NATURE JOINT | BESOIN ECHAF | Tableaux | SUPPRESSION | PROGRESS | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+E3201B-V2 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 810-E3201B CDTS | SORTIE CONDENSATS E3201B | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E3201B-V3 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 810-E3201B CDTS | ARRIVEE CONDENSATS E3201 B ET D SUR F2109  | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+E3201B-TP7 | PLATINES | TAMPON PLEIN | ZONE 4 |  |  | 810-E3201B CDTS | BRIDE AMONT V7 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X | X | X |  | X |  |  |  |  |  | 
+E3201B-TP8 | PLATINES | TAMPON PLEIN | ZONE 4 |  |  | 810-E3201B CDTS | BRIDE AVAL V7 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X | X | X |  | X |  |  |  |  |  | 
+E6423B-V4 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 810-E3201B CDTS | Mise à la terre avant F2109 des condensats de E3201B et D |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+
+### Sheet: TM_PROC_MAD
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 9 |  | 1-ISOLEMENT, ZERO ENERGIE ET REPOSE DE LA CELLULE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 10 | 1 | Le Four B est à l'arrêt |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 11 | 2 | Fermer LV3201B à -14% et sa vanne aval V1 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 12 | 3 | Sur la sortie condensats, fermer et prolocker V2 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 13 | 4 | S'assurer que V5 et V6 (amont et aval purgeur) soient ouvertes |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 14 | 5 | Ouvrir V7 (by-pass) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 15 | 6 | Fermer et prolocker V3 (arrivée condensats E3201B et D sur F2109) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 16 | 7 | Ouvrir V4 (mise à la terre avant F2109 des condensats de E3201B et D) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 17 | 8 | Constater le zéro énergie en présence de l'entreprise en V4  |  | Brulure |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 18 | 9 | Dépose de V7 | ADF EG | Brulure |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 19 | 10 | Pose de TP7 et TP8 | ADF EG |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 20 | 11 | Lorsque la vanne sera disponible, déposer TP7 et TP8 | ADF EG |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 21 | 12 | Pose de la nouvelle vanne V7 | ADF EG |  |  | Procédure MAD | A faire | N
+
+### Sheet: TM_PROC_REL
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 22 |  | 2-TEST D'ETANCHEITE ET REMISE EN SERVICE |  |  |  | Procédure REL | Pour info | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 23 | 13 | Enlever le prolock de V3 et l'ouvrir  |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 24 | 14 | Fermer V4 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 25 | 15 | Enlever le prolock et ouvrir V2 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 26 | 16 | Ouvrir V1 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 27 | 17 | Démarrer G3201A ou B |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 28 | 18 | Chauffer en ouvrant LV3201A |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 29 | 19 | Procéder au test d'étanchéité visuel des brides de V7 (Se tenir à distance d'une fuite éventuelle) |  | Brulure |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 30 | 20 | Fermer V7 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 810-E3201B CDTS | ZONE 4 |  |  | MAD TRAVAUX |  |  | 31 | 21 | Clôture du dossier MaD |  |  |  | Procédure REL | A faire | N

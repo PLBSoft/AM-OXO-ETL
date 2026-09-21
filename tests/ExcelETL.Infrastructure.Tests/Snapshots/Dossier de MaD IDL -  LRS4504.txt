@@ -1,0 +1,83 @@
+# Fixture: Dossier de MaD IDL -  LRS4504.xlsx
+
+## Equipement
+797-LRS4504 | Rév 0 du 11/06/2026 | MAD TRAVAUX | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | PROCEDURE
+
+## Elements (6)
+ISOLEMENT | LRS4504-V1 | PRISE BP LRS4502 | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | 
+ISOLEMENT | LRS4504-V2 | PRISE HP LRS4502 | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | 
+AUTRES JOINTS TOUCHES | XCV7552E-JT1 | JOINT AVAL XCV7552E | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | BLEUE
+AUTRES JOINTS TOUCHES | XCV7552E-JT2 | JOINT AMONT XCV7552E | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | BLEUE
+DIVERS | LRS4504-LRS4504 | TRANSMETTEUR DE NIVEAU F4501 | INSTRUMENTATION |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | 
+DIVERS | LRS4504-LRS4504 | TRANSMETTEUR DE NIVEAU F4501 | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 797-LRS4504 | 
+
+## Points (18)
+797-LRS4504 | VISITE PRÉALABLE CHANTIER
+797-LRS4504 | AUTORISATION DÉPLATINAGES
+797-LRS4504 | AUTORISATION DE REMISE EN SERVICE
+797-LRS4504 | RÉCEPTION FINALE CHANTIER
+797-LRS4504 | PROCÉDURE MAD
+797-LRS4504 | PROCÉDURE REL
+LRS4504-V1 | PROLOCK VANNES
+LRS4504-V1 | DEPROLOCK VANNES
+LRS4504-V2 | PROLOCK VANNES
+LRS4504-V2 | DEPROLOCK VANNES
+XCV7552E-JT1 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+XCV7552E-JT1 | CONTRÔLE ETANCHÉITÉS
+XCV7552E-JT1 | POSE ÉTIQUETTES
+XCV7552E-JT2 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+XCV7552E-JT2 | CONTRÔLE ETANCHÉITÉS
+XCV7552E-JT2 | POSE ÉTIQUETTES
+LRS4504-LRS4504 | SYNCHRONISATION INSTRUMENTATION
+LRS4504-LRS4504 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+
+## Tasks (11)
+9 |  | 1 - ISOLEMENT ET ZERO ENERGIE |  |  | TM_PROC_MAD |  | factice | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+10 | 1 | Sur SNCC, by-passer LSL4504. Rédiger un bon de by-pass |  | Perte sécu, suivre niveau régul | TM_PROC_MAD |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+11 | 2 | Fermer et prolocker V1 |  |  | TM_PROC_MAD |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+12 | 3 | Fermer et prolocker V2 |  |  | TM_PROC_MAD |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+13 | 4 | Le zéro énergie sera assuré au capteur par le service contrôle | INEO |  | TM_PROC_MAD |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+14 | 5 | Intervention sur LRS4504 | INEO |  | TM_PROC_MAD |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure MAD | ZONE 4
+15 |  | 2 - REMISE EN SERVICE |  |  | TM_PROC_REL |  | factice | 797-LRS4504 | MAD TRAVAUX | Procédure REL | ZONE 4
+16 | 6 | S'assurer qu il n'y ait pas de purge ouverte au capteur |  | Pollution | TM_PROC_REL |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure REL | ZONE 4
+17 | 7 | Enlever le prolock et ouvrir V1 |  |  | TM_PROC_REL |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure REL | ZONE 4
+18 | 8 | Enlever le prolock et ouvrir V2 |  |  | TM_PROC_REL |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure REL | ZONE 4
+19 | 9 | Enlever le by-pass de LSL4504, clôturer le bon |  |  | TM_PROC_REL |  |  | 797-LRS4504 | MAD TRAVAUX | Procédure REL | ZONE 4
+
+## Errors (1)
+NoConditionalPointCreated | ISOLEMENT | PROLOCK
+
+## Error block identifiers and messages
+NoConditionalPointCreated | ISOLEMENT | LRS4504-V1 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
+
+## Generated workbook
+
+### Sheet: Parents
+Repère | Feuille | Type Elément | Zone | LOC2 | LOC3 | Désignation | FLUIDE | RECURRENT | Tableaux | SUPPRESSION | ADR Email | COMMENTAIRES | PROGRESS | VISITE PRÉALABLE CHANTIER | PROCÉDURE MAD | AUTORISATION DÉPLATINAGES | PROCÉDURE REL | AUTORISATION DE REMISE EN SERVICE | RÉCEPTION FINALE CHANTIER | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+797-LRS4504 | PROCEDURE | MAD TRAVAUX | ZONE 4 |  |  | Rév 0 du 11/06/2026 |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  |  |  | O | X | X | X | X | X | X | X | X | X | X | X | X |  |  |  |  | X |  |  |  |  | 
+
+### Sheet: Enfants
+Numéro | Feuille | Type Elément | Zone | LOC2 | LOC3 | ELEMENT PARENT | Désignation | Position à la pose | POSITION A LA DEPOSE | PHASE PROCESS | REMARQUES | ETIQUETTE | DIAMETRE INCH | SERIE LBS | NATURE JOINT | BESOIN ECHAF | Tableaux | SUPPRESSION | PROGRESS | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+LRS4504-V1 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 797-LRS4504 | PRISE BP LRS4502 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+LRS4504-V2 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 797-LRS4504 | PRISE HP LRS4502 | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+XCV7552E-JT1 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 797-LRS4504 | JOINT AVAL XCV7552E |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+XCV7552E-JT2 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 797-LRS4504 | JOINT AMONT XCV7552E |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+LRS4504-LRS4504 | DIVERS | INSTRUMENTATION | ZONE 4 |  |  | 797-LRS4504 | TRANSMETTEUR DE NIVEAU F4501 |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  | X |  |  |  |  | 
+LRS4504-LRS4504 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 797-LRS4504 | TRANSMETTEUR DE NIVEAU F4501 |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  | X |  |  |  |  | 
+
+### Sheet: TM_PROC_MAD
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 9 |  | 1 - ISOLEMENT ET ZERO ENERGIE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 10 | 1 | Sur SNCC, by-passer LSL4504. Rédiger un bon de by-pass |  | Perte sécu, suivre niveau régul |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 11 | 2 | Fermer et prolocker V1 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 12 | 3 | Fermer et prolocker V2 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 13 | 4 | Le zéro énergie sera assuré au capteur par le service contrôle | INEO |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 14 | 5 | Intervention sur LRS4504 | INEO |  |  | Procédure MAD | A faire | N
+
+### Sheet: TM_PROC_REL
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_REL | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 15 |  | 2 - REMISE EN SERVICE |  |  |  | Procédure REL | Pour info | N
+ | TM_PROC_REL | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 16 | 6 | S'assurer qu il n'y ait pas de purge ouverte au capteur |  | Pollution |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 17 | 7 | Enlever le prolock et ouvrir V1 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 18 | 8 | Enlever le prolock et ouvrir V2 |  |  |  | Procédure REL | A faire | N
+ | TM_PROC_REL | 797-LRS4504 | ZONE 4 |  |  | MAD TRAVAUX |  |  | 19 | 9 | Enlever le by-pass de LSL4504, clôturer le bon |  |  |  | Procédure REL | A faire | N

@@ -1,0 +1,134 @@
+# Fixture: Dossier de MaD IDL -  G4010A.xlsx
+
+## Equipement
+771-G4010A | Rév 0 du 30/03/2026 | MAD TRAVAUX | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | PROCEDURE
+
+## Elements (9)
+ISOLEMENT | RANGEE N°1-V1 | ASPIRATION G4010A | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | 
+ISOLEMENT | RANGEE N°1-V2 | REFOULEMENT G4010A | PROLOCK | FERMÉE | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | 
+PLATINES | G4010A-TP1 | ASPIRATION G4010A | TAMPON PLEIN |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | ROUGE
+PLATINES | G4010A-TP2 | REFOULEMENT G4010A | TAMPON PLEIN |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | ROUGE
+PLATINES | G4010A-P3 | ASPIRATION G4010A VERS G4020 | PLATINE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | ROUGE
+PLATINES | G4010A-P4 | REFOULEMENT G4010A VERS G4020 | PLATINE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | ROUGE
+AUTRES JOINTS TOUCHES | G4010A-J1 | ASPIRATION G4010A | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | BLEUE
+AUTRES JOINTS TOUCHES | G4010A-J2 | REFOULEMENT G4010A | TUYAUTERIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | BLEUE
+DIVERS | RANGEE N°1-PI4010 | MANOMETRE REFOULEMENT G4010A | ZERO ENERGIE |  | ZONE 4 | [TRAVAUX COMPLET, TRAVAUX DETAIL] | [PROGRESS] | 771-G4010A | 
+
+## Points (36)
+771-G4010A | VISITE PRÉALABLE CHANTIER
+771-G4010A | AUTORISATION DÉPLATINAGES
+771-G4010A | AUTORISATION DE REMISE EN SERVICE
+771-G4010A | RÉCEPTION FINALE CHANTIER
+771-G4010A | PROCÉDURE MAD
+RANGEE N°1-V1 | PROLOCK VANNES
+RANGEE N°1-V1 | DEPROLOCK VANNES
+RANGEE N°1-V2 | PROLOCK VANNES
+RANGEE N°1-V2 | DEPROLOCK VANNES
+G4010A-TP1 | POSE ÉTIQUETTES
+G4010A-TP1 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-TP1 | CONTRÔLE ETANCHÉITÉS
+G4010A-TP1 | RÉCEPTION PLATINES/TAMPONS PLEINS
+G4010A-TP1 | PLATINES / TAMPONS PLEINS
+G4010A-TP2 | POSE ÉTIQUETTES
+G4010A-TP2 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-TP2 | CONTRÔLE ETANCHÉITÉS
+G4010A-TP2 | RÉCEPTION PLATINES/TAMPONS PLEINS
+G4010A-TP2 | PLATINES / TAMPONS PLEINS
+G4010A-P3 | POSE ÉTIQUETTES
+G4010A-P3 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-P3 | CONTRÔLE ETANCHÉITÉS
+G4010A-P3 | RÉCEPTION PLATINES/TAMPONS PLEINS
+G4010A-P3 | PLATINES / TAMPONS PLEINS
+G4010A-P4 | POSE ÉTIQUETTES
+G4010A-P4 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-P4 | CONTRÔLE ETANCHÉITÉS
+G4010A-P4 | RÉCEPTION PLATINES/TAMPONS PLEINS
+G4010A-P4 | PLATINES / TAMPONS PLEINS
+G4010A-J1 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-J1 | CONTRÔLE ETANCHÉITÉS
+G4010A-J1 | POSE ÉTIQUETTES
+G4010A-J2 | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS
+G4010A-J2 | CONTRÔLE ETANCHÉITÉS
+G4010A-J2 | POSE ÉTIQUETTES
+RANGEE N°1-PI4010 | ZÉRO ENERGIE EN PRESENCE EE (PS941)
+
+## Tasks (26)
+9 |  | 1-ISOLEMENT ET ZERO ENERGIE |  |  | TM_PROC_MAD |  | factice | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+10 | 1 | Fermer et prolocker V1 et V2 (aspiration et refoulement de G4010A) |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+11 | 2 | S'assurer que V3 soit fermée (aspiration G4010A vers G4020) |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+12 | 3 | S'assurer que V4 soit fermée (refoulement G4010A vers G4020) |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+13 | 4 | S'assurer que les 2 platines permanentes P3 et P4 soient en place |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+14 | 5 | Condamner G4010A, poser la pancarte et faire l'essai de marche/arrêt en présence de l'entreprise  | INEO / INEOS |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+15 | 6 | Purger la pompe au PI4010A dans un sceau (Port du MAVA) |  | Asphyxie | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+16 | 7 | Constater le zéro énergie en présence de l'entreprise  |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+17 | 8 | Autoriser la dépose du bouchon de volute et purger dans un sceau (Port du MAVA) | ADF Méca | Asphyxie | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+18 | 9 | Echange standard ou dépose de la pompe (Port du MAVA) | ADF Méca | Asphyxie | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+19 | 10 | Pose de TP1 et TP2 (Brides aspiration et refoulement) dans le cas d'une dépose / repose | ADF Méca |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+20 |  | 2-TEST D'ETANCHEITE ET ESSAI |  |  | TM_PROC_MAD |  | factice | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+21 | 11 | Dans le cas d'une repose, déposer TP1 et TP2. Sinon passer directement à la ligne 12 | ADF Méca |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+22 | 12 | Repose de la pompe  | ADF Méca |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+23 | 13 | Vérifier la présence des étiquettes GTIS à l'aspiration et au refoulement de la pompe  | ADF Méca / INEOS |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+24 | 14 | Fermer la purge au PI4010A |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+25 | 15 | Enlever le prolock et décoller V1 |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+26 | 16 | Ouvrir la purge au PI et chasser l'air en purgeant dans un sceau qui sera vidé au F3308 (Port du MAVA) |  | Asphyxie | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+27 | 17 | Fermer la purge au PI4010A |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+28 | 18 | Procéder au test d'étanchéité des joints |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+29 | 19 | Ouvrir V1 en grand |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+30 | 20 | Enlever le prolock de V2 |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+31 | 21 | Décondamner G4010A | INEO |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+32 | 22 | Clôturer le permis associé au travaux | ADF Méca / INEOS |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+33 | 23 | Essai de G4010A en démarrant V2 fermée puis l'ouvrir  |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+34 | 24 | Si le test est concluant, arrêter G4010A et la laisser en secours |  |  | TM_PROC_MAD |  |  | 771-G4010A | MAD TRAVAUX | Procédure MAD | ZONE 4
+
+## Errors (1)
+NoConditionalPointCreated | ISOLEMENT | PROLOCK
+
+## Error block identifiers and messages
+NoConditionalPointCreated | ISOLEMENT | RANGEE N°1-V1 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
+
+## Generated workbook
+
+### Sheet: Parents
+Repère | Feuille | Type Elément | Zone | LOC2 | LOC3 | Désignation | FLUIDE | RECURRENT | Tableaux | SUPPRESSION | ADR Email | COMMENTAIRES | PROGRESS | VISITE PRÉALABLE CHANTIER | PROCÉDURE MAD | AUTORISATION DÉPLATINAGES | PROCÉDURE REL | AUTORISATION DE REMISE EN SERVICE | RÉCEPTION FINALE CHANTIER | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+771-G4010A | PROCEDURE | MAD TRAVAUX | ZONE 4 |  |  | Rév 0 du 30/03/2026 |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  |  |  | O | X | X | X |  | X | X | X | X | X | X | X | X |  | X |  | X |  |  |  |  |  | 
+
+### Sheet: Enfants
+Numéro | Feuille | Type Elément | Zone | LOC2 | LOC3 | ELEMENT PARENT | Désignation | Position à la pose | POSITION A LA DEPOSE | PHASE PROCESS | REMARQUES | ETIQUETTE | DIAMETRE INCH | SERIE LBS | NATURE JOINT | BESOIN ECHAF | Tableaux | SUPPRESSION | PROGRESS | PROLOCK VANNES | DEPROLOCK VANNES | ZÉRO ENERGIE EN PRESENCE EE (PS941) | POSE ÉTIQUETTES | RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS | CONTRÔLE ETANCHÉITÉS | RECEPTION DEBUT MAD | RÉCEPTION PLATINES/TAMPONS PLEINS | RECEPTION DEBUT REL | PLATINES / TAMPONS PLEINS | SYNCHRONISATION INSTRUMENTATION | SOUPAPE : CONSTAT ENCRASSEMENT | SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS | PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES | PF : VALIDATION CONSTAT ENCRASSEMENT | PF : ACCORD TRAVAUX FEU
+RANGEE N°1-V1 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 771-G4010A | ASPIRATION G4010A | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-V2 | ISOLEMENT | PROLOCK | ZONE 4 |  |  | 771-G4010A | REFOULEMENT G4010A | FERMÉE |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O | X | X |  |  |  |  |  |  |  |  |  |  |  |  |  | 
+G4010A-TP1 | PLATINES | TAMPON PLEIN | ZONE 4 |  |  | 771-G4010A | ASPIRATION G4010A |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+G4010A-TP2 | PLATINES | TAMPON PLEIN | ZONE 4 |  |  | 771-G4010A | REFOULEMENT G4010A |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+G4010A-P3 | PLATINES | PLATINE | ZONE 4 |  |  | 771-G4010A | ASPIRATION G4010A VERS G4020 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+G4010A-P4 | PLATINES | PLATINE | ZONE 4 |  |  | 771-G4010A | REFOULEMENT G4010A VERS G4020 |  |  |  |  | ROUGE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  | X |  | X |  |  |  |  |  | 
+G4010A-J1 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 771-G4010A | ASPIRATION G4010A |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+G4010A-J2 | AUTRES JOINTS TOUCHES | TUYAUTERIE | ZONE 4 |  |  | 771-G4010A | REFOULEMENT G4010A |  |  |  |  | BLEUE |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  |  | X | X | X |  |  |  |  |  |  |  |  |  | 
+RANGEE N°1-PI4010 | DIVERS | ZERO ENERGIE | ZONE 4 |  |  | 771-G4010A | MANOMETRE REFOULEMENT G4010A |  |  |  |  |  |  |  |  |  | TRAVAUX COMPLET, TRAVAUX DETAIL |  | O |  |  | X |  |  |  |  |  |  |  |  |  |  |  |  | 
+
+### Sheet: TM_PROC_MAD
+GUID | TYPE TACHE | Repère TM | ZONE | LOC2 | LOC3 | TYPE ELEMENT CODE | LOT | Ressource | Ligne | Ordre | Action | Acteur | Risques | Date de validation | Colonne Travaux | CRITERE | SUPPRESSION
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 9 |  | 1-ISOLEMENT ET ZERO ENERGIE |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 10 | 1 | Fermer et prolocker V1 et V2 (aspiration et refoulement de G4010A) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 11 | 2 | S'assurer que V3 soit fermée (aspiration G4010A vers G4020) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 12 | 3 | S'assurer que V4 soit fermée (refoulement G4010A vers G4020) |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 13 | 4 | S'assurer que les 2 platines permanentes P3 et P4 soient en place |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 14 | 5 | Condamner G4010A, poser la pancarte et faire l'essai de marche/arrêt en présence de l'entreprise  | INEO / INEOS |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 15 | 6 | Purger la pompe au PI4010A dans un sceau (Port du MAVA) |  | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 16 | 7 | Constater le zéro énergie en présence de l'entreprise  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 17 | 8 | Autoriser la dépose du bouchon de volute et purger dans un sceau (Port du MAVA) | ADF Méca | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 18 | 9 | Echange standard ou dépose de la pompe (Port du MAVA) | ADF Méca | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 19 | 10 | Pose de TP1 et TP2 (Brides aspiration et refoulement) dans le cas d'une dépose / repose | ADF Méca |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 20 |  | 2-TEST D'ETANCHEITE ET ESSAI |  |  |  | Procédure MAD | Pour info | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 21 | 11 | Dans le cas d'une repose, déposer TP1 et TP2. Sinon passer directement à la ligne 12 | ADF Méca |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 22 | 12 | Repose de la pompe  | ADF Méca |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 23 | 13 | Vérifier la présence des étiquettes GTIS à l'aspiration et au refoulement de la pompe  | ADF Méca / INEOS |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 24 | 14 | Fermer la purge au PI4010A |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 25 | 15 | Enlever le prolock et décoller V1 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 26 | 16 | Ouvrir la purge au PI et chasser l'air en purgeant dans un sceau qui sera vidé au F3308 (Port du MAVA) |  | Asphyxie |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 27 | 17 | Fermer la purge au PI4010A |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 28 | 18 | Procéder au test d'étanchéité des joints |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 29 | 19 | Ouvrir V1 en grand |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 30 | 20 | Enlever le prolock de V2 |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 31 | 21 | Décondamner G4010A | INEO |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 32 | 22 | Clôturer le permis associé au travaux | ADF Méca / INEOS |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 33 | 23 | Essai de G4010A en démarrant V2 fermée puis l'ouvrir  |  |  |  | Procédure MAD | A faire | N
+ | TM_PROC_MAD | 771-G4010A | ZONE 4 |  |  | MAD TRAVAUX |  |  | 34 | 24 | Si le test est concluant, arrêter G4010A et la laisser en secours |  |  |  | Procédure MAD | A faire | N
