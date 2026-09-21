@@ -556,15 +556,6 @@
   <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
     <value>Stop field name</value>
   </data>
-  <data name="ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder" xml:space="preserve">
-    <value>Zero energie expected value</value>
-  </data>
-  <data name="ImportProfileEditor_ZeroEnergieExpectedValueLabel" xml:space="preserve">
-    <value>Zero energie expected value</value>
-  </data>
-  <data name="ImportProfileEditor_ZeroEnergieExpectedValueSummary" xml:space="preserve">
-    <value>Zero energie expected value: {0}</value>
-  </data>
   <data name="ImportProfileEditor_DefaultCouleurEtiquettePlaceholder" xml:space="preserve">
     <value>Default couleur etiquette (leave empty if read per block)</value>
   </data>
@@ -573,15 +564,6 @@
   </data>
   <data name="ImportProfileEditor_DefaultCouleurEtiquetteSummary" xml:space="preserve">
     <value>Default couleur etiquette: {0}</value>
-  </data>
-  <data name="ImportProfileEditor_CouleurEtiquetteCellPlaceholder" xml:space="preserve">
-    <value>Couleur etiquette cell, e.g. B19:E20 (leave empty if fixed for the whole sheet)</value>
-  </data>
-  <data name="ImportProfileEditor_CouleurEtiquetteCellLabel" xml:space="preserve">
-    <value>Couleur etiquette cell, e.g. B19:E20 (leave empty if fixed for the whole sheet)</value>
-  </data>
-  <data name="ImportProfileEditor_CouleurEtiquetteCellSummary" xml:space="preserve">
-    <value>Couleur etiquette cell: {0}</value>
   </data>
   <data name="ImportProfileEditor_AllowedCouleursEtiquettePlaceholder" xml:space="preserve">
     <value>Allowed couleurs etiquette, comma-separated, e.g. ROUGE, BLEUE, JAUNE (leave empty for no restriction)</value>
@@ -689,28 +671,10 @@
     <value>Conditional point rules</value>
   </data>
   <data name="ImportProfileEditor_SheetRuleDetailsSummary" xml:space="preserve">
-    <value>{0} unconditional colonnes, {1} conditional rules, {4} filled-cell rules, {2} header fields, {3} header composites</value>
+    <value>{0} unconditional colonnes, {1} conditional rules, {2} header fields, {3} header composites</value>
   </data>
   <data name="ImportProfileEditor_NoSheetRuleSublistItems" xml:space="preserve">
     <value>No unconditional colonnes, conditional point rules, filled-cell rules, header fields, or header composites for this sheet.</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresencePointRulesHeading" xml:space="preserve">
-    <value>Colonnes checked when a cell is filled in</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresencePointRulesHint" xml:space="preserve">
-    <value>The colonne is checked for a block only if this cell of the block contains a value -- any value, or exactly the expected value when one is entered. Enter the cell for the 1st block.</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresenceExpectedValueLabel" xml:space="preserve">
-    <value>Expected value (optional)</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresenceExpectedValuePlaceholder" xml:space="preserve">
-    <value>Expected value (optional)</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresenceExpectedValueHint" xml:space="preserve">
-    <value>E.g. DEBUT MAD. Leave empty to accept any value. Compared ignoring case and surrounding spaces.</value>
-  </data>
-  <data name="ImportProfileEditor_AddFieldPresencePointRuleButton" xml:space="preserve">
-    <value>Add filled-cell rule</value>
   </data>
   <data name="ImportProfileEditor_HeaderFieldsHeading" xml:space="preserve">
     <value>Header fields</value>
@@ -773,9 +737,6 @@
     <value>The extraction service for this sheet expects the following header name(s), missing here: {0}. Saving is still allowed, but extraction will fail for this sheet until they're added.</value>
   </data>
   <data name="ImportProfileEditor_SourceFieldNameLabel" xml:space="preserve">
-    <value>Source field name</value>
-  </data>
-  <data name="ImportProfileEditor_SourceFieldNamePlaceholder" xml:space="preserve">
     <value>Source field name</value>
   </data>
   <data name="ImportProfileEditor_OperatorLabel" xml:space="preserve">
@@ -1681,26 +1642,8 @@
   <data name="ImportProfileDetails_PointNotEqualsSeveral" xml:space="preserve">
     <value>Si {0} n'est pas {1}, l'élément est coché dans les {2} colonnes {3}.</value>
   </data>
-  <data name="ImportProfileDetails_PointZeroEnergieOne" xml:space="preserve">
-    <value>Si l'indicateur zéro énergie contient {0}, l'élément est coché dans la colonne {1}. Toute autre valeur non vide donne un avertissement.</value>
-  </data>
-  <data name="ImportProfileDetails_PointZeroEnergieSeveral" xml:space="preserve">
-    <value>Si l'indicateur zéro énergie contient {0}, l'élément est coché dans les {1} colonnes {2}. Toute autre valeur non vide donne un avertissement.</value>
-  </data>
-  <data name="ImportProfileDetails_PointZeroEnergieNeverOne" xml:space="preserve">
-    <value>L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : la colonne {0} n'est jamais cochée.</value>
-  </data>
-  <data name="ImportProfileDetails_PointZeroEnergieNeverSeveral" xml:space="preserve">
-    <value>L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : les {0} colonnes {1} ne sont jamais cochées.</value>
-  </data>
   <data name="ImportProfileDetails_PointNoConditionMet" xml:space="preserve">
     <value>Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.</value>
-  </data>
-  <data name="ImportProfileDetails_PointCellHasValue" xml:space="preserve">
-    <value>Si la cellule {0} contient {1}, l'élément est coché dans la colonne {2}.</value>
-  </data>
-  <data name="ImportProfileDetails_PointCellFilledIn" xml:space="preserve">
-    <value>Si la cellule {0} est renseignée, l'élément est coché dans la colonne {1}.</value>
   </data>
   <data name="ProfileDescription_ListLastOrSeparator" xml:space="preserve">
     <value> ou </value>
@@ -1713,12 +1656,6 @@
   </data>
   <data name="ImportProfileDetails_CouleurDefault" xml:space="preserve">
     <value>La couleur d'étiquette de chaque élément est toujours {0}.</value>
-  </data>
-  <data name="ImportProfileDetails_Fixed_ElementRepereFromCell" xml:space="preserve">
-    <value>Le repère de l'élément est la cellule {0}, un tiret, puis l'identifiant.</value>
-  </data>
-  <data name="ImportProfileDetails_Fixed_ZoneFromCell" xml:space="preserve">
-    <value>La zone lue en {0} est appliquée à l'équipement et à tous les éléments du fichier.</value>
   </data>
   <data name="ImportProfileDetails_Fixed_UnreadableRevisionDateRejectsFile" xml:space="preserve">
     <value>Une date de révision illisible fait refuser le fichier entier.</value>
@@ -1993,20 +1930,8 @@
   <data name="ImportProfileEditor_SheetNotProcessedWarning" xml:space="preserve">
     <value>The sheet "{0}" is not processed by the import: none of the settings of this rule has any effect. Sheets processed: {1}.</value>
   </data>
-  <data name="ImportProfileEditor_PointRulesIgnoredWarning" xml:space="preserve">
-    <value>The sheet "{0}" applies no conditional point rule: the rules of this section check no colonne. On this sheet, colonnes are checked by the unconditional colonnes or by the "{1}" section.</value>
-  </data>
-  <data name="ImportProfileEditor_FieldPresencePointRulesIgnoredWarning" xml:space="preserve">
-    <value>The sheet "{0}" applies none of the rules of this section: they check no colonne. On this sheet, colonnes are checked by the unconditional colonnes or by the "{1}" section.</value>
-  </data>
-  <data name="ImportProfileEditor_HeaderRulesIgnoredWarning" xml:space="preserve">
-    <value>The sheet "{0}" reads no header: the settings of this section have no effect.</value>
-  </data>
   <data name="ImportProfileEditor_StopFieldIgnoredWarning" xml:space="preserve">
     <value>On the sheet "{0}", reading always stops on the field "{1}": this stop field has no effect.</value>
-  </data>
-  <data name="ImportProfileEditor_ZeroEnergieIgnoredWarning" xml:space="preserve">
-    <value>The sheet "{0}" uses no zero-energy value: this setting has no effect.</value>
   </data>
   <data name="ImportProfileEditor_CouleurEtiquetteIgnoredWarning" xml:space="preserve">
     <value>The sheet "{0}" reads no label colour: the colour settings have no effect.</value>
@@ -2019,9 +1944,6 @@
   </data>
   <data name="ImportProfileEditor_SheetRuleIgnoredSettingsWarning" xml:space="preserve">
     <value>Some settings of this rule have no effect on the sheet "{0}". Open the rule (Modify button) or the profile's Details view to see them.</value>
-  </data>
-  <data name="ImportProfileDetails_IgnoredConditionalRulesNote" xml:space="preserve">
-    <value>Cette feuille n'applique pas les règles de point conditionnelles : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Colonnes cochées si une cellule est renseignée » de l'éditeur.</value>
   </data>
   <data name="ImportProfileDetails_IgnoredFieldPresenceRulesNote" xml:space="preserve">
     <value>Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Règles de point conditionnelles » de l'éditeur.</value>
@@ -2044,10 +1966,22 @@
   <data name="ImportProfileEditor_WarnWhenNoConditionalPointLabel" xml:space="preserve">
     <value>Warn when an element gets none of the conditional columns</value>
   </data>
-  <data name="ImportProfileEditor_CouleurEtiquetteCellIgnoredWarning" xml:space="preserve">
-    <value>This cell is no longer read: declare the colour as a block field named « CouleurEtiquette ».</value>
-  </data>
   <data name="ImportProfileDetails_HeaderField_Zone" xml:space="preserve">
     <value>En-tête : la zone ({0}) est lue en {1}{2}. Elle est appliquée à l'équipement et à tous les éléments du fichier.</value>
+  </data>
+  <data name="ImportProfileDetails_PointIsNotBlankOne" xml:space="preserve">
+    <value>Si {0} est renseigné, l'élément est coché dans la colonne {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointIsNotBlankSeveral" xml:space="preserve">
+    <value>Si {0} est renseigné, l'élément est coché dans les {1} colonnes {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointTaskIsNotBlankOne" xml:space="preserve">
+    <value>Si au moins une tâche a {0} renseigné, l'équipement est coché dans la colonne {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_PointTaskIsNotBlankSeveral" xml:space="preserve">
+    <value>Si au moins une tâche a {0} renseigné, l'équipement est coché dans les {1} colonnes {2}.</value>
+  </data>
+  <data name="ImportProfileDetails_BlockFieldAtOptional" xml:space="preserve">
+    <value>{0} en {1} (facultatif)</value>
   </data>
 </root>

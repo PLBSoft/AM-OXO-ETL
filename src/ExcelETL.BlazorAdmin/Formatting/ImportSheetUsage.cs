@@ -1,19 +1,19 @@
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 
 namespace ExcelETL.BlazorAdmin.Formatting;
 
 // Lot 078.1 (docs/tickets/tickets-tdd-lot-078-vue-details-langage-courant-profil-import.md, D2):
-// which parts of a SheetExtractionRule each extraction service actually reads. A member left out here
-// is stored with the profile but has no effect on extraction -- the Details page reports it as ignored
-// instead of describing it.
+// which parts of a SheetExtractionRule extraction actually reads. A member left out here is stored with
+// the profile but has no effect -- the Details page reports it as ignored instead of describing it.
 //
-// Duplicated knowledge, on purpose: the real behavior lives in the 5 extraction services and the
-// sheet-name literals in ImportPipelineOrchestrator (private, unreachable from BlazorAdmin), the same
-// trade-off KnownHeaderFieldNames already made. ImportSheetUsageTests runs the real pipeline with every
-// "not read" member filled in, so a service that starts reading one breaks the build here first.
+// Since lot 084 there are only two forms: PROCEDURE (tasks, ProcedureExtractionService) and the five
+// element sheets (one engine, ElementSheetExtractionService). What stays coded in the services is kept
+// here: the task/element vocabulary, PROCEDURE's fixed behaviors and the header roles (repereEcho,
+// DIVERS' zone). Duplicated knowledge, on purpose: the sheet-name literals live in
+// ImportPipelineOrchestrator (private). ImportSheetUsageTests runs the real pipeline with every "not
+// read" member filled in, so extraction starting to read one breaks the build here first.
 public static class ImportSheetUsage
 {
     private const string Procedure = "PROCEDURE";
@@ -131,8 +131,6 @@ public sealed record FixedBehavior(FixedBehaviorKind Kind, string? Range = null)
 
 public enum FixedBehaviorKind
 {
-    ElementRepereFromCell,
-    ZoneFromCell,
     UnreadableRevisionDateRejectsFile,
     TaskTypeMadRelMapping,
     TaskWithoutOrdreIsSectionTitle

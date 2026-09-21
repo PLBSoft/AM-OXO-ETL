@@ -15,11 +15,11 @@ using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
-// Client feedback (2026-09-11): DefaultCouleurEtiquette (fixed value for the whole sheet, e.g.
-// AUTRES JOINTS TOUCHES = "BLEUE") and CouleurEtiquetteCell (per-block absolute range, e.g.
-// PLATINES/ORIFICES CAPACITES = H18:N18) are now editable, closing the deliberate deferral both
-// fields had since Lot 068/their own follow-up commit ("only settable via DefaultProfileSeeder.cs").
-// Kept in its own file per this project's established convention (mirrors ImportProfileEditorLot063Tests.cs).
+// Client feedback (2026-09-11): the couleur d'étiquette settings of a sheet rule -- DefaultCouleurEtiquette
+// (fixed value for the whole sheet, e.g. AUTRES JOINTS TOUCHES = "BLEUE") and AllowedCouleursEtiquette.
+// Since lot 084.7 the per-block cell is an optional block field named "CouleurEtiquette" (G10), not a
+// setting of its own.
+// Kept in its own file per this project's established convention.
 public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
 {
     public ImportProfileEditorCouleurEtiquetteTests()
@@ -58,12 +58,12 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             "AUTRES JOINTS TOUCHES", ajtLocator, [], ["POSE ÉTIQUETTES"], [], [],
             defaultCouleurEtiquette: "BLEUE");
 
+        // Lot 084 (G10): the couleur is an optional block field named "CouleurEtiquette".
         var platinesLocator = new RepeatingBlockLocator(
             "PLATINES", 17, 8, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)]);
         var platinesRule = new SheetExtractionRule(
-            "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+            "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], []);
 
         return new ImportProfile(name, "MAD TRAVAUX", [], [], [ajtRule, platinesRule]);
     }
@@ -77,14 +77,15 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
     }
 
     [Fact]
-    public void AddSheetRuleForm_DefaultCouleurEtiquetteAndCouleurEtiquetteCellFields_HaveAssociatedLabels() =>
+    public void AddSheetRuleForm_DefaultCouleurEtiquetteField_HasAnAssociatedLabel() =>
         WithCulture("en-US", () =>
         {
             var cut = Render<ImportProfileEditor>();
             OpenAddSheetRuleFormIfClosed(cut);
 
             cut.Find("label[for='sheet-rule-default-couleur-etiquette-input']").TextContent.Should().NotBeNullOrEmpty();
-            cut.Find("label[for='sheet-rule-couleur-etiquette-cell-input']").TextContent.Should().NotBeNullOrEmpty();
+            // Lot 084.7 (G10): the dedicated couleur cell input is gone -- the colour is a block field.
+            cut.FindAll("#sheet-rule-couleur-etiquette-cell-input").Should().BeEmpty();
         });
 
     [Fact]
@@ -116,38 +117,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         });
 
     [Fact]
-    public async Task AddSheetRule_WithCouleurEtiquetteCell_RoundTripsThroughTheStore() =>
-        await WithCultureAsync("en-US", async () =>
-        {
-            var cut = Render<ImportProfileEditor>();
-            cut.Find("#profile-name-input").Change("MAD OXO");
-            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
-            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
-
-            OpenAddSheetRuleFormIfClosed(cut);
-            cut.Find("#sheet-rule-name-input").Change("PLATINES");
-            cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
-            cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
-            cut.Find("#sheet-rule-couleur-etiquette-cell-input").Change("H18:N18");
-            cut.Find("#block-field-name-input").Change("Identification");
-            cut.Find("#block-field-absolute-range-input").Change("B17:E18");
-            cut.Find("#add-block-field-button").Click();
-            cut.Find("#add-sheet-rule-button").Click();
-
-            cut.Find("#save-profile-button").Click();
-
-            var all = await Store.GetAllAsync();
-            var reloaded = all.Should().ContainSingle().Subject;
-            var cell = reloaded.SheetRules.Single().CouleurEtiquetteCell;
-            cell.Should().NotBeNull();
-            cell!.ColumnRange.Should().Be("H:N");
-            cell.RowOffsetStart.Should().Be(1);
-            cell.RowOffsetEnd.Should().Be(1);
-            reloaded.SheetRules.Single().DefaultCouleurEtiquette.Should().BeNull();
-        });
-
-    [Fact]
     public async Task AddSheetRule_WithBothFieldsLeftEmpty_PersistsBothAsNull() =>
         await WithCultureAsync("en-US", async () =>
         {
@@ -175,28 +144,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         });
 
     [Fact]
-    public async Task AddSheetRule_WithInvalidCouleurEtiquetteCellRange_ShowsErrorAndDoesNotSubmit() =>
-        await WithCultureAsync("en-US", async () =>
-        {
-            var cut = Render<ImportProfileEditor>();
-            cut.Find("#profile-name-input").Change("MAD OXO");
-            cut.Find("#profile-repere-prefix-input").Change("MAD-OXO-");
-            cut.Find("#profile-equipement-type-element-nom-input").Change("MAD TRAVAUX");
-
-            OpenAddSheetRuleFormIfClosed(cut);
-            cut.Find("#sheet-rule-name-input").Change("PLATINES");
-            cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
-            cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
-            cut.Find("#sheet-rule-couleur-etiquette-cell-input").Change("not a range");
-            cut.Find("#add-sheet-rule-button").Click();
-
-            cut.Find(".alert-danger").TextContent.Should().NotBeNullOrEmpty();
-            cut.FindAll(".sheet-rule-card").Should().BeEmpty();
-        });
-
-    [Fact]
-    public async Task ModifySheetRule_PrefillsDefaultCouleurEtiquetteAndCouleurEtiquetteCell_AndCancelRestoresOriginalWithoutPersisting() =>
+    public async Task ModifySheetRule_PrefillsDefaultCouleurEtiquette_AndCancelRestoresOriginalWithoutPersisting() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithAjtAndPlatinesSheetRules();
@@ -209,20 +157,12 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#edit-0-sheet-rule-default-couleur-etiquette-input").Change("ROUGE");
             cut.Find("#cancel-sheet-rule-button-0").Click();
 
-            cut.Find("#modify-sheet-rule-button-1").Click();
-            cut.Find("#edit-1-sheet-rule-couleur-etiquette-cell-input").GetAttribute("value").Should().Be("H18:N18");
-            cut.Find("#edit-1-sheet-rule-couleur-etiquette-cell-input").Change("B1");
-            cut.Find("#cancel-sheet-rule-button-1").Click();
-
             var reloaded = await Store.GetByIdAsync(profile.Id);
             reloaded!.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES").DefaultCouleurEtiquette.Should().Be("BLEUE");
-            var platinesCell = reloaded.SheetRules.Single(r => r.SheetName == "PLATINES").CouleurEtiquetteCell;
-            platinesCell!.ColumnRange.Should().Be("H:N");
-            platinesCell.RowOffsetStart.Should().Be(1);
         });
 
     [Fact]
-    public async Task Summary_DisplaysDefaultCouleurEtiquetteAndCouleurEtiquetteCell_EachOnlyForItsOwnSheet() =>
+    public async Task Summary_DisplaysDefaultCouleurEtiquetteAndCouleurField_EachOnlyForItsOwnSheet() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = BuildProfileWithAjtAndPlatinesSheetRules();
@@ -282,7 +222,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
             cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
-            cut.Find("#sheet-rule-couleur-etiquette-cell-input").Change("H18:N18");
             cut.Find("#sheet-rule-allowed-couleurs-etiquette-input").Change(" ROUGE, BLEUE ,JAUNE");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E18");
@@ -310,7 +249,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
             cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
-            cut.Find("#sheet-rule-couleur-etiquette-cell-input").Change("H18:N18");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E18");
             cut.Find("#add-block-field-button").Click();

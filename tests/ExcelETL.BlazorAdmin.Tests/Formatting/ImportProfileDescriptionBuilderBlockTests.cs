@@ -101,4 +101,18 @@ public class ImportProfileDescriptionBuilderBlockTests
     [Fact]
     public void BlockSentences_AreNotFixed() =>
         Describe(Profile([Rule("ISOLEMENT")])).SheetSection("ISOLEMENT").Sentences.Take(2).Should().OnlyContain(s => !s.IsFixed);
+
+    // Lot 084.7 (G4): an optional element field is marked; PROCEDURE ignores the setting, so it isn't.
+    [Fact]
+    public void OptionalElementField_IsMarkedOptional() =>
+        Describe(Profile([Rule("PLATINES", firstBlockStartRow: 17, step: 8, fields:
+            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)])]))
+            .SheetSection("PLATINES").Texts().Should().Contain(
+                "Pour le premier élément : identifiant en B17:E18, champ « PoseeLe » en H19:N19 (facultatif).");
+
+    [Fact]
+    public void OptionalFieldOnProcedure_IsNotMarked() =>
+        Describe(Profile([Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+                fields: [new BlockFieldDefinition("Action", "C:L", 0, 0, isRequired: false)])]))
+            .SheetSection("PROCEDURE").Texts().Should().NotContain(t => t.Contains("facultatif"));
 }

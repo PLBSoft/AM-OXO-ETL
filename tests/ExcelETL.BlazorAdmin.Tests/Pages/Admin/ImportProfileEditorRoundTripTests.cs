@@ -81,7 +81,6 @@ public class ImportProfileEditorRoundTripTests : BunitContext
             ["block-field"] = ("modify-block-field-button", "save-block-field-button"),
             ["header-field"] = ("modify-header-field-button", "save-header-field-button"),
             ["header-composite"] = ("modify-header-composite-button", "save-header-composite-button"),
-            ["field-presence-rule"] = ("modify-field-presence-rule-button", "save-field-presence-rule-button"),
             ["unconditional-colonne"] = ("edit-unconditional-colonne-button", "save-unconditional-colonne-button"),
             ["conditional-point-rule"] = ("edit-conditional-point-rule-button", "save-conditional-point-rule-button"),
         };
@@ -91,7 +90,8 @@ public class ImportProfileEditorRoundTripTests : BunitContext
         ("block-field", rule.Locator.Fields.Count),
         ("header-field", rule.HeaderFields.Count),
         ("header-composite", rule.HeaderComposites.Count),
-        ("field-presence-rule", rule.FieldPresencePointRules.Count),
+        // Lot 084.7: the "filled cell" rules have no editor section any more; the rule-level
+        // round trip above still proves they are kept (removed from the model in 84.8).
         ("unconditional-colonne", rule.UnconditionalColonneNames.Count),
         ("conditional-point-rule", rule.PointRules.Count),
     ];

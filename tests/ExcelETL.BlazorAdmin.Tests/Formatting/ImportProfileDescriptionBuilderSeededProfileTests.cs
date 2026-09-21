@@ -43,7 +43,7 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:T6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B19:E20, désignation en H18:U19, position à la pose en H20:O21, type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19.", false),
+                ("Pour le premier élément : identifiant en B19:E20, désignation en H18:U19 (facultatif), position à la pose en H20:O21, type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19 (facultatif).", false),
                 ("Chaque élément est coché dans les 2 colonnes « PROLOCK VANNES », « DEPROLOCK VANNES ».", false),
                 ("Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».", false),
                 ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
@@ -52,7 +52,7 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18, champ « PoseeLe » en H19:N19, champ « DeposeeLe » en H20:N20.", false),
+                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif), champ « PoseeLe » en H19:N19 (facultatif), champ « DeposeeLe » en H20:N20 (facultatif).", false),
                 ("Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « RÉCEPTION PLATINES/TAMPONS PLEINS », « PLATINES / TAMPONS PLEINS ».", false),
                 ("Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».", false),
                 ("Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».", false),
@@ -64,7 +64,7 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18.", false),
+                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif).", false),
                 ("Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».", false),
                 ("La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.", false),
             ]),

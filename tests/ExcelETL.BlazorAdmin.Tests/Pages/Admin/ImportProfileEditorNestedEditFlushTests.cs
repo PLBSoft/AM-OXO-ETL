@@ -122,33 +122,4 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
             reloaded.SheetRules.Single().HeaderComposites.Single().Template.Should().Be("Revision {revision}");
         });
 
-    [Fact]
-    public async Task EditingAnExistingFieldPresenceRule_ThenSavingProfileDirectly_PersistsTheNewColonneName() =>
-        await WithCultureAsync("en-US", async () =>
-        {
-            var locator = new RepeatingBlockLocator(
-                "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
-                fields: [new BlockFieldDefinition("Identification", "B:E", 1, 1)]);
-            var fieldPresenceRules = new List<FieldPresencePointRule>
-            {
-                new(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
-            };
-            var sheetRule = new SheetExtractionRule(
-                "PLATINES", locator, pointRules: [], unconditionalColonneNames: [], [], [],
-                fieldPresencePointRules: fieldPresenceRules);
-            var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
-            await Store.SaveAsync(profile);
-
-            var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
-            cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-modify-field-presence-rule-button-0").Click();
-            cut.Find("#edit-0-field-presence-rule-0-colonne-name-input").Change("RECEPTION DEBUT MAD renommee");
-
-            // Deliberately never click #edit-0-save-field-presence-rule-button-0.
-            cut.Find("#save-profile-button").Click();
-
-            var reloaded = (await Store.GetAllAsync()).Single();
-            reloaded.SheetRules.Single().FieldPresencePointRules.Single().ColonneName
-                .Should().Be("RECEPTION DEBUT MAD renommee");
-        });
 }

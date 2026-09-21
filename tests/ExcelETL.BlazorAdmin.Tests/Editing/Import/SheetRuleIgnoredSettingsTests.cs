@@ -4,8 +4,8 @@ using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Editing.Import;
 
-// What the import editor warns about: the settings of a sheet rule that this sheet's extraction never uses
-// (ImportSheetUsage, the same table as the Details page).
+// What the import editor warns about (ImportSheetUsage, the same table as the Details page). Since lot
+// 084.7: an unprocessed sheet name, what PROCEDURE ignores, and colour combinations with no effect.
 public class SheetRuleIgnoredSettingsTests
 {
     private static SheetExtractionRuleDraft Rule(string sheetName) => new() { SheetName = sheetName };
@@ -24,46 +24,26 @@ public class SheetRuleIgnoredSettingsTests
         var result = SheetRuleIgnoredSettings.For(Rule("platines"));
 
         result.SheetNotProcessed.Should().BeTrue();
-        result.ConditionalPointRulesIgnored.Should().BeFalse();
-        result.FieldPresencePointRulesIgnored.Should().BeFalse();
-        result.HeaderRulesIgnored.Should().BeFalse();
+        result.IgnoredStopFieldFixedName.Should().BeNull();
+        result.CouleurEtiquetteIgnored.Should().BeFalse();
         result.AnyConfiguredSettingIgnored.Should().BeTrue();
     }
 
-    // Lot 084.6: the five element sheets read conditional rules and headers; no sheet reads the
-    // "filled cell" rules any more (removed in 84.8).
+    // Client ticket J2M76: the client's conditional rules on PLATINES are read since lot 084.6.
     [Theory]
-    [InlineData("PLATINES", false, true, false)]
-    [InlineData("ORIFICES CAPACITES", false, true, false)]
-    [InlineData("ISOLEMENT", false, true, false)]
-    [InlineData("PROCEDURE", false, true, false)]
-    [InlineData("AUTRES JOINTS TOUCHES", false, true, false)]
-    [InlineData("DIVERS", false, true, false)]
-    public void Sections_AreReportedAsIgnored_ForTheSheetsThatDontReadThem(
-        string sheetName, bool conditionalIgnored, bool fieldPresenceIgnored, bool headerIgnored)
+    [InlineData("PROCEDURE")]
+    [InlineData("ISOLEMENT")]
+    [InlineData("PLATINES")]
+    [InlineData("ORIFICES CAPACITES")]
+    [InlineData("AUTRES JOINTS TOUCHES")]
+    [InlineData("DIVERS")]
+    public void PointRulesAndHeaders_AreNeverAnIgnoredSetting(string sheetName)
     {
-        var result = SheetRuleIgnoredSettings.For(Rule(sheetName));
-
-        result.SheetNotProcessed.Should().BeFalse();
-        result.ConditionalPointRulesIgnored.Should().Be(conditionalIgnored);
-        result.FieldPresencePointRulesIgnored.Should().Be(fieldPresenceIgnored);
-        result.HeaderRulesIgnored.Should().Be(headerIgnored);
-    }
-
-    // The client's case (ticket J2M76): conditional rules on PLATINES are read since lot 084.6.
-    [Fact]
-    public void ConditionalRulesOnPlatines_AreNoLongerAnIgnoredSetting()
-    {
-        var rule = Rule("PLATINES");
+        var rule = Rule(sheetName);
         rule.PointRules.Add(new ConditionalPointRuleDraft { ColonneName = "DEB MAD", SourceFieldName = "HasDebMad", ComparisonValue = "DEBUT MAD" });
+        rule.HeaderFields.Add(new HeaderFieldRuleDraft { Name = "repereEcho", Range = "N6" });
 
         SheetRuleIgnoredSettings.For(rule).AnyConfiguredSettingIgnored.Should().BeFalse();
-    }
-
-    [Fact]
-    public void EmptyIgnoredSections_AreNotAConfiguredIgnoredSetting()
-    {
-        SheetRuleIgnoredSettings.For(Rule("PLATINES")).AnyConfiguredSettingIgnored.Should().BeFalse();
     }
 
     [Theory]
@@ -83,22 +63,7 @@ public class SheetRuleIgnoredSettingsTests
         result.AnyConfiguredSettingIgnored.Should().Be(expectedFixedName is not null);
     }
 
-    // Lot 084 (G5): zéro énergie is an ordinary point rule; the dedicated value is read by no sheet.
-    [Theory]
-    [InlineData("ISOLEMENT", true)]
-    [InlineData("PLATINES", true)]
-    [InlineData("PROCEDURE", true)]
-    public void ZeroEnergieValue_IsIgnoredOnEverySheet_OnlyWhenFilledIn(string sheetName, bool expectedIgnored)
-    {
-        SheetRuleIgnoredSettings.For(Rule(sheetName)).ZeroEnergieExpectedValueIgnored.Should().BeFalse();
-
-        var rule = Rule(sheetName);
-        rule.ZeroEnergieExpectedValue = "ZERO ENERGIE";
-
-        SheetRuleIgnoredSettings.For(rule).ZeroEnergieExpectedValueIgnored.Should().Be(expectedIgnored);
-    }
-
-    // Lot 084.6: every element sheet reads a colour; only PROCEDURE doesn't.
+    // Every element sheet reads a colour; only PROCEDURE doesn't.
     [Theory]
     [InlineData("PROCEDURE", true)]
     [InlineData("ISOLEMENT", false)]
@@ -147,22 +112,5 @@ public class SheetRuleIgnoredSettingsTests
         rule.DefaultCouleurEtiquette = "ROUGE";
 
         SheetRuleIgnoredSettings.For(rule).DefaultCouleurIgnoredBecauseCell.Should().BeTrue();
-    }
-
-    // Lot 084.6 (G10): the dedicated couleur cell is read by no sheet any more (removed in 84.8).
-    [Theory]
-    [InlineData("PLATINES")]
-    [InlineData("ORIFICES CAPACITES")]
-    [InlineData("PROCEDURE")]
-    public void DedicatedCouleurCell_IsIgnoredOnEverySheet_OnlyWhenFilledIn(string sheetName)
-    {
-        SheetRuleIgnoredSettings.For(Rule(sheetName)).CouleurEtiquetteCellIgnored.Should().BeFalse();
-
-        var rule = Rule(sheetName);
-        rule.CouleurEtiquetteCellRange = "H18:N18";
-
-        var result = SheetRuleIgnoredSettings.For(rule);
-        result.CouleurEtiquetteCellIgnored.Should().BeTrue();
-        result.AnyConfiguredSettingIgnored.Should().BeTrue();
     }
 }

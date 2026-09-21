@@ -97,4 +97,20 @@ public class ImportProfileDescriptionBuilderPointTests
         Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17,
             fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD")]))
             .Should().NotContain(t => t.Contains("coché") || t == ClosingSentence);
+
+    // Lot 084.7 (G2)
+    [Fact]
+    public void IsNotBlankRule_IsDescribedWithoutAValue() =>
+        Texts("PLATINES", name => Rule(name, pointRules:
+        [
+            new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "A"),
+            new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "B")
+        ])).Should().Contain("Si le champ « PoseeLe » est renseigné, l'élément est coché dans les 2 colonnes « A », « B ».");
+
+    [Fact]
+    public void IsNotBlankRule_OnProcedure_TicksTheEquipementWhenAnyTaskHasTheField() =>
+        Texts("PROCEDURE", name => Rule(name, firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+            fields: [new BlockFieldDefinition("Action", "C:L", 0, 0), new BlockFieldDefinition("Acteur", "M:N", 0, 0)],
+            pointRules: [new ConditionalPointRule("Acteur", ConditionOperator.IsNotBlank, null, "A")]))
+            .Should().Contain(t => t.StartsWith("Si au moins une tâche a ") && t.EndsWith(" renseigné, l'équipement est coché dans la colonne « A »."));
 }

@@ -74,17 +74,12 @@ public static class ImportProfileDescriptionBuilder
         };
     }
 
-    // Client ticket J2M76: a point rule of a type this sheet doesn't apply is the easiest mistake to make --
-    // the editor offers both sections for every sheet -- so say which mechanism the sheet does use.
+    // Client ticket J2M76: a "filled cell" rule, read by no sheet since lot 084.6 (removed in 84.8), says
+    // what to use instead.
     private static List<string> DescribeIgnoredNotes(
         SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
     {
         var notes = new List<string>();
-        if (!usage.ReadMembers.Contains(SheetRuleMember.ConditionalPointRules) && rule.PointRules.Count > 0)
-        {
-            notes.Add(loc["ImportProfileDetails_IgnoredConditionalRulesNote"]);
-        }
-
         if (!usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules) && rule.FieldPresencePointRules.Count > 0)
         {
             notes.Add(loc["ImportProfileDetails_IgnoredFieldPresenceRulesNote"]);
@@ -313,24 +308,6 @@ public static class ImportProfileDescriptionBuilder
                 yield return new(loc["ImportProfileDetails_PointNoConditionMet"]);
             }
         }
-
-        if (usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules))
-        {
-            var groups = rule.FieldPresencePointRules.GroupBy(
-                r => (r.ColonneName, ExpectedValue: r.ExpectedValue?.Trim().ToUpperInvariant()));
-            foreach (var group in groups)
-            {
-                var cells = JoinWithOr(
-                    [.. group.Select(r => CellRange(rule.Locator.FirstBlockStartRow, r.Cell))
-                        .Distinct()],
-                    loc);
-                var colonne = Quote(group.Key.ColonneName, loc);
-                var expectedValue = group.First().ExpectedValue;
-                yield return new(expectedValue is null
-                    ? loc["ImportProfileDetails_PointCellFilledIn", cells, colonne]
-                    : loc["ImportProfileDetails_PointCellHasValue", cells, Quote(expectedValue.Trim(), loc), colonne]);
-            }
-        }
     }
 
     // Same normalization as ConditionalPointRuleEvaluator: compared value trimmed, case ignored.
@@ -346,29 +323,20 @@ public static class ImportProfileDescriptionBuilder
     {
         var colonnes = group.Select(r => r.ColonneName).Distinct(StringComparer.Ordinal).ToList();
         var first = group.First();
-
-        // ISOLEMENT's zero-energie rule compares a computed "true"/"false" flag -- meaningless read
-        // literally, so it's described through the cell and ZeroEnergieExpectedValue that produce it.
-        if (first.SourceFieldName == IsolementFieldNames.HasZeroEnergie
-            && first.Operator == ConditionOperator.Equals
-            && group.Key.Value == bool.TrueString.ToUpperInvariant())
-        {
-            var isEvaluated = rule.ZeroEnergieExpectedValue is not null
-                && rule.Locator.Fields.Any(f => f.Name == IsolementFieldNames.HasZeroEnergie);
-            return isEvaluated
-                ? colonnes.Count == 1
-                    ? loc["ImportProfileDetails_PointZeroEnergieOne", Quote(rule.ZeroEnergieExpectedValue!, loc), Quote(colonnes[0], loc)]
-                    : loc["ImportProfileDetails_PointZeroEnergieSeveral", Quote(rule.ZeroEnergieExpectedValue!, loc), colonnes.Count,
-                        QuoteList(colonnes, loc)]
-                : OneOrSeveral(colonnes, loc,
-                    "ImportProfileDetails_PointZeroEnergieNeverOne", "ImportProfileDetails_PointZeroEnergieNeverSeveral");
-        }
-
         var field = FieldLabel(first.SourceFieldName, definite: true, loc);
-        var value = Quote((first.ComparisonValue ?? "").Trim(), loc);
-        var isEquals = first.Operator == ConditionOperator.Equals;
         // PROCEDURE (lot 083): the rule ticks the Equipement when at least one real task matches.
         var prefix = anyTask ? "ImportProfileDetails_PointTask" : "ImportProfileDetails_Point";
+
+        // Lot 084 (G2): "is filled in" compares no value.
+        if (first.Operator == ConditionOperator.IsNotBlank)
+        {
+            return colonnes.Count == 1
+                ? loc[prefix + "IsNotBlankOne", field, Quote(colonnes[0], loc)]
+                : loc[prefix + "IsNotBlankSeveral", field, colonnes.Count, QuoteList(colonnes, loc)];
+        }
+
+        var value = Quote((first.ComparisonValue ?? "").Trim(), loc);
+        var isEquals = first.Operator == ConditionOperator.Equals;
         return colonnes.Count == 1
             ? loc[prefix + (isEquals ? "EqualsOne" : "NotEqualsOne"), field, value, Quote(colonnes[0], loc)]
             : loc[prefix + (isEquals ? "EqualsSeveral" : "NotEqualsSeveral"), field, value,
@@ -389,8 +357,10 @@ public static class ImportProfileDescriptionBuilder
             : loc[isTask ? "ImportProfileDetails_BlockTaskEveryNLines" : "ImportProfileDetails_BlockElementEveryNLines",
                 locator.Step, locator.FirstBlockStartRow, stopField]);
 
+        // Lot 084 (G4): an optional element field keeps its block when blank. PROCEDURE walks its tasks
+        // tolerantly and ignores the setting, so it's not mentioned there.
         var fields = string.Join(ListSeparator, locator.Fields.Select(field => loc[
-            "ImportProfileDetails_BlockFieldAt",
+            !isTask && !field.IsRequired ? "ImportProfileDetails_BlockFieldAtOptional" : "ImportProfileDetails_BlockFieldAt",
             FieldLabel(field.Name, definite: false, loc),
             CellRange(locator.FirstBlockStartRow, field)].Value));
 

@@ -618,7 +618,7 @@ public class ProfileEditorParityTests : BunitContext
             exportCut.FindAll("#default-application-name-input").Should().BeEmpty();
         });
 
-    // Client feedback (2026-09-11): DefaultCouleurEtiquette/CouleurEtiquetteCell (SheetExtractionRule,
+    // Client feedback (2026-09-11): DefaultCouleurEtiquette/AllowedCouleursEtiquette (SheetExtractionRule,
     // now editable via SheetRuleForm) have no export-side counterpart at all -- ExportProfile's
     // SheetGenerationRule carries no such notion. Documented explicitly, same convention as
     // DefaultTableauxAndApplications_HaveNoExportCounterpart_ImportOnlyAssertion above.
@@ -633,12 +633,10 @@ public class ProfileEditorParityTests : BunitContext
             }
 
             importCut.FindAll("#sheet-rule-default-couleur-etiquette-input").Should().ContainSingle();
-            importCut.FindAll("#sheet-rule-couleur-etiquette-cell-input").Should().ContainSingle();
             importCut.FindAll("#sheet-rule-allowed-couleurs-etiquette-input").Should().ContainSingle();
 
             var exportCut = Render<ExportProfileEditor>();
             exportCut.FindAll("#sheet-rule-default-couleur-etiquette-input").Should().BeEmpty();
-            exportCut.FindAll("#sheet-rule-couleur-etiquette-cell-input").Should().BeEmpty();
             exportCut.FindAll("#sheet-rule-allowed-couleurs-etiquette-input").Should().BeEmpty();
         });
 }

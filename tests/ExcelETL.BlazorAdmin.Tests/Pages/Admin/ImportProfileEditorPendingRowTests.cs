@@ -187,21 +187,6 @@ public class ImportProfileEditorPendingRowTests : BunitContext
         });
 
     [Fact]
-    public async Task L4_PendingFieldPresencePointRuleRow_FilledButNotAdded_IsPersistedOnSave() =>
-        await WithCultureAsync("en-US", async () =>
-        {
-            var cut = await RenderExistingProfileAsync();
-            cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-field-presence-rule-colonne-name-input").Change("RECEPTION DEBUT MAD");
-            cut.Find("#edit-0-field-presence-rule-absolute-range-input").Change("H21:N21");
-
-            cut.Find("#save-profile-button").Click();
-
-            (await SingleSavedProfileAsync()).SheetRules.Single().FieldPresencePointRules
-                .Should().ContainSingle(r => r.ColonneName == "RECEPTION DEBUT MAD");
-        });
-
-    [Fact]
     public async Task L5_PendingPointRuleRow_FilledButNotAdded_IsPersistedOnSave() =>
         await WithCultureAsync("en-US", async () =>
         {

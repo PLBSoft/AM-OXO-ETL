@@ -680,9 +680,7 @@ public class ImportProfileEditorTests : BunitContext
         "sheet-rule-first-block-start-row-input",
         "sheet-rule-step-input",
         "sheet-rule-stop-field-name-input",
-        "sheet-rule-zero-energie-expected-value-input",
         "sheet-rule-default-couleur-etiquette-input",
-        "sheet-rule-couleur-etiquette-cell-input",
         "sheet-rule-allowed-couleurs-etiquette-input",
     ];
 

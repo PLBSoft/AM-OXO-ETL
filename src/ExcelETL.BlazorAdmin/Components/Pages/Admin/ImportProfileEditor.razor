@@ -483,17 +483,9 @@ else
                     <div class="sheet-rule-card-header">
                         <h3 class="sheet-rule-card-title h4">@rule.SheetName</h3>
                         <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.FirstBlockStartRow, rule.Step, rule.StopFieldName]</span>
-                        @if (!string.IsNullOrWhiteSpace(rule.ZeroEnergieExpectedValue))
-                        {
-                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueSummary", rule.ZeroEnergieExpectedValue]</span>
-                        }
                         @if (!string.IsNullOrWhiteSpace(rule.DefaultCouleurEtiquette))
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteSummary", rule.DefaultCouleurEtiquette]</span>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(rule.CouleurEtiquetteCellRange))
-                        {
-                            <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_CouleurEtiquetteCellSummary", rule.CouleurEtiquetteCellRange]</span>
                         }
                         @if (!string.IsNullOrWhiteSpace(rule.AllowedCouleursEtiquette))
                         {
@@ -520,7 +512,7 @@ else
                     <details class="sheet-rule-sublist-details" open="@_expandedSheetRuleDetails.Contains(index)">
                         <summary id="@($"sheet-rule-details-toggle-{index}")"
                                  @onclick="() => ToggleSheetRuleDetails(index)" @onclick:preventDefault="true">
-                            @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count, rule.HeaderFields.Count, rule.HeaderComposites.Count, rule.FieldPresencePointRules.Count]
+                            @Loc["ImportProfileEditor_SheetRuleDetailsSummary", rule.UnconditionalColonneNames.Count, rule.PointRules.Count, rule.HeaderFields.Count, rule.HeaderComposites.Count]
                         </summary>
                         @if (_expandedSheetRuleDetails.Contains(index))
                         {
@@ -545,16 +537,6 @@ else
                                         }
                                     </ul>
                                 }
-                                @if (rule.FieldPresencePointRules.Count > 0)
-                                {
-                                    <h4 class="h5">@Loc["ImportProfileEditor_FieldPresencePointRulesHeading"]</h4>
-                                    <ul>
-                                        @foreach (var fieldPresenceRule in rule.FieldPresencePointRules)
-                                        {
-                                            <li>@fieldPresenceRule.ColonneName (@FieldPresencePointRuleFormatter.FormatCell(fieldPresenceRule.AbsoluteRange, fieldPresenceRule.ExpectedValue))</li>
-                                        }
-                                    </ul>
-                                }
                                 @if (rule.HeaderFields.Count > 0)
                                 {
                                     <h4 class="h5">@Loc["ImportProfileEditor_HeaderFieldsHeading"]</h4>
@@ -576,8 +558,7 @@ else
                                     </ul>
                                 }
                                 @if (rule.UnconditionalColonneNames.Count == 0 && rule.PointRules.Count == 0
-                                       && rule.HeaderFields.Count == 0 && rule.HeaderComposites.Count == 0
-                                       && rule.FieldPresencePointRules.Count == 0)
+                                       && rule.HeaderFields.Count == 0 && rule.HeaderComposites.Count == 0)
                                 {
                                     <p>@Loc["ImportProfileEditor_NoSheetRuleSublistItems"]</p>
                                 }

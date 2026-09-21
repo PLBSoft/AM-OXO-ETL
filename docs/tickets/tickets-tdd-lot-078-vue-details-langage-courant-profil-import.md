@@ -213,7 +213,10 @@ colonne conditionnelle n'est cochée pour un élément.
 Mise à jour le 2026-09-17 à la clôture du lot : ordre en-tête → blocs → comportements fixes → points →
 couleur, format de date affiché tel que saisi, couleurs entre guillemets, « Pour la première tâche ».
 Les phrases marquées « (fixe) » décrivent un comportement codé, non modifiable dans le profil (D3) ;
-la page les affiche avec le badge « non modifiable ». Plages indiquées pour le premier bloc.*
+la page les affiche avec le badge « non modifiable ». Plages indiquées pour le premier bloc.
+Mise à jour le 2026-09-21 (lot 084.7) : les cinq feuilles d'éléments partagent un moteur ; repère et
+zone sont des champs d'en-tête, zéro énergie et « DEBUT MAD/REL » des règles ordinaires sur des champs
+facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 
 **Paramètres généraux**
 - Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.
@@ -238,26 +241,28 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 - Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».
 
 **Feuille ISOLEMENT**
+- En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:T6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B19:E20, désignation en H18:U19, position à la pose en H20:O21, type d'élément en B22:E23, indicateur zéro énergie en V18:V19.
-- Le repère de l'élément est la cellule K6:T6, un tiret, puis l'identifiant. (fixe)
+- Pour le premier élément : identifiant en B19:E20, désignation en H18:U19 (facultatif), position à la pose en H20:O21, type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19 (facultatif).
 - Chaque élément est coché dans les 2 colonnes « PROLOCK VANNES », « DEPROLOCK VANNES ».
-- Si l'indicateur zéro énergie contient « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ». Toute autre valeur non vide donne un avertissement.
+- Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 
 **Feuille PLATINES**
+- En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22.
-- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant. (fixe)
+- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif), champ « PoseeLe » en H19:N19 (facultatif), champ « DeposeeLe » en H20:N20 (facultatif).
 - Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « RÉCEPTION PLATINES/TAMPONS PLEINS », « PLATINES / TAMPONS PLEINS ».
-- Si la cellule H19:N19 ou H20:N20 contient « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
-- Si la cellule H19:N19 ou H20:N20 contient « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
+- Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
+- Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
+- Si le champ « PoseeLe » est « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
+- Si le champ « DeposeeLe » est « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
 - La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC », « JAUNE », « VERT », « BLEUE ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille ORIFICES CAPACITES**
+- En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22.
-- Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant. (fixe)
+- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif).
 - Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
 - La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.
 
@@ -272,9 +277,9 @@ la page les affiche avec le badge « non modifiable ». Plages indiquées pour l
 
 **Feuille DIVERS**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
+- En-tête : la zone (« zone ») est lue en B6:E6. Elle est appliquée à l'équipement et à tous les éléments du fichier.
 - Un élément est lu toutes les 3 lignes à partir de la ligne 9. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : type d'élément en B9:G11, identifiant en H9:K11, désignation en L9:V11.
-- La zone lue en B6:E6 est appliquée à l'équipement et à tous les éléments du fichier. (fixe)
 - Si le type d'élément est « INSTRUMENTATION », l'élément est coché dans la colonne « SYNCHRONISATION INSTRUMENTATION ».
 - Si le type d'élément est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
 - Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes « SOUPAPE : CONSTAT ENCRASSEMENT », « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS ».

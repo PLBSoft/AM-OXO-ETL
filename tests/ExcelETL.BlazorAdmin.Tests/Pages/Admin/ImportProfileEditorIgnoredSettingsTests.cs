@@ -85,9 +85,9 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
     public async Task SheetRuleCard_FlagsARuleHoldingIgnoredSettings() =>
         await WithCultureAsync("fr-FR", async () =>
         {
+            // Lot 084.7: a colour allowed list without a "CouleurEtiquette" block field has nothing to filter.
             var cut = await RenderWithRuleAsync(new SheetExtractionRule(
-                "PLATINES", Locator("PLATINES"), [], ["POSE ÉTIQUETTES"], [], [],
-                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "DEB MAD")]));
+                "PLATINES", Locator("PLATINES"), [], ["POSE ÉTIQUETTES"], [], [], allowedCouleursEtiquette: ["ROUGE"]));
 
             var warning = cut.Find("#sheet-rule-ignored-settings-warning-0");
             warning.ClassList.Should().Contain(["alert", "alert-warning"]);
@@ -103,20 +103,16 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
             cut.FindAll("#sheet-rule-ignored-settings-warning-0").Should().BeEmpty();
         });
 
-    // Lot 084.6: an element sheet reads headers and conditional rules; only the "filled cell" section,
-    // read by no sheet any more (removed in 84.8), still warns.
+    // Lot 084.7: the element sheets read every section the editor offers -- no section warning left.
     [Fact]
-    public async Task Isolement_WarnsOnlyOnTheFilledCellSection() =>
+    public async Task ElementSheet_HasNoSectionWarning() =>
         await WithCultureAsync("en-US", async () =>
         {
             var cut = await RenderWithRuleAsync(new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []));
 
             cut.Find("#modify-sheet-rule-button-0").Click();
 
-            cut.FindAll("#edit-0-header-fields-ignored-warning").Should().BeEmpty();
-            cut.FindAll("#edit-0-header-composites-ignored-warning").Should().BeEmpty();
-            cut.FindAll("#edit-0-field-presence-rules-ignored-warning").Should().ContainSingle();
-            cut.FindAll("#edit-0-point-rules-ignored-warning").Should().BeEmpty();
+            cut.FindAll("[id$='-ignored-warning']").Should().BeEmpty();
         });
 
     [Fact]
@@ -124,16 +120,11 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
     {
         var cut = Render<ImportProfileEditor>();
 
-        cut.FindAll("#point-rules-ignored-warning").Should().BeEmpty();
-
         cut.Find("#sheet-rule-name-input").Change("PLATINES");
-        cut.FindAll("#point-rules-ignored-warning").Should().BeEmpty();
-        cut.FindAll("#field-presence-rules-ignored-warning").Should().ContainSingle();
         cut.FindAll("#sheet-not-processed-warning").Should().BeEmpty();
 
         cut.Find("#sheet-rule-name-input").Change("PLATINE");
         cut.Find("#sheet-not-processed-warning").TextContent.Should().Contain("« PLATINE »").And.Contain("PLATINES");
-        cut.FindAll("#field-presence-rules-ignored-warning").Should().BeEmpty();
     });
 
     [Fact]
@@ -152,14 +143,9 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
         cut.FindAll("#couleur-etiquette-ignored-warning").Should().ContainSingle();
 
         cut.Find("#sheet-rule-name-input").Change("PLATINES");
-        cut.Find("#sheet-rule-zero-energie-expected-value-input").Change("ZERO ENERGIE");
-        cut.FindAll("#zero-energie-ignored-warning").Should().ContainSingle();
         cut.FindAll("#couleur-etiquette-ignored-warning").Should().BeEmpty();
 
-        // Lot 084.6 (G10): the dedicated cell is read by no sheet any more; the colour comes from a block field.
-        cut.Find("#sheet-rule-couleur-etiquette-cell-input").Change("H18:N18");
-        cut.FindAll("#couleur-etiquette-cell-ignored-warning").Should().ContainSingle();
-
+        // Lot 084 (G10): the colour comes from a block field named "CouleurEtiquette".
         cut.Find("#block-field-name-input").Change("CouleurEtiquette");
         cut.FindAll("#default-couleur-ignored-warning").Should().ContainSingle();
 
