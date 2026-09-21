@@ -570,4 +570,50 @@ public class EfImportProfileStoreTests
         var all = await store.GetAllAsync();
         all.Should().HaveCount(2);
     }
+
+    // Lot 084.2: the three element-sheet settings of lot 084.1 survive a save and a reload.
+    [Fact]
+    public async Task SaveAsync_WithLot084Settings_RoundTripsOptionalFieldWarningFlagAndIsNotBlankRule()
+    {
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            fields:
+            [
+                new BlockFieldDefinition("Identification", "B:E", 0, 1),
+                new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)
+            ]);
+        var sheetRule = new SheetExtractionRule(
+            "PLATINES", locator,
+            pointRules:
+            [
+                new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "RECEPTION DEBUT MAD"),
+                new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL")
+            ],
+            unconditionalColonneNames: [], headerFields: [], headerComposites: [],
+            warnWhenNoConditionalPoint: true);
+        var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = (await store.GetByIdAsync(profile.Id))!.SheetRules.Single();
+
+        reloaded.WarnWhenNoConditionalPoint.Should().BeTrue();
+        reloaded.Locator.Fields.Select(f => (f.Name, f.IsRequired)).Should().Equal(("Identification", true), ("PoseeLe", false));
+        var isNotBlank = reloaded.PointRules.Single(r => r.Operator == ConditionOperator.IsNotBlank);
+        isNotBlank.ComparisonValue.Should().BeNull();
+        reloaded.PointRules.Single(r => r.Operator == ConditionOperator.Equals).ComparisonValue.Should().Be("DEBUT REL");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithDefaultLot084Settings_ReloadsRequiredFieldsAndNoWarningFlag()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = (await store.GetByIdAsync(profile.Id))!.SheetRules.Single();
+
+        reloaded.WarnWhenNoConditionalPoint.Should().BeFalse();
+        reloaded.Locator.Fields.Should().OnlyContain(f => f.IsRequired);
+    }
 }
