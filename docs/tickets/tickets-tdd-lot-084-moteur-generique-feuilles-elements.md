@@ -358,3 +358,49 @@ vert sans régénération. Tests ciblés par `--filter` pendant l'itération ; s
 - Repère d'un élément autrement qu'en `{repereEcho}-{Identification}`.
 - Migration de données d'un profil existant (G8).
 - Le bug de cohérence des types de tâches découvert au lot 083 (tâche séparée).
+
+## 8. Résultat (21/09)
+
+Lot livré, un commit par sous-ticket : `f97a338` (84.0), `1bd1da5` (84.1), `bdbb1ce` (84.2), `cdab001`
+(84.3), `f43410d` (84.4), `8352c6e` (84.5), `f6bf06e` (84.6), `6abb854` (84.7), `368b388` (84.8), `1ce253f`
+(84.9), `cc72ed5` (84.10), `c0e49d7` (84.11), puis la documentation (84.12).
+
+- **Références de 84.0** : restées vertes **sans régénération** du début à la fin, y compris l'écart
+  accepté du §6, qui ne s'est finalement pas produit (les messages `RequiredFieldMissing` d'ISOLEMENT
+  avaient déjà le format de `RepeatingBlockReader`).
+- **Découpage** : une partie de 84.7 a été avancée dans 84.6 (`ImportSheetUsage` et avertissements de
+  l'éditeur rendus fidèles au nouveau moteur dès la bascule), validé par Simon.
+- **Au-delà du ticket** (84.11) : `/api-test` affiche désormais le message d'un 422 sans liste d'erreurs
+  (ce cas et le conflit de noms de feuilles du lot 080), au lieu d'un « Fichier rejeté » vide.
+- **Documentation** : `spec-extraction-fichier-source-oxo.md` (section commune aux feuilles d'éléments,
+  corrections par feuille dont l'écho du repère en `N6` sur AUTRES JOINTS TOUCHES/DIVERS), note en tête de
+  `spec-migration-entetes-profile-driven-directcell.md`, `CLAUDE.md`. Le document
+  `modele-domaine-import-profile.md` cité au §84.12 n'existe plus (supprimé volontairement, commit
+  `83109a5`) : rien à mettre à jour.
+- **Mise en service** : voir §5 — réinitialiser tous les profils d'import après le déploiement.
+
+### Proposition de réponse au client (ticket J2M76)
+
+> Bonjour,
+>
+> Merci pour votre signalement. L'extraction des feuilles ISOLEMENT, PLATINES, ORIFICES CAPACITES,
+> AUTRES JOINTS TOUCHES et DIVERS fonctionne désormais de la même façon sur les cinq feuilles : la
+> méthode que vous avez utilisée (déclarer des champs dans le bloc, puis des règles de point
+> conditionnelles sur ces champs) est maintenant la méthode normale, sur toutes les feuilles.
+>
+> Après la mise à jour, merci de **réinitialiser vos profils d'import** (bouton « Réinitialiser » sur le
+> profil standard) : les anciennes règles « colonnes cochées si une cellule est renseignée » n'existent
+> plus, et le profil standard contient déjà les règles DEBUT MAD / DEBUT REL de la feuille PLATINES.
+>
+> Si vous refaites ces règles vous-même, deux points :
+> - déclarez les deux cellules H du bloc (ligne POSÉE LE, `H19:N19`, et ligne DÉPOSÉE LE, `H20:N20`) et
+>   laissez la case « obligatoire » décochée, car elles sont souvent vides ;
+> - « DEBUT MAD » et « DEBUT REL » peuvent être saisis dans **l'une ou l'autre** de ces deux cellules
+>   (c'est le cas dans plusieurs de vos fichiers) : il faut donc une règle par cellule et par valeur,
+>   soit quatre règles (les deux cellules × « DEBUT MAD » → RECEPTION DEBUT MAD, les deux cellules ×
+>   « DEBUT REL » → RECEPTION DEBUT REL). Un élément n'est jamais coché deux fois dans la même colonne.
+>
+> La page « Détails » du profil décrit en clair ce que fait chaque feuille et signale un réglage manquant
+> avant tout import.
+>
+> Cordialement,

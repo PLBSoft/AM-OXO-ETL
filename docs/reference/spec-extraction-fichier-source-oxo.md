@@ -73,6 +73,38 @@ OXO fournit un fichier Excel source. AM-OXO-ETL en extrait les données pour pro
 
 ---
 
+## Feuilles d'éléments — fonctionnement commun (lot 084)
+
+Les cinq feuilles d'éléments (ISOLEMENT, PLATINES, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS)
+sont lues par **un seul moteur** (`ElementSheetExtractionService`). Ce qui les distingue est entièrement
+dans le profil d'import ; les sections 2 à 6 ne décrivent que le paramétrage du profil standard.
+
+- **En-tête** : le champ d'en-tête `repereEcho` (plage lue dans la feuille elle-même) est obligatoire.
+  Le repère d'un élément est `{repereEcho}-{Identification}`. Le champ d'en-tête `zone`, facultatif,
+  donne la zone (`loc1`) appliquée à l'Équipement et à tous les éléments du fichier ; le profil standard
+  ne le déclare que sur DIVERS.
+- **Bloc** : lu toutes les *pas* lignes à partir de la ligne de début ; la lecture s'arrête au premier bloc
+  dont `Identification` est vide (le champ d'arrêt n'est plus un réglage). `Identification` et
+  `TypeElement` sont obligatoirement déclarés. Chaque champ du bloc est **obligatoire** (vide ⇒ bloc
+  écarté avec une erreur `RequiredFieldMissing`) ou **facultatif** (vide ⇒ valeur vide, bloc conservé).
+  Champs au nom connu : `Designation`, `PositionALaPose`, `CouleurEtiquette` ; tout autre champ ne sert
+  qu'aux règles de point.
+- **Points** : colonnes inconditionnelles (cochées pour chaque élément) et règles conditionnelles, évaluées
+  sur **n'importe quel champ du bloc** : `Equals`/`NotEquals` une valeur, ou `IsNotBlank` (champ
+  renseigné). Plusieurs règles d'une même colonne s'additionnent (OU) ; un élément ne reçoit jamais deux
+  fois le même point. Comparaison sans tenir compte des majuscules ni des espaces autour (§7).
+- **Avertissement** : si la case « avertir » de la feuille est cochée et qu'aucune colonne conditionnelle
+  n'est cochée pour un élément, un avertissement non bloquant `NoConditionalPointCreated` est émis (une
+  seule entrée par valeur de `TypeElement`).
+- **Couleur d'étiquette** : lue dans le champ du bloc `CouleurEtiquette` s'il est déclaré, sinon la couleur
+  par défaut de la feuille ; la liste des couleurs autorisées filtre la valeur lue (valeur hors liste ⇒
+  vide + avertissement `UnexpectedCouleurEtiquetteValue`).
+- **Paramétrage invalide** : un profil qui ne déclare pas un champ nécessaire (`repereEcho`,
+  `Identification`, `TypeElement`) fait échouer l'import ; l'API répond 422 en nommant le champ. La vue
+  « Détails » du profil le signale avant tout import.
+
+---
+
 ## 2. Feuille ISOLEMENT
 
 *Nom de feuille paramétrable. Contient des Isolements enfants de l'Équipement MAD identifié en PROCEDURE.*
@@ -84,20 +116,21 @@ OXO fournit un fichier Excel source. AM-OXO-ETL en extrait les données pour pro
 | `H18:U19` | Désignation | Texte |
 | `H20:O21` | Position MAD | Texte — alimente la colonne cible **`"POSITION A LA POSE"`** (fichier `Enfants`), champ pivot `IsolementPivot.PositionALaPose` |
 | `B22:E23` | Type d'élément (`TypeElement.Nom`) | Texte |
+| `V18:V19` | Zéro énergie (champ facultatif `ZeroEnergie`) | Texte |
 
-**Pas de lecture entre blocs : 7**
+**Pas de lecture entre blocs : 7** — Désignation facultative, case « avertir » cochée.
 
 **Règles métier**
 - Repère de l'isolement = `{K6:T6}-{Identification}`
 - Arrêt de lecture dès que la cellule Identification (lue par pas de 7) est vide
 - Points créés pour **tout** isolement extrait de cette feuille, sans condition sur `TypeElement` : `"PROLOCK VANNES"`, `"DEPROLOCK VANNES"`
-- Point créé uniquement si type d'élément = `"ZERO ENERGIE"` : `"ZÉRO ENERGIE EN PRESENCE EE (PS941)"`
+- Point `"ZÉRO ENERGIE EN PRESENCE EE (PS941)"` créé si le champ `ZeroEnergie` (colonne V du bloc) vaut
+  `"ZERO ENERGIE"` (lot 063 ; règle conditionnelle ordinaire depuis le lot 084). Seul le bloc « V4 » de
+  C7401 le déclenche parmi les fixtures.
 - Liste de colonnes paramétrable dans le profil d'import
 
 **Valeurs de `TypeElement` observées sur cette feuille** : les 3 fixtures contiennent 26 éléments,
-dont 25 de type `"PROLOCK"` et 1 de type `"VANNE"` (D8570). La condition `"ZERO ENERGIE"` de cette
-feuille **n'est déclenchée par aucun fichier connu** — elle reste néanmoins au profil, conformément
-à la règle métier ci-dessus, et est couverte en test unitaire.
+dont 25 de type `"PROLOCK"` et 1 de type `"VANNE"` (D8570).
 
 `"PROLOCK"` est une valeur confirmée en base OXO (voir §6 et glossaire). `"VANNE"` en est
 **confirmée absente** — probable typo utilisateur ou confusion avec `VM`/`VANNE MANUELLE`, à la
@@ -117,7 +150,7 @@ la lecture humaine du glossaire, pas d'un comportement du code.
 au lot 055) : C7401 → 1 (`ISOLEMENT` / `PROLOCK`) ; D8570 → 2 (`ISOLEMENT` / `PROLOCK`,
 `ISOLEMENT` / `VANNE`) ; G6306B → 3 (`ISOLEMENT` / `PROLOCK`, `AUTRES JOINTS TOUCHES` / `TUBING`,
 `DIVERS` / `POINT DE FEU`). Les feuilles `PLATINES` et `ORIFICES CAPACITES` n'en produisent jamais :
-elles ne portent aucune `ConditionalPointRule`.
+leur case « avertir » est décochée (un bloc sans `DEBUT MAD`/`DEBUT REL` est normal).
 
 ---
 
@@ -128,15 +161,17 @@ elles ne portent aucune `ConditionalPointRule`.
 | `K6:U6` | Repère de l'Équipement parent | Texte |
 | `B17:E18` (1er enregistrement) | Identification | Texte |
 | `H16:V17` | Désignation | Texte |
-| `H18:N18` | Texte libre | Texte |
+| `H18:N18` | Couleur d'étiquette (champ facultatif `CouleurEtiquette`) | Texte |
+| `H19:N19` | POSÉE LE (champ facultatif `PoseeLe`) | Texte |
+| `H20:N20` | DÉPOSÉE LE (champ facultatif `DeposeeLe`) | Texte |
 | `B20:E22` | Type d'élément | Texte |
 
-**Pas de lecture entre blocs : 8**
+**Pas de lecture entre blocs : 8** — case « avertir » décochée.
 
 *Valeurs réelles de Type d'élément observées dans les 3 fichiers source : `"PLATINE"` et `"TAMPON PLEIN"` (confirmées en base OXO, `Code` respectifs `PT`/`TP`, `Categorie = ISOLEMENTS`).*
 
 **Règles métier**
-- Repère de l'isolement = `{Equipement.Repere}-{Identification}`
+- Repère de l'isolement = `{repereEcho}-{Identification}` (plage du tableau ci-dessus)
 - Arrêt dès que Identification est vide
 - Points créés sans condition : `"POSE ÉTIQUETTES"`, `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"`, `"PLATINES / TAMPONS PLEINS"`
 - Points créés sous condition de valeur : `"RECEPTION DEBUT MAD"` et `"RECEPTION DEBUT REL"` (voir ci-dessous)
@@ -150,9 +185,9 @@ elles ne portent aucune `ConditionalPointRule`.
 | `RECEPTION DEBUT REL` | DEB REL platines/tampons pleins | une des 2 cellules H du bloc vaut `DEBUT REL` |
 | `PLATINES / TAMPONS PLEINS` | FIN REL platines/tampons pleins | toujours (identification non vide) |
 
-L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur des cellules H (confirmé par le client). Comparaison sans tenir compte des majuscules ni des espaces autour. Une valeur `FIN MAD`/`FIN REL` ne coche aucune colonne `DEBUT`. Relevé des fichiers réels : `DEBUT MAD` apparaît dans les deux lignes (E6431A, C8503, E8582), `DEBUT REL` uniquement dans POSÉE LE (C7401 PT15B, C8503, RANGEE N°1). Profil : 4 `FieldPresencePointRule` avec valeur attendue (une par cellule × colonne), un bloc n'obtient jamais deux fois le même Point.
+L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur des cellules H (confirmé par le client). Comparaison sans tenir compte des majuscules ni des espaces autour. Une valeur `FIN MAD`/`FIN REL` ne coche aucune colonne `DEBUT`. Relevé des fichiers réels : `DEBUT MAD` apparaît dans les deux lignes (E6431A, C8503, E8582), `DEBUT REL` uniquement dans POSÉE LE (C7401 PT15B, C8503, RANGEE N°1). Profil : 4 règles conditionnelles `Equals` (`PoseeLe`/`DeposeeLe` × `DEBUT MAD`/`DEBUT REL`) sur les deux champs facultatifs ; un bloc n'obtient jamais deux fois le même Point (lot 084 ; auparavant 4 `FieldPresencePointRule`, supprimées).
 
-**Point de conception** : le profil d'import définit, par feuille, la liste des `Colonne.Nom` pour lesquelles créer des Points sans condition (`UnconditionalColonneNames`), et éventuellement une condition par colonne (`ConditionalPointRule`) — voir modèle de domaine §1.4.
+**Point de conception** : le profil d'import définit, par feuille, la liste des `Colonne.Nom` pour lesquelles créer des Points sans condition (`UnconditionalColonneNames`), et les règles conditionnelles (`ConditionalPointRule`) — voir « Feuilles d'éléments — fonctionnement commun ».
 
 ---
 
@@ -163,14 +198,15 @@ L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur d
 | `K6:U6` | Repère de l'Équipement parent | Texte |
 | `B17:E18` (1er enregistrement) | Identification | Texte |
 | `H16:V17` | Désignation | Texte |
+| `H18:N18` | Couleur d'étiquette (champ facultatif `CouleurEtiquette`) | Texte |
 | `B20:E22` | Type d'élément | Texte |
 
-**Pas de lecture entre blocs : 8**
+**Pas de lecture entre blocs : 8** — case « avertir » décochée.
 
 *Valeur réelle de Type d'élément observée dans les 3 fichiers source : `"TROU D'HOMME"` (seule valeur rencontrée ; confirmée en base OXO, `Code = TH`, `Categorie = ISOLEMENTS`).*
 
 **Règles métier**
-- Repère de l'isolement = `{Equipement.Repere}-{Identification}`
+- Repère de l'isolement = `{repereEcho}-{Identification}` (plage du tableau ci-dessus)
 - Arrêt dès que Identification est vide
 - Points créés : `"POSE ÉTIQUETTES"`, `"RÉCEPTION PLATINES/TAMPONS PLEINS"` (coquille "PLEIN" au singulier corrigée — même Colonne qu'en feuille PLATINES, pas une variante distincte), `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`
 
@@ -180,15 +216,15 @@ L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur d
 
 | Plage source | Donnée | Type Excel |
 |---|---|---|
-| `K6:U6` | Repère de l'Équipement parent | Texte |
+| `N6` | Repère de l'Équipement parent (la plage `K6:U6` de la spec d'origine est vide dans les fichiers réels) | Texte |
 | `B17:E18` (1er enregistrement) | Identification | Texte |
 | `F16:Y17` | Désignation | Texte |
 | `B20:E21` | Type d'élément | Texte |
 
-**Pas de lecture entre blocs : 7** *(Identification lue en `B17:E18`, puis `B24:E25`, puis `B31:E32`, etc.)*
+**Pas de lecture entre blocs : 7** *(Identification lue en `B17:E18`, puis `B24:E25`, puis `B31:E32`, etc.)* — case « avertir » cochée, couleur d'étiquette par défaut `BLEUE`.
 
 **Règles métier**
-- Repère de l'isolement = `{Equipement.Repere}-{Identification}`
+- Repère de l'isolement = `{repereEcho}-{Identification}` (plage du tableau ci-dessus)
 - Arrêt dès que Identification est vide
 - Points créés : `"POSE ÉTIQUETTES"` (si type d'élément ≠ `"TUBING"`), `"RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"`, `"CONTRÔLE ETANCHÉITÉS"`
 
@@ -200,22 +236,22 @@ L'intitulé de ligne (POSÉE LE / DÉPOSÉE LE) ne compte pas, seule la valeur d
 
 | Plage source | Donnée | Type Excel |
 |---|---|---|
-| `K6:U6` | Repère de l'Équipement parent | Texte |
-| `B6:E6` | Localisation → `BaseElement.Localisation.Loc1.Nom` (`loc1`) | Texte |
+| `N6` | Repère de l'Équipement parent (même écart qu'au §5) | Texte |
+| `B6:E6` | Localisation → `BaseElement.Localisation.Loc1.Nom` (`loc1`, champ d'en-tête `zone`) | Texte |
 | `B9:G11` (1er enregistrement) | Type d'élément | Texte |
 | `H9:K11` | Identification | Texte |
 | `L9:V11` | Désignation | Texte |
 
-**Pas de lecture entre blocs : 3** *(Identification lue en `H9:K11`, puis `H12:K14`, puis `H15:K17`, etc.)*
+**Pas de lecture entre blocs : 3** *(Identification lue en `H9:K11`, puis `H12:K14`, puis `H15:K17`, etc.)* — case « avertir » cochée.
 
 **`loc1`** : la valeur lue en `B6:E6` (`BaseElement.Localisation.Loc1.Nom`) est **applicable à tous les Equipement et Isolement extraits du fichier Excel** (portée globale/broadcast, colonne cible `"ZONE"` — confirmé sans exception, y compris malgré un écart `ZONE 4`/`ZONE 3` observé dans un fichier cible de test, jugé non fiable).
 
 **Règles métier**
-- Repère de l'isolement = `{Equipement.Repere}-{Identification}`
+- Repère de l'isolement = `{repereEcho}-{Identification}` (plage du tableau ci-dessus)
 - Arrêt dès que Identification est vide
 - Points créés selon le type d'élément :
   - `"SYNCHRONISATION INSTRUMENTATION"` si type = `"INSTRUMENTATION"`
-  - `"ZÉRO ENERGIE EN PRESENCE EE"` si type = `"ZERO ENERGIE"`
+  - `"ZÉRO ENERGIE EN PRESENCE EE (PS941)"` si type = `"ZERO ENERGIE"` (même colonne qu'ISOLEMENT, lot 066)
   - `"SOUPAPE : CONSTAT ENCRASSEMENT"` si type = `"SOUPAPE"`
   - `"SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"` si type = `"SOUPAPE"`
   - `"PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"` si type = `"POINT FEU"`

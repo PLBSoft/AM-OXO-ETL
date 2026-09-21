@@ -4,6 +4,13 @@
 Conception figée le 27/07 avec Simon (§2). Complète `modele-domaine-import-profile.md` et
 `spec-extraction-fichier-source-oxo.md`. Sert de référence aux lots 047 (moteur) et 048 (UI).*
 
+> **Mise à jour du lot 084 (21/09).** `DirectCell` n'existe plus : un champ d'en-tête est un nom et une
+> plage (`HeaderFieldRule.CellRange`), toujours lue dans la feuille de sa règle (la décision 2 de 048
+> fait désormais partie du modèle). Le champ d'en-tête `repereEcho` est déclaré sur les cinq feuilles
+> d'éléments (plus seulement AUTRES JOINTS TOUCHES et DIVERS), et DIVERS déclare aussi `zone` (sa
+> cellule `B6:E6` n'est plus codée en dur). L'arbre `TextTransform` est supprimé ; le retrait du préfixe
+> repère reste une option du champ d'en-tête. Le reste du document décrit la conception de 047/048.
+
 ## 1. Problème
 
 Le principe directeur du projet est « profile-driven, jamais de règle d'extraction codée en dur
