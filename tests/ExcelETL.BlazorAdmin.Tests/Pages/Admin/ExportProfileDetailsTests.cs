@@ -67,7 +67,7 @@ public class ExportProfileDetailsTests : BunitContext
 
         var cut = RenderDetails(profile.Id);
 
-        cut.Find("h1").TextContent.Should().Be("Détails du profil « Profil d'export détaillé »");
+        cut.Find("h1").TextContent.Should().Be("Détails du profil d'export « Profil d'export détaillé »");
         cut.Find("#details-section-general h2").TextContent.Should().Be("Classeur généré");
         cut.Find("#details-section-sheet-0 h2").TextContent.Should().Be("Feuille Parents");
         cut.Find("#details-section-sheet-1 h2").TextContent.Should().Be("Feuilles par type de tâche (règle « Tâches multiples »)");
@@ -129,6 +129,7 @@ public class ExportProfileDetailsTests : BunitContext
         var alert = cut.Find("#export-profile-details-not-found");
         alert.ClassList.Should().Contain(["alert", "alert-danger"]);
         alert.GetAttribute("role").Should().Be("alert");
+        cut.Find("h1").TextContent.Should().Be("Détails du profil d'export");
         alert.TextContent.Should().Be("Profil d'export introuvable.");
         cut.FindAll("section").Should().BeEmpty();
     });

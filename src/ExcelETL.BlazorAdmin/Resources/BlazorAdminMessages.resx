@@ -1787,10 +1787,10 @@
     <value>Feuille {0} absente du profil : l'import échoue.</value>
   </data>
   <data name="ImportProfileDetails_PageTitle" xml:space="preserve">
-    <value>Détails du profil « {0} »</value>
+    <value>Détails du profil d'import « {0} »</value>
   </data>
   <data name="ImportProfileDetails_PageTitleGeneric" xml:space="preserve">
-    <value>Détails du profil</value>
+    <value>Détails du profil d'import</value>
   </data>
   <data name="ImportProfileDetails_NotFound" xml:space="preserve">
     <value>Profil d'import introuvable.</value>
@@ -1973,10 +1973,10 @@
     <value>La feuille {0} porte le nom d'une feuille de tâches : la génération échoue si le fichier contient des tâches de ce type.</value>
   </data>
   <data name="ExportProfileDetails_PageTitle" xml:space="preserve">
-    <value>Détails du profil « {0} »</value>
+    <value>Détails du profil d'export « {0} »</value>
   </data>
   <data name="ExportProfileDetails_PageTitleGeneric" xml:space="preserve">
-    <value>Détails du profil</value>
+    <value>Détails du profil d'export</value>
   </data>
   <data name="ExportProfileDetails_NotFound" xml:space="preserve">
     <value>Profil d'export introuvable.</value>

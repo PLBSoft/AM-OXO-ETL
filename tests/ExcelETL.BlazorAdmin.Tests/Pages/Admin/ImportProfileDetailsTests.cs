@@ -70,7 +70,7 @@ public class ImportProfileDetailsTests : BunitContext
 
         var cut = RenderDetails(profile.Id);
 
-        cut.Find("h1").TextContent.Should().Be("Détails du profil « Profil détaillé »");
+        cut.Find("h1").TextContent.Should().Be("Détails du profil d'import « Profil détaillé »");
         cut.Find("#details-section-general h2").TextContent.Should().Be("Paramètres généraux");
         cut.Find("#details-section-sheet-0 h2").TextContent.Should().Be("Feuille ISOLEMENT");
         cut.FindAll("#details-section-sheet-0 li").Select(li => li.TextContent).Should().Contain(
@@ -147,6 +147,7 @@ public class ImportProfileDetailsTests : BunitContext
 
         cut.Find("#import-profile-details-not-found").ClassList.Should().Contain(["alert", "alert-danger"]);
         cut.FindAll("section").Should().BeEmpty();
+        cut.Find("h1").TextContent.Should().Be("Détails du profil d'import");
     });
 
     [Fact]
