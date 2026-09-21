@@ -226,4 +226,10 @@
   <data name="ConstantColumnDefinition_EmptyValue" xml:space="preserve">
     <value>Value must not be empty.</value>
   </data>
+  <data name="ConditionalPointRule_ComparisonValueNotAllowedForIsNotBlank" xml:space="preserve">
+    <value>Comparison value must be empty for the 'is not blank' operator.</value>
+  </data>
+  <data name="SheetExtractionRule_PointRuleReferencesUnknownBlockField" xml:space="preserve">
+    <value>Point rule for Colonne '{0}' reads '{1}', which is not a field of this sheet's block.</value>
+  </data>
 </root>

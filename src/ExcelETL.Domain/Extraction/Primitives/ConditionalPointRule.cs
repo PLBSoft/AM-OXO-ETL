@@ -4,14 +4,16 @@ namespace ExcelETL.Domain.Extraction.Primitives;
 
 // Guards whether a Point is created for a given already-extracted field value. An empty rule list
 // for a sheet means "always create the Point" -- see docs/modele-domaine-import-profile-2026-07-16.md §1.4.
+// Lot 084 (G2): ComparisonValue is required (non-blank) for Equals/NotEquals and forbidden for
+// IsNotBlank -- a blank value given with IsNotBlank is stored as null.
 public sealed record ConditionalPointRule
 {
     public string SourceFieldName { get; }
     public ConditionOperator Operator { get; }
-    public string ComparisonValue { get; }
+    public string? ComparisonValue { get; }
     public string ColonneName { get; }
 
-    public ConditionalPointRule(string sourceFieldName, ConditionOperator @operator, string comparisonValue, string colonneName)
+    public ConditionalPointRule(string sourceFieldName, ConditionOperator @operator, string? comparisonValue, string colonneName)
     {
         if (string.IsNullOrWhiteSpace(sourceFieldName))
         {
@@ -20,7 +22,18 @@ public sealed record ConditionalPointRule
                 DomainErrorCode.ConditionalPointRule_EmptySourceFieldName);
         }
 
-        if (string.IsNullOrWhiteSpace(comparisonValue))
+        if (@operator == ConditionOperator.IsNotBlank)
+        {
+            if (!string.IsNullOrWhiteSpace(comparisonValue))
+            {
+                throw new DomainValidationException(
+                    "Comparison value must be empty for the 'is not blank' operator.", nameof(comparisonValue),
+                    DomainErrorCode.ConditionalPointRule_ComparisonValueNotAllowedForIsNotBlank);
+            }
+
+            comparisonValue = null;
+        }
+        else if (string.IsNullOrWhiteSpace(comparisonValue))
         {
             throw new DomainValidationException(
                 "Comparison value must not be empty.", nameof(comparisonValue),

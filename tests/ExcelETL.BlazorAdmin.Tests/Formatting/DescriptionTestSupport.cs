@@ -83,7 +83,15 @@ internal static class DescriptionTestSupport
         string? defaultCouleurEtiquette = null,
         IReadOnlyList<string>? allowedCouleursEtiquette = null)
     {
-        fields ??= [new BlockFieldDefinition("Identification", "B:E", 0, 1)];
+        // Lot 084.1: a point rule may only read a field of its own block -- by default, declare one
+        // block field per source field the rules read.
+        fields ??=
+        [
+            new BlockFieldDefinition("Identification", "B:E", 0, 1),
+            .. (pointRules ?? []).Select(r => r.SourceFieldName).Distinct()
+                .Where(name => name != "Identification")
+                .Select(name => new BlockFieldDefinition(name, "B:E", 3, 4))
+        ];
         return new SheetExtractionRule(
             sheetName,
             new RepeatingBlockLocator(sheetName, firstBlockStartRow, step, stopFieldName ?? fields[0].Name, fields),

@@ -166,6 +166,11 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
 
+        // Lot 084.1: the point rule below reads TypeElement, which must be a field of the block.
+        cut.Find("#block-field-name-input").Change("TypeElement");
+        cut.Find("#block-field-absolute-range-input").Change("B12:E13");
+        cut.Find("#add-block-field-button").Click();
+
         cut.Find("#unconditional-colonne-name-input").Change("PROLOCK VANNES");
         cut.Find("#add-unconditional-colonne-button").Click();
 
@@ -908,7 +913,7 @@ public class ImportProfileEditorTests : BunitContext
                 firstBlockStartRow: 9,
                 step: 7,
                 stopFieldName: "Identification",
-                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [pointRule], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
@@ -934,7 +939,7 @@ public class ImportProfileEditorTests : BunitContext
                 firstBlockStartRow: 9,
                 step: 7,
                 stopFieldName: "Identification",
-                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [pointRule],
@@ -2477,7 +2482,7 @@ public class ImportProfileEditorTests : BunitContext
         {
             var locator = new RepeatingBlockLocator(
                 "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
-                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
                 unconditionalColonneNames: [], [], []);
@@ -2504,7 +2509,7 @@ public class ImportProfileEditorTests : BunitContext
         {
             var locator = new RepeatingBlockLocator(
                 "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
-                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+                fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
                 unconditionalColonneNames: [], [], []);

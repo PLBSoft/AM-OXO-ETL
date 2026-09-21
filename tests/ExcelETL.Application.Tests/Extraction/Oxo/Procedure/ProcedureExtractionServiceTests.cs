@@ -1,3 +1,4 @@
+using ExcelETL.Domain.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Domain.Extraction.Pivot;
@@ -247,7 +248,9 @@ public class ProcedureExtractionServiceTests
         var act = () => ExtractWithTasks(
             [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "X", "A")], ("1", "MAD"));
 
-        act.Should().Throw<UnknownFieldReferenceException>();
+        // Lot 084.1: the rule is now refused when the profile is built, before extraction.
+        act.Should().Throw<DomainRuleViolationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_PointRuleReferencesUnknownBlockField);
     }
 
     [Theory]

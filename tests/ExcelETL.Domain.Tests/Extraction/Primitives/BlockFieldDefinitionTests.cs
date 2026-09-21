@@ -70,4 +70,24 @@ public class BlockFieldDefinitionTests
             .WithParameterName("rowOffsetEnd")
             .Which.ErrorCode.Should().Be(DomainErrorCode.BlockFieldDefinition_RowOffsetEndBeforeStart);
     }
+
+    // Lot 084.1 (G4)
+    [Fact]
+    public void Constructor_WithNoIsRequiredArgument_DefaultsToRequired()
+    {
+        new BlockFieldDefinition("Identification", "B:E", 0, 1).IsRequired.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Constructor_WithIsRequiredFalse_CreatesAnOptionalField()
+    {
+        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false).IsRequired.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Equality_TakesIsRequiredIntoAccount()
+    {
+        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)
+            .Should().NotBe(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2));
+    }
 }

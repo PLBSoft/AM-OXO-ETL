@@ -208,7 +208,8 @@ public class ImportProfileEditorPendingRowTests : BunitContext
             var cut = await RenderExistingProfileAsync();
             cut.Find("#modify-sheet-rule-button-0").Click();
             cut.Find("#edit-0-point-rule-colonne-name-input").Change("POSE ETIQUETTES");
-            cut.Find("#edit-0-point-rule-source-field-name-input").Change("TypeElement");
+            // Lot 084.1: the source must be a field of the block (only Identification here).
+            cut.Find("#edit-0-point-rule-source-field-name-input").Change("Identification");
             cut.Find("#edit-0-point-rule-comparison-value-input").Change("TUBING");
 
             cut.Find("#save-profile-button").Click();

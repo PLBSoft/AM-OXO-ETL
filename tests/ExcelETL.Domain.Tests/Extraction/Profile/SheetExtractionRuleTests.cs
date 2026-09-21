@@ -9,7 +9,8 @@ namespace ExcelETL.Domain.Tests.Extraction.Profile;
 public class SheetExtractionRuleTests
 {
     private static RepeatingBlockLocator Locator(string sheet) => new(
-        sheet, 19, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+        sheet, 19, 7, "Identification",
+        [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
 
     [Fact]
     public void Constructor_WithValidArguments_CreatesSheetExtractionRule()
@@ -276,5 +277,51 @@ public class SheetExtractionRuleTests
 
         act.Should().Throw<DomainRuleViolationException>()
             .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_HeaderCompositeReferencesUnknownField);
+    }
+
+    // Lot 084.1
+    [Fact]
+    public void Constructor_WithPointRuleOnFieldOutsideTheBlock_ThrowsDomainRuleViolationException()
+    {
+        IReadOnlyList<ConditionalPointRule> pointRules =
+            [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD")];
+
+        var act = () => new SheetExtractionRule("PLATINES", Locator("PLATINES"), pointRules, [], [], []);
+
+        var exception = act.Should().Throw<DomainRuleViolationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_PointRuleReferencesUnknownBlockField);
+        exception.Args.Should().Equal("RECEPTION DEBUT MAD", "HasDebMad");
+    }
+
+    [Fact]
+    public void Constructor_WithPointRuleOnABlockField_CreatesSheetExtractionRule()
+    {
+        var locator = new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
+        [
+            new BlockFieldDefinition("Identification", "B:E", 0, 1),
+            new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)
+        ]);
+        IReadOnlyList<ConditionalPointRule> pointRules =
+            [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD")];
+
+        var rule = new SheetExtractionRule("PLATINES", locator, pointRules, [], [], []);
+
+        rule.PointRules.Should().Equal(pointRules);
+    }
+
+    [Fact]
+    public void Constructor_WithNoWarnWhenNoConditionalPointArgument_DefaultsToFalse()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
+
+        rule.WarnWhenNoConditionalPoint.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Constructor_WithWarnWhenNoConditionalPoint_AssignsProperty()
+    {
+        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], [], warnWhenNoConditionalPoint: true);
+
+        rule.WarnWhenNoConditionalPoint.Should().BeTrue();
     }
 }

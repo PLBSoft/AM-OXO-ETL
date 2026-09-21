@@ -145,7 +145,7 @@ public class EfImportProfileStoreTests
     {
         var isolementLocator = new RepeatingBlockLocator(
             "ISOLEMENT", 9, 7, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator,
             [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...")],
@@ -153,7 +153,7 @@ public class EfImportProfileStoreTests
 
         var diversLocator = new RepeatingBlockLocator(
             "DIVERS", 6, 3, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
+            [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
         var diversRule = new SheetExtractionRule(
             "DIVERS", diversLocator,
             [

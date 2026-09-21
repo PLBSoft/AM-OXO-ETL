@@ -11,7 +11,12 @@ public sealed partial record BlockFieldDefinition
     public int RowOffsetStart { get; }
     public int RowOffsetEnd { get; }
 
-    public BlockFieldDefinition(string name, string columnRange, int rowOffsetStart, int rowOffsetEnd)
+    // Lot 084 (G4): a required field left blank drops the whole block (RequiredFieldMissing); an
+    // optional one is read as "". Defaults to required -- every profile saved before the lot keeps
+    // its behavior until it is reset.
+    public bool IsRequired { get; }
+
+    public BlockFieldDefinition(string name, string columnRange, int rowOffsetStart, int rowOffsetEnd, bool isRequired = true)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -39,6 +44,7 @@ public sealed partial record BlockFieldDefinition
         ColumnRange = columnRange;
         RowOffsetStart = rowOffsetStart;
         RowOffsetEnd = rowOffsetEnd;
+        IsRequired = isRequired;
     }
 
     [GeneratedRegex(@"^[A-Z]{1,3}(:[A-Z]{1,3})?$")]

@@ -62,7 +62,7 @@ public static class ImportProfileDraftMapper
             [
                 .. rule.PointRules.Select(p => new ConditionalPointRuleDraft
                 {
-                    ColonneName = p.ColonneName, SourceFieldName = p.SourceFieldName, Operator = p.Operator, ComparisonValue = p.ComparisonValue,
+                    ColonneName = p.ColonneName, SourceFieldName = p.SourceFieldName, Operator = p.Operator, ComparisonValue = p.ComparisonValue ?? "",
                 }),
             ],
             FieldPresencePointRules =

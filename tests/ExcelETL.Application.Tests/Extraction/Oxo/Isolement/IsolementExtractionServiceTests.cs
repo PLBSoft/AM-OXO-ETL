@@ -45,7 +45,8 @@ public class IsolementExtractionServiceTests
             new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
             new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
-        [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
+        // Lot 084.1: a point rule on HasZeroEnergie can no longer be built without the block field.
+        [],
         ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)

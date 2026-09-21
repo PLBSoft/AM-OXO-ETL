@@ -331,7 +331,7 @@ public static class ImportProfileDescriptionBuilder
     // Same normalization as ConditionalPointRuleEvaluator: compared value trimmed, case ignored.
     private static IEnumerable<IGrouping<(string SourceFieldName, ConditionOperator Operator, string Value), ConditionalPointRule>>
         GroupConditionalRules(IEnumerable<ConditionalPointRule> rules) =>
-        rules.GroupBy(r => (r.SourceFieldName, r.Operator, Value: r.ComparisonValue.Trim().ToUpperInvariant()));
+        rules.GroupBy(r => (r.SourceFieldName, r.Operator, Value: (r.ComparisonValue ?? "").Trim().ToUpperInvariant()));
 
     private static string DescribeConditionalGroup(
         SheetExtractionRule rule,
@@ -360,7 +360,7 @@ public static class ImportProfileDescriptionBuilder
         }
 
         var field = FieldLabel(first.SourceFieldName, definite: true, loc);
-        var value = Quote(first.ComparisonValue.Trim(), loc);
+        var value = Quote((first.ComparisonValue ?? "").Trim(), loc);
         var isEquals = first.Operator == ConditionOperator.Equals;
         // PROCEDURE (lot 083): the rule ticks the Equipement when at least one real task matches.
         var prefix = anyTask ? "ImportProfileDetails_PointTask" : "ImportProfileDetails_Point";

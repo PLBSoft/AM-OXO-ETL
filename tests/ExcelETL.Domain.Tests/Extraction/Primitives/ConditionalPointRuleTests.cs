@@ -68,4 +68,36 @@ public class ConditionalPointRuleTests
             .WithParameterName("colonneName")
             .Which.ErrorCode.Should().Be(DomainErrorCode.ConditionalPointRule_EmptyColonneName);
     }
+
+    // Lot 084.1 (G2)
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void Constructor_WithIsNotBlankAndNoComparisonValue_StoresNull(string? comparisonValue)
+    {
+        var rule = new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, comparisonValue, "RECEPTION DEBUT MAD");
+
+        rule.Operator.Should().Be(ConditionOperator.IsNotBlank);
+        rule.ComparisonValue.Should().BeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithIsNotBlankAndAComparisonValue_ThrowsDomainValidationException()
+    {
+        var act = () => new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, "DEBUT MAD", "RECEPTION DEBUT MAD");
+
+        act.Should().Throw<DomainValidationException>()
+            .WithParameterName("comparisonValue")
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ConditionalPointRule_ComparisonValueNotAllowedForIsNotBlank);
+    }
+
+    [Fact]
+    public void Constructor_WithNotEqualsAndNoComparisonValue_ThrowsDomainValidationException()
+    {
+        var act = () => new ConditionalPointRule("TypeElement", ConditionOperator.NotEquals, null, "Colonne");
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ConditionalPointRule_EmptyComparisonValue);
+    }
 }

@@ -71,15 +71,6 @@ public class ImportProfileDescriptionBuilderPointTests
                 "la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) » n'est jamais cochée.");
 
     [Fact]
-    public void Isolement_ZeroEnergieRule_WithoutTheCellInTheBlock_SaysTheColonneIsNeverTicked() =>
-        Texts("ISOLEMENT", name => Rule(name,
-            pointRules: [new ConditionalPointRule("HasZeroEnergie", ConditionOperator.Equals, "TRUE ", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")],
-            zeroEnergieExpectedValue: "ZERO ENERGIE"))
-            .Should().Contain(
-                "L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : " +
-                "la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) » n'est jamais cochée.");
-
-    [Fact]
     public void Platines_FourFieldPresenceRules_BecomeTwoSentencesWithTwoCells_AndNoClosingSentence()
     {
         var texts = Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17, step: 8, fieldPresencePointRules:

@@ -120,7 +120,8 @@ public class ImportProfileDetailsTests : BunitContext
             new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
-                new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
+                new BlockFieldDefinition("TypeElement", "B:E", 3, 5),
+                new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)
             ]),
             [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "DEB MAD")], [], [], []);
         var profile = new ImportProfile("Profil PLATINES", "OXO-", "MAD TRAVAUX", [], [], [platines]);

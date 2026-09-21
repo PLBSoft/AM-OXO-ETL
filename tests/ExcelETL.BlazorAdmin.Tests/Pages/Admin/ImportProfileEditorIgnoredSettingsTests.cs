@@ -50,8 +50,14 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
         ]);
 
     // What the client configured (screenshots of ticket J2M76).
+    // Lot 084.1: the rule's field must now be declared in the block, as the client did (optional here).
     private static SheetExtractionRule PlatinesWithConditionalRules() => new(
-        "PLATINES", Locator("PLATINES"),
+        "PLATINES",
+        new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
+        [
+            .. Locator("PLATINES").Fields,
+            new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)
+        ]),
         [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "DEB MAD RÉCEPTION PLATINES/TAMPONS PLEINS")],
         ["POSE ÉTIQUETTES"], [], []);
 

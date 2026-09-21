@@ -101,6 +101,10 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
             rules.Property(r => r.UnconditionalColonneNames)
                 .IsRequired();
 
+            // Lot 084 (G3).
+            rules.Property(r => r.WarnWhenNoConditionalPoint)
+                .IsRequired();
+
             rules.OwnsOne(r => r.Locator, locator =>
             {
                 locator.Property(l => l.Sheet)
@@ -141,6 +145,12 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
 
                     fields.Property(f => f.RowOffsetEnd)
                         .IsRequired();
+
+                    // Lot 084 (G4). Deliberately no HasDefaultValue(true): with a bool, EF would
+                    // then never insert false. The migration's column default keeps existing rows
+                    // required.
+                    fields.Property(f => f.IsRequired)
+                        .IsRequired();
                 });
             });
 
@@ -160,8 +170,8 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                     .HasConversion<string>()
                     .HasMaxLength(20);
 
+                // Lot 084 (G2): null for the IsNotBlank operator.
                 pointRules.Property(pr => pr.ComparisonValue)
-                    .IsRequired()
                     .HasMaxLength(200);
 
                 pointRules.Property(pr => pr.ColonneName)
@@ -265,6 +275,10 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                     cell.Property(c => c.RowOffsetEnd)
                         .IsRequired()
                         .HasColumnName("CellRowOffsetEnd");
+
+                    cell.Property(c => c.IsRequired)
+                        .IsRequired()
+                        .HasColumnName("CellIsRequired");
                 });
 
                 fieldPresenceRules.Navigation(r => r.Cell).IsRequired();
@@ -289,6 +303,9 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
 
                 cell.Property(c => c.RowOffsetEnd)
                     .HasColumnName("CouleurEtiquetteCellRowOffsetEnd");
+
+                cell.Property(c => c.IsRequired)
+                    .HasColumnName("CouleurEtiquetteCellIsRequired");
             });
 
             rules.Navigation(r => r.Locator).IsRequired();

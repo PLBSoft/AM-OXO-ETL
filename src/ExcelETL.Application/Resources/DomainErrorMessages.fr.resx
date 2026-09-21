@@ -226,4 +226,10 @@
   <data name="ConstantColumnDefinition_EmptyValue" xml:space="preserve">
     <value>La valeur ne doit pas être vide.</value>
   </data>
+  <data name="ConditionalPointRule_ComparisonValueNotAllowedForIsNotBlank" xml:space="preserve">
+    <value>La valeur de comparaison doit être vide pour l'opérateur « est renseigné ».</value>
+  </data>
+  <data name="SheetExtractionRule_PointRuleReferencesUnknownBlockField" xml:space="preserve">
+    <value>La règle de point de la colonne '{0}' lit '{1}', qui n'est pas un champ du bloc de cette feuille.</value>
+  </data>
 </root>

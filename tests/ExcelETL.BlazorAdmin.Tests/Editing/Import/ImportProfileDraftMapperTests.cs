@@ -34,7 +34,7 @@ public class ImportProfileDraftMapperTests
             [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0)]);
         var rule = new SheetExtractionRule(
             "PLATINES", locator,
-            pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.NotEquals, "TUBING", "POSE")],
+            pointRules: [new ConditionalPointRule("Designation", ConditionOperator.NotEquals, "TUBING", "POSE")],
             unconditionalColonneNames: ["PROLOCK VANNES"],
             headerFields: [new HeaderFieldRule("nomMAD", new DirectCell("PLATINES", "M2:O2"), stripReperePrefix: true, dateFormat: "dd/MM/yyyy")],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {nomMAD}")],
@@ -376,7 +376,7 @@ public class ImportProfileDraftMapperTests
         ruleDraft.PendingField.AbsoluteRange = "H18:U19";
         ruleDraft.PendingUnconditionalColonneName.Value = "PROLOCK VANNES";
         ruleDraft.PendingPointRule.ColonneName = "POSE";
-        ruleDraft.PendingPointRule.SourceFieldName = "TypeElement";
+        ruleDraft.PendingPointRule.SourceFieldName = "Designation";
         ruleDraft.PendingPointRule.ComparisonValue = "TUBING";
         ruleDraft.PendingFieldPresencePointRule.ColonneName = "RECEPTION DEBUT MAD";
         ruleDraft.PendingFieldPresencePointRule.AbsoluteRange = "H21:N21";

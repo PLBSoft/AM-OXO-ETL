@@ -178,6 +178,62 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             headerFields: [], headerComposites: [], allowedCouleursEtiquette: ["ROUGE", "   "]);
     }
 
+    // Lot 084.1: the two new codes are real, and different, in both languages.
+    public static IEnumerable<object[]> Lot084ResourceKeyAndTriggeringAction()
+    {
+        yield return
+        [
+            "ConditionalPointRule_ComparisonValueNotAllowedForIsNotBlank",
+            () => new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, "DEBUT MAD", "RECEPTION DEBUT MAD"),
+        ];
+        yield return
+        [
+            "SheetExtractionRule_PointRuleReferencesUnknownBlockField",
+            BuildRuleWithPointRuleOutsideTheBlock,
+        ];
+    }
+
+    [Theory]
+    [MemberData(nameof(Lot084ResourceKeyAndTriggeringAction))]
+    public void TryLocalize_Lot084ErrorCodes_AreRealAndDifferentInEnglishAndFrench(
+        string resourceKey, Func<object> triggeringAction)
+    {
+        var english = LocalizeIn(triggeringAction, "en");
+        var french = LocalizeIn(triggeringAction, "fr");
+
+        english.Should().NotBeNull().And.NotBe(resourceKey);
+        french.Should().NotBeNull().And.NotBe(resourceKey);
+        french.Should().NotBe(english);
+    }
+
+    private static object BuildRuleWithPointRuleOutsideTheBlock()
+    {
+        var locator = new RepeatingBlockLocator(
+            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+
+        return new SheetExtractionRule(
+            "PLATINES", locator,
+            pointRules: [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD")],
+            unconditionalColonneNames: [], headerFields: [], headerComposites: []);
+    }
+
+    private static string? LocalizeIn(Func<object> triggeringAction, string cultureName)
+    {
+        var originalCulture = CultureInfo.CurrentUICulture;
+        CultureInfo.CurrentUICulture = new CultureInfo(cultureName);
+        try
+        {
+            var exception = Record.Exception(() => triggeringAction());
+            exception.Should().NotBeNull();
+            return CreateSut().TryLocalize(exception!);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
     private static void AssertLocalizedMessageDiffersFromKey(string resourceKey, Func<object> triggeringAction, string cultureName)
     {
         var originalCulture = CultureInfo.CurrentUICulture;

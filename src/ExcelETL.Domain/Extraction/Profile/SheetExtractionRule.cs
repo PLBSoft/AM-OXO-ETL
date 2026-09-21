@@ -74,6 +74,11 @@ public sealed class SheetExtractionRule
     // unreliable client cell, so it carries no equivalent data-quality risk to warn about.
     public IReadOnlyList<string>? AllowedCouleursEtiquette { get; }
 
+    // Lot 084 (G3): whether an element for which no conditional Colonne got ticked produces a
+    // NoConditionalPointCreated warning. Off by default; the standard profile turns it on for
+    // ISOLEMENT, AUTRES JOINTS TOUCHES and DIVERS (their behavior before the lot).
+    public bool WarnWhenNoConditionalPoint { get; }
+
     public SheetExtractionRule(
         string sheetName,
         RepeatingBlockLocator locator,
@@ -85,7 +90,8 @@ public sealed class SheetExtractionRule
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
         BlockFieldDefinition? couleurEtiquetteCell = null,
         string? defaultCouleurEtiquette = null,
-        IReadOnlyList<string>? allowedCouleursEtiquette = null)
+        IReadOnlyList<string>? allowedCouleursEtiquette = null,
+        bool warnWhenNoConditionalPoint = false)
     {
         if (string.IsNullOrWhiteSpace(sheetName))
         {
@@ -144,6 +150,21 @@ public sealed class SheetExtractionRule
             }
         }
 
+        // Lot 084: a point rule can only read a field of its own block -- a name outside it used to
+        // fail the whole import at extraction time (UnknownFieldReferenceException).
+        var blockFieldNames = locator.Fields.Select(f => f.Name).ToHashSet();
+        foreach (var pointRule in pointRules)
+        {
+            if (!blockFieldNames.Contains(pointRule.SourceFieldName))
+            {
+                throw new DomainRuleViolationException(
+                    $"Point rule for Colonne '{pointRule.ColonneName}' references '{pointRule.SourceFieldName}', " +
+                    "which is not a field of this sheet's block.",
+                    DomainErrorCode.SheetExtractionRule_PointRuleReferencesUnknownBlockField,
+                    pointRule.ColonneName, pointRule.SourceFieldName);
+            }
+        }
+
         SheetName = sheetName;
         Locator = locator;
         _pointRules = [.. pointRules];
@@ -155,6 +176,7 @@ public sealed class SheetExtractionRule
         CouleurEtiquetteCell = couleurEtiquetteCell;
         DefaultCouleurEtiquette = defaultCouleurEtiquette;
         AllowedCouleursEtiquette = allowedCouleursEtiquette;
+        WarnWhenNoConditionalPoint = warnWhenNoConditionalPoint;
     }
 
     // EF Core materialization only -- every property is set directly via reflection immediately

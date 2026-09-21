@@ -262,12 +262,12 @@ public class ImportSheetUsageTests
     [MemberData(nameof(RequiredBlockFieldCases))]
     public void RequiredBlockField_WhenRemoved_MakesTheRealPipelineFail(string sheetName, string fieldName)
     {
-        var profile = WithLocator(LoadSeededDefaultProfile(), sheetName, locator =>
+        // Lot 084.1: when a point rule reads the removed field, the profile itself is now refused --
+        // building it is part of what must fail.
+        var run = () => RunPipeline(WithLocator(LoadSeededDefaultProfile(), sheetName, locator =>
             new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step,
                 locator.StopFieldName == fieldName ? locator.Fields.First(f => f.Name != fieldName).Name : locator.StopFieldName,
-                [.. locator.Fields.Where(f => f.Name != fieldName)]));
-
-        var run = () => RunPipeline(profile);
+                [.. locator.Fields.Where(f => f.Name != fieldName)])));
 
         run.Should().Throw<Exception>("the extraction service looks the field up by name (First() or an indexer)");
     }
