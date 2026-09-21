@@ -23,6 +23,7 @@ public sealed class SheetExtractionRuleDraft : IDraftWithError
     public string CouleurEtiquetteCellRange { get; set; } = string.Empty;
     public string? CouleurEtiquetteCellName { get; set; }
     public string AllowedCouleursEtiquette { get; set; } = string.Empty;
+    public bool WarnWhenNoConditionalPoint { get; set; }
 
     public List<BlockFieldDefinitionDraft> Fields { get; set; } = [];
     public List<StringItemDraft> UnconditionalColonneNames { get; set; } = [];

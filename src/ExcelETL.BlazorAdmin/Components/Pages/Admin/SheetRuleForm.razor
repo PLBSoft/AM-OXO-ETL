@@ -25,7 +25,13 @@
 @* Client ticket J2M76: every section is offered for every sheet, but each sheet's extraction only reads
    some of them -- say so where the user types, not in a code comment. No role="alert": these follow the
    sheet name as it is typed and would otherwise be announced on every keystroke. *@
-@{ var ignored = SheetRuleIgnoredSettings.For(Draft); }
+@{
+    var ignored = SheetRuleIgnoredSettings.For(Draft);
+    // Lot 084: PROCEDURE walks its tasks itself, tolerantly, and never warns -- its "required" and
+    // warning check boxes would have no effect.
+    var isTaskSheet = ImportSheetUsage.For(Draft.SheetName)?.ItemKind == BlockItemKind.Task;
+    var blockFieldNames = BlockFieldNames();
+}
 @if (ignored.SheetNotProcessed)
 {
     <div id="@($"{IdPrefix}sheet-not-processed-warning")" class="alert alert-warning">
@@ -145,6 +151,7 @@
                                     ShowCancel="true"
                                     CancelButtonId="@($"{IdPrefix}cancel-block-field-button-{fieldIndex}")"
                                     OnCancel="() => _fieldEdit.Cancel(Draft.Fields)"
+                                    ShowIsRequired="!isTaskSheet"
                                     OnDirty="MarkDirty"
                                     OnSubmit="() => SubmitField(fieldIndex)" />
                 </li>
@@ -155,6 +162,10 @@
                     <div class="block-field-info">
                         <span class="block-field-name">@field.Name</span>
                         <span class="block-field-range text-muted font-monospace">@field.AbsoluteRange</span>
+                        @if (!field.IsRequired && !isTaskSheet)
+                        {
+                            <span id="@($"{IdPrefix}block-field-optional-badge-{fieldIndex}")" class="badge text-bg-light border">@Loc["ImportProfileEditor_FieldOptionalBadge"]</span>
+                        }
                     </div>
                     <div class="block-field-actions">
                         <button id="@($"{IdPrefix}modify-block-field-button-{fieldIndex}")" type="button"
@@ -187,6 +198,7 @@
                 Draft="Draft.PendingField"
                 SubmitButtonId="@($"{IdPrefix}add-block-field-button")"
                 SubmitLabel="@Loc["ImportProfileEditor_AddFieldButton"]"
+                ShowIsRequired="!isTaskSheet"
                 OnDirty="MarkDirty"
                 OnSubmit="() => SubmitField(null)" />
 </div>
@@ -290,6 +302,14 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_PointRulesHeading"]</h3>
+@if (!isTaskSheet)
+{
+    <div class="form-check mb-3">
+        <input id="@($"{IdPrefix}sheet-rule-warn-when-no-conditional-point-checkbox")" type="checkbox" class="form-check-input"
+               @bind="Draft.WarnWhenNoConditionalPoint" @bind:after="MarkDirty" />
+        <label class="form-check-label" for="@($"{IdPrefix}sheet-rule-warn-when-no-conditional-point-checkbox")">@Loc["ImportProfileEditor_WarnWhenNoConditionalPointLabel"]</label>
+    </div>
+}
 @if (ignored.ConditionalPointRulesIgnored)
 {
     <div id="@($"{IdPrefix}point-rules-ignored-warning")" class="alert alert-warning">
@@ -316,20 +336,24 @@
                                    @bind="pointRule.ColonneName" @bind:after="MarkDirty" />
                         </div>
                         <div class="col">
-                            <input id="@($"{IdPrefix}conditional-point-rule-edit-source-field-input-{itemIndex}")" class="form-control"
-                                   @bind="pointRule.SourceFieldName" @bind:after="MarkDirty" />
-                        </div>
-                        <div class="col">
-                            <select id="@($"{IdPrefix}conditional-point-rule-edit-operator-select-{itemIndex}")" class="form-select"
-                                    @bind="pointRule.Operator" @bind:after="MarkDirty">
-                                <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
-                                <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+                            <select id="@($"{IdPrefix}conditional-point-rule-edit-source-field-input-{itemIndex}")" class="form-select"
+                                    @bind="pointRule.SourceFieldName" @bind:after="MarkDirty">
+                                @SourceFieldOptions(blockFieldNames, pointRule.SourceFieldName)
                             </select>
                         </div>
                         <div class="col">
-                            <input id="@($"{IdPrefix}conditional-point-rule-edit-comparison-value-input-{itemIndex}")" class="form-control"
-                                   @bind="pointRule.ComparisonValue" @bind:after="MarkDirty" />
+                            <select id="@($"{IdPrefix}conditional-point-rule-edit-operator-select-{itemIndex}")" class="form-select"
+                                    @bind="pointRule.Operator" @bind:after="() => OnOperatorChanged(pointRule)">
+                                @OperatorOptions
+                            </select>
                         </div>
+                        @if (pointRule.Operator != ConditionOperator.IsNotBlank)
+                        {
+                            <div class="col">
+                                <input id="@($"{IdPrefix}conditional-point-rule-edit-comparison-value-input-{itemIndex}")" class="form-control"
+                                       @bind="pointRule.ComparisonValue" @bind:after="MarkDirty" />
+                            </div>
+                        }
                         <div class="col-auto block-field-actions">
                             <button id="@($"{IdPrefix}save-conditional-point-rule-button-{itemIndex}")" type="button"
                                     class="btn btn-sm btn-outline-secondary block-field-icon-btn"
@@ -396,27 +420,31 @@
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-control" @bind="Draft.PendingPointRule.SourceFieldName" @bind:after="MarkDirty"
-               placeholder="@Loc["ImportProfileEditor_SourceFieldNamePlaceholder"]" />
+        <select id="@($"{IdPrefix}point-rule-source-field-name-input")" class="form-select" @bind="Draft.PendingPointRule.SourceFieldName" @bind:after="MarkDirty">
+            @SourceFieldOptions(blockFieldNames, Draft.PendingPointRule.SourceFieldName)
+        </select>
         <label for="@($"{IdPrefix}point-rule-source-field-name-input")">@Loc["ImportProfileEditor_SourceFieldNameLabel"]</label>
     </div>
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="Draft.PendingPointRule.Operator" @bind:after="MarkDirty">
-            <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
-            <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+        <select id="@($"{IdPrefix}point-rule-operator-select")" class="form-select" @bind="Draft.PendingPointRule.Operator"
+                @bind:after="() => OnOperatorChanged(Draft.PendingPointRule)">
+            @OperatorOptions
         </select>
         <label for="@($"{IdPrefix}point-rule-operator-select")">@Loc["ImportProfileEditor_OperatorLabel"]</label>
     </div>
 </div>
-<div class="mb-3">
-    <div class="form-floating">
-        <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="Draft.PendingPointRule.ComparisonValue" @bind:after="MarkDirty"
-               placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
-        <label for="@($"{IdPrefix}point-rule-comparison-value-input")">@Loc["ImportProfileEditor_ComparisonValueLabel"]</label>
+@if (Draft.PendingPointRule.Operator != ConditionOperator.IsNotBlank)
+{
+    <div class="mb-3">
+        <div class="form-floating">
+            <input id="@($"{IdPrefix}point-rule-comparison-value-input")" class="form-control" @bind="Draft.PendingPointRule.ComparisonValue" @bind:after="MarkDirty"
+                   placeholder="@Loc["ImportProfileEditor_ComparisonValuePlaceholder"]" />
+            <label for="@($"{IdPrefix}point-rule-comparison-value-input")">@Loc["ImportProfileEditor_ComparisonValueLabel"]</label>
+        </div>
     </div>
-</div>
+}
 <div class="right-aligned-actions">
     <button id="@($"{IdPrefix}add-point-rule-button")" class="btn btn-secondary w-100 mt-3 d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitPointRule(null)">
         @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddPointRuleButton"]
@@ -770,6 +798,43 @@
         {
             await OnUnconditionalColonneRowBlurAsync();
         }
+    }
+
+    // Lot 084: the source is picked among the block's own field names (the pending field's too); a
+    // name outside them, from a profile saved before the lot, stays selected and is marked unknown.
+    private IReadOnlyList<string> BlockFieldNames() =>
+        Draft.Fields.Select(f => f.Name).Append(Draft.PendingField.Name)
+            .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.Ordinal).ToList();
+
+    private RenderFragment SourceFieldOptions(IReadOnlyList<string> names, string current) => __builder =>
+    {
+        <option value="">@Loc["ImportProfileEditor_SourceFieldChoose"]</option>
+        @foreach (var name in names)
+        {
+            <option value="@name">@name</option>
+        }
+        @if (!string.IsNullOrEmpty(current) && !names.Contains(current))
+        {
+            <option value="@current">@Loc["ImportProfileEditor_SourceFieldUnknown", current]</option>
+        }
+    };
+
+    private RenderFragment OperatorOptions => __builder =>
+    {
+        <option value="@ConditionOperator.Equals">@Loc["ImportProfileEditor_Operator_Equals"]</option>
+        <option value="@ConditionOperator.NotEquals">@Loc["ImportProfileEditor_Operator_NotEquals"]</option>
+        <option value="@ConditionOperator.IsNotBlank">@Loc["ImportProfileEditor_Operator_IsNotBlank"]</option>
+    };
+
+    // IsNotBlank takes no value: the hidden input must not keep a stale one.
+    private void OnOperatorChanged(ConditionalPointRuleDraft rule)
+    {
+        if (rule.Operator == ConditionOperator.IsNotBlank)
+        {
+            rule.ComparisonValue = string.Empty;
+        }
+
+        MarkDirty();
     }
 
     private void SubmitPointRule(int? index)

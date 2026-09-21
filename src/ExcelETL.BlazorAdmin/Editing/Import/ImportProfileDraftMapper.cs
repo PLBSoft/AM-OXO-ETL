@@ -56,7 +56,14 @@ public static class ImportProfileDraftMapper
             CouleurEtiquetteCellRange = rule.CouleurEtiquetteCell is { } cell ? ToAbsoluteRange(startRow, cell) : string.Empty,
             CouleurEtiquetteCellName = rule.CouleurEtiquetteCell?.Name,
             AllowedCouleursEtiquette = rule.AllowedCouleursEtiquette is null ? string.Empty : string.Join(", ", rule.AllowedCouleursEtiquette),
-            Fields = [.. rule.Locator.Fields.Select(f => new BlockFieldDefinitionDraft { Name = f.Name, AbsoluteRange = ToAbsoluteRange(startRow, f) })],
+            WarnWhenNoConditionalPoint = rule.WarnWhenNoConditionalPoint,
+            Fields =
+            [
+                .. rule.Locator.Fields.Select(f => new BlockFieldDefinitionDraft
+                {
+                    Name = f.Name, AbsoluteRange = ToAbsoluteRange(startRow, f), IsRequired = f.IsRequired,
+                }),
+            ],
             UnconditionalColonneNames = [.. rule.UnconditionalColonneNames.Select(v => new StringItemDraft { Value = v })],
             PointRules =
             [
@@ -243,7 +250,8 @@ public static class ImportProfileDraftMapper
                 fieldPresencePointRules: fieldPresencePointRules,
                 couleurEtiquetteCell: couleurEtiquetteCell,
                 defaultCouleurEtiquette: NullIfBlank(draft.DefaultCouleurEtiquette),
-                allowedCouleursEtiquette: allowedCouleursEtiquette);
+                allowedCouleursEtiquette: allowedCouleursEtiquette,
+                warnWhenNoConditionalPoint: draft.WarnWhenNoConditionalPoint);
             draft.AllowedCouleursEtiquette = allowedCouleursEtiquette is null ? string.Empty : string.Join(", ", allowedCouleursEtiquette);
             return ConversionResult<SheetExtractionRule>.Success(rule);
         }
@@ -263,7 +271,7 @@ public static class ImportProfileDraftMapper
 
         try
         {
-            var field = new BlockFieldDefinition(draft.Name, parsed.ColumnRange, parsed.RowOffsetStart, parsed.RowOffsetEnd);
+            var field = new BlockFieldDefinition(draft.Name, parsed.ColumnRange, parsed.RowOffsetStart, parsed.RowOffsetEnd, draft.IsRequired);
             draft.AbsoluteRange = ToAbsoluteRange(firstBlockStartRow, field);
             return ConversionResult<BlockFieldDefinition>.Success(field);
         }
@@ -305,8 +313,9 @@ public static class ImportProfileDraftMapper
     {
         try
         {
-            return ConversionResult<ConditionalPointRule>.Success(
-                new ConditionalPointRule(draft.SourceFieldName, draft.Operator, draft.ComparisonValue, draft.ColonneName));
+            var rule = new ConditionalPointRule(draft.SourceFieldName, draft.Operator, draft.ComparisonValue, draft.ColonneName);
+            draft.ComparisonValue = rule.ComparisonValue ?? string.Empty;
+            return ConversionResult<ConditionalPointRule>.Success(rule);
         }
         catch (DomainValidationException ex)
         {

@@ -339,4 +339,44 @@ public class ImportProfileEditorPendingRowTests : BunitContext
             cut.FindAll("#unsaved-changes-indicator").Should().ContainSingle();
             cut.Find("#save-profile-button").HasAttribute("disabled").Should().BeFalse();
         });
+
+    // ------------------------------------------------------------------------------------------
+    // Lot 084.5 -- pending rows of the new shapes.
+    // ------------------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Lot084_PendingOptionalBlockFieldAndIsNotBlankRule_FilledButNotAdded_AreBothPersistedOnSave() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = await RenderExistingProfileAsync();
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-block-field-name-input").Change("HasDebMad");
+            cut.Find("#edit-0-block-field-absolute-range-input").Change("H21:N21");
+            cut.Find("#edit-0-point-rule-colonne-name-input").Change("RECEPTION DEBUT MAD");
+            cut.Find("#edit-0-point-rule-source-field-name-input").Change("HasDebMad");
+            cut.Find("#edit-0-point-rule-operator-select").Change("IsNotBlank");
+
+            cut.Find("#save-profile-button").Click();
+
+            var rule = (await SingleSavedProfileAsync()).SheetRules.Single();
+            rule.Locator.Fields.Single(f => f.Name == "HasDebMad").IsRequired.Should().BeFalse();
+            rule.PointRules.Should().ContainSingle(r =>
+                r.SourceFieldName == "HasDebMad" && r.Operator == ConditionOperator.IsNotBlank && r.ComparisonValue == null);
+        });
+
+    [Fact]
+    public async Task Lot084_PendingRequiredBlockField_FilledButNotAdded_IsPersistedRequired() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var cut = await RenderExistingProfileAsync();
+            cut.Find("#modify-sheet-rule-button-0").Click();
+            cut.Find("#edit-0-block-field-name-input").Change("TypeElement");
+            cut.Find("#edit-0-block-field-absolute-range-input").Change("B22:E23");
+            cut.Find("#edit-0-block-field-is-required-checkbox").Change(true);
+
+            cut.Find("#save-profile-button").Click();
+
+            (await SingleSavedProfileAsync()).SheetRules.Single().Locator.Fields.Single(f => f.Name == "TypeElement")
+                .IsRequired.Should().BeTrue();
+        });
 }

@@ -26,15 +26,20 @@ public class ImportProfileDraftMapperTests
     }
 
     // Every optional shape the seeded profile doesn't carry: a presence-only FieldPresencePointRule, and
-    // non-default stored cell names that no input exposes.
+    // non-default stored cell names that no input exposes. Lot 084.5: an optional block field, an
+    // IsNotBlank rule and the warning flag.
     private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
             "PLATINES", 17, 8, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0)]);
+            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0, isRequired: false)]);
         var rule = new SheetExtractionRule(
             "PLATINES", locator,
-            pointRules: [new ConditionalPointRule("Designation", ConditionOperator.NotEquals, "TUBING", "POSE")],
+            pointRules:
+            [
+                new ConditionalPointRule("Designation", ConditionOperator.NotEquals, "TUBING", "POSE"),
+                new ConditionalPointRule("Designation", ConditionOperator.IsNotBlank, null, "RENSEIGNÉ"),
+            ],
             unconditionalColonneNames: ["PROLOCK VANNES"],
             headerFields: [new HeaderFieldRule("nomMAD", new DirectCell("PLATINES", "M2:O2"), stripReperePrefix: true, dateFormat: "dd/MM/yyyy")],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {nomMAD}")],
@@ -46,7 +51,8 @@ public class ImportProfileDraftMapperTests
             ],
             couleurEtiquetteCell: new BlockFieldDefinition("CelluleCouleurPerso", "H:N", 1, 1),
             defaultCouleurEtiquette: "BLEUE",
-            allowedCouleursEtiquette: ["ROUGE", "BLANC"]);
+            allowedCouleursEtiquette: ["ROUGE", "BLANC"],
+            warnWhenNoConditionalPoint: true);
         return new ImportProfile(
             "Profil fait main", "MAD-OXO-", "MAD TRAVAUX", ["TRAVAUX COMPLET"], ["PROGRESS"], [rule],
             [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD")]);
@@ -114,6 +120,33 @@ public class ImportProfileDraftMapperTests
         rule.AllowedCouleursEtiquette.Should().Be("ROUGE, BLANC");
         rule.FieldPresencePointRules[0].ExpectedValue.Should().BeEmpty();
         rule.FieldPresencePointRules[0].CellName.Should().Be("PoseeLe");
+        rule.Fields.Select(f => f.IsRequired).Should().Equal(true, false);
+        rule.WarnWhenNoConditionalPoint.Should().BeTrue();
+        rule.PointRules[1].ComparisonValue.Should().BeEmpty();
+    }
+
+    // Lot 084.5
+    [Fact]
+    public void ConvertPointRule_IsNotBlankWithABlankValue_BuildsARuleWithoutValue()
+    {
+        var draft = new ConditionalPointRuleDraft
+        {
+            ColonneName = "RECEPTION DEBUT MAD", SourceFieldName = "PoseeLe", Operator = ConditionOperator.IsNotBlank, ComparisonValue = "  ",
+        };
+
+        var result = ImportProfileDraftMapper.ConvertPointRule(draft);
+
+        result.Value!.ComparisonValue.Should().BeNull();
+        draft.ComparisonValue.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void NewBlockFieldDraft_IsOptional_AndStaysPristine()
+    {
+        var draft = new BlockFieldDefinitionDraft();
+
+        draft.IsRequired.Should().BeFalse();
+        DraftJson.IsPristine(draft).Should().BeTrue();
     }
 
     [Fact]

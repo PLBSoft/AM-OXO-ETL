@@ -11,6 +11,10 @@ public sealed class BlockFieldDefinitionDraft : IDraftWithError
     public string Name { get; set; } = string.Empty;
     public string AbsoluteRange { get; set; } = string.Empty;
 
+    // Lot 084 (G14): unchecked for a field added in the editor (the J2M76 case works as typed). The
+    // Domain default stays "required", so a profile saved before the lot keeps its behavior.
+    public bool IsRequired { get; set; }
+
     [JsonIgnore]
     public string? Error { get; set; }
 

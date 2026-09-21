@@ -32,6 +32,15 @@
         <label for="@($"{IdPrefix}absolute-range-input")">@Loc["ImportProfileEditor_AbsoluteRangeLabel"]</label>
     </div>
 </div>
+@* Lot 084 (G4): not shown on PROCEDURE, whose service walks its tasks itself, tolerantly. *@
+@if (ShowIsRequired)
+{
+    <div class="form-check mb-3">
+        <input id="@($"{IdPrefix}is-required-checkbox")" type="checkbox" class="form-check-input"
+               @bind="Draft.IsRequired" @bind:after="MarkDirty" />
+        <label class="form-check-label" for="@($"{IdPrefix}is-required-checkbox")">@Loc["ImportProfileEditor_FieldIsRequiredLabel"]</label>
+    </div>
+}
 
 <!-- Lot 056 (56.7): submission and cancel are now visually distinct in every mode -- the
      submission button is always solid btn-secondary (icon still Plus in add mode / Check in edit
@@ -75,6 +84,9 @@
 
     [Parameter]
     public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public bool ShowIsRequired { get; set; } = true;
 
     [Parameter]
     public EventCallback OnCancel { get; set; }

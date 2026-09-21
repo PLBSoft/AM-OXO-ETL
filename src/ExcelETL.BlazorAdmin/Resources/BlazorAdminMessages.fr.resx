@@ -2026,4 +2026,22 @@
   <data name="ImportProfileDetails_IgnoredFieldPresenceRulesNote" xml:space="preserve">
     <value>Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Règles de point conditionnelles » de l'éditeur.</value>
   </data>
+  <data name="ImportProfileEditor_FieldIsRequiredLabel" xml:space="preserve">
+    <value>Obligatoire (un bloc où ce champ est vide est ignoré)</value>
+  </data>
+  <data name="ImportProfileEditor_FieldOptionalBadge" xml:space="preserve">
+    <value>facultatif</value>
+  </data>
+  <data name="ImportProfileEditor_Operator_IsNotBlank" xml:space="preserve">
+    <value>Est renseigné</value>
+  </data>
+  <data name="ImportProfileEditor_SourceFieldChoose" xml:space="preserve">
+    <value>Choisir un champ du bloc</value>
+  </data>
+  <data name="ImportProfileEditor_SourceFieldUnknown" xml:space="preserve">
+    <value>{0} (inconnu)</value>
+  </data>
+  <data name="ImportProfileEditor_WarnWhenNoConditionalPointLabel" xml:space="preserve">
+    <value>Avertir quand un élément ne reçoit aucune des colonnes conditionnelles</value>
+  </data>
 </root>
