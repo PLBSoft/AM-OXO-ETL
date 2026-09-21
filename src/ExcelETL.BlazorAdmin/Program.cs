@@ -2,10 +2,7 @@ using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Diagnostics;
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Application.Home;
@@ -97,15 +94,10 @@ builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveSto
 
 // The OXO extraction pipeline (Lot A-D), wired here so the /import-profiles/test admin page can run
 // it in-process against an uploaded file. All stateless, so Singleton.
-builder.Services.AddSingleton<ITextTransformEvaluator, TextTransformEvaluator>();
 builder.Services.AddSingleton<IConditionalPointRuleEvaluator, ConditionalPointRuleEvaluator>();
 builder.Services.AddSingleton<IRepeatingBlockReader, RepeatingBlockReader>();
 builder.Services.AddSingleton<IHeaderRuleResolver, HeaderRuleResolver>();
 builder.Services.AddSingleton<IProcedureExtractionService, ProcedureExtractionService>();
-builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionService>();
-builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();
-builder.Services.AddSingleton<IAutresJointsTouchesExtractionService, AutresJointsTouchesExtractionService>();
-builder.Services.AddSingleton<IDiversExtractionService, DiversExtractionService>();
 builder.Services.AddSingleton<IElementSheetExtractionService, ElementSheetExtractionService>();
 builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
 

@@ -68,8 +68,7 @@ public static class ImportSheetUsage
         [Divers] = ElementSheet() with { OptionalHeaderFields = [new(ElementFieldNames.ZoneHeader, HeaderRole.Zone)] },
     };
 
-    // Every setting of an element sheet is read, except the three retired by lot 084 (removed in 84.8):
-    // FieldPresencePointRules, ZeroEnergieExpectedValue and CouleurEtiquetteCell.
+    // Every setting of an element sheet is read.
     private static ImportSheetUsageEntry ElementSheet() => new(
         [
             SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
@@ -144,13 +143,9 @@ public enum SheetRuleMember
     HeaderRules,
     UnconditionalColonnes,
     ConditionalPointRules,
-    FieldPresencePointRules,
-    ZeroEnergieExpectedValue,
     // The "CouleurEtiquette" block field, DefaultCouleurEtiquette and AllowedCouleursEtiquette, read together
     // by ElementSheetExtractionService (lot 084, G10).
-    CouleurEtiquette,
-    // The dedicated couleur cell, read by no sheet since lot 084.6 (removed in 84.8).
-    CouleurEtiquetteCell
+    CouleurEtiquette
 }
 
 public enum HeaderRole

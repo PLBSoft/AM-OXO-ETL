@@ -16,9 +16,8 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 // - PositionALaPose: only the ISOLEMENT sheet has a source cell for it ("Position MAD", H20:O21) --
 //   PLATINES/ORIFICES CAPACITES/AUTRES JOINTS TOUCHES/DIVERS have no equivalent, so their
 //   IsolementPivot instances necessarily leave it blank. A required-non-blank invariant here would
-//   make every non-ISOLEMENT sheet's extraction throw. Individual sheet services (e.g.
-//   IsolementExtractionService for the ISOLEMENT sheet specifically) may still enforce their own,
-//   stricter "blank is reportable" policy on top of this before ever constructing the pivot.
+//   make every non-ISOLEMENT sheet's extraction throw. Whether a blank field is reportable is the
+//   profile's call (a required block field, lot 084), made before the pivot is ever constructed.
 // Tableaux/Applications/RepereParent (Lot U, docs/tickets-tdd-pivot-tableaux-applications-export.md)
 // follow the exact same broadcast mechanism as Localisation: all start empty and are filled in later
 // by ImportPipelineOrchestrator (Tableaux/Applications from ImportProfile.DefaultTableaux/
@@ -35,28 +34,17 @@ public sealed record IsolementPivot
     public IReadOnlyList<string> Applications { get; init; }
     public string RepereParent { get; init; }
 
-    // Lot 063: unlike Localisation/Tableaux/Applications/RepereParent, this is known at construction
-    // time -- read from the same ISOLEMENT block as Identification/Designation/TypeElement, not
-    // diffused after the fact by the orchestrator -- hence a constructor parameter, not an init
-    // property. Defaults to false so the 4 other isolement-style services (which have no notion of
-    // this at all -- PLATINES/ORIFICES CAPACITES/AUTRES JOINTS TOUCHES/DIVERS) are unaffected.
-    public bool HasZeroEnergie { get; }
-
-    // Lot 068: known at construction time, like HasZeroEnergie -- read from the same PLATINES block
-    // as Identification/Designation/TypeElement, not diffused after the fact. Defaults to "" so the 4
-    // other isolement-style services (ISOLEMENT, ORIFICES CAPACITES, AUTRES JOINTS TOUCHES, DIVERS --
-    // none of which have this notion, confirmed against all 4 real client fixtures) are unaffected.
+    // Lot 068: known at construction time -- read from the element's own block (or the sheet's default
+    // colour, lot 084 G10), not diffused after the fact. Defaults to "" for a sheet reading no colour.
     public string CouleurEtiquette { get; }
 
     // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md): known at
-    // construction time too -- every one of the 5 isolement-style services already has its own
-    // SheetExtractionRule.SheetName in hand. Optional, last parameter (never inserted earlier, e.g.
-    // before hasZeroEnergie) so the existing positional call in IsolementExtractionService stays valid.
+    // construction time too -- the extraction service has the SheetExtractionRule.SheetName in hand.
     public string SourceSheetName { get; }
 
     public IsolementPivot(
         string repere, string designation, string typeElementNom, string positionALaPose, string localisation,
-        bool hasZeroEnergie = false, string couleurEtiquette = "", string sourceSheetName = "")
+        string couleurEtiquette = "", string sourceSheetName = "")
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -79,14 +67,13 @@ public sealed record IsolementPivot
         Tableaux = [];
         Applications = [];
         RepereParent = "";
-        HasZeroEnergie = hasZeroEnergie;
         CouleurEtiquette = couleurEtiquette;
         SourceSheetName = sourceSheetName;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
     // properties by reference, not content, so an explicit override is needed (same reason as
-    // RepeatingBlockLocator/Concat in Extraction/Primitives).
+    // RepeatingBlockLocator in Extraction/Primitives).
     public bool Equals(IsolementPivot? other) =>
         other is not null
         && Repere == other.Repere
@@ -97,7 +84,6 @@ public sealed record IsolementPivot
         && Tableaux.SequenceEqual(other.Tableaux)
         && Applications.SequenceEqual(other.Applications)
         && RepereParent == other.RepereParent
-        && HasZeroEnergie == other.HasZeroEnergie
         && CouleurEtiquette == other.CouleurEtiquette
         && SourceSheetName == other.SourceSheetName;
 
@@ -110,7 +96,6 @@ public sealed record IsolementPivot
         hash.Add(PositionALaPose);
         hash.Add(Localisation);
         hash.Add(RepereParent);
-        hash.Add(HasZeroEnergie);
         hash.Add(CouleurEtiquette);
         hash.Add(SourceSheetName);
         foreach (var tableau in Tableaux)

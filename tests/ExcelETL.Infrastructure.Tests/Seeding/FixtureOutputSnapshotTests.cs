@@ -4,9 +4,6 @@ using System.Text;
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Pivot;
@@ -38,10 +35,10 @@ public class FixtureOutputSnapshotTests
         new TestExcelEtlDbContextFactory("FixtureOutputSnapshotTests_" + Guid.NewGuid());
 
     private readonly ImportPipelineOrchestrator _orchestrator = new(
-        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
+        new ProcedureExtractionService(new HeaderRuleResolver(), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
         new ElementSheetExtractionService(
             new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
+            new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private readonly SheetGenerationEngine _generationEngine = new(NullLogger<SheetGenerationEngine>.Instance);

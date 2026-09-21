@@ -30,7 +30,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     private readonly ElementSheetExtractionService _sut = new(
         new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
+        new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance);
 
     private const string ReperePrefix = "MAD-OXO-";
 

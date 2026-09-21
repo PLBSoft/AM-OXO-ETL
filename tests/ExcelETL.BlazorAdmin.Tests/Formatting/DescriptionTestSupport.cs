@@ -77,9 +77,6 @@ internal static class DescriptionTestSupport
         IReadOnlyList<string>? unconditionalColonneNames = null,
         IReadOnlyList<HeaderFieldRule>? headerFields = null,
         IReadOnlyList<HeaderCompositeRule>? headerComposites = null,
-        string? zeroEnergieExpectedValue = null,
-        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
-        BlockFieldDefinition? couleurEtiquetteCell = null,
         string? defaultCouleurEtiquette = null,
         IReadOnlyList<string>? allowedCouleursEtiquette = null,
         bool warnWhenNoConditionalPoint = false)
@@ -100,12 +97,9 @@ internal static class DescriptionTestSupport
             unconditionalColonneNames ?? [],
             headerFields ?? [],
             headerComposites ?? [],
-            zeroEnergieExpectedValue,
-            fieldPresencePointRules,
-            couleurEtiquetteCell,
-            defaultCouleurEtiquette,
-            allowedCouleursEtiquette,
-            warnWhenNoConditionalPoint);
+            defaultCouleurEtiquette: defaultCouleurEtiquette,
+            allowedCouleursEtiquette: allowedCouleursEtiquette,
+            warnWhenNoConditionalPoint: warnWhenNoConditionalPoint);
     }
 
     public static ImportProfile Profile(

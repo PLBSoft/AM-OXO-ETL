@@ -17,7 +17,7 @@ public class ImportProfileDescriptionBuilderBlockTests
             new BlockFieldDefinition("Designation", "H:U", -1, 0),
             new BlockFieldDefinition("PositionALaPose", "H:O", 1, 2),
             new BlockFieldDefinition("TypeElement", "B:E", 3, 4),
-            new BlockFieldDefinition("HasZeroEnergie", "V", -1, 0)
+            new BlockFieldDefinition("ZeroEnergie", "V", -1, 0)
         ]);
 
         var texts = Describe(Profile([rule])).SheetSection("ISOLEMENT").Texts();
@@ -26,7 +26,7 @@ public class ImportProfileDescriptionBuilderBlockTests
             "Un élément est lu toutes les 7 lignes à partir de la ligne 19. " +
             "La lecture s'arrête au premier bloc dont l'identifiant est vide.",
             "Pour le premier élément : identifiant en B19:E20, désignation en H18:U19, position à la pose en H20:O21, " +
-            "type d'élément en B22:E23, indicateur zéro énergie en V18:V19.");
+            "type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19.");
     }
 
     [Fact]

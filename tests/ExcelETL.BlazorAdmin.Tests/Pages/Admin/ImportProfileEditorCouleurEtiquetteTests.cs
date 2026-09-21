@@ -113,7 +113,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             var all = await Store.GetAllAsync();
             var reloaded = all.Should().ContainSingle().Subject;
             reloaded.SheetRules.Single().DefaultCouleurEtiquette.Should().Be("BLEUE");
-            reloaded.SheetRules.Single().CouleurEtiquetteCell.Should().BeNull();
         });
 
     [Fact]
@@ -140,7 +139,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             var all = await Store.GetAllAsync();
             var reloaded = all.Should().ContainSingle().Subject;
             reloaded.SheetRules.Single().DefaultCouleurEtiquette.Should().BeNull();
-            reloaded.SheetRules.Single().CouleurEtiquetteCell.Should().BeNull();
         });
 
     [Fact]
@@ -269,7 +267,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
                 "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [platinesRule]);
             await Store.SaveAsync(profile);
@@ -293,7 +290,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
                 "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
             var isolementLocator = new RepeatingBlockLocator(
                 "ISOLEMENT", 19, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);

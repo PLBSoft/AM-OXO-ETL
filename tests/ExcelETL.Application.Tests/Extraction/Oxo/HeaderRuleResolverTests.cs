@@ -12,7 +12,7 @@ public class HeaderRuleResolverTests
     private const string Sheet = "PROCEDURE";
     private const string ReperePrefix = "MAD-OXO-";
 
-    private readonly HeaderRuleResolver _sut = new(new TextTransformEvaluator());
+    private readonly HeaderRuleResolver _sut = new();
 
     private static Mock<IWorkbookReader> CreateWorkbookReader(IReadOnlyDictionary<string, string?> cells)
     {
@@ -157,8 +157,8 @@ public class HeaderRuleResolverTests
     // construction-time cross-validation (SheetExtractionRuleTests, Domain) already makes this
     // unreachable through the resolver's only public entry point, Resolve(SheetExtractionRule, ...) --
     // a SheetExtractionRule with a composite referencing an unknown field simply cannot be constructed.
-    // SubstituteTemplate's own defensive UnknownFieldReferenceException throw (same typed-exception
-    // precedent as TextTransformEvaluator's Concat/FieldRef) is exercised as dead-code-for-now defense
+    // SubstituteTemplate's own defensive UnknownFieldReferenceException throw is exercised as
+    // dead-code-for-now defense
     // in depth, per the ticket's own 47.1 recommendation to put the real validation on
     // SheetExtractionRule -- not duplicated here as a reflection-bypassing test.
 

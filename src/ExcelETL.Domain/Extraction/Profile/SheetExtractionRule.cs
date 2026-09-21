@@ -21,13 +21,11 @@ public sealed class SheetExtractionRule
     // auto-property: EF Core cannot constructor-bind an entity-collection navigation.
     // UnconditionalColonneNames doesn't need this treatment -- it's a primitive (string) collection,
     // not a navigation to an owned entity type, so EF Core binds it via the constructor like any
-    // other scalar-ish property. HeaderFields/HeaderComposites (Lot 047) and FieldPresencePointRules
-    // (PLATINES client feedback, 2026-09) need the same backing-field treatment as PointRules -- all
-    // are navigations to owned entity types.
+    // other scalar-ish property. HeaderFields/HeaderComposites (Lot 047) need the same backing-field
+    // treatment as PointRules -- all are navigations to owned entity types.
     private readonly List<ConditionalPointRule> _pointRules = [];
     private readonly List<HeaderFieldRule> _headerFields = [];
     private readonly List<HeaderCompositeRule> _headerComposites = [];
-    private readonly List<FieldPresencePointRule> _fieldPresencePointRules = [];
 
     public string SheetName { get; }
     public RepeatingBlockLocator Locator { get; }
@@ -36,36 +34,14 @@ public sealed class SheetExtractionRule
     public IReadOnlyList<HeaderFieldRule> HeaderFields => _headerFields;
     public IReadOnlyList<HeaderCompositeRule> HeaderComposites => _headerComposites;
 
-    // A Point is created for FieldPresencePointRule.ColonneName only when its Cell is non-blank for
-    // the current block -- unlike PointRules/UnconditionalColonneNames, which never look at whether a
-    // specific cell (beyond the sheet's own declared, required fields) has a value. An empty list
-    // (default) means "no field-presence rule for this sheet" -- every sheet other than PLATINES
-    // today, and any PLATINES profile predating this feature.
-    public IReadOnlyList<FieldPresencePointRule> FieldPresencePointRules => _fieldPresencePointRules;
-
-    // Lot 063: the text a bloc's dedicated "zero energie" column must equal for ISOLEMENT's PS941
-    // rule to consider it matched -- a field dedicated to this one sheet's own rule, not a generic
-    // reusable mechanism (no other sheet has this notion). null = no such field configured for this
-    // sheet (every sheet other than ISOLEMENT, and any ISOLEMENT profile predating this lot).
-    public string? ZeroEnergieExpectedValue { get; }
-
-    // Lot 068: where to read a sheet's "couleur d'étiquette" cell for each block (PLATINES: H:N,
-    // offset +1; ORIFICES CAPACITES shares the exact same cell, confirmed against the client's own
-    // instructions -- both sheets share FirstBlockStartRow=17, so H18:N18 for the first block).
-    // null = not configured for this sheet (ISOLEMENT/DIVERS today, and any profile predating this
-    // feature).
-    public BlockFieldDefinition? CouleurEtiquetteCell { get; }
-
-    // Client feedback (2026-09): some sheets never carry a per-block cell at all -- every isolement
-    // on that sheet gets the exact same fixed value (e.g. AUTRES JOINTS TOUCHES is always "BLEUE").
-    // Mutually exclusive with CouleurEtiquetteCell in practice, but not enforced as an invariant here
-    // -- if a profile somehow configures both, the cell wins (see CouleurEtiquetteResolver), since a
-    // real per-block reading is always more specific/trustworthy than a blanket default. null = no
-    // fixed value configured for this sheet.
+    // Client feedback (2026-09): some sheets never carry a per-block cell at all -- every element on
+    // that sheet gets the exact same fixed value (e.g. AUTRES JOINTS TOUCHES is always "BLEUE"). Since
+    // lot 084 (G10) the per-block colour is the optional block field "CouleurEtiquette"; when a sheet
+    // declares it, that field wins over this default. null = no fixed value configured for this sheet.
     public string? DefaultCouleurEtiquette { get; }
 
     // Client feedback (2026-09-11): a whitelist approach, replacing the earlier hardcoded "DATE"
-    // blacklist entry -- a value read from CouleurEtiquetteCell that matches none of these (trim +
+    // blacklist entry -- a value read from the "CouleurEtiquette" block field that matches none of these (trim +
     // case-insensitive, same §7 convention) is a non-blocking UnexpectedCouleurEtiquetteValue warning
     // rather than being silently imported or silently dropped. null = no restriction configured for
     // this sheet (opt-in feature, backward compatible with any profile predating it -- the cell's raw
@@ -86,9 +62,6 @@ public sealed class SheetExtractionRule
         IReadOnlyList<string> unconditionalColonneNames,
         IReadOnlyList<HeaderFieldRule> headerFields,
         IReadOnlyList<HeaderCompositeRule> headerComposites,
-        string? zeroEnergieExpectedValue = null,
-        IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
-        BlockFieldDefinition? couleurEtiquetteCell = null,
         string? defaultCouleurEtiquette = null,
         IReadOnlyList<string>? allowedCouleursEtiquette = null,
         bool warnWhenNoConditionalPoint = false)
@@ -104,13 +77,6 @@ public sealed class SheetExtractionRule
         ArgumentNullException.ThrowIfNull(unconditionalColonneNames);
         ArgumentNullException.ThrowIfNull(headerFields);
         ArgumentNullException.ThrowIfNull(headerComposites);
-
-        if (zeroEnergieExpectedValue is not null && string.IsNullOrWhiteSpace(zeroEnergieExpectedValue))
-        {
-            throw new DomainValidationException(
-                "Zero energie expected value must not be blank when provided.", nameof(zeroEnergieExpectedValue),
-                DomainErrorCode.SheetExtractionRule_BlankZeroEnergieExpectedValue);
-        }
 
         if (defaultCouleurEtiquette is not null && string.IsNullOrWhiteSpace(defaultCouleurEtiquette))
         {
@@ -171,9 +137,6 @@ public sealed class SheetExtractionRule
         UnconditionalColonneNames = unconditionalColonneNames;
         _headerFields = [.. headerFields];
         _headerComposites = [.. headerComposites];
-        _fieldPresencePointRules = fieldPresencePointRules is null ? [] : [.. fieldPresencePointRules];
-        ZeroEnergieExpectedValue = zeroEnergieExpectedValue;
-        CouleurEtiquetteCell = couleurEtiquetteCell;
         DefaultCouleurEtiquette = defaultCouleurEtiquette;
         AllowedCouleursEtiquette = allowedCouleursEtiquette;
         WarnWhenNoConditionalPoint = warnWhenNoConditionalPoint;

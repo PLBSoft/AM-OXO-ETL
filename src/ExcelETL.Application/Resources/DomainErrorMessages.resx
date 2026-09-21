@@ -64,12 +64,6 @@
   <data name="ConditionalPointRule_EmptyColonneName" xml:space="preserve">
     <value>Colonne name must not be empty.</value>
   </data>
-  <data name="FieldPresencePointRule_EmptyColonneName" xml:space="preserve">
-    <value>Colonne name must not be empty.</value>
-  </data>
-  <data name="FieldPresencePointRule_BlankExpectedValue" xml:space="preserve">
-    <value>The expected cell value must not be blank when provided. Leave it empty to accept any value.</value>
-  </data>
   <data name="ImportProfile_EmptyName" xml:space="preserve">
     <value>Name must not be empty.</value>
   </data>
@@ -126,9 +120,6 @@
   </data>
   <data name="SheetExtractionRule_HeaderCompositeReferencesUnknownField" xml:space="preserve">
     <value>Header composite rule '{0}' references unknown placeholder '{1}'.</value>
-  </data>
-  <data name="SheetExtractionRule_BlankZeroEnergieExpectedValue" xml:space="preserve">
-    <value>Zero energie expected value must not be blank when provided.</value>
   </data>
   <data name="SheetExtractionRule_BlankDefaultCouleurEtiquette" xml:space="preserve">
     <value>Default couleur etiquette must not be blank when provided.</value>

@@ -17,7 +17,7 @@ public class ElementSheetExtractionServiceTests
 
     private readonly ElementSheetExtractionService _sut = new(
         new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
+        new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance);
 
     // PLATINES-shaped block: first block at row 17, step 8.
     private static readonly BlockFieldDefinition Identification = new("Identification", "B:E", 0, 1);

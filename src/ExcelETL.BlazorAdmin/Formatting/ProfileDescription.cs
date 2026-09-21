@@ -11,12 +11,7 @@ public sealed record ProfileDescriptionSection(
     string Title,
     IReadOnlyList<ProfileDescriptionSentence> Sentences,
     IReadOnlyList<ProfileDescriptionText> Ignored,
-    IReadOnlyList<ProfileDescriptionText> Blocking)
-{
-    // Client ticket J2M76: shown under the ignored settings, why this sheet doesn't use them and what it
-    // uses instead -- a list of names alone doesn't tell a user that this sheet works differently.
-    public IReadOnlyList<ProfileDescriptionText> IgnoredNotes { get; init; } = [];
-}
+    IReadOnlyList<ProfileDescriptionText> Blocking);
 
 // IsFixed: behavior coded in the extraction services, not editable in the profile (D3) -- the page adds
 // the "non modifiable" mark, the text itself doesn't carry it.

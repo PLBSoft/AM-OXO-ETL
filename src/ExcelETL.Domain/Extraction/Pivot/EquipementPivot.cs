@@ -25,7 +25,7 @@ namespace ExcelETL.Domain.Extraction.Pivot;
 // always has its own SheetExtractionRule.SheetName in hand when it builds this pivot, so it's a plain
 // constructor parameter, not an init property diffused after the fact. Optional with an empty default
 // (not required) purely to avoid disturbing the existing call sites that don't care about it, same
-// rationale as IsolementPivot.HasZeroEnergie/CouleurEtiquette (Lots 063/068).
+// rationale as IsolementPivot.CouleurEtiquette (Lot 068).
 public sealed record EquipementPivot
 {
     public string Repere { get; }
@@ -68,7 +68,7 @@ public sealed record EquipementPivot
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
     // properties by reference, not content, so an explicit override is needed (same reason as
-    // RepeatingBlockLocator/Concat in Extraction/Primitives).
+    // RepeatingBlockLocator in Extraction/Primitives).
     public bool Equals(EquipementPivot? other) =>
         other is not null
         && Repere == other.Repere

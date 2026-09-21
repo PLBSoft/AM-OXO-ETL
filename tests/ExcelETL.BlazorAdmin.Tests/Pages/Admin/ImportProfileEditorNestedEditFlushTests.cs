@@ -16,8 +16,8 @@ using Xunit;
 namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
 // Regression guard-rail for the 2026-09-16 incident: editing an *already-added* item inside a
-// nested sub-form (BlockFieldForm/HeaderFieldRuleForm/HeaderCompositeRuleForm/
-// FieldPresencePointRuleForm) via its own "Modify" button, then saving the profile directly --
+// nested sub-form (BlockFieldForm/HeaderFieldRuleForm/HeaderCompositeRuleForm, and
+// FieldPresencePointRuleForm until lot 084) via its own "Modify" button, then saving the profile directly --
 // without ever clicking that nested item's own "Save changes" button -- used to silently discard
 // the edit, keeping the old value with no error shown. Lot 056 (29/07) only fixed the equivalent
 // gap one level up (an open SheetRuleForm flushed on profile save); it never generalized to the

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Generation;
 
-// Symmetric to the import side's RepeatingBlockReader/TextTransformEvaluator: a stateless engine that
+// Symmetric to the import side's RepeatingBlockReader: a stateless engine that
 // turns a pivot (ImportResult) + a profile (ExportProfile) into the intermediate GeneratedWorkbook
 // structure -- no ClosedXML dependency at this layer, see docs/tickets-tdd-ecriture-fichier-cible.md I3.
 //

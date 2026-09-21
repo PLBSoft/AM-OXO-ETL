@@ -1,8 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.BlazorAdmin.Formatting;
 using ExcelETL.BlazorAdmin.Shared;
@@ -157,8 +154,8 @@ public class ImportSheetUsageTests
     }
 
     // Counterpart proving the mutations below are not no-ops: applied to a sheet that does read the
-    // member, they change the output. HeaderRules/ZeroEnergieExpectedValue have no such cheap proof on
-    // this fixture (adding a header field changes nothing; no ISOLEMENT zero-energie cell is filled).
+    // member, they change the output. HeaderRules has no such cheap proof on ISOLEMENT or DIVERS on
+    // this fixture (adding a repereEcho already present changes nothing).
     public static TheoryData<string, SheetRuleMember> ReadCases() => new()
     {
         { Procedure, SheetRuleMember.UnconditionalColonnes },
@@ -266,16 +263,15 @@ public class ImportSheetUsageTests
                     ? rule
                     : new SheetExtractionRule(
                         rule.SheetName, change(rule.Locator), rule.PointRules, rule.UnconditionalColonneNames, rule.HeaderFields,
-                        rule.HeaderComposites, rule.ZeroEnergieExpectedValue, rule.FieldPresencePointRules, rule.CouleurEtiquetteCell,
-                        rule.DefaultCouleurEtiquette, rule.AllowedCouleursEtiquette, rule.WarnWhenNoConditionalPoint))
+                        rule.HeaderComposites, rule.DefaultCouleurEtiquette, rule.AllowedCouleursEtiquette,
+                        rule.WarnWhenNoConditionalPoint))
             ],
             profile.TacheMultipleTypeLabels);
 
     private static readonly SheetRuleMember[] MutableMembers =
     [
         SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
-        SheetRuleMember.FieldPresencePointRules, SheetRuleMember.ZeroEnergieExpectedValue, SheetRuleMember.CouleurEtiquette,
-        SheetRuleMember.CouleurEtiquetteCell
+        SheetRuleMember.CouleurEtiquette
     ];
 
     // Independent copy of the expected table, so the drift guard doesn't just trust the production table.
@@ -289,7 +285,7 @@ public class ImportSheetUsageTests
             member == SheetRuleMember.ConditionalPointRules
                 // PROCEDURE's rules compare a task field (lot 083); every other sheet an element field.
                 ? [.. rule.PointRules, new ConditionalPointRule(
-                    rule.SheetName == Procedure ? ProcedureFieldNames.TypeTacheMultipleAlias : IsolementFieldNames.TypeElement,
+                    rule.SheetName == Procedure ? ProcedureFieldNames.TypeTacheMultipleAlias : ElementFieldNames.TypeElement,
                     ConditionOperator.NotEquals, "__JAMAIS__", TestColonneName)]
                 : rule.PointRules,
             member == SheetRuleMember.UnconditionalColonnes
@@ -299,21 +295,9 @@ public class ImportSheetUsageTests
                 ? [.. rule.HeaderFields, new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(rule.SheetName, "N6"))]
                 : rule.HeaderFields,
             rule.HeaderComposites,
-            member == SheetRuleMember.ZeroEnergieExpectedValue ? "VALEUR TEST 078" : rule.ZeroEnergieExpectedValue,
-            member == SheetRuleMember.FieldPresencePointRules
-                ? [.. rule.FieldPresencePointRules, new FieldPresencePointRule(FirstFieldOf(rule), TestColonneName)]
-                : rule.FieldPresencePointRules,
-            member == SheetRuleMember.CouleurEtiquetteCell ? new BlockFieldDefinition("CelluleCouleur", "H:N", 1, 1) : rule.CouleurEtiquetteCell,
             member == SheetRuleMember.CouleurEtiquette ? "VERT" : rule.DefaultCouleurEtiquette,
             rule.AllowedCouleursEtiquette,
             rule.WarnWhenNoConditionalPoint);
-
-    // Reads the stop field's own cell: always filled in for every extracted block.
-    private static BlockFieldDefinition FirstFieldOf(SheetExtractionRule rule)
-    {
-        var stopField = rule.Locator.Fields.First(f => f.Name == rule.Locator.StopFieldName);
-        return new BlockFieldDefinition("TestCell", stopField.ColumnRange, stopField.RowOffsetStart, stopField.RowOffsetEnd);
-    }
 
     private static ImportProfile WithMemberFilledIn(ImportProfile profile, string sheetName, SheetRuleMember member) =>
         new(
@@ -334,15 +318,14 @@ public class ImportSheetUsageTests
 
     private static ImportResult RunPipeline(ImportProfile profile)
     {
-        var textTransformEvaluator = new TextTransformEvaluator();
         var conditionalPointRuleEvaluator = new ConditionalPointRuleEvaluator();
         var repeatingBlockReader = new RepeatingBlockReader();
-        var headerRuleResolver = new HeaderRuleResolver(textTransformEvaluator);
+        var headerRuleResolver = new HeaderRuleResolver();
         var orchestrator = new ImportPipelineOrchestrator(
             new ProcedureExtractionService(headerRuleResolver, conditionalPointRuleEvaluator, NullLogger<ProcedureExtractionService>.Instance),
             new ElementSheetExtractionService(
                 new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-                new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
+                new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance),
             NullLogger<ImportPipelineOrchestrator>.Instance);
 
         using var stream = File.OpenRead(FixturePath(FixtureFileName));

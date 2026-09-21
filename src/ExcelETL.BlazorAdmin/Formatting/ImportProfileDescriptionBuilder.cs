@@ -1,5 +1,4 @@
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -68,24 +67,7 @@ public static class ImportProfileDescriptionBuilder
 
         return new ProfileDescriptionSection(
             loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences,
-            Marked(DescribeIgnored(rule, usage, loc)), Marked(DescribeBlocking(rule, usage, loc)))
-        {
-            IgnoredNotes = Marked(DescribeIgnoredNotes(rule, usage, loc))
-        };
-    }
-
-    // Client ticket J2M76: a "filled cell" rule, read by no sheet since lot 084.6 (removed in 84.8), says
-    // what to use instead.
-    private static List<string> DescribeIgnoredNotes(
-        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
-    {
-        var notes = new List<string>();
-        if (!usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules) && rule.FieldPresencePointRules.Count > 0)
-        {
-            notes.Add(loc["ImportProfileDetails_IgnoredFieldPresenceRulesNote"]);
-        }
-
-        return notes;
+            Marked(DescribeIgnored(rule, usage, loc)), Marked(DescribeBlocking(rule, usage, loc)));
     }
 
     // Header rules extraction uses: the composites the sheet requires, and the fields those composites
@@ -133,22 +115,6 @@ public static class ImportProfileDescriptionBuilder
         {
             ignored.AddRange(rule.PointRules.Select(r =>
                 loc["ImportProfileDetails_IgnoredConditionalRule", Quote(r.ColonneName, loc)].Value));
-        }
-
-        if (!Reads(SheetRuleMember.FieldPresencePointRules))
-        {
-            ignored.AddRange(rule.FieldPresencePointRules.Select(r =>
-                loc["ImportProfileDetails_IgnoredFieldPresenceRule", Quote(r.ColonneName, loc)].Value));
-        }
-
-        if (!Reads(SheetRuleMember.CouleurEtiquetteCell) && rule.CouleurEtiquetteCell is { } retiredCell)
-        {
-            ignored.Add(loc["ImportProfileDetails_IgnoredCouleurCell", CellRange(rule.Locator.FirstBlockStartRow, retiredCell)]);
-        }
-
-        if (!Reads(SheetRuleMember.ZeroEnergieExpectedValue) && rule.ZeroEnergieExpectedValue is not null)
-        {
-            ignored.Add(loc["ImportProfileDetails_IgnoredZeroEnergieExpectedValue", Quote(rule.ZeroEnergieExpectedValue, loc)]);
         }
 
         ignored.AddRange(DescribeIgnoredCouleur(rule, Reads(SheetRuleMember.CouleurEtiquette), loc));

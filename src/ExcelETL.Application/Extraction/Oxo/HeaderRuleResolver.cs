@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 
 namespace ExcelETL.Application.Extraction.Oxo;
@@ -14,7 +13,7 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // Deliberately policy-free about "required": whether a blank/unresolvable field rejects the whole
 // file (and with which ExtractionErrorCode) is the calling sheet service's own business decision, not
 // this resolver's -- it just reports RawValue/Value/ErrorMessage per field and lets the caller decide.
-public sealed partial class HeaderRuleResolver(ITextTransformEvaluator textTransformEvaluator) : IHeaderRuleResolver
+public sealed partial class HeaderRuleResolver : IHeaderRuleResolver
 {
     // Input date parsing stays a fixed, hardcoded format list (out of this lot's scope per spec §5/§6 --
     // only the *output* DateFormat is profile-driven) -- the same list ProcedureExtractionService's own
@@ -44,20 +43,20 @@ public sealed partial class HeaderRuleResolver(ITextTransformEvaluator textTrans
         return new HeaderResolutionResult(fields, composites);
     }
 
-    private HeaderFieldResolution ResolveField(HeaderFieldRule field, string? rawValue, string reperePrefix)
+    private static HeaderFieldResolution ResolveField(HeaderFieldRule field, string? rawValue, string reperePrefix)
     {
         var value = rawValue;
 
         if (field.StripReperePrefix)
         {
-            var (stripped, error) = textTransformEvaluator.Evaluate(
-                new SubstringAfter(reperePrefix), value, new Dictionary<string, string>());
-            if (error is not null)
+            // A plain string operation since lot 084 (G9, the TextTransform tree is gone); same message.
+            if (value is null || !value.StartsWith(reperePrefix, StringComparison.Ordinal))
             {
-                return new HeaderFieldResolution(field.Name, rawValue, null, error);
+                return new HeaderFieldResolution(
+                    field.Name, rawValue, null, $"Value '{value}' does not start with expected prefix '{reperePrefix}'.");
             }
 
-            value = stripped;
+            value = value[reperePrefix.Length..];
         }
 
         if (field.DateFormat is not null)
@@ -78,7 +77,7 @@ public sealed partial class HeaderRuleResolver(ITextTransformEvaluator textTrans
 
     // Domain-level cross-validation (SheetExtractionRule's own constructor) already guarantees every
     // placeholder references a real HeaderFieldRule.Name on the same sheet -- this is a defensive
-    // second check (same "profile/configuration bug" precedent as Concat/FieldRef's
+    // second check (same "profile/configuration bug" meaning as every other
     // UnknownFieldReferenceException), reachable only if a composite is ever resolved independently of
     // that construction-time guarantee. A field that resolved to null (blank cell, failed transform)
     // substitutes as an empty string rather than propagating an error -- the caller who actually needs

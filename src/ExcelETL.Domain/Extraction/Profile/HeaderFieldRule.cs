@@ -6,7 +6,7 @@ namespace ExcelETL.Domain.Extraction.Profile;
 // One directly-read header cell (Lot 047, spec-migration-entetes-profile-driven-directcell.md §3).
 // Name is the logical identifier a HeaderCompositeRule.Template placeholder ({name}) references -- it
 // is not tied to any Pivot field name. StripReperePrefix/DateFormat are deliberately the only two
-// transformations offered: a flat, non-recursive model (unlike TextTransform), chosen specifically so
+// transformations offered: a flat, non-recursive model, chosen specifically so
 // it stays trivially persistable and editable from the Blazor profile editor (Lot 048).
 public sealed record HeaderFieldRule
 {

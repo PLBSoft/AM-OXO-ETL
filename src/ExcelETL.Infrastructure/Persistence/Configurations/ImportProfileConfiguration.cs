@@ -79,11 +79,6 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                 .IsRequired()
                 .HasMaxLength(200);
 
-            // Lot 063: optional -- null for every sheet other than ISOLEMENT, and for any ISOLEMENT
-            // rule predating this lot.
-            rules.Property(r => r.ZeroEnergieExpectedValue)
-                .HasMaxLength(200);
-
             // Client feedback (2026-09): optional -- null for every sheet with no fixed "couleur
             // d'étiquette" (ISOLEMENT/DIVERS today, and any rule predating this feature).
             rules.Property(r => r.DefaultCouleurEtiquette)
@@ -232,80 +227,6 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                 headerComposites.Property(c => c.Template)
                     .IsRequired()
                     .HasMaxLength(500);
-            });
-
-            // FieldPresencePointRules (PLATINES client feedback, 2026-09): each rule reuses
-            // BlockFieldDefinition purely as "where to read this cell" (see the Domain type's own
-            // comment), table-split (OwnsOne) into the same row exactly like HeaderFieldRule.Cell
-            // above -- except this Cell is a BlockFieldDefinition, not a DirectCell, so it has the
-            // same 4 columns as ImportProfileSheetRuleBlockFields above (Name/ColumnRange/
-            // RowOffsetStart/RowOffsetEnd), not Sheet/Range.
-            rules.OwnsMany(r => r.FieldPresencePointRules, fieldPresenceRules =>
-            {
-                fieldPresenceRules.ToTable("ImportProfileSheetRuleFieldPresencePointRules");
-                fieldPresenceRules.WithOwner().HasForeignKey("SheetExtractionRuleId");
-                fieldPresenceRules.Property<int>("Id");
-                fieldPresenceRules.HasKey("Id");
-
-                fieldPresenceRules.Property(r => r.ColonneName)
-                    .IsRequired()
-                    .HasMaxLength(200);
-
-                // Optional (null = any non-blank value satisfies the rule) -- client clarification
-                // 2026-09-16, e.g. "DEBUT MAD" for RECEPTION DEBUT MAD.
-                fieldPresenceRules.Property(r => r.ExpectedValue)
-                    .HasMaxLength(200);
-
-                fieldPresenceRules.OwnsOne(r => r.Cell, cell =>
-                {
-                    cell.Property(c => c.Name)
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnName("CellName");
-
-                    cell.Property(c => c.ColumnRange)
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnName("CellColumnRange");
-
-                    cell.Property(c => c.RowOffsetStart)
-                        .IsRequired()
-                        .HasColumnName("CellRowOffsetStart");
-
-                    cell.Property(c => c.RowOffsetEnd)
-                        .IsRequired()
-                        .HasColumnName("CellRowOffsetEnd");
-
-                    cell.Property(c => c.IsRequired)
-                        .IsRequired()
-                        .HasColumnName("CellIsRequired");
-                });
-
-                fieldPresenceRules.Navigation(r => r.Cell).IsRequired();
-            });
-
-            // CouleurEtiquetteCell (Lot 068, PLATINES "couleur d'étiquette"): table-split (OwnsOne)
-            // directly onto the ImportProfileSheetRules row, like Locator above -- optional (no
-            // .Navigation(...).IsRequired()), null for every sheet other than PLATINES. Column names
-            // prefixed to avoid any collision with Locator's own LocatorXxx columns on the same row.
-            rules.OwnsOne(r => r.CouleurEtiquetteCell, cell =>
-            {
-                cell.Property(c => c.Name)
-                    .HasMaxLength(200)
-                    .HasColumnName("CouleurEtiquetteCellName");
-
-                cell.Property(c => c.ColumnRange)
-                    .HasMaxLength(20)
-                    .HasColumnName("CouleurEtiquetteCellColumnRange");
-
-                cell.Property(c => c.RowOffsetStart)
-                    .HasColumnName("CouleurEtiquetteCellRowOffsetStart");
-
-                cell.Property(c => c.RowOffsetEnd)
-                    .HasColumnName("CouleurEtiquetteCellRowOffsetEnd");
-
-                cell.Property(c => c.IsRequired)
-                    .HasColumnName("CouleurEtiquetteCellIsRequired");
             });
 
             rules.Navigation(r => r.Locator).IsRequired();

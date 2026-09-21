@@ -91,13 +91,6 @@ public class ImportProfileDescriptionBuilderPointTests
     public void SheetWithoutAnyPointSetting_HasNoPointSentence() =>
         Texts("ISOLEMENT", name => Rule(name)).Should().NotContain(t => t.Contains("coché"));
 
-    // Lot 084.6: the "filled cell" rules are read by no sheet any more (removed in 84.8).
-    [Fact]
-    public void MembersTheSheetDoesNotRead_AreNotDescribed() =>
-        Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17,
-            fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD")]))
-            .Should().NotContain(t => t.Contains("coché") || t == ClosingSentence);
-
     // Lot 084.7 (G2)
     [Fact]
     public void IsNotBlankRule_IsDescribedWithoutAValue() =>

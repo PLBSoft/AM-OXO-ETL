@@ -21,10 +21,6 @@ namespace ExcelETL.BlazorAdmin.Editing.Import;
 //   Application names, canonical Excel ranges), so the summaries show what the Domain stores.
 public static class ImportProfileDraftMapper
 {
-    // Stored names of cells no input exposes, used for newly created ones (edited ones keep theirs).
-    public const string DefaultFieldPresenceCellName = "FieldPresenceCell";
-    public const string DefaultCouleurEtiquetteCellName = "CouleurEtiquette";
-
     // Never read: a header field's real sheet is always its rule's sheet, applied when the rule is
     // built. Lets a header field be validated on its own before its rule has a sheet name.
     private const string PendingHeaderFieldSheet = "__pending__";
@@ -51,10 +47,7 @@ public static class ImportProfileDraftMapper
             FirstBlockStartRow = startRow,
             Step = rule.Locator.Step,
             StopFieldName = rule.Locator.StopFieldName,
-            ZeroEnergieExpectedValue = rule.ZeroEnergieExpectedValue ?? string.Empty,
             DefaultCouleurEtiquette = rule.DefaultCouleurEtiquette ?? string.Empty,
-            CouleurEtiquetteCellRange = rule.CouleurEtiquetteCell is { } cell ? ToAbsoluteRange(startRow, cell) : string.Empty,
-            CouleurEtiquetteCellName = rule.CouleurEtiquetteCell?.Name,
             AllowedCouleursEtiquette = rule.AllowedCouleursEtiquette is null ? string.Empty : string.Join(", ", rule.AllowedCouleursEtiquette),
             WarnWhenNoConditionalPoint = rule.WarnWhenNoConditionalPoint,
             Fields =
@@ -70,16 +63,6 @@ public static class ImportProfileDraftMapper
                 .. rule.PointRules.Select(p => new ConditionalPointRuleDraft
                 {
                     ColonneName = p.ColonneName, SourceFieldName = p.SourceFieldName, Operator = p.Operator, ComparisonValue = p.ComparisonValue ?? "",
-                }),
-            ],
-            FieldPresencePointRules =
-            [
-                .. rule.FieldPresencePointRules.Select(f => new FieldPresencePointRuleDraft
-                {
-                    ColonneName = f.ColonneName,
-                    AbsoluteRange = ToAbsoluteRange(startRow, f.Cell),
-                    ExpectedValue = f.ExpectedValue ?? string.Empty,
-                    CellName = f.Cell.Name,
                 }),
             ],
             HeaderFields =
@@ -185,7 +168,6 @@ public static class ImportProfileDraftMapper
         var startRow = draft.FirstBlockStartRow;
 
         ConversionResult<BlockFieldDefinition> Field(BlockFieldDefinitionDraft d) => ConvertField(d, startRow);
-        ConversionResult<FieldPresencePointRule> FieldPresence(FieldPresencePointRuleDraft d) => ConvertFieldPresencePointRule(d, startRow);
 
         var fields = ConvertList(draft.Fields, Field, errors);
         PromoteIfNonPristineAndValid(draft.PendingField, Field, fields, errors,
@@ -203,10 +185,6 @@ public static class ImportProfileDraftMapper
         PromoteIfNonPristineAndValid(draft.PendingPointRule, ConvertPointRule, pointRules, errors,
             () => { draft.PointRules.Add(draft.PendingPointRule); draft.PendingPointRule = new ConditionalPointRuleDraft(); });
 
-        var fieldPresencePointRules = ConvertList(draft.FieldPresencePointRules, FieldPresence, errors);
-        PromoteIfNonPristineAndValid(draft.PendingFieldPresencePointRule, FieldPresence, fieldPresencePointRules, errors,
-            () => { draft.FieldPresencePointRules.Add(draft.PendingFieldPresencePointRule); draft.PendingFieldPresencePointRule = new FieldPresencePointRuleDraft(); });
-
         var headerFields = ConvertList(draft.HeaderFields, ConvertHeaderField, errors);
         PromoteIfNonPristineAndValid(draft.PendingHeaderField, ConvertHeaderField, headerFields, errors,
             () => { draft.HeaderFields.Add(draft.PendingHeaderField); draft.PendingHeaderField = new HeaderFieldRuleDraft(); });
@@ -220,22 +198,6 @@ public static class ImportProfileDraftMapper
             return ConversionResult<SheetExtractionRule>.Failure(errors);
         }
 
-        // Blank -> no per-block cell configured (null, not an error); a non-blank value must parse.
-        BlockFieldDefinition? couleurEtiquetteCell = null;
-        if (!string.IsNullOrWhiteSpace(draft.CouleurEtiquetteCellRange))
-        {
-            var parsed = BlockFieldRangeFormatter.FromAbsoluteRange(draft.CouleurEtiquetteCellRange, startRow);
-            if (!parsed.IsSuccess)
-            {
-                return ConversionResult<SheetExtractionRule>.Failure(draft, InvalidExcelRange());
-            }
-
-            couleurEtiquetteCell = new BlockFieldDefinition(
-                draft.CouleurEtiquetteCellName ?? DefaultCouleurEtiquetteCellName,
-                parsed.ColumnRange, parsed.RowOffsetStart, parsed.RowOffsetEnd);
-            draft.CouleurEtiquetteCellRange = ToAbsoluteRange(startRow, couleurEtiquetteCell);
-        }
-
         var allowedCouleursEtiquette = ParseAllowedCouleursEtiquette(draft.AllowedCouleursEtiquette);
 
         try
@@ -246,9 +208,6 @@ public static class ImportProfileDraftMapper
                 draft.SheetName, locator, pointRules, unconditionalColonneNames,
                 [.. headerFields.Select(h => new HeaderFieldRule(h.Name, new DirectCell(draft.SheetName, h.Cell.Range), h.StripReperePrefix, h.DateFormat))],
                 headerComposites,
-                NullIfBlank(draft.ZeroEnergieExpectedValue),
-                fieldPresencePointRules: fieldPresencePointRules,
-                couleurEtiquetteCell: couleurEtiquetteCell,
                 defaultCouleurEtiquette: NullIfBlank(draft.DefaultCouleurEtiquette),
                 allowedCouleursEtiquette: allowedCouleursEtiquette,
                 warnWhenNoConditionalPoint: draft.WarnWhenNoConditionalPoint);
@@ -278,29 +237,6 @@ public static class ImportProfileDraftMapper
         catch (DomainValidationException ex)
         {
             return ConversionResult<BlockFieldDefinition>.Failure(draft, ex);
-        }
-    }
-
-    public static ConversionResult<FieldPresencePointRule> ConvertFieldPresencePointRule(FieldPresencePointRuleDraft draft, int firstBlockStartRow)
-    {
-        var parsed = BlockFieldRangeFormatter.FromAbsoluteRange(draft.AbsoluteRange, firstBlockStartRow);
-        if (!parsed.IsSuccess)
-        {
-            return ConversionResult<FieldPresencePointRule>.Failure(draft, InvalidExcelRange());
-        }
-
-        try
-        {
-            var cell = new BlockFieldDefinition(
-                draft.CellName ?? DefaultFieldPresenceCellName, parsed.ColumnRange, parsed.RowOffsetStart, parsed.RowOffsetEnd);
-            var rule = new FieldPresencePointRule(cell, draft.ColonneName, NullIfBlank(draft.ExpectedValue)?.Trim());
-            draft.AbsoluteRange = ToAbsoluteRange(firstBlockStartRow, cell);
-            draft.ExpectedValue = rule.ExpectedValue ?? string.Empty;
-            return ConversionResult<FieldPresencePointRule>.Success(rule);
-        }
-        catch (DomainValidationException ex)
-        {
-            return ConversionResult<FieldPresencePointRule>.Failure(draft, ex);
         }
     }
 

@@ -24,7 +24,7 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 public class ImportProfileEditorRoundTripTests : BunitContext
 {
     private const string DefaultFixture = "default";
-    private const string NullExpectedValueFixture = "field-presence-null-expected-value";
+    private const string HandBuiltFixture = "hand-built";
 
     private readonly Mock<IImportProfileStore> _store = new();
     private ImportProfile? _saved;
@@ -45,7 +45,7 @@ public class ImportProfileEditorRoundTripTests : BunitContext
     public static TheoryData<string, int, string> SheetRuleCases()
     {
         var data = new TheoryData<string, int, string>();
-        foreach (var fixture in new[] { DefaultFixture, NullExpectedValueFixture })
+        foreach (var fixture in new[] { DefaultFixture, HandBuiltFixture })
         {
             var profile = LoadFixture(fixture);
             for (var i = 0; i < profile.SheetRules.Count; i++)
@@ -99,7 +99,7 @@ public class ImportProfileEditorRoundTripTests : BunitContext
     public static TheoryData<string, int, string, int, string> NestedItemCases()
     {
         var data = new TheoryData<string, int, string, int, string>();
-        foreach (var fixture in new[] { DefaultFixture, NullExpectedValueFixture })
+        foreach (var fixture in new[] { DefaultFixture, HandBuiltFixture })
         {
             var profile = LoadFixture(fixture);
             for (var i = 0; i < profile.SheetRules.Count; i++)
@@ -183,8 +183,8 @@ public class ImportProfileEditorRoundTripTests : BunitContext
             AssertSavedEquivalentTo(original, $"{fixture}/{list}[{itemIndex}]");
         });
 
-    // The default profile's own coverage is guarded too: if a future seeder change dropped every
-    // FieldPresencePointRule, the null-ExpectedValue gap (constat 4) would silently widen.
+    // The default profile's own coverage is guarded too: if a future seeder change dropped a setting,
+    // the hand-built fixture has to take it over, or the round trip would silently stop guarding it.
     [Fact]
     public void Fixtures_CoverTheOptionalFieldsTheRoundTripIsMeantToGuard()
     {
@@ -194,13 +194,9 @@ public class ImportProfileEditorRoundTripTests : BunitContext
         rules.Should().Contain(r => r.WarnWhenNoConditionalPoint);
         rules.Should().Contain(r => r.Locator.Fields.Any(f => f.Name == "CouleurEtiquette") && r.AllowedCouleursEtiquette != null);
         rules.Should().Contain(r => r.DefaultCouleurEtiquette != null);
-        // Lot 084.6: the settings the standard profile no longer uses (removed in 84.8) stay guarded by
-        // the hand-built fixture until then.
-        var handBuilt = LoadFixture(NullExpectedValueFixture).SheetRules;
-        handBuilt.Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue == null));
-        handBuilt.Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue != null));
-        handBuilt.Should().Contain(r => r.ZeroEnergieExpectedValue != null);
-        handBuilt.Should().Contain(r => r.CouleurEtiquetteCell != null);
+        // Lot 084: a rule without comparison value (IsNotBlank) exists only in the hand-built fixture.
+        var handBuilt = LoadFixture(HandBuiltFixture).SheetRules;
+        handBuilt.Should().Contain(r => r.PointRules.Any(p => p.ComparisonValue == null));
     }
 
     // -----------------------------------------------------------------------------------------
@@ -226,7 +222,7 @@ public class ImportProfileEditorRoundTripTests : BunitContext
     private static ImportProfile LoadFixture(string fixture) => fixture switch
     {
         DefaultFixture => LoadSeededDefaultProfile(),
-        NullExpectedValueFixture => BuildProfileWithNullExpectedValueFieldPresenceRule(),
+        HandBuiltFixture => BuildHandBuiltProfile(),
         _ => throw new ArgumentOutOfRangeException(nameof(fixture), fixture, null),
     };
 
@@ -240,23 +236,26 @@ public class ImportProfileEditorRoundTripTests : BunitContext
         return importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId).GetAwaiter().GetResult()!;
     }
 
-    // Constat 4: the default profile no longer carries a FieldPresencePointRule without ExpectedValue.
-    private static ImportProfile BuildProfileWithNullExpectedValueFieldPresenceRule()
+    // Lot 084: what the seeded profile doesn't carry -- a rule with no comparison value (IsNotBlank).
+    private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
             "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
-            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-        var rule = new SheetExtractionRule(
-            "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["POSE PLATINES"], [], [],
-            zeroEnergieExpectedValue: "ZERO ENERGIE",
-            fieldPresencePointRules:
+            fields:
             [
-                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
-                new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL")
+                new BlockFieldDefinition("Identification", "B:E", 0, 1),
+                new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)
+            ]);
+        var rule = new SheetExtractionRule(
+            "PLATINES", locator,
+            pointRules:
+            [
+                new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "RECEPTION DEBUT MAD"),
+                new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL")
             ],
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+            unconditionalColonneNames: ["POSE PLATINES"], [], []);
         return new ImportProfile(
-            Guid.NewGuid(), "Round trip null ExpectedValue", ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
+            Guid.NewGuid(), "Round trip hand-built", ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
             ["TRAVAUX COMPLET"], ["PROGRESS"], [rule]);
     }
 

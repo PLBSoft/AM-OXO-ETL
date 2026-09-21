@@ -1,8 +1,7 @@
 namespace ExcelETL.Application.Extraction.Oxo;
 
-// The HeaderFieldRule.Name every isolement-style sheet's repere echo (Lot 047, previously the "N6"
-// coordinate hardcoded in AutresJointsTouchesExtractionService/DiversExtractionService) is looked up
-// by. Shared by both services since it's the exact same logical field -- same naming convention as
+// The HeaderFieldRule.Name every element sheet's equipment repère echo is looked up by (Lot 047 for
+// AUTRES JOINTS TOUCHES/DIVERS, all five element sheets since lot 084) -- same naming convention as
 // Procedure.ProcedureHeaderFieldNames for PROCEDURE's own header fields.
 public static class SharedHeaderFieldNames
 {

@@ -26,7 +26,7 @@ public class IsolementExtractionServiceIntegrationTests
 
     private readonly ElementSheetExtractionService _sut = new(
         new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
+        new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance);
 
     // Lot 084.6: the ISOLEMENT settings of the standard profile, run through the generic element engine.
     // G5: the dedicated column V cell is an ordinary optional block field read by an ordinary rule.

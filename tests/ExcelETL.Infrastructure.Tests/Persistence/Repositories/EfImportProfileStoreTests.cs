@@ -241,133 +241,9 @@ public class EfImportProfileStoreTests
     }
 
     [Fact]
-    public async Task SaveAsync_WithFieldPresencePointRules_RoundTripsIdentically()
-    {
-        // PLATINES client feedback (2026-09): FieldPresencePointRule.Cell (a BlockFieldDefinition, not
-        // a DirectCell -- unlike HeaderFieldRule.Cell above) must round-trip through EF Core intact.
-        var locator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-        var sheetRule = new SheetExtractionRule(
-            "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
-            fieldPresencePointRules:
-            [
-                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
-                new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL")
-            ]);
-        var profile = new ImportProfile("Profil field presence", "MAD TRAVAUX", [], [], [sheetRule]);
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        var reloadedRule = reloaded!.SheetRules.Single();
-        reloadedRule.FieldPresencePointRules.Should().HaveCount(2);
-
-        var poseeLe = reloadedRule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT MAD");
-        poseeLe.Cell.Name.Should().Be("PoseeLe");
-        poseeLe.Cell.ColumnRange.Should().Be("H:N");
-        poseeLe.Cell.RowOffsetStart.Should().Be(2);
-        poseeLe.Cell.RowOffsetEnd.Should().Be(2);
-        poseeLe.ExpectedValue.Should().Be("DEBUT MAD");
-
-        var deposeeLe = reloadedRule.FieldPresencePointRules.Single(r => r.ColonneName == "RECEPTION DEBUT REL");
-        deposeeLe.Cell.RowOffsetStart.Should().Be(3);
-        deposeeLe.Cell.RowOffsetEnd.Should().Be(3);
-        // No expected value configured: must reload as a genuine null (presence-only rule).
-        deposeeLe.ExpectedValue.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithNoFieldPresencePointRules_PersistsAndReloadsAsEmptyList()
-    {
-        // CreateSampleProfile's ISOLEMENT rule never sets FieldPresencePointRules -- the pre-existing
-        // shape for every sheet other than PLATINES today.
-        var profile = CreateSampleProfile();
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        reloaded!.SheetRules.Single().FieldPresencePointRules.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithZeroEnergieExpectedValue_RoundTripsIdentically()
-    {
-        // Lot 063.
-        var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", 19, 7, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("HasZeroEnergie", "V", -1, 0)]);
-        var sheetRule = new SheetExtractionRule(
-            "ISOLEMENT", locator,
-            [new ConditionalPointRule("HasZeroEnergie", ConditionOperator.Equals, "true", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")],
-            ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
-        var profile = new ImportProfile("Profil zero energie", "MAD TRAVAUX", [], [], [sheetRule]);
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        reloaded!.SheetRules.Single().ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithNullZeroEnergieExpectedValue_PersistsAndReloadsAsNull()
-    {
-        // Not an empty string by default value -- same requirement as the other nullable owned-type
-        // columns on this mapping (e.g. ColumnDefinition.Source, Lot I6).
-        var profile = CreateSampleProfile();
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        reloaded!.SheetRules.Single().ZeroEnergieExpectedValue.Should().BeNull();
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithCouleurEtiquetteCell_RoundTripsIdentically()
-    {
-        // Lot 068 (PLATINES "couleur d'étiquette", client remark) -- a single optional owned-type
-        // reference directly on SheetExtractionRule (not a collection like FieldPresencePointRules).
-        var locator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-        var sheetRule = new SheetExtractionRule(
-            "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
-        var profile = new ImportProfile("Profil couleur etiquette", "MAD TRAVAUX", [], [], [sheetRule]);
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        var cell = reloaded!.SheetRules.Single().CouleurEtiquetteCell;
-        cell.Should().NotBeNull();
-        cell!.Name.Should().Be("CouleurEtiquette");
-        cell.ColumnRange.Should().Be("H:N");
-        cell.RowOffsetStart.Should().Be(1);
-        cell.RowOffsetEnd.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task SaveAsync_WithNullCouleurEtiquetteCell_PersistsAndReloadsAsNull()
-    {
-        // Not a BlockFieldDefinition with default/empty columns -- same requirement as
-        // ZeroEnergieExpectedValue above (a genuine null, not a default value).
-        var profile = CreateSampleProfile();
-        var store = CreateStore();
-
-        await store.SaveAsync(profile);
-        var reloaded = await store.GetByIdAsync(profile.Id);
-
-        reloaded!.SheetRules.Single().CouleurEtiquetteCell.Should().BeNull();
-    }
-
-    [Fact]
     public async Task SaveAsync_WithDefaultCouleurEtiquette_RoundTripsIdentically()
     {
-        // Client feedback (2026-09): a plain nullable scalar, same treatment as
-        // ZeroEnergieExpectedValue -- not an owned-type reference like CouleurEtiquetteCell.
+        // Client feedback (2026-09): a plain nullable scalar.
         var locator = new RepeatingBlockLocator(
             "AUTRES JOINTS TOUCHES", 17, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var sheetRule = new SheetExtractionRule(
@@ -403,7 +279,6 @@ public class EfImportProfileStoreTests
             "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var sheetRule = new SheetExtractionRule(
             "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
             allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
         var profile = new ImportProfile("Profil couleurs autorisees", "MAD TRAVAUX", [], [], [sheetRule]);
         var store = CreateStore();

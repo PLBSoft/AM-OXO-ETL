@@ -1,9 +1,6 @@
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Pivot;
@@ -32,10 +29,10 @@ public class GenerationPipelineIntegrationTests
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
 
     private readonly ImportPipelineOrchestrator _orchestrator = new(
-        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
+        new ProcedureExtractionService(new HeaderRuleResolver(), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
         new ElementSheetExtractionService(
             new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
+            new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private readonly SheetGenerationEngine _engine = new(NullLogger<SheetGenerationEngine>.Instance);
@@ -70,24 +67,24 @@ public class GenerationPipelineIntegrationTests
                 ]),
             new SheetExtractionRule(
                 "ISOLEMENT",
-                new RepeatingBlockLocator("ISOLEMENT", 19, 7, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("ISOLEMENT", 19, 7, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
-                    new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
+                    new BlockFieldDefinition(ElementFieldNames.PositionALaPose, "H:O", 1, 2),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4)
                 ]),
-                [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
+                [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
                 ["PROLOCK VANNES", "DEPROLOCK VANNES"],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ISOLEMENT", "K6:T6"))], [],
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "PLATINES",
-                new RepeatingBlockLocator("PLATINES", 17, 8, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("PLATINES", 17, 8, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5)
                 ]),
                 [],
                 [
@@ -102,11 +99,11 @@ public class GenerationPipelineIntegrationTests
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("PLATINES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
-                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5)
                 ]),
                 [],
                 [
@@ -118,33 +115,33 @@ public class GenerationPipelineIntegrationTests
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ORIFICES CAPACITES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
-                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "F:Y", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4)
                 ]),
-                [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
+                [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
                 ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
                 [],
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "DIVERS",
-                new RepeatingBlockLocator("DIVERS", 9, 3, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("DIVERS", 9, 3, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:G", 0, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "H:K", 0, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "L:V", 0, 2)
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:G", 0, 2),
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "H:K", 0, 2),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "L:V", 0, 2)
                 ]),
                 [
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
-                    new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : ACCORD TRAVAUX FEU")
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
+                    new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
                 [],
                 [

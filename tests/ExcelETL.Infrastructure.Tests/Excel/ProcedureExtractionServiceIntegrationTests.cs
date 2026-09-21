@@ -23,7 +23,7 @@ public class ProcedureExtractionServiceIntegrationTests
     private const string VisitePrealableChantier = "VISITE PRÉALABLE CHANTIER";
 
     private readonly ProcedureExtractionService _sut =
-        new(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(),
+        new(new HeaderRuleResolver(), new ConditionalPointRuleEvaluator(),
             NullLogger<ProcedureExtractionService>.Instance);
 
     // Lot 047: PROCEDURE's header rules, transcribed from the coordinates/template previously

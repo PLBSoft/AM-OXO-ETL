@@ -43,7 +43,7 @@ public class ImportProfileDetailsTests : BunitContext
     }
 
     // ISOLEMENT with every required block field and header (no blocking problem on its own section), and an
-    // ignored setting (the zéro énergie value, read by no sheet since lot 084.6).
+    // ignored setting (a header composite ISOLEMENT never uses).
     private static ImportProfile BuildProfile()
     {
         var isolement = new SheetExtractionRule(
@@ -54,8 +54,8 @@ public class ImportProfileDetailsTests : BunitContext
                 new BlockFieldDefinition("PositionALaPose", "H:O", 1, 2), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)
             ]),
             [], ["PROLOCK VANNES"],
-            [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "K6:T6"))], [],
-            zeroEnergieExpectedValue: "ZERO ENERGIE");
+            [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "K6:T6"))],
+            [new HeaderCompositeRule("Libelle", "{repereEcho}")]);
 
         return new ImportProfile("Profil détaillé", "OXO-", "MAD TRAVAUX", [], [], [isolement]);
     }
@@ -127,36 +127,13 @@ public class ImportProfileDetailsTests : BunitContext
         var ignored = cut.Find("#details-section-sheet-0-ignored");
         ignored.ClassList.Should().Contain(["alert", "alert-warning"]);
         ignored.HasAttribute("role").Should().BeFalse();
-        ignored.TextContent.Should().Contain("Configuré mais ignoré pour cette feuille").And.Contain("valeur zéro énergie attendue « ZERO ENERGIE »");
+        ignored.TextContent.Should().Contain("Configuré mais ignoré pour cette feuille").And.Contain("modèle d'en-tête « Libelle »");
         cut.FindAll("#details-section-sheet-0-blocking").Should().BeEmpty();
 
         var blocking = cut.Find("#details-section-general-blocking");
         blocking.ClassList.Should().Contain(["alert", "alert-danger"]);
         blocking.TextContent.Should().Contain("Feuille « PROCEDURE » absente du profil : l'import échoue.");
         cut.FindAll("#details-section-general-ignored").Should().BeEmpty();
-    });
-
-    // Since lot 084.6 the "filled cell" rules are read by no sheet: the note points to the conditional rules.
-    [Fact]
-    public void IgnoredFieldPresenceRuleOnPlatines_ShowsTheNoteInTheIgnoredAlert() => WithFrenchCulture(() =>
-    {
-        var platines = new SheetExtractionRule(
-            "PLATINES",
-            new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
-            [
-                new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
-                new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
-            ]),
-            [], [], [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))], [],
-            fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "DEB MAD", "DEBUT MAD")]);
-        var profile = new ImportProfile("Profil PLATINES", "OXO-", "MAD TRAVAUX", [], [], [platines]);
-        Store.SaveAsync(profile).GetAwaiter().GetResult();
-
-        var cut = RenderDetails(profile.Id);
-
-        var note = cut.Find("#details-section-sheet-0-ignored .profile-details-ignored-note");
-        note.TextContent.Should().StartWith("Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée")
-            .And.Contain("« Règles de point conditionnelles »");
     });
 
     // Lot 078.12.2: profile values are emphasised, the guillemets stay outside the emphasis.
@@ -171,7 +148,7 @@ public class ImportProfileDetailsTests : BunitContext
         var typeSentence = cut.FindAll("#details-section-general li").Single(li => li.TextContent.StartsWith("L'équipement est créé"));
         typeSentence.QuerySelectorAll("strong.profile-details-value").Select(s => s.TextContent).Should().Equal("MAD TRAVAUX");
         typeSentence.InnerHtml.Should().Contain("« <strong class=\"profile-details-value\">MAD TRAVAUX</strong> »");
-        cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("ZERO ENERGIE");
+        cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("Libelle");
     });
 
     // Lot 078.12.3: cell coordinates rendered as <code>.

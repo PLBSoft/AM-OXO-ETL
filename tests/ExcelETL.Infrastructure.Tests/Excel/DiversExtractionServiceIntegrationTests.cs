@@ -1,6 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -29,7 +28,7 @@ public class DiversExtractionServiceIntegrationTests
 
     private readonly ElementSheetExtractionService _sut = new(
         new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
+        new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance);
 
     // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
     // hardcoded in DiversExtractionService.

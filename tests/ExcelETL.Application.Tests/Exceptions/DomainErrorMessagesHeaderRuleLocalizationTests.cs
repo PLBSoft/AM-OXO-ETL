@@ -67,16 +67,6 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             "DirectCell_InvalidRange",
             () => new DirectCell("PROCEDURE", "not-a-range"),
         ];
-        yield return
-        [
-            "FieldPresencePointRule_EmptyColonneName",
-            () => new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), string.Empty),
-        ];
-        yield return
-        [
-            "FieldPresencePointRule_BlankExpectedValue",
-            () => new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", " "),
-        ];
     }
 
     [Theory]
@@ -100,16 +90,6 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     public void TryLocalize_SheetExtractionRuleWithUnknownPlaceholder_ReturnsMessageDifferentFromTheRawKey_InFrench() =>
         AssertLocalizedMessageDiffersFromKey(
             "SheetExtractionRule_HeaderCompositeReferencesUnknownField", BuildRuleWithUnknownPlaceholder, "fr");
-
-    [Fact]
-    public void TryLocalize_SheetExtractionRuleWithBlankZeroEnergieExpectedValue_ReturnsMessageDifferentFromTheRawKey_InEnglish() =>
-        AssertLocalizedMessageDiffersFromKey(
-            "SheetExtractionRule_BlankZeroEnergieExpectedValue", BuildRuleWithBlankZeroEnergieExpectedValue, "en");
-
-    [Fact]
-    public void TryLocalize_SheetExtractionRuleWithBlankZeroEnergieExpectedValue_ReturnsMessageDifferentFromTheRawKey_InFrench() =>
-        AssertLocalizedMessageDiffersFromKey(
-            "SheetExtractionRule_BlankZeroEnergieExpectedValue", BuildRuleWithBlankZeroEnergieExpectedValue, "fr");
 
     // Closes a gap this file itself had never covered -- DefaultCouleurEtiquette/AllowedCouleursEtiquette
     // (client feedback, 2026-09-11) added their own DomainErrorCode members without a localization test.
@@ -143,17 +123,6 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
             "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [],
             headerFields: [],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {inconnu}")]);
-    }
-
-    private static object BuildRuleWithBlankZeroEnergieExpectedValue()
-    {
-        var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 19, step: 7, stopFieldName: "Identification",
-            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-
-        return new SheetExtractionRule(
-            "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [],
-            headerFields: [], headerComposites: [], zeroEnergieExpectedValue: "   ");
     }
 
     private static object BuildRuleWithBlankDefaultCouleurEtiquette()

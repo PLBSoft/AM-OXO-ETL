@@ -5,7 +5,7 @@ namespace ExcelETL.Domain.Generation.Profile;
 // SheetGenerationEngine (Application, deciding whether a Point/Application column is marked) and by
 // SheetGenerationRule's own duplicate-name checks (Domain) -- one place, usable directly in a GroupBy.
 // No diacritics normalization beyond casing: a genuine spelling difference ("POINT DE FEU" vs
-// "POINT FEU") stays a real mismatch, same guard-rail as Lot 055's ConditionalPointGroupEvaluator.
+// "POINT FEU") stays a real mismatch, same guard-rail as the import side's ConditionalPointRuleEvaluator (lot 055).
 public sealed class ColonneNameComparer : StringComparer
 {
     public static ColonneNameComparer Instance { get; } = new();

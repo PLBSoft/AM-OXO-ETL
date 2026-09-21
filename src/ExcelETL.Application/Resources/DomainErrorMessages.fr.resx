@@ -64,12 +64,6 @@
   <data name="ConditionalPointRule_EmptyColonneName" xml:space="preserve">
     <value>Le nom de la colonne ne doit pas être vide.</value>
   </data>
-  <data name="FieldPresencePointRule_EmptyColonneName" xml:space="preserve">
-    <value>Le nom de la colonne ne doit pas être vide.</value>
-  </data>
-  <data name="FieldPresencePointRule_BlankExpectedValue" xml:space="preserve">
-    <value>La valeur attendue dans la cellule ne doit pas être vide lorsqu'elle est renseignée. Laissez-la vide pour accepter n'importe quelle valeur.</value>
-  </data>
   <data name="ImportProfile_EmptyName" xml:space="preserve">
     <value>Le nom ne doit pas être vide.</value>
   </data>
@@ -126,9 +120,6 @@
   </data>
   <data name="SheetExtractionRule_HeaderCompositeReferencesUnknownField" xml:space="preserve">
     <value>La règle composée d'en-tête '{0}' référence un placeholder inconnu '{1}'.</value>
-  </data>
-  <data name="SheetExtractionRule_BlankZeroEnergieExpectedValue" xml:space="preserve">
-    <value>La valeur « zéro énergie » attendue ne doit pas être vide si elle est renseignée.</value>
   </data>
   <data name="SheetExtractionRule_BlankDefaultCouleurEtiquette" xml:space="preserve">
     <value>La couleur d'étiquette par défaut ne doit pas être vide si elle est renseignée.</value>

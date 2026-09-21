@@ -36,10 +36,12 @@ public class ImportProfileDescriptionValueSegmentsTests
     [Fact]
     public void IgnoredAndBlockingItems_AlsoCarryValueSegments()
     {
-        var section = Describe(Profile([Rule("PLATINES", zeroEnergieExpectedValue: "ZERO ENERGIE")]));
+        var section = Describe(Profile([Rule("PLATINES",
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)],
+            defaultCouleurEtiquette: "VERT")]));
 
         section.SheetSection("PLATINES").Ignored.Single().Segments.Where(s => s.Kind == ProfileDescriptionSegmentKind.Value).Select(s => s.Text)
-            .Should().Equal("ZERO ENERGIE");
+            .Should().Equal("VERT");
         section.Sections[0].Blocking.Should().Contain(b => b.Segments.Any(s => s.Kind == ProfileDescriptionSegmentKind.Value && s.Text == "PROCEDURE"));
     }
 
@@ -81,9 +83,7 @@ public class ImportProfileDescriptionValueSegmentsTests
                     new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)
                 ],
                 headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))],
-                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "C", "DEBUT MAD")],
-                couleurEtiquetteCell: new BlockFieldDefinition("CelluleCouleur", "H:N", 4, 4),
-                zeroEnergieExpectedValue: "IGNOREE"),
+                pointRules: [new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "C")]),
             Rule("DIVERS", fields: [new BlockFieldDefinition("Identification", "H:K", 0, 2)],
                 headerFields:
                 [
@@ -103,7 +103,6 @@ public class ImportProfileDescriptionValueSegmentsTests
             "K6:U6", // header field
             "H19:N19", // optional block field
             "H18:N18", // couleur block field
-            "H21:N21", // retired couleur cell, ignored
             "N6", // header field
             "H17:K19", // block field on DIVERS (first block at row 17)
             "B6:E6", // zone header field

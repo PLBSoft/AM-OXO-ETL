@@ -25,14 +25,16 @@ public class ImportProfileDraftMapperTests
         return importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId).GetAwaiter().GetResult()!;
     }
 
-    // Every optional shape the seeded profile doesn't carry: a presence-only FieldPresencePointRule, and
-    // non-default stored cell names that no input exposes. Lot 084.5: an optional block field, an
-    // IsNotBlank rule and the warning flag.
+    // Every optional shape the seeded profile doesn't carry (lot 084.5): an IsNotBlank rule, a NotEquals
+    // rule, an optional block field, a header field with a date format and the warning flag.
     private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
             "PLATINES", 17, 8, "Identification",
-            [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0, isRequired: false)]);
+            [
+                new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0, isRequired: false),
+                new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false),
+            ]);
         var rule = new SheetExtractionRule(
             "PLATINES", locator,
             pointRules:
@@ -43,13 +45,6 @@ public class ImportProfileDraftMapperTests
             unconditionalColonneNames: ["PROLOCK VANNES"],
             headerFields: [new HeaderFieldRule("nomMAD", new DirectCell("PLATINES", "M2:O2"), stripReperePrefix: true, dateFormat: "dd/MM/yyyy")],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {nomMAD}")],
-            zeroEnergieExpectedValue: "ZERO ENERGIE",
-            fieldPresencePointRules:
-            [
-                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
-                new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL"),
-            ],
-            couleurEtiquetteCell: new BlockFieldDefinition("CelluleCouleurPerso", "H:N", 1, 1),
             defaultCouleurEtiquette: "BLEUE",
             allowedCouleursEtiquette: ["ROUGE", "BLANC"],
             warnWhenNoConditionalPoint: true);
@@ -98,7 +93,7 @@ public class ImportProfileDraftMapperTests
     }
 
     [Fact]
-    public void RoundTrip_HandBuiltProfile_PreservesNullExpectedValueAndStoredCellNames()
+    public void RoundTrip_HandBuiltProfile_PreservesEveryOptionalSetting()
     {
         var original = BuildHandBuiltProfile();
 
@@ -114,13 +109,9 @@ public class ImportProfileDraftMapperTests
         var draft = ImportProfileDraftMapper.FromDomain(BuildHandBuiltProfile());
 
         var rule = draft.SheetRules.Single();
-        rule.Fields.Select(f => f.AbsoluteRange).Should().Equal("B17:E18", "H16:U17");
-        rule.CouleurEtiquetteCellRange.Should().Be("H18:N18");
-        rule.CouleurEtiquetteCellName.Should().Be("CelluleCouleurPerso");
+        rule.Fields.Select(f => f.AbsoluteRange).Should().Equal("B17:E18", "H16:U17", "H18:N18");
         rule.AllowedCouleursEtiquette.Should().Be("ROUGE, BLANC");
-        rule.FieldPresencePointRules[0].ExpectedValue.Should().BeEmpty();
-        rule.FieldPresencePointRules[0].CellName.Should().Be("PoseeLe");
-        rule.Fields.Select(f => f.IsRequired).Should().Equal(true, false);
+        rule.Fields.Select(f => f.IsRequired).Should().Equal(true, false, false);
         rule.WarnWhenNoConditionalPoint.Should().BeTrue();
         rule.PointRules[1].ComparisonValue.Should().BeEmpty();
     }
@@ -183,15 +174,6 @@ public class ImportProfileDraftMapperTests
     }
 
     [Fact]
-    public void ConvertFieldPresencePointRule_Success_TrimsTheExpectedValueInTheDraft()
-    {
-        var ruleDraft = new FieldPresencePointRuleDraft { ColonneName = "X", AbsoluteRange = "H21:N21", ExpectedValue = " DEBUT MAD " };
-
-        ImportProfileDraftMapper.ConvertFieldPresencePointRule(ruleDraft, 19).Value!.ExpectedValue.Should().Be("DEBUT MAD");
-        ruleDraft.ExpectedValue.Should().Be("DEBUT MAD");
-    }
-
-    [Fact]
     public void ConvertField_Success_NormalizesTheTypedRange()
     {
         var fieldDraft = new BlockFieldDefinitionDraft { Name = "Identification", AbsoluteRange = "b19:b19" };
@@ -243,19 +225,6 @@ public class ImportProfileDraftMapperTests
         var error = result.Errors.Should().ContainSingle().Subject;
         error.Draft.Should().BeSameAs(ruleDraft);
         error.Exception.Should().BeOfType<DomainRuleViolationException>();
-    }
-
-    [Fact]
-    public void ConvertSheetRule_UnparsableCouleurEtiquetteCell_AttachesADraftValidationExceptionToTheRule()
-    {
-        var ruleDraft = MinimalValidRuleDraft();
-        ruleDraft.CouleurEtiquetteCellRange = "pas une plage";
-
-        var result = ImportProfileDraftMapper.ConvertSheetRule(ruleDraft);
-
-        var error = result.Errors.Should().ContainSingle().Subject;
-        error.Draft.Should().BeSameAs(ruleDraft);
-        error.Exception.Should().BeOfType<DraftValidationException>();
     }
 
     [Fact]
@@ -411,8 +380,6 @@ public class ImportProfileDraftMapperTests
         ruleDraft.PendingPointRule.ColonneName = "POSE";
         ruleDraft.PendingPointRule.SourceFieldName = "Designation";
         ruleDraft.PendingPointRule.ComparisonValue = "TUBING";
-        ruleDraft.PendingFieldPresencePointRule.ColonneName = "RECEPTION DEBUT MAD";
-        ruleDraft.PendingFieldPresencePointRule.AbsoluteRange = "H21:N21";
         ruleDraft.PendingHeaderField.Name = "nomMAD";
         ruleDraft.PendingHeaderField.Range = "M2:O2";
         ruleDraft.PendingHeaderComposite.Name = "Designation";
@@ -425,7 +392,6 @@ public class ImportProfileDraftMapperTests
         rule.Locator.Fields.Select(f => f.Name).Should().Equal("Identification", "Designation");
         rule.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES");
         rule.PointRules.Should().ContainSingle();
-        rule.FieldPresencePointRules.Single().Cell.Name.Should().Be(ImportProfileDraftMapper.DefaultFieldPresenceCellName);
         rule.HeaderFields.Single().Cell.Sheet.Should().Be("ISOLEMENT");
         rule.HeaderComposites.Should().ContainSingle();
         ruleDraft.Fields.Should().HaveCount(2);
@@ -488,20 +454,14 @@ public class ImportProfileDraftMapperTests
     public void ConvertSheetRule_BlankOptionalScalars_BecomeNull()
     {
         var ruleDraft = MinimalValidRuleDraft();
-        ruleDraft.ZeroEnergieExpectedValue = " ";
         ruleDraft.DefaultCouleurEtiquette = "";
-        ruleDraft.CouleurEtiquetteCellRange = " ";
         ruleDraft.AllowedCouleursEtiquette = " , ";
         ruleDraft.HeaderFields.Add(new HeaderFieldRuleDraft { Name = "nomMAD", Range = "M2:O2", DateFormat = " " });
-        ruleDraft.FieldPresencePointRules.Add(new FieldPresencePointRuleDraft { ColonneName = "X", AbsoluteRange = "H21:N21", ExpectedValue = " " });
 
         var rule = ImportProfileDraftMapper.ConvertSheetRule(ruleDraft).Value!;
 
-        rule.ZeroEnergieExpectedValue.Should().BeNull();
         rule.DefaultCouleurEtiquette.Should().BeNull();
-        rule.CouleurEtiquetteCell.Should().BeNull();
         rule.HeaderFields.Single().DateFormat.Should().BeNull();
-        rule.FieldPresencePointRules.Single().ExpectedValue.Should().BeNull();
     }
 
     [Fact]
@@ -516,17 +476,5 @@ public class ImportProfileDraftMapperTests
 
         ruleDraft.AllowedCouleursEtiquette = "";
         ImportProfileDraftMapper.ConvertSheetRule(ruleDraft).Value!.AllowedCouleursEtiquette.Should().BeNull();
-    }
-
-    [Fact]
-    public void ConvertSheetRule_NewCouleurEtiquetteCell_GetsTheDefaultCellName()
-    {
-        var ruleDraft = MinimalValidRuleDraft();
-        ruleDraft.CouleurEtiquetteCellRange = "H20:N20";
-
-        var cell = ImportProfileDraftMapper.ConvertSheetRule(ruleDraft).Value!.CouleurEtiquetteCell!;
-
-        cell.Name.Should().Be(ImportProfileDraftMapper.DefaultCouleurEtiquetteCellName);
-        cell.RowOffsetStart.Should().Be(1);
     }
 }

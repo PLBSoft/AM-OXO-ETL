@@ -98,30 +98,8 @@ public class ImportProfileDescriptionBuilderIgnoredTests
             pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")]));
 
         section.Ignored.Should().BeEmpty();
-        section.IgnoredNotes.Should().BeEmpty();
         section.Texts().Should().Contain("Si le type d'élément est « SOUPAPE », l'élément est coché dans la colonne « A ».");
     }
-
-    [Fact]
-    public void FieldPresenceRuleOnIsolement_CarriesANoteNamingTheSectionToUseInstead() =>
-        Section(Rule("ISOLEMENT", fields: IsolementFields,
-                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "B")]))
-            .IgnoredNotes.Select(n => n.Text).Should().Equal(
-                "Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. "
-                + "Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section "
-                + "« Règles de point conditionnelles » de l'éditeur.");
-
-    [Fact]
-    public void NoIgnoredPointRule_NoNote() =>
-        Section(Rule("PLATINES", fields: ElementFields, defaultCouleurEtiquette: "ROUGE",
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)))
-            .IgnoredNotes.Should().BeEmpty();
-
-    [Fact]
-    public void FieldPresenceRuleOnIsolement_IsReportedAsIgnored() =>
-        Section(Rule("ISOLEMENT", fields: IsolementFields,
-                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "B")]))
-            .Ignored.Select(i => i.Text).Should().Equal("règle de cellule pour la colonne « B »");
 
     // Since lot 084.6 only PROCEDURE reads no colour.
     [Fact]
@@ -130,27 +108,12 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         var baseRule = ProcedureRule();
         var rule = Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields: ProcedureFields, stopFieldName: "Action",
             headerFields: baseRule.HeaderFields, headerComposites: baseRule.HeaderComposites,
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
             defaultCouleurEtiquette: "VERT", allowedCouleursEtiquette: ["ROUGE", "BLANC"]);
 
         Section(rule).Ignored.Select(i => i.Text).Should().Equal(
-            "cellule de couleur d'étiquette H10:N10",
             "couleur d'étiquette par défaut « VERT »",
             "couleurs d'étiquette autorisées « ROUGE », « BLANC »");
     }
-
-    // Lot 084.6 (G10): the dedicated couleur cell is read by no sheet any more (removed in 84.8).
-    [Fact]
-    public void DedicatedCouleurCellOnPlatines_IsReportedAsIgnored() =>
-        Section(Rule("PLATINES", fields: ElementFields,
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))],
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)))
-            .Ignored.Select(i => i.Text).Should().Equal("cellule de couleur d'étiquette H18:N18");
-
-    [Fact]
-    public void ZeroEnergieExpectedValueOnPlatines_IsReportedAsIgnored() =>
-        Section(Rule("PLATINES", fields: ElementFields, zeroEnergieExpectedValue: "ZERO ENERGIE"))
-            .Ignored.Select(i => i.Text).Should().Equal("valeur zéro énergie attendue « ZERO ENERGIE »");
 
     // Since lot 084.6 ISOLEMENT reads its repère echo from the header; an unused composite stays ignored.
     [Fact]

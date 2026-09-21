@@ -3,13 +3,12 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
-// Every per-sheet extraction service logs its own ExtractionErrors through this one mapping so the
+// Every extraction service logs its own ExtractionErrors through this one mapping so the
 // Warning/Error split stays consistent instead of being duplicated per service. NoConditionalPointCreated
 // (model doc §3.2, e.g. ISOLEMENT's "VANNE" case), TacheMultipleTypeMismatch (Lot 032,
-// decision 8: non-blocking), UnexpectedZeroEnergieValue (Lot 063: the isolement is still extracted
-// normally, HasZeroEnergie just falls back to false), and UnexpectedCouleurEtiquetteValue (client
-// feedback 2026-09-11: the isolement is still extracted normally, CouleurEtiquette just falls back to
-// "") are the four codes explicitly non-blocking -> Warning; RequiredFieldMissing/UnparsableValue mean
+// decision 8: non-blocking) and UnexpectedCouleurEtiquetteValue (client feedback 2026-09-11: the
+// element is still extracted normally, CouleurEtiquette just falls back to "") are the three codes
+// explicitly non-blocking -> Warning; RequiredFieldMissing/UnparsableValue mean
 // a block (or, for PROCEDURE, the whole file) was skipped/rejected -> Error.
 internal static class ExtractionErrorLogging
 {
@@ -17,7 +16,6 @@ internal static class ExtractionErrorLogging
     {
         var level = error.Code is ExtractionErrorCode.NoConditionalPointCreated
             or ExtractionErrorCode.TacheMultipleTypeMismatch
-            or ExtractionErrorCode.UnexpectedZeroEnergieValue
             or ExtractionErrorCode.UnexpectedCouleurEtiquetteValue
             ? LogLevel.Warning
             : LogLevel.Error;

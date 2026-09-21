@@ -429,8 +429,7 @@ public class DefaultProfileSeederTests
 
         var producedColonneNames = importProfile!.SheetRules
             .SelectMany(r => r.UnconditionalColonneNames
-                .Concat(r.PointRules.Select(p => p.ColonneName))
-                .Concat(r.FieldPresencePointRules.Select(f => f.ColonneName)))
+                .Concat(r.PointRules.Select(p => p.ColonneName)))
             .ToHashSet();
 
         var parents = exportProfile!.SheetRules.Single(r => r.SheetName == "Parents");
@@ -450,8 +449,7 @@ public class DefaultProfileSeederTests
         var isolementStyleSheets = importProfile!.SheetRules.Where(r => r.SheetName != "PROCEDURE");
         var producedColonneNames = isolementStyleSheets
             .SelectMany(r => r.UnconditionalColonneNames
-                .Concat(r.PointRules.Select(p => p.ColonneName))
-                .Concat(r.FieldPresencePointRules.Select(f => f.ColonneName)))
+                .Concat(r.PointRules.Select(p => p.ColonneName)))
             .ToHashSet();
 
         var enfants = exportProfile!.SheetRules.Single(r => r.SheetName == "Enfants");

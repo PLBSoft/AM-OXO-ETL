@@ -1,9 +1,6 @@
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Pivot;
@@ -29,10 +26,10 @@ public class DefaultProfileSeederPipelineIntegrationTests
         new TestExcelEtlDbContextFactory("DefaultProfileSeederPipelineIntegrationTests_" + Guid.NewGuid());
 
     private readonly ImportPipelineOrchestrator _orchestrator = new(
-        new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
+        new ProcedureExtractionService(new HeaderRuleResolver(), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
         new ElementSheetExtractionService(
             new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
+            new HeaderRuleResolver(), NullLogger<ElementSheetExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private readonly SheetGenerationEngine _generationEngine = new(NullLogger<SheetGenerationEngine>.Instance);
@@ -76,11 +73,11 @@ public class DefaultProfileSeederPipelineIntegrationTests
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
         var result = RunOnFixture("Dossier.de.MaD.IDL.-.C7401.xlsx", importProfile);
 
-        // Lot 084 (G5): zéro énergie is an ordinary rule now -- the PS941 Point is the observable result;
-        // IsolementPivot.HasZeroEnergie is no longer set (removed in 84.8).
+        // Lot 084 (G5): zéro énergie is an ordinary rule -- the PS941 Point is the observable result, and
+        // the V4 element (the only one ticked) gets no "no conditional Point" warning.
         result.Isolements.Should().ContainSingle(i => i.Repere == "C7401-V4");
         result.Points.Should().Contain(new PointPivot("ZÉRO ENERGIE EN PRESENCE EE (PS941)", "C7401-V4"));
-        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.UnexpectedZeroEnergieValue);
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == "C7401-V4");
         result.Isolements.Should().HaveCount(23);
     }
 

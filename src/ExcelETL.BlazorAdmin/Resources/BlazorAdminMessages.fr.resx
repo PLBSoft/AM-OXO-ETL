@@ -1528,12 +1528,6 @@
   <data name="ImportProfileDetails_FieldLabelDefinite_TypeElement" xml:space="preserve">
     <value>le type d'élément</value>
   </data>
-  <data name="ImportProfileDetails_FieldLabel_HasZeroEnergie" xml:space="preserve">
-    <value>indicateur zéro énergie</value>
-  </data>
-  <data name="ImportProfileDetails_FieldLabelDefinite_HasZeroEnergie" xml:space="preserve">
-    <value>l'indicateur zéro énergie</value>
-  </data>
   <data name="ImportProfileDetails_FieldLabel_Action" xml:space="preserve">
     <value>action</value>
   </data>
@@ -1677,15 +1671,6 @@
   </data>
   <data name="ImportProfileDetails_IgnoredConditionalRule" xml:space="preserve">
     <value>règle conditionnelle pour la colonne {0}</value>
-  </data>
-  <data name="ImportProfileDetails_IgnoredFieldPresenceRule" xml:space="preserve">
-    <value>règle de cellule pour la colonne {0}</value>
-  </data>
-  <data name="ImportProfileDetails_IgnoredZeroEnergieExpectedValue" xml:space="preserve">
-    <value>valeur zéro énergie attendue {0}</value>
-  </data>
-  <data name="ImportProfileDetails_IgnoredCouleurCell" xml:space="preserve">
-    <value>cellule de couleur d'étiquette {0}</value>
   </data>
   <data name="ImportProfileDetails_IgnoredDefaultCouleur" xml:space="preserve">
     <value>couleur d'étiquette par défaut {0}</value>
@@ -1944,9 +1929,6 @@
   </data>
   <data name="ImportProfileEditor_SheetRuleIgnoredSettingsWarning" xml:space="preserve">
     <value>Certains réglages de cette règle sont sans effet sur la feuille « {0} ». Ouvrez la règle (bouton Modifier) ou la vue Détails du profil pour les voir.</value>
-  </data>
-  <data name="ImportProfileDetails_IgnoredFieldPresenceRulesNote" xml:space="preserve">
-    <value>Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Règles de point conditionnelles » de l'éditeur.</value>
   </data>
   <data name="ImportProfileEditor_FieldIsRequiredLabel" xml:space="preserve">
     <value>Obligatoire (un bloc où ce champ est vide est ignoré)</value>

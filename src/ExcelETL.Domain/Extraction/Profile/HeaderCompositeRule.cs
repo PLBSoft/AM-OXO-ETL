@@ -6,7 +6,7 @@ namespace ExcelETL.Domain.Extraction.Profile;
 // A header field derived from a text template with named placeholders (Lot 047,
 // spec-migration-entetes-profile-driven-directcell.md §3), e.g. "Rév {revision} du {dateRev}" where
 // each {placeholder} references the Name of a HeaderFieldRule on the same SheetExtractionRule.
-// Deliberately not the recursive TextTransform tree -- a flat template string, trivially persistable
+// Deliberately not a recursive transform tree -- a flat template string, trivially persistable
 // and editable (Lot 048).
 public sealed partial record HeaderCompositeRule
 {

@@ -30,29 +30,6 @@ public class SheetExtractionRuleTests
         rule.UnconditionalColonneNames.Should().BeEquivalentTo(unconditionalColonneNames);
         rule.HeaderFields.Should().BeEmpty();
         rule.HeaderComposites.Should().BeEmpty();
-        rule.ZeroEnergieExpectedValue.Should().BeNull();
-    }
-
-    [Fact]
-    public void Constructor_WithZeroEnergieExpectedValue_AssignsProperty()
-    {
-        var rule = new SheetExtractionRule(
-            "ISOLEMENT", Locator("ISOLEMENT"), [], [], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
-
-        rule.ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    public void Constructor_WithBlankZeroEnergieExpectedValue_ThrowsDomainValidationException(string blankValue)
-    {
-        var act = () => new SheetExtractionRule(
-            "ISOLEMENT", Locator("ISOLEMENT"), [], [], [], [], zeroEnergieExpectedValue: blankValue);
-
-        act.Should().Throw<DomainValidationException>()
-            .WithParameterName("zeroEnergieExpectedValue")
-            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_BlankZeroEnergieExpectedValue);
     }
 
     [Fact]
@@ -69,47 +46,6 @@ public class SheetExtractionRuleTests
         var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
 
         rule.UnconditionalColonneNames.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Constructor_WithNoFieldPresencePointRulesArgument_DefaultsToEmptyList()
-    {
-        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
-
-        rule.FieldPresencePointRules.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Constructor_WithFieldPresencePointRules_PassesThemThrough()
-    {
-        var fieldPresenceRule = new FieldPresencePointRule(
-            new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD");
-
-        var rule = new SheetExtractionRule(
-            "PLATINES", Locator("PLATINES"), [], [], [], [],
-            fieldPresencePointRules: [fieldPresenceRule]);
-
-        rule.FieldPresencePointRules.Should().ContainSingle().Which.Should().Be(fieldPresenceRule);
-    }
-
-    [Fact]
-    public void Constructor_WithNoCouleurEtiquetteCellArgument_DefaultsToNull()
-    {
-        var rule = new SheetExtractionRule("ISOLEMENT", Locator("ISOLEMENT"), [], [], [], []);
-
-        rule.CouleurEtiquetteCell.Should().BeNull();
-    }
-
-    [Fact]
-    public void Constructor_WithCouleurEtiquetteCell_AssignsProperty()
-    {
-        var couleurEtiquetteCell = new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1);
-
-        var rule = new SheetExtractionRule(
-            "PLATINES", Locator("PLATINES"), [], [], [], [],
-            couleurEtiquetteCell: couleurEtiquetteCell);
-
-        rule.CouleurEtiquetteCell.Should().Be(couleurEtiquetteCell);
     }
 
     [Fact]
