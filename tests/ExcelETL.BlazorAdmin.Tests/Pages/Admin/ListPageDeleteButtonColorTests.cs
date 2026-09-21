@@ -45,7 +45,7 @@ public class ListPageDeleteButtonColorTests : BunitContext
     private static ImportProfile BuildImportProfile(string name = "MAD OXO")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
+            firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var sheetRule = new SheetExtractionRule(
             "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);

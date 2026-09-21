@@ -30,7 +30,7 @@ public class ProcedureExtractionServiceIntegrationTests
     // hardcoded in ProcedureExtractionService -- same values as DefaultProfileSeeder's own seeded rule.
     private static SheetExtractionRule CreateSheetRule(IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1,
+        new RepeatingBlockLocator(9, 1,
         [
             new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -42,9 +42,9 @@ public class ProcedureExtractionServiceIntegrationTests
         pointRules ?? [],
         [VisitePrealableChantier],
         [
-            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
-            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
-            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "M2:O2", stripReperePrefix: true),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "P2:Q2"),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "R2:T2", dateFormat: "dd/MM/yyyy")
         ],
         [
             new HeaderCompositeRule(

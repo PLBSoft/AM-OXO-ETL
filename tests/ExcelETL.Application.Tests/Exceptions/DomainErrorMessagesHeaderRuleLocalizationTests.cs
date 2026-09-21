@@ -14,7 +14,8 @@ using Xunit;
 namespace ExcelETL.Application.Tests.Exceptions;
 
 // Lot 048 (48.7b): DomainErrorMessages.resx/.fr.resx had zero entries for any of the 7 DomainErrorCode
-// members the Lot 047 header-rule types (HeaderFieldRule/HeaderCompositeRule/DirectCell/
+// members the Lot 047 header-rule types (HeaderFieldRule/HeaderCompositeRule/DirectCell -- folded into
+// HeaderFieldRule at lot 084/
 // SheetExtractionRule's cross-validation) can throw -- IStringLocalizer silently falls back to the
 // raw resource-key string when a key is missing, so the user would have seen literal text like
 // "HeaderFieldRule_EmptyName" on screen. This exercises the real .resx-backed resource tables (not a
@@ -40,12 +41,12 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
         yield return
         [
             "HeaderFieldRule_EmptyName",
-            () => new HeaderFieldRule(string.Empty, new DirectCell("PROCEDURE", "M2:O2")),
+            () => new HeaderFieldRule(string.Empty, "M2:O2"),
         ];
         yield return
         [
             "HeaderFieldRule_BlankDateFormat",
-            () => new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "   "),
+            () => new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "   "),
         ];
         yield return
         [
@@ -59,13 +60,8 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
         ];
         yield return
         [
-            "DirectCell_EmptySheet",
-            () => new DirectCell(string.Empty, "M2:O2"),
-        ];
-        yield return
-        [
-            "DirectCell_InvalidRange",
-            () => new DirectCell("PROCEDURE", "not-a-range"),
+            "HeaderFieldRule_InvalidCellRange",
+            () => new HeaderFieldRule("nomMAD", "not-a-range"),
         ];
     }
 
@@ -116,7 +112,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithUnknownPlaceholder()
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", firstBlockStartRow: 9, step: 1,
+            firstBlockStartRow: 9, step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         return new SheetExtractionRule(
@@ -128,7 +124,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithBlankDefaultCouleurEtiquette()
     {
         var locator = new RepeatingBlockLocator(
-            "AUTRES JOINTS TOUCHES", firstBlockStartRow: 17, step: 7,
+            firstBlockStartRow: 17, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(
@@ -139,7 +135,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithBlankEntryInAllowedCouleursEtiquette()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8,
+            firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(
@@ -178,7 +174,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithPointRuleOutsideTheBlock()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8,
+            firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(

@@ -102,11 +102,6 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
 
             rules.OwnsOne(r => r.Locator, locator =>
             {
-                locator.Property(l => l.Sheet)
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnName("LocatorSheet");
-
                 locator.Property(l => l.FirstBlockStartRow)
                     .IsRequired()
                     .HasColumnName("LocatorFirstBlockStartRow");
@@ -173,8 +168,7 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
             // docs/reference/spec-migration-entetes-profile-driven-directcell.md §3): the flat,
             // non-recursive header-rule model that replaces the hardcoded M2:O2/P2:Q2/R2:T2/N6
             // coordinates previously baked into ProcedureExtractionService/AutresJointsTouches/
-            // DiversExtractionService. DirectCell is table-split (OwnsOne) into the same row as its
-            // owning HeaderFieldRule, same treatment as RepeatingBlockLocator above.
+            // DiversExtractionService. Each field is a name and a cell range, read in the rule's sheet.
             rules.OwnsMany(r => r.HeaderFields, headerFields =>
             {
                 headerFields.ToTable("ImportProfileSheetRuleHeaderFields");
@@ -192,20 +186,11 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                 headerFields.Property(f => f.DateFormat)
                     .HasMaxLength(50);
 
-                headerFields.OwnsOne(f => f.Cell, cell =>
-                {
-                    cell.Property(c => c.Sheet)
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnName("CellSheet");
-
-                    cell.Property(c => c.Range)
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnName("CellRange");
-                });
-
-                headerFields.Navigation(f => f.Cell).IsRequired();
+                // Same column as the former DirectCell.Range (lot 084, G13): no data to move.
+                headerFields.Property(f => f.CellRange)
+                    .IsRequired()
+                    .HasMaxLength(20)
+                    .HasColumnName("CellRange");
             });
 
             rules.OwnsMany(r => r.HeaderComposites, headerComposites =>

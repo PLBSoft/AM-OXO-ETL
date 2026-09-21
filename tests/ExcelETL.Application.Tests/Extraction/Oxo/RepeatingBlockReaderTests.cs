@@ -22,7 +22,7 @@ public class RepeatingBlockReaderTests
     [Fact]
     public void Read_WithMultipleFieldsAndValidBlocks_ComputesCorrectRangesPerBlock()
     {
-        var locator = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var locator = new RepeatingBlockLocator(19, 7,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1),
             new BlockFieldDefinition("Designation", "H:U", -1, 0)
@@ -37,7 +37,7 @@ public class RepeatingBlockReaderTests
         };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Read(locator, "Identification", workbookReader.Object);
+        var result = _sut.Read(locator, "ISOLEMENT", "Identification", workbookReader.Object);
 
         result.Errors.Should().BeEmpty();
         result.Blocks.Should().HaveCount(2);
@@ -58,7 +58,7 @@ public class RepeatingBlockReaderTests
     [Fact]
     public void Read_StopsAtFirstEmptyStopField_WithoutReadingOtherFieldsOfTheStoppedBlock()
     {
-        var locator = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var locator = new RepeatingBlockLocator(19, 7,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1),
             new BlockFieldDefinition("Designation", "H:U", -1, 0)
@@ -71,7 +71,7 @@ public class RepeatingBlockReaderTests
         };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Read(locator, "Identification", workbookReader.Object);
+        var result = _sut.Read(locator, "ISOLEMENT", "Identification", workbookReader.Object);
 
         result.Blocks.Should().HaveCount(1);
         workbookReader.Verify(r => r.ReadCellValue("ISOLEMENT", "H25:U26"), Times.Never);
@@ -84,7 +84,7 @@ public class RepeatingBlockReaderTests
     [InlineData(8)]
     public void Read_WithConfirmedSteps_ReadsExpectedNumberOfBlocksBeforeStopping(int step)
     {
-        var locator = new RepeatingBlockLocator("SHEET", 9, step,
+        var locator = new RepeatingBlockLocator(9, step,
         [
             new BlockFieldDefinition("Action", "C", 0, 0)
         ]);
@@ -97,7 +97,7 @@ public class RepeatingBlockReaderTests
         };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Read(locator, "Action", workbookReader.Object);
+        var result = _sut.Read(locator, "SHEET", "Action", workbookReader.Object);
 
         result.Errors.Should().BeEmpty();
         result.Blocks.Should().HaveCount(3);
@@ -109,7 +109,7 @@ public class RepeatingBlockReaderTests
     [Fact]
     public void Read_StopsOnTheFieldTheCallerNames()
     {
-        var locator = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var locator = new RepeatingBlockLocator(19, 7,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1, isRequired: false),
             new BlockFieldDefinition("Designation", "H:U", -1, 0)
@@ -121,7 +121,7 @@ public class RepeatingBlockReaderTests
             [("ISOLEMENT", "H25:U26")] = null
         };
 
-        var result = _sut.Read(locator, "Designation", CreateWorkbookReader(cells).Object);
+        var result = _sut.Read(locator, "ISOLEMENT", "Designation", CreateWorkbookReader(cells).Object);
 
         result.Blocks.Should().ContainSingle().Which.Fields["Designation"].Should().Be("Vanne 1");
     }
@@ -129,7 +129,7 @@ public class RepeatingBlockReaderTests
     [Fact]
     public void Read_WithAStopFieldOutsideTheBlock_ThrowsUnknownFieldReferenceException()
     {
-        var act = () => _sut.Read(PlatinesLocator(), "Action", CreateWorkbookReader(new Dictionary<(string, string), string?>()).Object);
+        var act = () => _sut.Read(PlatinesLocator(), "PLATINES", "Action", CreateWorkbookReader(new Dictionary<(string, string), string?>()).Object);
 
         act.Should().Throw<UnknownFieldReferenceException>();
     }
@@ -137,7 +137,7 @@ public class RepeatingBlockReaderTests
     [Fact]
     public void Read_WithNonStopFieldBlankWhileStopFieldPopulated_ReportsErrorSkipsBlockAndContinues()
     {
-        var locator = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var locator = new RepeatingBlockLocator(19, 7,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1),
             new BlockFieldDefinition("Designation", "H:U", -1, 0)
@@ -152,7 +152,7 @@ public class RepeatingBlockReaderTests
         };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Read(locator, "Identification", workbookReader.Object);
+        var result = _sut.Read(locator, "ISOLEMENT", "Identification", workbookReader.Object);
 
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
         var block = result.Blocks.Should().ContainSingle().Subject;
@@ -167,7 +167,7 @@ public class RepeatingBlockReaderTests
     }
 
     // Lot 084.3 (G4): an optional field left blank keeps the block, read as "".
-    private static RepeatingBlockLocator PlatinesLocator() => new("PLATINES", 17, 8,
+    private static RepeatingBlockLocator PlatinesLocator() => new(17, 8,
     [
         new BlockFieldDefinition("Identification", "B:E", 0, 1),
         new BlockFieldDefinition("TypeElement", "B:E", 3, 5),
@@ -185,7 +185,7 @@ public class RepeatingBlockReaderTests
             [("PLATINES", "B25:E26")] = null
         };
 
-        var result = _sut.Read(PlatinesLocator(), "Identification", CreateWorkbookReader(cells).Object);
+        var result = _sut.Read(PlatinesLocator(), "PLATINES", "Identification", CreateWorkbookReader(cells).Object);
 
         result.Errors.Should().BeEmpty();
         result.Blocks.Should().ContainSingle().Which.Fields.Should().BeEquivalentTo(new Dictionary<string, string>
@@ -207,7 +207,7 @@ public class RepeatingBlockReaderTests
             [("PLATINES", "B25:E26")] = null
         };
 
-        var result = _sut.Read(PlatinesLocator(), "Identification", CreateWorkbookReader(cells).Object);
+        var result = _sut.Read(PlatinesLocator(), "PLATINES", "Identification", CreateWorkbookReader(cells).Object);
 
         result.Blocks.Should().ContainSingle().Which.Fields["PoseeLe"].Should().Be("DEBUT MAD");
     }
@@ -223,7 +223,7 @@ public class RepeatingBlockReaderTests
             [("PLATINES", "B25:E26")] = null
         };
 
-        var result = _sut.Read(PlatinesLocator(), "Identification", CreateWorkbookReader(cells).Object);
+        var result = _sut.Read(PlatinesLocator(), "PLATINES", "Identification", CreateWorkbookReader(cells).Object);
 
         result.Blocks.Should().BeEmpty();
         var error = result.Errors.Should().ContainSingle().Which;
@@ -237,7 +237,7 @@ public class RepeatingBlockReaderTests
         var cells = new Dictionary<(string, string), string?> { [("PLATINES", "B17:E18")] = null };
         var workbookReader = CreateWorkbookReader(cells);
 
-        var result = _sut.Read(PlatinesLocator(), "Identification", workbookReader.Object);
+        var result = _sut.Read(PlatinesLocator(), "PLATINES", "Identification", workbookReader.Object);
 
         result.Blocks.Should().BeEmpty();
         workbookReader.Verify(r => r.ReadCellValue("PLATINES", It.IsAny<string>()), Times.Once);

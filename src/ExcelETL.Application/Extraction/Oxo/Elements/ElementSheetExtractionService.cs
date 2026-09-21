@@ -44,7 +44,7 @@ public sealed class ElementSheetExtractionService(
         var zone = header.Fields.TryGetValue(ElementFieldNames.ZoneHeader, out var zoneField) ? zoneField.Value ?? "" : "";
         var hasCouleurField = sheetRule.Locator.Fields.Any(f => f.Name == ElementFieldNames.CouleurEtiquette);
 
-        var blockResult = repeatingBlockReader.Read(sheetRule.Locator, ElementFieldNames.Identification, workbookReader);
+        var blockResult = repeatingBlockReader.Read(sheetRule.Locator, sheet, ElementFieldNames.Identification, workbookReader);
         var errors = new List<ExtractionError>(blockResult.Errors);
         foreach (var error in blockResult.Errors)
         {

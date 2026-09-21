@@ -52,7 +52,7 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "ISOLEMENT", firstBlockStartRow: 9, step: 7,
+                firstBlockStartRow: 9, step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [], [], []);
@@ -76,9 +76,9 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PROCEDURE", firstBlockStartRow: 9, step: 1,
+                firstBlockStartRow: 9, step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
-            var headerFields = new List<HeaderFieldRule> { new("nomMAD", new DirectCell("PROCEDURE", "M2:O2")) };
+            var headerFields = new List<HeaderFieldRule> { new("nomMAD", "M2:O2") };
             var sheetRule = new SheetExtractionRule(
                 "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], headerFields, []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [sheetRule]);
@@ -93,7 +93,7 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
             cut.Find("#save-profile-button").Click();
 
             var reloaded = (await Store.GetAllAsync()).Single();
-            reloaded.SheetRules.Single().HeaderFields.Single().Cell.Range.Should().Be("M3:O3");
+            reloaded.SheetRules.Single().HeaderFields.Single().CellRange.Should().Be("M3:O3");
         });
 
     [Fact]
@@ -101,9 +101,9 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PROCEDURE", firstBlockStartRow: 9, step: 1,
+                firstBlockStartRow: 9, step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
-            var headerFields = new List<HeaderFieldRule> { new("revision", new DirectCell("PROCEDURE", "P2:Q2")) };
+            var headerFields = new List<HeaderFieldRule> { new("revision", "P2:Q2") };
             var headerComposites = new List<HeaderCompositeRule> { new("Designation", "Rev {revision}") };
             var sheetRule = new SheetExtractionRule(
                 "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], headerFields, headerComposites);

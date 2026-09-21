@@ -5,12 +5,9 @@ namespace ExcelETL.Domain.Exceptions;
 // translate it at the WebAPI/BlazorAdmin boundary -- see the DomainValidationException family.
 public enum DomainErrorCode
 {
-    DirectCell_EmptySheet,
-    DirectCell_InvalidRange,
     BlockFieldDefinition_EmptyName,
     BlockFieldDefinition_InvalidColumnRange,
     BlockFieldDefinition_RowOffsetEndBeforeStart,
-    RepeatingBlockLocator_EmptySheet,
     RepeatingBlockLocator_NonPositiveFirstBlockStartRow,
     RepeatingBlockLocator_NonPositiveStep,
     RepeatingBlockLocator_EmptyFields,
@@ -46,13 +43,13 @@ public enum DomainErrorCode
     TacheMultipleTypeLabel_EmptyLabel,
     TacheMultipleTypeLabel_LabelTooLong,
     SheetExtractionRule_EmptySheetName,
-    SheetExtractionRule_SheetNameLocatorMismatch,
     SheetExtractionRule_HeaderCompositeReferencesUnknownField,
     SheetExtractionRule_BlankDefaultCouleurEtiquette,
     SheetExtractionRule_BlankAllowedCouleurEtiquette,
     SheetExtractionRule_PointRuleReferencesUnknownBlockField,
     HeaderFieldRule_EmptyName,
     HeaderFieldRule_BlankDateFormat,
+    HeaderFieldRule_InvalidCellRange,
     HeaderCompositeRule_EmptyName,
     HeaderCompositeRule_EmptyTemplate,
     ExportProfile_EmptyName,

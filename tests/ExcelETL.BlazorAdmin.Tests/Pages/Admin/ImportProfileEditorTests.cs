@@ -51,7 +51,6 @@ public class ImportProfileEditorTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -68,7 +67,6 @@ public class ImportProfileEditorTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 19,
             step: 7,
             fields:
@@ -89,16 +87,15 @@ public class ImportProfileEditorTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE",
             firstBlockStartRow: 9,
             step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var headerFields = new List<HeaderFieldRule>
         {
-            new("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
-            new("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-            new("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy"),
+            new("nomMAD", "M2:O2", stripReperePrefix: true),
+            new("revision", "P2:Q2"),
+            new("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy"),
         };
         var headerComposites = new List<HeaderCompositeRule>
         {
@@ -115,7 +112,6 @@ public class ImportProfileEditorTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var isolementLocator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -123,7 +119,6 @@ public class ImportProfileEditorTests : BunitContext
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES",
             firstBlockStartRow: 17,
             step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -896,7 +891,6 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "ISOLEMENT",
                 firstBlockStartRow: 9,
                 step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
@@ -921,7 +915,6 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "ISOLEMENT",
                 firstBlockStartRow: 9,
                 step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
@@ -960,7 +953,6 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PLATINES",
                 firstBlockStartRow: 17,
                 step: 8,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -983,7 +975,6 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PROCEDURE",
                 firstBlockStartRow: 9,
                 step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
@@ -1172,7 +1163,6 @@ public class ImportProfileEditorTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE",
             firstBlockStartRow: 9,
             step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
@@ -2458,7 +2448,7 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "DIVERS", firstBlockStartRow: 9, step: 3,
+                firstBlockStartRow: 9, step: 3,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
@@ -2485,7 +2475,7 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "DIVERS", firstBlockStartRow: 9, step: 3,
+                firstBlockStartRow: 9, step: 3,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
@@ -3147,7 +3137,6 @@ public class ImportProfileEditorTests : BunitContext
 
             var rule = (await Store.GetAllAsync()).Single().SheetRules.Single();
             rule.SheetName.Should().Be("AUTRES JOINTS TOUCHES");
-            rule.HeaderFields.Single().Cell.Sheet.Should().Be("AUTRES JOINTS TOUCHES");
         });
 
     [Fact]

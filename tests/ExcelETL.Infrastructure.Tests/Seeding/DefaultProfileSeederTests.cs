@@ -214,18 +214,17 @@ public class DefaultProfileSeederTests
         procedure.HeaderFields.Should().HaveCount(3);
 
         var nomMad = procedure.HeaderFields.Single(f => f.Name == "nomMAD");
-        nomMad.Cell.Sheet.Should().Be("PROCEDURE");
-        nomMad.Cell.Range.Should().Be("M2:O2");
+        nomMad.CellRange.Should().Be("M2:O2");
         nomMad.StripReperePrefix.Should().BeTrue();
         nomMad.DateFormat.Should().BeNull();
 
         var revision = procedure.HeaderFields.Single(f => f.Name == "revision");
-        revision.Cell.Range.Should().Be("P2:Q2");
+        revision.CellRange.Should().Be("P2:Q2");
         revision.StripReperePrefix.Should().BeFalse();
         revision.DateFormat.Should().BeNull();
 
         var dateRev = procedure.HeaderFields.Single(f => f.Name == "dateRev");
-        dateRev.Cell.Range.Should().Be("R2:T2");
+        dateRev.CellRange.Should().Be("R2:T2");
         dateRev.StripReperePrefix.Should().BeFalse();
         dateRev.DateFormat.Should().Be("dd/MM/yyyy");
 
@@ -238,20 +237,18 @@ public class DefaultProfileSeederTests
         autresJointsTouches.HeaderFields.Should().ContainSingle();
         var ajtRepereEcho = autresJointsTouches.HeaderFields.Single();
         ajtRepereEcho.Name.Should().Be("repereEcho");
-        ajtRepereEcho.Cell.Sheet.Should().Be("AUTRES JOINTS TOUCHES");
-        ajtRepereEcho.Cell.Range.Should().Be("N6");
+        ajtRepereEcho.CellRange.Should().Be("N6");
         autresJointsTouches.HeaderComposites.Should().BeEmpty();
 
         // Lot 084.6 (G6, G16): every element sheet declares its repère echo; DIVERS also its zone.
         var divers = profile.SheetRules.Single(r => r.SheetName == "DIVERS");
-        divers.HeaderFields.Select(f => (f.Name, f.Cell.Sheet, f.Cell.Range)).Should().Equal(
-            ("repereEcho", "DIVERS", "N6"), ("zone", "DIVERS", "B6:E6"));
+        divers.HeaderFields.Select(f => (f.Name, f.CellRange)).Should().Equal(("repereEcho", "N6"), ("zone", "B6:E6"));
         divers.HeaderComposites.Should().BeEmpty();
 
         foreach (var (sheetName, range) in new[] { ("ISOLEMENT", "K6:T6"), ("PLATINES", "K6:U6"), ("ORIFICES CAPACITES", "K6:U6") })
         {
             var rule = profile.SheetRules.Single(r => r.SheetName == sheetName);
-            rule.HeaderFields.Select(f => (f.Name, f.Cell.Sheet, f.Cell.Range)).Should().Equal(("repereEcho", sheetName, range));
+            rule.HeaderFields.Select(f => (f.Name, f.CellRange)).Should().Equal(("repereEcho", range));
             rule.HeaderComposites.Should().BeEmpty();
         }
     }

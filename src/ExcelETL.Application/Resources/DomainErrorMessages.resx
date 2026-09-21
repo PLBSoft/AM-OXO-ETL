@@ -40,9 +40,6 @@
   <data name="BlockFieldDefinition_RowOffsetEndBeforeStart" xml:space="preserve">
     <value>Row offset end must not be before row offset start.</value>
   </data>
-  <data name="RepeatingBlockLocator_EmptySheet" xml:space="preserve">
-    <value>Sheet must not be empty.</value>
-  </data>
   <data name="RepeatingBlockLocator_NonPositiveFirstBlockStartRow" xml:space="preserve">
     <value>First block start row must be positive.</value>
   </data>
@@ -112,9 +109,6 @@
   <data name="SheetExtractionRule_EmptySheetName" xml:space="preserve">
     <value>Sheet name must not be empty.</value>
   </data>
-  <data name="SheetExtractionRule_SheetNameLocatorMismatch" xml:space="preserve">
-    <value>Sheet name '{0}' must match the locator's sheet '{1}'.</value>
-  </data>
   <data name="SheetExtractionRule_HeaderCompositeReferencesUnknownField" xml:space="preserve">
     <value>Header composite rule '{0}' references unknown placeholder '{1}'.</value>
   </data>
@@ -136,10 +130,7 @@
   <data name="HeaderCompositeRule_EmptyTemplate" xml:space="preserve">
     <value>Template must not be empty.</value>
   </data>
-  <data name="DirectCell_EmptySheet" xml:space="preserve">
-    <value>Sheet must not be empty.</value>
-  </data>
-  <data name="DirectCell_InvalidRange" xml:space="preserve">
+  <data name="HeaderFieldRule_InvalidCellRange" xml:space="preserve">
     <value>Range must be a valid Excel cell reference (e.g. 'B4') or merged range (e.g. 'B4:D4').</value>
   </data>
   <data name="ExportProfile_EmptyName" xml:space="preserve">

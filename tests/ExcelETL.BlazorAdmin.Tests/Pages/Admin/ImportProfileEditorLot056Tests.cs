@@ -57,7 +57,6 @@ public class ImportProfileEditorLot056Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -532,13 +531,13 @@ public class ImportProfileEditorLot056Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", firstBlockStartRow: 9, step: 1,
+            firstBlockStartRow: 9, step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var headerFields = new List<HeaderFieldRule>
         {
-            new("nomMAD", new DirectCell("PROCEDURE", "M2:O2")),
-            new("revision", new DirectCell("PROCEDURE", "P2:Q2")),
+            new("nomMAD", "M2:O2"),
+            new("revision", "P2:Q2"),
         };
         var headerComposites = new List<HeaderCompositeRule> { new("Designation", "Rév {revision}") };
 

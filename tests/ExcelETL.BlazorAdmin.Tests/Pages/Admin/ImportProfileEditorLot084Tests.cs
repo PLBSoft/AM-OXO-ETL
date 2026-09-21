@@ -41,7 +41,7 @@ public class ImportProfileEditorLot084Tests : BunitContext
     private async Task<IRenderedComponent<ImportProfileEditor>> RenderExistingProfileAsync(string sheetName = "PLATINES")
     {
         var locator = new RepeatingBlockLocator(
-            sheetName, firstBlockStartRow: 17, step: 8,
+            firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("TypeElement", "B:E", 3, 5)]);
         var rule = new SheetExtractionRule(
             sheetName, locator,

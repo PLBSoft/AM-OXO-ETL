@@ -52,7 +52,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
     private static ImportProfile BuildProfileWithAjtAndPlatinesSheetRules(string name = "MAD OXO")
     {
         var ajtLocator = new RepeatingBlockLocator(
-            "AUTRES JOINTS TOUCHES", 17, 7,
+            17, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var ajtRule = new SheetExtractionRule(
             "AUTRES JOINTS TOUCHES", ajtLocator, [], ["POSE ÉTIQUETTES"], [], [],
@@ -60,7 +60,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
 
         // Lot 084 (G10): the couleur is an optional block field named "CouleurEtiquette".
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8,
+            17, 8,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], []);
@@ -260,7 +260,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var platinesLocator = new RepeatingBlockLocator(
-                "PLATINES", 17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
@@ -283,12 +283,12 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var platinesLocator = new RepeatingBlockLocator(
-                "PLATINES", 17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
             var isolementLocator = new RepeatingBlockLocator(
-                "ISOLEMENT", 19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var isolementRule = new SheetExtractionRule("ISOLEMENT", isolementLocator, [], [], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [platinesRule, isolementRule]);
             await Store.SaveAsync(profile);

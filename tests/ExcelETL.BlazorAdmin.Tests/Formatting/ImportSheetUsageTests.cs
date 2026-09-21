@@ -231,7 +231,7 @@ public class ImportSheetUsageTests
         // Lot 084.1: when a point rule reads the removed field, the profile itself is now refused --
         // building it is part of what must fail.
         var run = () => RunPipeline(WithLocator(LoadSeededDefaultProfile(), sheetName, locator =>
-            new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step,
+            new RepeatingBlockLocator(locator.FirstBlockStartRow, locator.Step,
                 [.. locator.Fields.Where(f => f.Name != fieldName)])));
 
         run.Should().Throw<Exception>("the extraction service looks the field up by name (First() or an indexer)");
@@ -276,7 +276,7 @@ public class ImportSheetUsageTests
                 ? [.. rule.UnconditionalColonneNames, TestColonneName]
                 : rule.UnconditionalColonneNames,
             member == SheetRuleMember.HeaderRules
-                ? [.. rule.HeaderFields, new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(rule.SheetName, "N6"))]
+                ? [.. rule.HeaderFields, new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "N6")]
                 : rule.HeaderFields,
             rule.HeaderComposites,
             member == SheetRuleMember.CouleurEtiquette ? "VERT" : rule.DefaultCouleurEtiquette,

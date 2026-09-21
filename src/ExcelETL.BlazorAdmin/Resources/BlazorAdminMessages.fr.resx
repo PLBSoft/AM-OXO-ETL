@@ -1573,9 +1573,6 @@
   <data name="ImportProfileDetails_HeaderField_Other" xml:space="preserve">
     <value>En-tête : le champ {0} est lu en {1}{2}.</value>
   </data>
-  <data name="ImportProfileDetails_HeaderOptionOtherSheet" xml:space="preserve">
-    <value> de la feuille {0}</value>
-  </data>
   <data name="ImportProfileDetails_HeaderOptionStripPrefix" xml:space="preserve">
     <value>, préfixe {0} retiré</value>
   </data>

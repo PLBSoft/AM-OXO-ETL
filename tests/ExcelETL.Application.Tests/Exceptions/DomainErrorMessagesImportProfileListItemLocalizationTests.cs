@@ -24,7 +24,7 @@ public class DomainErrorMessagesImportProfileListItemLocalizationTests
 
     private static SheetExtractionRule ValidRule() => new(
         "ISOLEMENT",
-        new RepeatingBlockLocator("ISOLEMENT", 19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]),
+        new RepeatingBlockLocator(19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]),
         [],
         [],
         [],

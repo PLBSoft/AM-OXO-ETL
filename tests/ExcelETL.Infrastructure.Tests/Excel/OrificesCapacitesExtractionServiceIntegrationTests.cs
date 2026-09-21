@@ -40,7 +40,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     private static SheetExtractionRule CreateSheetRule(
         BlockFieldDefinition? couleurEtiquetteCell = null, IReadOnlyList<string>? allowedCouleursEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8,
+        new RepeatingBlockLocator(17, 8,
         [
             new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
@@ -49,7 +49,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         ]),
         [],
         UnconditionalColonneNames,
-        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "K6:U6"))], [],
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")], [],
         allowedCouleursEtiquette: allowedCouleursEtiquette);
 
     [Fact]

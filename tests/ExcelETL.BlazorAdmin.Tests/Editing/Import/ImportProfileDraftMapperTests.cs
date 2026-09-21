@@ -30,7 +30,7 @@ public class ImportProfileDraftMapperTests
     private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8,
+            17, 8,
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0, isRequired: false),
                 new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false),
@@ -43,7 +43,7 @@ public class ImportProfileDraftMapperTests
                 new ConditionalPointRule("Designation", ConditionOperator.IsNotBlank, null, "RENSEIGNÉ"),
             ],
             unconditionalColonneNames: ["PROLOCK VANNES"],
-            headerFields: [new HeaderFieldRule("nomMAD", new DirectCell("PLATINES", "M2:O2"), stripReperePrefix: true, dateFormat: "dd/MM/yyyy")],
+            headerFields: [new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true, dateFormat: "dd/MM/yyyy")],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {nomMAD}")],
             defaultCouleurEtiquette: "BLEUE",
             allowedCouleursEtiquette: ["ROUGE", "BLANC"],
@@ -391,7 +391,6 @@ public class ImportProfileDraftMapperTests
         rule.Locator.Fields.Select(f => f.Name).Should().Equal("Identification", "Designation");
         rule.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES");
         rule.PointRules.Should().ContainSingle();
-        rule.HeaderFields.Single().Cell.Sheet.Should().Be("ISOLEMENT");
         rule.HeaderComposites.Should().ContainSingle();
         ruleDraft.Fields.Should().HaveCount(2);
         DraftJson.IsPristine(ruleDraft.PendingField).Should().BeTrue();
@@ -437,17 +436,6 @@ public class ImportProfileDraftMapperTests
     // ------------------------------------------------------------------------------------------
     // Preserved behaviors of the pre-draft forms.
     // ------------------------------------------------------------------------------------------
-
-    [Fact]
-    public void ConvertSheetRule_HeaderFieldCellSheet_IsAlwaysTheRuleSheetName()
-    {
-        var ruleDraft = MinimalValidRuleDraft();
-        ruleDraft.HeaderFields.Add(new HeaderFieldRuleDraft { Name = "nomMAD", Range = "M2:O2" });
-
-        var result = ImportProfileDraftMapper.ConvertSheetRule(ruleDraft);
-
-        result.Value!.HeaderFields.Single().Cell.Sheet.Should().Be("ISOLEMENT");
-    }
 
     [Fact]
     public void ConvertSheetRule_BlankOptionalScalars_BecomeNull()

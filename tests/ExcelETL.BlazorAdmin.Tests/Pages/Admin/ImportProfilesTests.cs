@@ -78,7 +78,6 @@ public class ImportProfilesTests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -92,7 +91,6 @@ public class ImportProfilesTests : BunitContext
     private static ImportProfile BuildProfileWithId(Guid id, string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -140,7 +138,7 @@ public class ImportProfilesTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             static RepeatingBlockLocator BuildLocator(string sheet) => new(
-                sheet, firstBlockStartRow: 9, step: 7,
+                firstBlockStartRow: 9, step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var profile = new ImportProfile(
                 "MAD OXO multi", "MAD TRAVAUX", [], [],

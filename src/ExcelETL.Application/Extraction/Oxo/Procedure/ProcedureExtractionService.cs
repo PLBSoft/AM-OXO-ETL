@@ -65,7 +65,7 @@ public sealed class ProcedureExtractionService(
         var designation = header.Composites[ProcedureHeaderFieldNames.Designation]!;
 
         var equipement = new EquipementPivot(repere, designation, equipementTypeElementNom, sourceSheetName: sheet);
-        var (tachesMultiples, realTaskFields) = ReadTachesMultiples(workbookReader, sheetRule.Locator);
+        var (tachesMultiples, realTaskFields) = ReadTachesMultiples(workbookReader, sheet, sheetRule.Locator);
 
         // Lot 082: the Equipement's Points are the PROCEDURE rule's own unconditional Colonnes -- never
         // ImportProfile.DefaultTableaux, which only fills the "Tableaux" column (lot U3 used to turn
@@ -146,7 +146,7 @@ public sealed class ProcedureExtractionService(
         items.Count == 1 ? items[0] : string.Join(", ", items.Take(items.Count - 1)) + " et " + items[^1];
 
     private static string FindHeaderFieldCellRange(SheetExtractionRule sheetRule, string headerFieldName) =>
-        sheetRule.HeaderFields.First(f => f.Name == headerFieldName).Cell.Range;
+        sheetRule.HeaderFields.First(f => f.Name == headerFieldName).CellRange;
 
     // Lot 083 (docs/tickets/tickets-tdd-lot-083-points-conditionnels-procedure-taches.md): a Colonne's
     // rules are satisfied when at least one real task matches one of them (E1/E3). No warning when none
@@ -163,7 +163,7 @@ public sealed class ProcedureExtractionService(
     // Also returns, for each real task (Ordre filled in -- section-title rows excluded, lot 083 E2),
     // its raw block field values keyed by field name, for the conditional Point rules.
     private (List<TacheMultiplePivot> TachesMultiples, List<IReadOnlyDictionary<string, string>> RealTaskFields)
-        ReadTachesMultiples(IWorkbookReader workbookReader, RepeatingBlockLocator locator)
+        ReadTachesMultiples(IWorkbookReader workbookReader, string sheet, RepeatingBlockLocator locator)
     {
         var actionField = FindField(locator, ProcedureFieldNames.Action);
         var ordreField = FindField(locator, ProcedureFieldNames.Ordre);
@@ -180,7 +180,7 @@ public sealed class ProcedureExtractionService(
         {
             var blockStartRow = locator.FirstBlockStartRow + blockIndex * locator.Step;
             var action = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(actionField, blockStartRow));
+                sheet, BlockFieldRangeCalculator.BuildRange(actionField, blockStartRow));
 
             if (string.IsNullOrWhiteSpace(action))
             {
@@ -188,15 +188,15 @@ public sealed class ProcedureExtractionService(
             }
 
             var ordreRaw = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(ordreField, blockStartRow));
+                sheet, BlockFieldRangeCalculator.BuildRange(ordreField, blockStartRow));
             var acteur = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(acteurField, blockStartRow)) ?? "";
+                sheet, BlockFieldRangeCalculator.BuildRange(acteurField, blockStartRow)) ?? "";
             var risques = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(risquesField, blockStartRow)) ?? "";
+                sheet, BlockFieldRangeCalculator.BuildRange(risquesField, blockStartRow)) ?? "";
             var aliasRaw = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(aliasField, blockStartRow));
+                sheet, BlockFieldRangeCalculator.BuildRange(aliasField, blockStartRow));
             var dateValidationRaw = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(dateValidationField, blockStartRow));
+                sheet, BlockFieldRangeCalculator.BuildRange(dateValidationField, blockStartRow));
 
             var estFactice = string.IsNullOrWhiteSpace(ordreRaw);
             var ordre = int.TryParse(ordreRaw, out var parsedOrdre) ? parsedOrdre : (int?)null;

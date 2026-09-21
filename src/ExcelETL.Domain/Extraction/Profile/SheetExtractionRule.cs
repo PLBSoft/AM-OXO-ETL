@@ -92,14 +92,6 @@ public sealed class SheetExtractionRule
                 DomainErrorCode.SheetExtractionRule_BlankAllowedCouleurEtiquette);
         }
 
-        if (sheetName != locator.Sheet)
-        {
-            throw new DomainRuleViolationException(
-                $"Sheet name '{sheetName}' must match the locator's sheet '{locator.Sheet}'.",
-                DomainErrorCode.SheetExtractionRule_SheetNameLocatorMismatch,
-                sheetName, locator.Sheet);
-        }
-
         var headerFieldNames = headerFields.Select(f => f.Name).ToHashSet();
         foreach (var composite in headerComposites)
         {

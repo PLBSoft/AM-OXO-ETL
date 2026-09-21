@@ -50,7 +50,7 @@ public class ImportProfileEditorLot057Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
+            firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -63,13 +63,13 @@ public class ImportProfileEditorLot057Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var isolementLocator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
+            firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8,
+            firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);

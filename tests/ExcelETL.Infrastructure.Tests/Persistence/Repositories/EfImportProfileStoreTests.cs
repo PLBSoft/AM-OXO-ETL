@@ -22,7 +22,6 @@ public class EfImportProfileStoreTests
         IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields:
@@ -68,7 +67,6 @@ public class EfImportProfileStoreTests
         rule.SheetName.Should().Be("ISOLEMENT");
         rule.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES", "DEPROLOCK VANNES");
 
-        rule.Locator.Sheet.Should().Be("ISOLEMENT");
         rule.Locator.FirstBlockStartRow.Should().Be(9);
         rule.Locator.Step.Should().Be(7);
         rule.Locator.Fields.Should().HaveCount(3);
@@ -142,7 +140,7 @@ public class EfImportProfileStoreTests
     public async Task SaveAsync_WithMultipleSheetRules_PersistsEachRulesNestedDataIndependently()
     {
         var isolementLocator = new RepeatingBlockLocator(
-            "ISOLEMENT", 9, 7,
+            9, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator,
@@ -150,7 +148,7 @@ public class EfImportProfileStoreTests
             ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []);
 
         var diversLocator = new RepeatingBlockLocator(
-            "DIVERS", 6, 3,
+            6, 3,
             [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
         var diversRule = new SheetExtractionRule(
             "DIVERS", diversLocator,
@@ -185,14 +183,14 @@ public class EfImportProfileStoreTests
         // 47.3: HeaderFieldRule (direct, incl. StripReperePrefix/DateFormat) + HeaderCompositeRule
         // (template referencing a HeaderFieldRule.Name) must round-trip through EF Core intact.
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", 9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+            9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
         var sheetRule = new SheetExtractionRule(
             "PROCEDURE", locator, [], [],
             headerFields:
             [
-                new HeaderFieldRule("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
-                new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+                new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true),
+                new HeaderFieldRule("revision", "P2:Q2"),
+                new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")
             ],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")]);
         var profile = new ImportProfile("Profil avec en-têtes", "MAD TRAVAUX", [], [], [sheetRule]);
@@ -205,13 +203,12 @@ public class EfImportProfileStoreTests
         reloadedRule.HeaderFields.Should().HaveCount(3);
 
         var nomMad = reloadedRule.HeaderFields.Single(f => f.Name == "nomMAD");
-        nomMad.Cell.Sheet.Should().Be("PROCEDURE");
-        nomMad.Cell.Range.Should().Be("M2:O2");
+        nomMad.CellRange.Should().Be("M2:O2");
         nomMad.StripReperePrefix.Should().BeTrue();
         nomMad.DateFormat.Should().BeNull();
 
         var dateRev = reloadedRule.HeaderFields.Single(f => f.Name == "dateRev");
-        dateRev.Cell.Range.Should().Be("R2:T2");
+        dateRev.CellRange.Should().Be("R2:T2");
         dateRev.StripReperePrefix.Should().BeFalse();
         dateRev.DateFormat.Should().Be("dd/MM/yyyy");
 
@@ -243,7 +240,7 @@ public class EfImportProfileStoreTests
     {
         // Client feedback (2026-09): a plain nullable scalar.
         var locator = new RepeatingBlockLocator(
-            "AUTRES JOINTS TOUCHES", 17, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+            17, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var sheetRule = new SheetExtractionRule(
             "AUTRES JOINTS TOUCHES", locator, [], ["POSE ÉTIQUETTES"], [], [], defaultCouleurEtiquette: "BLEUE");
         var profile = new ImportProfile("Profil couleur etiquette par defaut", "MAD TRAVAUX", [], [], [sheetRule]);
@@ -274,7 +271,7 @@ public class EfImportProfileStoreTests
         // required-but-possibly-empty one (UnconditionalColonneNames) -- null and empty are two
         // genuinely different states here.
         var locator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+            17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var sheetRule = new SheetExtractionRule(
             "PLATINES", locator, [], ["POSE ÉTIQUETTES"], [], [],
             allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
@@ -329,7 +326,7 @@ public class EfImportProfileStoreTests
         await store.SaveAsync(original);
 
         var editedLocator = new RepeatingBlockLocator(
-            "DIVERS", 6, 3,
+            6, 3,
             [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var editedRule = new SheetExtractionRule("DIVERS", editedLocator, [], [], [], []);
         var edited = new ImportProfile(
@@ -449,7 +446,7 @@ public class EfImportProfileStoreTests
     public async Task SaveAsync_WithLot084Settings_RoundTripsOptionalFieldWarningFlagAndIsNotBlankRule()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8,
+            firstBlockStartRow: 17, step: 8,
             fields:
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1),

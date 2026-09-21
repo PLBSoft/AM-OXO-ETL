@@ -25,7 +25,7 @@ public class HeaderRuleResolverTests
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<HeaderFieldRule> headerFields, IReadOnlyList<HeaderCompositeRule> headerComposites) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]),
+        new RepeatingBlockLocator(9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]),
         [],
         [],
         headerFields,
@@ -34,7 +34,7 @@ public class HeaderRuleResolverTests
     [Fact]
     public void Resolve_WithDirectFieldNoTransforms_ReturnsRawValueAsIs()
     {
-        var rule = CreateSheetRule([new HeaderFieldRule("repereEcho", new DirectCell(Sheet, "N6"))], []);
+        var rule = CreateSheetRule([new HeaderFieldRule("repereEcho", "N6")], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?> { ["N6"] = "38-C7401" });
 
         var result = _sut.Resolve(workbookReader.Object, rule, ReperePrefix);
@@ -48,7 +48,7 @@ public class HeaderRuleResolverTests
     public void Resolve_WithStripReperePrefixTrue_RemovesOnlyTheProfilePrefix()
     {
         var rule = CreateSheetRule(
-            [new HeaderFieldRule("nomMAD", new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true)], []);
+            [new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true)], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?> { ["M2:O2"] = "MAD-OXO-38-C7401" });
 
         var result = _sut.Resolve(workbookReader.Object, rule, ReperePrefix);
@@ -60,7 +60,7 @@ public class HeaderRuleResolverTests
     public void Resolve_WithStripReperePrefixTrueAndValueNotStartingWithPrefix_ReturnsNullValueAndErrorMessage()
     {
         var rule = CreateSheetRule(
-            [new HeaderFieldRule("nomMAD", new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true)], []);
+            [new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true)], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?> { ["M2:O2"] = "OTHER-38-C7401" });
 
         var result = _sut.Resolve(workbookReader.Object, rule, ReperePrefix);
@@ -74,7 +74,7 @@ public class HeaderRuleResolverTests
     public void Resolve_WithDateFormat_ReformatsTheDateExactly()
     {
         var rule = CreateSheetRule(
-            [new HeaderFieldRule("dateRev", new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")], []);
+            [new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?> { ["R2:T2"] = "12/12/2025 00:00:00" });
 
         var result = _sut.Resolve(workbookReader.Object, rule, ReperePrefix);
@@ -88,7 +88,7 @@ public class HeaderRuleResolverTests
     public void Resolve_WithDateFormatAndUnparsableRawValue_ReturnsNullValueAndErrorMessage(string? rawDate)
     {
         var rule = CreateSheetRule(
-            [new HeaderFieldRule("dateRev", new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")], []);
+            [new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?> { ["R2:T2"] = rawDate });
 
         var result = _sut.Resolve(workbookReader.Object, rule, ReperePrefix);
@@ -102,8 +102,8 @@ public class HeaderRuleResolverTests
     {
         var rule = CreateSheetRule(
         [
-            new HeaderFieldRule("revision", new DirectCell(Sheet, "P2:Q2")),
-            new HeaderFieldRule("dateRev", new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+            new HeaderFieldRule("revision", "P2:Q2"),
+            new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")
         ],
         [
             new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")
@@ -124,7 +124,7 @@ public class HeaderRuleResolverTests
     {
         var rule = CreateSheetRule(
         [
-            new HeaderFieldRule("dateRev", new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+            new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")
         ],
         [
             new HeaderCompositeRule("Designation", "Rév du {dateRev}")
@@ -141,8 +141,8 @@ public class HeaderRuleResolverTests
     {
         // Anti-hardcoding guard-rail (ticket 47.5's own pattern, Lot C1's EquipementTypeElementNom
         // precedent): the resolver must never assume a literal cell coordinate.
-        var ruleA = CreateSheetRule([new HeaderFieldRule("nomMAD", new DirectCell(Sheet, "M2:O2"))], []);
-        var ruleB = CreateSheetRule([new HeaderFieldRule("nomMAD", new DirectCell(Sheet, "X9:Y9"))], []);
+        var ruleA = CreateSheetRule([new HeaderFieldRule("nomMAD", "M2:O2")], []);
+        var ruleB = CreateSheetRule([new HeaderFieldRule("nomMAD", "X9:Y9")], []);
         var workbookReader = CreateWorkbookReader(new Dictionary<string, string?>
         {
             ["M2:O2"] = "FROM-M2O2",

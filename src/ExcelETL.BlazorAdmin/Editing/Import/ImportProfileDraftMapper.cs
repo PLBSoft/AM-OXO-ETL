@@ -21,10 +21,6 @@ namespace ExcelETL.BlazorAdmin.Editing.Import;
 //   Application names, canonical Excel ranges), so the summaries show what the Domain stores.
 public static class ImportProfileDraftMapper
 {
-    // Never read: a header field's real sheet is always its rule's sheet, applied when the rule is
-    // built. Lets a header field be validated on its own before its rule has a sheet name.
-    private const string PendingHeaderFieldSheet = "__pending__";
-
     public static ImportProfileDraft FromDomain(ImportProfile profile) => new()
     {
         Id = profile.Id,
@@ -68,7 +64,7 @@ public static class ImportProfileDraftMapper
             [
                 .. rule.HeaderFields.Select(h => new HeaderFieldRuleDraft
                 {
-                    Name = h.Name, Range = h.Cell.Range, DateFormat = h.DateFormat ?? string.Empty, StripReperePrefix = h.StripReperePrefix,
+                    Name = h.Name, Range = h.CellRange, DateFormat = h.DateFormat ?? string.Empty, StripReperePrefix = h.StripReperePrefix,
                 }),
             ],
             HeaderComposites = [.. rule.HeaderComposites.Select(c => new HeaderCompositeRuleDraft { Name = c.Name, Template = c.Template })],
@@ -201,11 +197,11 @@ public static class ImportProfileDraftMapper
 
         try
         {
-            var locator = new RepeatingBlockLocator(draft.SheetName, startRow, draft.Step, fields);
+            var locator = new RepeatingBlockLocator(startRow, draft.Step, fields);
 
             var rule = new SheetExtractionRule(
                 draft.SheetName, locator, pointRules, unconditionalColonneNames,
-                [.. headerFields.Select(h => new HeaderFieldRule(h.Name, new DirectCell(draft.SheetName, h.Cell.Range), h.StripReperePrefix, h.DateFormat))],
+                headerFields,
                 headerComposites,
                 defaultCouleurEtiquette: NullIfBlank(draft.DefaultCouleurEtiquette),
                 allowedCouleursEtiquette: allowedCouleursEtiquette,
@@ -263,7 +259,7 @@ public static class ImportProfileDraftMapper
         try
         {
             return ConversionResult<HeaderFieldRule>.Success(new HeaderFieldRule(
-                draft.Name, new DirectCell(PendingHeaderFieldSheet, draft.Range), draft.StripReperePrefix, NullIfBlank(draft.DateFormat)));
+                draft.Name, draft.Range, draft.StripReperePrefix, NullIfBlank(draft.DateFormat)));
         }
         catch (DomainValidationException ex)
         {

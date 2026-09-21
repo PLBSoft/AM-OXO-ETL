@@ -28,7 +28,7 @@ public class ProcedureExtractionServiceTests
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<string>? unconditionalColonneNames = null, IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1,
+        new RepeatingBlockLocator(9, 1,
         [
             new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -40,9 +40,9 @@ public class ProcedureExtractionServiceTests
         pointRules ?? [],
         unconditionalColonneNames ?? [],
         [
-            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
-            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
-            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+            new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "M2:O2", stripReperePrefix: true),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "P2:Q2"),
+            new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "R2:T2", dateFormat: "dd/MM/yyyy")
         ],
         [
             new HeaderCompositeRule(
@@ -274,15 +274,12 @@ public class ProcedureExtractionServiceTests
     {
         // Lot 070 (docs/tickets/tickets-tdd-lot-070-colonne-feuille-source-parents-enfants.md):
         // SourceSheetName must come from sheetRule.SheetName, never a literal "PROCEDURE" baked into
-        // the service -- same anti-hardcoding pattern as EquipementTypeElementNom (C1) above. The
-        // Locator's own sheet name must differ from PROCEDURE too, but the header-field cells keep
-        // targeting "PROCEDURE" so the existing Mock<IWorkbookReader> setup (keyed on that literal
-        // sheet name) still answers -- SheetExtractionRule only requires SheetName == Locator.Sheet,
-        // never that HeaderFieldRule.Cell.Sheet matches too.
+        // the service -- same anti-hardcoding pattern as EquipementTypeElementNom (C1) above. Since lot
+        // 084 (G13) every cell of the rule is read in that sheet, so the workbook answers under it.
         const string AlternateSheetName = "PROC_ALT";
         var sheetRule = new SheetExtractionRule(
             AlternateSheetName,
-            new RepeatingBlockLocator(AlternateSheetName, 9, 1,
+            new RepeatingBlockLocator(9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -294,9 +291,9 @@ public class ProcedureExtractionServiceTests
             [],
             [],
             [
-                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "M2:O2", stripReperePrefix: true),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "P2:Q2"),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "R2:T2", dateFormat: "dd/MM/yyyy")
             ],
             [
                 new HeaderCompositeRule(
@@ -305,7 +302,9 @@ public class ProcedureExtractionServiceTests
             ]);
         var cells = BaseHeaderCells();
         cells["C9:L9"] = null;
-        var workbookReader = CreateWorkbookReader(cells);
+        var workbookReader = new Mock<IWorkbookReader>();
+        workbookReader.Setup(r => r.ReadCellValue(AlternateSheetName, It.IsAny<string>()))
+            .Returns((string _, string range) => cells.GetValueOrDefault(range));
 
         var result = _sut.Extract(workbookReader.Object, sheetRule, ReperePrefix, EquipementTypeElementNom);
 
@@ -321,7 +320,7 @@ public class ProcedureExtractionServiceTests
         // literal baked into the service.
         var sheetRule = new SheetExtractionRule(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 9, 1,
+            new RepeatingBlockLocator(9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -333,9 +332,9 @@ public class ProcedureExtractionServiceTests
             [],
             [],
             [
-                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "X1:Y1"), stripReperePrefix: true),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "X2")),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "X3"), dateFormat: "dd/MM/yyyy")
+                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "X1:Y1", stripReperePrefix: true),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "X2"),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "X3", dateFormat: "dd/MM/yyyy")
             ],
             [
                 new HeaderCompositeRule(
@@ -363,7 +362,7 @@ public class ProcedureExtractionServiceTests
         // Lot 047, 47.5: two profiles, two gabarits -> two different results.
         var sheetRule = new SheetExtractionRule(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 9, 1,
+            new RepeatingBlockLocator(9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -375,9 +374,9 @@ public class ProcedureExtractionServiceTests
             [],
             [],
             [
-                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell(Sheet, "M2:O2"), stripReperePrefix: true),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell(Sheet, "P2:Q2")),
-                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell(Sheet, "R2:T2"), dateFormat: "dd/MM/yyyy")
+                new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "M2:O2", stripReperePrefix: true),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "P2:Q2"),
+                new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "R2:T2", dateFormat: "dd/MM/yyyy")
             ],
             [
                 new HeaderCompositeRule(

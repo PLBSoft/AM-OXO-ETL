@@ -17,9 +17,8 @@ public class RepeatingBlockLocatorTests
     {
         var fields = ValidFields;
 
-        var locator = new RepeatingBlockLocator("ISOLEMENT", 19, 7, fields);
+        var locator = new RepeatingBlockLocator(19, 7, fields);
 
-        locator.Sheet.Should().Be("ISOLEMENT");
         locator.FirstBlockStartRow.Should().Be(19);
         locator.Step.Should().Be(7);
         locator.Fields.Should().BeEquivalentTo(fields);
@@ -28,9 +27,9 @@ public class RepeatingBlockLocatorTests
     [Fact]
     public void Constructor_WithSameArguments_ButDifferentFieldsListInstances_ProducesStructurallyEqualInstances()
     {
-        var first = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var first = new RepeatingBlockLocator(19, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-        var second = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var second = new RepeatingBlockLocator(19, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         first.Should().Be(second);
@@ -40,25 +39,12 @@ public class RepeatingBlockLocatorTests
     [Fact]
     public void Constructor_WithDifferentFields_ProducesUnequalInstances()
     {
-        var first = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var first = new RepeatingBlockLocator(19, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
-        var second = new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+        var second = new RepeatingBlockLocator(19, 7,
             [new BlockFieldDefinition("Identification", "B:F", 0, 1)]);
 
         first.Should().NotBe(second);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void Constructor_WithInvalidSheet_ThrowsDomainValidationException(string? invalidSheet)
-    {
-        var act = () => new RepeatingBlockLocator(invalidSheet!, 19, 7, ValidFields);
-
-        act.Should().Throw<DomainValidationException>()
-            .WithParameterName("sheet")
-            .Which.ErrorCode.Should().Be(DomainErrorCode.RepeatingBlockLocator_EmptySheet);
     }
 
     [Theory]
@@ -66,7 +52,7 @@ public class RepeatingBlockLocatorTests
     [InlineData(-1)]
     public void Constructor_WithNonPositiveFirstBlockStartRow_ThrowsDomainArgumentOutOfRangeException(int invalidRow)
     {
-        var act = () => new RepeatingBlockLocator("ISOLEMENT", invalidRow, 7, ValidFields);
+        var act = () => new RepeatingBlockLocator(invalidRow, 7, ValidFields);
 
         act.Should().Throw<DomainArgumentOutOfRangeException>()
             .WithParameterName("firstBlockStartRow")
@@ -78,7 +64,7 @@ public class RepeatingBlockLocatorTests
     [InlineData(-1)]
     public void Constructor_WithNonPositiveStep_ThrowsDomainArgumentOutOfRangeException(int invalidStep)
     {
-        var act = () => new RepeatingBlockLocator("ISOLEMENT", 19, invalidStep, ValidFields);
+        var act = () => new RepeatingBlockLocator(19, invalidStep, ValidFields);
 
         act.Should().Throw<DomainArgumentOutOfRangeException>()
             .WithParameterName("step")
@@ -88,7 +74,7 @@ public class RepeatingBlockLocatorTests
     [Fact]
     public void Constructor_WithNullFields_ThrowsArgumentNullException()
     {
-        var act = () => new RepeatingBlockLocator("ISOLEMENT", 19, 7, null!);
+        var act = () => new RepeatingBlockLocator(19, 7, null!);
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -96,7 +82,7 @@ public class RepeatingBlockLocatorTests
     [Fact]
     public void Constructor_WithEmptyFields_ThrowsDomainValidationException()
     {
-        var act = () => new RepeatingBlockLocator("ISOLEMENT", 19, 7, []);
+        var act = () => new RepeatingBlockLocator(19, 7, []);
 
         act.Should().Throw<DomainValidationException>()
             .WithParameterName("fields")
@@ -110,7 +96,7 @@ public class RepeatingBlockLocatorTests
 
         foreach (var step in confirmedSteps)
         {
-            var locator = new RepeatingBlockLocator("SHEET", 1, step, ValidFields);
+            var locator = new RepeatingBlockLocator(1, step, ValidFields);
             locator.Step.Should().Be(step);
         }
     }

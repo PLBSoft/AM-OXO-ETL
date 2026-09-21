@@ -9,7 +9,7 @@ namespace ExcelETL.Domain.Tests.Extraction.Profile;
 public class SheetExtractionRuleTests
 {
     private static RepeatingBlockLocator Locator(string sheet) => new(
-        sheet, 19, 7,
+        19, 7,
         [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
 
     [Fact]
@@ -176,21 +176,12 @@ public class SheetExtractionRuleTests
     }
 
     [Fact]
-    public void Constructor_WithSheetNameNotMatchingLocatorSheet_ThrowsDomainRuleViolationException()
-    {
-        var act = () => new SheetExtractionRule("PLATINES", Locator("ISOLEMENT"), [], [], [], []);
-
-        act.Should().Throw<DomainRuleViolationException>()
-            .Which.ErrorCode.Should().Be(DomainErrorCode.SheetExtractionRule_SheetNameLocatorMismatch);
-    }
-
-    [Fact]
     public void Constructor_WithHeaderFieldsAndMatchingComposite_CreatesSheetExtractionRule()
     {
         IReadOnlyList<HeaderFieldRule> headerFields =
         [
-            new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-            new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+            new HeaderFieldRule("revision", "P2:Q2"),
+            new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")
         ];
         IReadOnlyList<HeaderCompositeRule> headerComposites =
         [
@@ -206,7 +197,7 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithCompositeReferencingUnknownPlaceholder_ThrowsDomainRuleViolationException()
     {
-        IReadOnlyList<HeaderFieldRule> headerFields = [new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2"))];
+        IReadOnlyList<HeaderFieldRule> headerFields = [new HeaderFieldRule("revision", "P2:Q2")];
         IReadOnlyList<HeaderCompositeRule> headerComposites = [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")];
 
         var act = () => new SheetExtractionRule("PROCEDURE", Locator("PROCEDURE"), [], [], headerFields, headerComposites);
@@ -232,7 +223,7 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithPointRuleOnABlockField_CreatesSheetExtractionRule()
     {
-        var locator = new RepeatingBlockLocator("PLATINES", 17, 8,
+        var locator = new RepeatingBlockLocator(17, 8,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1),
             new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)

@@ -30,7 +30,7 @@ public sealed partial class HeaderRuleResolver : IHeaderRuleResolver
         var fields = new Dictionary<string, HeaderFieldResolution>();
         foreach (var field in sheetRule.HeaderFields)
         {
-            var rawValue = workbookReader.ReadCellValue(field.Cell.Sheet, field.Cell.Range);
+            var rawValue = workbookReader.ReadCellValue(sheetRule.SheetName, field.CellRange);
             fields[field.Name] = ResolveField(field, rawValue, reperePrefix);
         }
 

@@ -91,7 +91,7 @@ internal static class DescriptionTestSupport
         ];
         return new SheetExtractionRule(
             sheetName,
-            new RepeatingBlockLocator(sheetName, firstBlockStartRow, step, fields),
+            new RepeatingBlockLocator(firstBlockStartRow, step, fields),
             pointRules ?? [],
             unconditionalColonneNames ?? [],
             headerFields ?? [],

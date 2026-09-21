@@ -53,7 +53,6 @@ public class ImportProfileEditorLot059Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);

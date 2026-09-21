@@ -52,7 +52,7 @@ public class ImportProfileEditorLot067Tests : BunitContext
         string name = "MAD OXO", IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", 9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+            9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
         var rule = new SheetExtractionRule("PROCEDURE", locator, [], [], [], []);
 
         return new ImportProfile(

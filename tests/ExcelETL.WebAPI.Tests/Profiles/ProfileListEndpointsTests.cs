@@ -157,7 +157,7 @@ public class ProfileListEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         [
             new SheetExtractionRule(
                 "Sheet1",
-                new RepeatingBlockLocator("Sheet1", 1, 1, [new BlockFieldDefinition("Field1", "A", 0, 0)]),
+                new RepeatingBlockLocator(1, 1, [new BlockFieldDefinition("Field1", "A", 0, 0)]),
                 [], [], [], [])
         ]);
 

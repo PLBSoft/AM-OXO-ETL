@@ -38,9 +38,9 @@ public class ImportProfileDescriptionBuilderIgnoredTests
             unconditionalColonneNames: unconditionalColonneNames,
             headerFields: headerFields ??
             [
-                new HeaderFieldRule("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
-                new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+                new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true),
+                new HeaderFieldRule("revision", "P2:Q2"),
+                new HeaderFieldRule("dateRev", "R2:T2", dateFormat: "dd/MM/yyyy")
             ],
             headerComposites: headerComposites ?? [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")]);
 
@@ -118,7 +118,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     [Fact]
     public void UnusedHeaderCompositeOnIsolement_IsReportedAsIgnored() =>
         Section(Rule("ISOLEMENT", fields: IsolementFields,
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "N6"))],
+                headerFields: [new HeaderFieldRule("repereEcho", "N6")],
                 headerComposites: [new HeaderCompositeRule("Libelle", "{repereEcho}")]))
             .Ignored.Select(i => i.Text).Should().Equal("modèle d'en-tête « Libelle »");
 
@@ -128,10 +128,10 @@ public class ImportProfileDescriptionBuilderIgnoredTests
         var rule = ProcedureRule(
             headerFields:
             [
-                new HeaderFieldRule("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
-                new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2")),
-                new HeaderFieldRule("inutile", new DirectCell("PROCEDURE", "A1"))
+                new HeaderFieldRule("nomMAD", "M2:O2", stripReperePrefix: true),
+                new HeaderFieldRule("revision", "P2:Q2"),
+                new HeaderFieldRule("dateRev", "R2:T2"),
+                new HeaderFieldRule("inutile", "A1")
             ],
             headerComposites: [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}"), new HeaderCompositeRule("Autre", "x")]);
 
@@ -142,12 +142,12 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void DefaultColourWithACell_AndAllowedColoursWithoutACell_AreReportedAsUnused()
     {
         Section(Rule("PLATINES", fields: [.. ElementFields, new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)],
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))],
+                headerFields: [new HeaderFieldRule("repereEcho", "K6:U6")],
                 defaultCouleurEtiquette: "BLEUE"))
             .Ignored.Select(i => i.Text).Should().Equal("couleur d'étiquette par défaut « BLEUE » (inutilisée : une cellule de couleur est configurée)");
 
         Section(Rule("AUTRES JOINTS TOUCHES", fields: ElementFields,
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
+                headerFields: [new HeaderFieldRule("repereEcho", "N6")],
                 defaultCouleurEtiquette: "BLEUE", allowedCouleursEtiquette: ["ROUGE"]))
             .Ignored.Select(i => i.Text).Should().Equal("couleurs d'étiquette autorisées « ROUGE » (inutilisées : aucune cellule de couleur configurée)");
     }
@@ -156,7 +156,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void UnknownSheetName_GetsASectionWithOnlyAnIgnoredNotice_AfterTheKnownSheets()
     {
         var description = Describe(Profile([Rule("MA FEUILLE", unconditionalColonneNames: ["X"]), Rule("DIVERS", fields: ElementFields,
-            headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))])]));
+            headerFields: [new HeaderFieldRule("repereEcho", "N6")])]));
 
         description.Sections.Select(s => s.Title).Should().EndWith(["Feuille DIVERS", "Feuille MA FEUILLE"]);
         var section = description.SheetSection("MA FEUILLE");
@@ -168,7 +168,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void SecondRuleWithTheSameSheetName_IsReportedAsNotProcessed()
     {
         var description = Describe(Profile([Rule("DIVERS", fields: ElementFields,
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))]),
+                headerFields: [new HeaderFieldRule("repereEcho", "N6")]),
             Rule("DIVERS", fields: ElementFields)]));
 
         var sections = description.Sections.Where(s => s.Title == "Feuille DIVERS").ToList();
@@ -179,8 +179,8 @@ public class ImportProfileDescriptionBuilderIgnoredTests
 
     [Fact]
     public void MissingRequiredHeaderNames_AreBlocking() =>
-        Section(ProcedureRule(headerFields: [new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
-                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"))],
+        Section(ProcedureRule(headerFields: [new HeaderFieldRule("revision", "P2:Q2"),
+                new HeaderFieldRule("dateRev", "R2:T2")],
                 headerComposites: [new HeaderCompositeRule("Libelle", "{revision}")]))
             .Blocking.Select(b => b.Text).Should().Equal(
                 "Champ d'en-tête « nomMAD » absent : l'extraction de cette feuille échoue.",

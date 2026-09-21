@@ -6,8 +6,7 @@ namespace ExcelETL.Domain.Generation.Profile;
 // A Point column of a generated sheet -- ColonneNom matches PointPivot.ColonneNom to decide whether
 // MarkValue is written for a given row. MarkValue itself is validated non-blank (not requested
 // verbatim by the ticket, but an empty mark would be visually indistinguishable from "no Point" once
-// written to a cell -- the same kind of self-consistency guard as
-// SheetExtractionRule.SheetName/Locator.Sheet on the import side).
+// written to a cell).
 public sealed record PointColumnDefinition
 {
     public const string DefaultMarkValue = ColumnMarking.DefaultMarkValue;

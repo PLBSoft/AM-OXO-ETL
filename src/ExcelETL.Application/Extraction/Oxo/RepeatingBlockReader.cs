@@ -7,12 +7,14 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // docs/modele-domaine-import-profile-2026-07-16.md §1.2). Reads the stop field first and bails out
 // before touching the block's other fields, both for efficiency and so a block that fails the stop
 // check never gets misreported as a "partially empty" one. The stop field is the caller's (lot 084, G12):
-// the locator carries no stop-field setting.
+// the locator carries no stop-field setting. Same for the sheet name (G13).
 public sealed class RepeatingBlockReader : IRepeatingBlockReader
 {
-    public RepeatingBlockReadResult Read(RepeatingBlockLocator locator, string stopFieldName, IWorkbookReader workbookReader)
+    public RepeatingBlockReadResult Read(
+        RepeatingBlockLocator locator, string sheetName, string stopFieldName, IWorkbookReader workbookReader)
     {
         ArgumentNullException.ThrowIfNull(locator);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sheetName);
         ArgumentException.ThrowIfNullOrWhiteSpace(stopFieldName);
         ArgumentNullException.ThrowIfNull(workbookReader);
 
@@ -28,7 +30,7 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
         {
             var blockStartRow = locator.FirstBlockStartRow + blockIndex * locator.Step;
             var stopValue = workbookReader.ReadCellValue(
-                locator.Sheet, BlockFieldRangeCalculator.BuildRange(stopField, blockStartRow));
+                sheetName, BlockFieldRangeCalculator.BuildRange(stopField, blockStartRow));
 
             if (string.IsNullOrWhiteSpace(stopValue))
             {
@@ -41,7 +43,7 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
             foreach (var field in otherFields)
             {
                 var value = workbookReader.ReadCellValue(
-                    locator.Sheet, BlockFieldRangeCalculator.BuildRange(field, blockStartRow));
+                    sheetName, BlockFieldRangeCalculator.BuildRange(field, blockStartRow));
                 if (string.IsNullOrWhiteSpace(value))
                 {
                     // Lot 084 (G4): an optional field left blank is read as "" and keeps the block.
@@ -63,7 +65,7 @@ public sealed class RepeatingBlockReader : IRepeatingBlockReader
             if (blankFieldNames.Count > 0)
             {
                 errors.Add(new ExtractionError(
-                    locator.Sheet, blockStartRow.ToString(), ExtractionErrorCode.RequiredFieldMissing,
+                    sheetName, blockStartRow.ToString(), ExtractionErrorCode.RequiredFieldMissing,
                     $"Block at row {blockStartRow} has required field(s) '{string.Join(", ", blankFieldNames)}' " +
                     $"empty while stop field '{stopFieldName}' is populated."));
             }

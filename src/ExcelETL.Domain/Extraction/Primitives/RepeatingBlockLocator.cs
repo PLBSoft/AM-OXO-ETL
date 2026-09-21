@@ -6,7 +6,8 @@ namespace ExcelETL.Domain.Extraction.Primitives;
 // AUTRES JOINTS TOUCHES, DIVERS, PROCEDURE) -- see docs/modele-domaine-import-profile-2026-07-16.md §1.2.
 // Fields is a list, so the default record-synthesized equality (reference equality on the list) is
 // overridden below with SequenceEqual to give true structural equality. There is no stop-field setting
-// (lot 084, G12): element sheets always stop on Identification, PROCEDURE on Action.
+// (lot 084, G12): element sheets always stop on Identification, PROCEDURE on Action. Nor a sheet name
+// (G13): the reader reads the sheet of the SheetExtractionRule that owns this locator.
 public sealed record RepeatingBlockLocator
 {
     // Backing field rather than a plain auto-property: EF Core's constructor-binding materialization
@@ -17,20 +18,13 @@ public sealed record RepeatingBlockLocator
     // since RepeatingBlockLocator is meant to stay fully immutable after construction.
     private readonly List<BlockFieldDefinition> _fields = [];
 
-    public string Sheet { get; }
     public int FirstBlockStartRow { get; }
     public int Step { get; }
     public IReadOnlyList<BlockFieldDefinition> Fields => _fields;
 
     public RepeatingBlockLocator(
-        string sheet, int firstBlockStartRow, int step, IReadOnlyList<BlockFieldDefinition> fields)
+        int firstBlockStartRow, int step, IReadOnlyList<BlockFieldDefinition> fields)
     {
-        if (string.IsNullOrWhiteSpace(sheet))
-        {
-            throw new DomainValidationException(
-                "Sheet must not be empty.", nameof(sheet), DomainErrorCode.RepeatingBlockLocator_EmptySheet);
-        }
-
         if (firstBlockStartRow <= 0)
         {
             throw new DomainArgumentOutOfRangeException(
@@ -54,7 +48,6 @@ public sealed record RepeatingBlockLocator
                 DomainErrorCode.RepeatingBlockLocator_EmptyFields);
         }
 
-        Sheet = sheet;
         FirstBlockStartRow = firstBlockStartRow;
         Step = step;
         _fields = [.. fields];
@@ -64,12 +57,10 @@ public sealed record RepeatingBlockLocator
     // afterwards, bypassing this constructor's (nonexistent) validation entirely.
     private RepeatingBlockLocator()
     {
-        Sheet = string.Empty;
     }
 
     public bool Equals(RepeatingBlockLocator? other) =>
         other is not null
-        && Sheet == other.Sheet
         && FirstBlockStartRow == other.FirstBlockStartRow
         && Step == other.Step
         && Fields.SequenceEqual(other.Fields);
@@ -77,7 +68,6 @@ public sealed record RepeatingBlockLocator
     public override int GetHashCode()
     {
         var hash = new HashCode();
-        hash.Add(Sheet);
         hash.Add(FirstBlockStartRow);
         hash.Add(Step);
         foreach (var field in Fields)

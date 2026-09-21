@@ -798,7 +798,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         [
             new SheetExtractionRule(
                 "PROCEDURE",
-                new RepeatingBlockLocator("PROCEDURE", 9, 1,
+                new RepeatingBlockLocator(9, 1,
                 [
                     new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                     new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -810,9 +810,9 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 [],
                 [],
                 [
-                    new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
-                    new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, new DirectCell("PROCEDURE", "P2:Q2")),
-                    new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+                    new HeaderFieldRule(ProcedureHeaderFieldNames.NomMad, "M2:O2", stripReperePrefix: true),
+                    new HeaderFieldRule(ProcedureHeaderFieldNames.Revision, "P2:Q2"),
+                    new HeaderFieldRule(ProcedureHeaderFieldNames.DateRev, "R2:T2", dateFormat: "dd/MM/yyyy")
                 ],
                 [
                     new HeaderCompositeRule(
@@ -821,7 +821,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 ]),
             new SheetExtractionRule(
                 "ISOLEMENT",
-                new RepeatingBlockLocator("ISOLEMENT", 19, 7,
+                new RepeatingBlockLocator(19, 7,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
@@ -830,11 +830,11 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 ]),
                 [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
                 ["PROLOCK VANNES", "DEPROLOCK VANNES"],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ISOLEMENT", "K6:T6"))], [],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:T6")], [],
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "PLATINES",
-                new RepeatingBlockLocator("PLATINES", 17, 8,
+                new RepeatingBlockLocator(17, 8,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
@@ -850,10 +850,10 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                     "RECEPTION DEBUT REL",
                     "PLATINES / TAMPONS PLEINS"
                 ],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("PLATINES", "K6:U6"))], []),
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")], []),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
-                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8,
+                new RepeatingBlockLocator(17, 8,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
@@ -866,10 +866,10 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS"
                 ],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ORIFICES CAPACITES", "K6:U6"))], []),
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")], []),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
-                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7,
+                new RepeatingBlockLocator(17, 7,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
@@ -877,12 +877,12 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 ]),
                 [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
                 ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "N6")],
                 [],
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "DIVERS",
-                new RepeatingBlockLocator("DIVERS", 9, 3,
+                new RepeatingBlockLocator(9, 3,
                 [
                     new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:G", 0, 2),
                     new BlockFieldDefinition(ElementFieldNames.Identification, "H:K", 0, 2),
@@ -899,8 +899,8 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 ],
                 [],
                 [
-                    new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6")),
-                    new HeaderFieldRule("zone", new DirectCell("DIVERS", "B6:E6"))
+                    new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "N6"),
+                    new HeaderFieldRule("zone", "B6:E6")
                 ],
                 [],
                 warnWhenNoConditionalPoint: true)

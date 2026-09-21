@@ -36,7 +36,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     // Lot 084.6: run through the generic element engine; the repère echo is a header field (G6).
     private static readonly HeaderFieldRule[] RepereEcho =
-        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "K6:U6"))];
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")];
 
     private static readonly BlockFieldDefinition[] KnownFields =
     [
@@ -47,7 +47,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, KnownFields),
+        new RepeatingBlockLocator(17, 8, KnownFields),
         [],
         UnconditionalColonneNames, RepereEcho, []);
 
@@ -104,7 +104,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     private static SheetExtractionRule CreateSheetRuleWithFieldPresenceRules() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8,
+        new RepeatingBlockLocator(17, 8,
         [
             .. KnownFields,
             new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
@@ -192,7 +192,7 @@ public class PlatinesExtractionServiceIntegrationTests
     // Lot 084.6 (G10): the couleur cell is an optional block field with a known name.
     private static SheetExtractionRule CreateSheetRuleWithCouleurEtiquetteCell() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8,
+        new RepeatingBlockLocator(17, 8,
             [.. KnownFields, new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false)]),
         [], UnconditionalColonneNames, RepereEcho, []);
 

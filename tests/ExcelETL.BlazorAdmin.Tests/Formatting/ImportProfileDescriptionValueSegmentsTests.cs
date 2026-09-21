@@ -61,7 +61,7 @@ public class ImportProfileDescriptionValueSegmentsTests
     public void HeaderFieldRange_IsACellReferenceSegment()
     {
         var sentence = Describe(Profile([Rule("DIVERS",
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))])]))
+                headerFields: [new HeaderFieldRule("repereEcho", "N6")])]))
             .SheetSection("DIVERS").Sentences[0];
 
         sentence.Content.Segments.Take(4).Should().Equal(
@@ -82,13 +82,13 @@ public class ImportProfileDescriptionValueSegmentsTests
                     new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
                     new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)
                 ],
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))],
+                headerFields: [new HeaderFieldRule("repereEcho", "K6:U6")],
                 pointRules: [new ConditionalPointRule("PoseeLe", ConditionOperator.IsNotBlank, null, "C")]),
             Rule("DIVERS", fields: [new BlockFieldDefinition("Identification", "H:K", 0, 2)],
                 headerFields:
                 [
-                    new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6")), new HeaderFieldRule("zone", new DirectCell("DIVERS", "B6:E6")),
-                    new HeaderFieldRule("inutile", new DirectCell("DIVERS", "A1"))
+                    new HeaderFieldRule("repereEcho", "N6"), new HeaderFieldRule("zone", "B6:E6"),
+                    new HeaderFieldRule("inutile", "A1")
                 ])
         ]));
 

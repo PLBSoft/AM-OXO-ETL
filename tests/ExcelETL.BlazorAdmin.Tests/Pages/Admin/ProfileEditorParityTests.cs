@@ -44,7 +44,6 @@ public class ProfileEditorParityTests : BunitContext
     private static ImportProfile BuildImportProfileWithTwoSheetRules()
     {
         var isolementLocator = new RepeatingBlockLocator(
-            "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
@@ -52,7 +51,6 @@ public class ProfileEditorParityTests : BunitContext
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES",
             firstBlockStartRow: 17,
             step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);

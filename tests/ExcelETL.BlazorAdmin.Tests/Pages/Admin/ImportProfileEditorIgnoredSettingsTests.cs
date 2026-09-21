@@ -43,7 +43,7 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
         WithCultureAsync(cultureName, () => { action(); return Task.CompletedTask; }).GetAwaiter().GetResult();
 
     private static RepeatingBlockLocator Locator(string sheet) => new(
-        sheet, 17, 8,
+        17, 8,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
             new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
@@ -53,7 +53,7 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
     // Lot 084.1: the rule's field must now be declared in the block, as the client did (optional here).
     private static SheetExtractionRule PlatinesWithConditionalRules() => new(
         "PLATINES",
-        new RepeatingBlockLocator("PLATINES", 17, 8,
+        new RepeatingBlockLocator(17, 8,
         [
             .. Locator("PLATINES").Fields,
             new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)

@@ -35,11 +35,11 @@ public class ElementSheetExtractionServiceTests
         IReadOnlyList<BlockFieldDefinition>? fields = null) =>
         new(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 17, 8,
+            new RepeatingBlockLocator(17, 8,
                 fields ?? [Identification, Designation, TypeElement, .. extraFields ?? []]),
             pointRules ?? [],
             unconditional ?? [],
-            headerFields ?? [new HeaderFieldRule("repereEcho", new DirectCell(Sheet, "K6:U6"))],
+            headerFields ?? [new HeaderFieldRule("repereEcho", "K6:U6")],
             [],
             defaultCouleurEtiquette: defaultCouleur,
             allowedCouleursEtiquette: allowedCouleurs,
@@ -243,8 +243,8 @@ public class ElementSheetExtractionServiceTests
     {
         var fields = new[] { Identification, Designation, TypeElement }.Where(f => f.Name != missingField).ToList();
         var rule = new SheetExtractionRule(
-            Sheet, new RepeatingBlockLocator(Sheet, 17, 8, fields), [], [],
-            [new HeaderFieldRule("repereEcho", new DirectCell(Sheet, "K6:U6"))], []);
+            Sheet, new RepeatingBlockLocator(17, 8, fields), [], [],
+            [new HeaderFieldRule("repereEcho", "K6:U6")], []);
 
         var act = () => _sut.Extract(Reader(TwoBlocks()), rule, "MAD-OXO-");
 
@@ -266,7 +266,7 @@ public class ElementSheetExtractionServiceTests
     {
         var cells = TwoBlocks();
         cells["N6"] = "AUTRE";
-        var rule = Rule(headerFields: [new HeaderFieldRule("repereEcho", new DirectCell(Sheet, range))]);
+        var rule = Rule(headerFields: [new HeaderFieldRule("repereEcho", range)]);
 
         var result = _sut.Extract(Reader(cells), rule, "MAD-OXO-");
 
@@ -283,8 +283,8 @@ public class ElementSheetExtractionServiceTests
         cells["C3"] = "ZONE 2";
         var rule = Rule(headerFields:
         [
-            new HeaderFieldRule("repereEcho", new DirectCell(Sheet, "K6:U6")),
-            new HeaderFieldRule("zone", new DirectCell(Sheet, range))
+            new HeaderFieldRule("repereEcho", "K6:U6"),
+            new HeaderFieldRule("zone", range)
         ]);
 
         _sut.Extract(Reader(cells), rule, "MAD-OXO-").Zone.Should().Be(expectedZone);

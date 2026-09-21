@@ -33,7 +33,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
     // hardcoded in AutresJointsTouchesExtractionService.
     private static SheetExtractionRule CreateSheetRule(string? defaultCouleurEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 7,
+        new RepeatingBlockLocator(17, 7,
         [
             new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
@@ -41,7 +41,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         ]),
         [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
         UnconditionalColonneNames,
-        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "N6")],
         [],
         defaultCouleurEtiquette: defaultCouleurEtiquette,
         warnWhenNoConditionalPoint: true);

@@ -73,7 +73,7 @@ public class ApiTestTests : BunitContext
                 new SheetExtractionRule(
                     "ISOLEMENT",
                     new RepeatingBlockLocator(
-                        "ISOLEMENT", firstBlockStartRow: 9, step: 7,
+                        firstBlockStartRow: 9, step: 7,
                         fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]),
                     pointRules: [],
                     unconditionalColonneNames: ["PROLOCK VANNES"], [], [])

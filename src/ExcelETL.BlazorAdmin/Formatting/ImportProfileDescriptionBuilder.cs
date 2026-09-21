@@ -94,7 +94,7 @@ public static class ImportProfileDescriptionBuilder
             .Where(f => !readsHeader
                 || (usage.RequiredHeaderFields.Concat(usage.OptionalHeaderFields).All(known => known.Name != f.Name)
                     && !referencedFieldNames.Contains(f.Name)))
-            .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), CellRef(f.Cell.Range)].Value));
+            .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), CellRef(f.CellRange)].Value));
         ignored.AddRange(rule.HeaderComposites
             .Where(c => !usedComposites.Contains(c))
             .Select(c => loc["ImportProfileDetails_IgnoredHeaderComposite", Quote(c.Name, loc)].Value));
@@ -186,10 +186,6 @@ public static class ImportProfileDescriptionBuilder
             }
 
             var options = "";
-            if (field.Cell.Sheet != rule.SheetName)
-            {
-                options += loc["ImportProfileDetails_HeaderOptionOtherSheet", Quote(field.Cell.Sheet, loc)];
-            }
 
             if (field.StripReperePrefix)
             {
@@ -202,7 +198,7 @@ public static class ImportProfileDescriptionBuilder
             }
 
             var key = role is null ? "ImportProfileDetails_HeaderField_Other" : $"ImportProfileDetails_HeaderField_{role}";
-            yield return new(loc[key, Quote(field.Name, loc), CellRef(field.Cell.Range), options]);
+            yield return new(loc[key, Quote(field.Name, loc), CellRef(field.CellRange), options]);
         }
 
         foreach (var composite in usedComposites)
