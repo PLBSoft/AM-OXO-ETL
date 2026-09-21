@@ -17,7 +17,7 @@ public class ImportProfileDescriptionBuilderPointTests
 
     [Fact]
     public void Divers_SevenRealRules_BecomeFourGroupedSentences_ThenTheClosingSentence() =>
-        Texts("DIVERS", name => Rule(name, pointRules:
+        Texts("DIVERS", name => Rule(name, warnWhenNoConditionalPoint: true, pointRules:
         [
             new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
             new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE (PS941)"),
@@ -37,7 +37,7 @@ public class ImportProfileDescriptionBuilderPointTests
 
     [Fact]
     public void AutresJointsTouches_UnconditionalColonnes_ThenNotEquals_ThenClosing() =>
-        Texts("AUTRES JOINTS TOUCHES", name => Rule(name,
+        Texts("AUTRES JOINTS TOUCHES", name => Rule(name, warnWhenNoConditionalPoint: true,
             unconditionalColonneNames: ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
             pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.NotEquals, "TUBING", "POSE ÉTIQUETTES")]))
             .Should().ContainInOrder(
@@ -50,48 +50,23 @@ public class ImportProfileDescriptionBuilderPointTests
         Texts("ISOLEMENT", name => Rule(name, unconditionalColonneNames: ["PROLOCK VANNES"]))
             .Should().Contain("Chaque élément est coché dans la colonne « PROLOCK VANNES ».");
 
+    // Lot 084 (G3): the closing sentence follows the sheet's own warning setting.
     [Fact]
-    public void Isolement_ZeroEnergieRule_IsMergedWithTheExpectedValueAndTheCell() =>
-        Texts("ISOLEMENT", name => Rule(name,
-            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("HasZeroEnergie", "V", -1, 0)],
-            pointRules: [new ConditionalPointRule("HasZeroEnergie", ConditionOperator.Equals, "true", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")],
-            zeroEnergieExpectedValue: "ZERO ENERGIE"))
+    public void WithoutTheWarningSetting_NoClosingSentence() =>
+        Texts("PLATINES", name => Rule(name,
+            pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")]))
+            .Should().Contain("Si le type d'élément est « SOUPAPE », l'élément est coché dans la colonne « A ».")
+            .And.NotContain(ClosingSentence);
+
+    // Lot 084 (G5): zéro énergie is an ordinary rule on an optional block field.
+    [Fact]
+    public void Isolement_ZeroEnergieRule_IsAnOrdinaryRuleOnItsField() =>
+        Texts("ISOLEMENT", name => Rule(name, warnWhenNoConditionalPoint: true,
+            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("ZeroEnergie", "V", -1, 0, isRequired: false)],
+            pointRules: [new ConditionalPointRule("ZeroEnergie", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")]))
             .Should().ContainInOrder(
-                "Si l'indicateur zéro énergie contient « ZERO ENERGIE », l'élément est coché dans la colonne " +
-                "« ZÉRO ENERGIE EN PRESENCE EE (PS941) ». Toute autre valeur non vide donne un avertissement.",
+                "Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».",
                 ClosingSentence);
-
-    [Fact]
-    public void Isolement_ZeroEnergieRule_WithoutExpectedValue_SaysTheColonneIsNeverTicked() =>
-        Texts("ISOLEMENT", name => Rule(name,
-            fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("HasZeroEnergie", "V", -1, 0)],
-            pointRules: [new ConditionalPointRule("HasZeroEnergie", ConditionOperator.Equals, "true", "ZÉRO ENERGIE EN PRESENCE EE (PS941)")]))
-            .Should().Contain(
-                "L'indicateur zéro énergie n'est jamais évalué (valeur attendue non renseignée ou cellule absente du bloc) : " +
-                "la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) » n'est jamais cochée.");
-
-    [Fact]
-    public void Platines_FourFieldPresenceRules_BecomeTwoSentencesWithTwoCells_AndNoClosingSentence()
-    {
-        var texts = Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17, step: 8, fieldPresencePointRules:
-        [
-            new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
-            new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT MAD", "DEBUT MAD"),
-            new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT REL", "DEBUT REL"),
-            new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL")
-        ]));
-
-        texts.Should().ContainInOrder(
-            "Si la cellule H19:N19 ou H20:N20 contient « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».",
-            "Si la cellule H19:N19 ou H20:N20 contient « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».");
-        texts.Should().NotContain(ClosingSentence);
-    }
-
-    [Fact]
-    public void FieldPresenceRuleWithoutExpectedValue_TicksWhenTheCellIsFilledIn() =>
-        Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17, fieldPresencePointRules:
-            [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD")]))
-            .Should().Contain("Si la cellule H19:N19 est renseignée, l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».");
 
     [Fact]
     public void GroupingKey_IgnoresCaseAndSurroundingSpaces_LikeTheEngine() =>
@@ -116,9 +91,10 @@ public class ImportProfileDescriptionBuilderPointTests
     public void SheetWithoutAnyPointSetting_HasNoPointSentence() =>
         Texts("ISOLEMENT", name => Rule(name)).Should().NotContain(t => t.Contains("coché"));
 
+    // Lot 084.6: the "filled cell" rules are read by no sheet any more (removed in 84.8).
     [Fact]
     public void MembersTheSheetDoesNotRead_AreNotDescribed() =>
-        Texts("PLATINES", name => Rule(name,
-            pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")])).Should()
-            .NotContain(t => t.Contains("coché") || t == ClosingSentence);
+        Texts("PLATINES", name => Rule(name, firstBlockStartRow: 17,
+            fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD")]))
+            .Should().NotContain(t => t.Contains("coché") || t == ClosingSentence);
 }

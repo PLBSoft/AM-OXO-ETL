@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ClosedXML.Excel;
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
@@ -38,17 +39,9 @@ public class FixtureOutputSnapshotTests
 
     private readonly ImportPipelineOrchestrator _orchestrator = new(
         new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
-        new IsolementExtractionService(
-            new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance),
-        new UnconditionalIsolementSheetExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(),
-            NullLogger<UnconditionalIsolementSheetExtractionService>.Instance),
-        new AutresJointsTouchesExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance),
-        new DiversExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<DiversExtractionService>.Instance),
+        new ElementSheetExtractionService(
+            new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private readonly SheetGenerationEngine _generationEngine = new(NullLogger<SheetGenerationEngine>.Instance);

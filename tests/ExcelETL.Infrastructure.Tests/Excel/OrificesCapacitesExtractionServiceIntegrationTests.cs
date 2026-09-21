@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -10,7 +10,8 @@ using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
-// ORIFICES CAPACITES (Lot C4) reuses UnconditionalIsolementSheetExtractionService as-is -- its cell
+// Lot 084: run through ElementSheetExtractionService like every element sheet.
+// ORIFICES CAPACITES (Lot C4) reused UnconditionalIsolementSheetExtractionService as-is -- its cell
 // ranges/step/offsets are byte-identical to PLATINES per the spec, only the sheet name and Colonne
 // list differ, both already parameterized via SheetExtractionRule. No new Application-layer unit
 // tests are added here: the shared service's mechanics are already covered by
@@ -28,22 +29,27 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         "CONTRÔLE ETANCHÉITÉS"
     ];
 
-    private readonly UnconditionalIsolementSheetExtractionService _sut = new(
-        new RepeatingBlockReader(), new TextTransformEvaluator(),
-        NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
+    private readonly ElementSheetExtractionService _sut = new(
+        new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
 
+    private const string ReperePrefix = "MAD-OXO-";
+
+    // Lot 084.6: run through the generic element engine -- the repère echo is a header field (G6), the
+    // couleur cell an optional block field with a known name (G10).
     private static SheetExtractionRule CreateSheetRule(
         BlockFieldDefinition? couleurEtiquetteCell = null, IReadOnlyList<string>? allowedCouleursEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
         [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+            new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+            new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5),
+            .. couleurEtiquetteCell is null ? Array.Empty<BlockFieldDefinition>() : [couleurEtiquetteCell]
         ]),
         [],
-        UnconditionalColonneNames, [], [],
-        couleurEtiquetteCell: couleurEtiquetteCell,
+        UnconditionalColonneNames,
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "K6:U6"))], [],
         allowedCouleursEtiquette: allowedCouleursEtiquette);
 
     [Fact]
@@ -54,7 +60,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         // error. The generic engine already handles a blank first Identification cell gracefully.
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Isolements.Should().BeEmpty();
+        result.Elements.Should().BeEmpty();
         result.Points.Should().BeEmpty();
         result.Errors.Should().BeEmpty();
     }
@@ -65,8 +71,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "TROU D'HOMME");
+        result.Elements.Should().HaveCount(5);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "TROU D'HOMME");
         result.Points.Should().HaveCount(5 * 4);
     }
 
@@ -76,8 +82,8 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(2);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "TROU D'HOMME");
+        result.Elements.Should().HaveCount(2);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "TROU D'HOMME");
         result.Points.Should().HaveCount(2 * 4);
     }
 
@@ -94,15 +100,15 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     public void Extract_D8570Fixture_WithCouleurEtiquetteCellAndAllowedList_UnfilledDateArtifactBecomesEmptyStringWithWarnings()
     {
         var rule = CreateSheetRule(
-            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+            couleurEtiquetteCell: new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false),
             allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
         using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
 
-        var result = _sut.Extract(workbookReader, rule);
+        var result = _sut.Extract(workbookReader, rule, ReperePrefix);
 
-        result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
+        result.Elements.Should().HaveCount(5);
+        result.Elements.Should().OnlyContain(i => i.CouleurEtiquette == "");
         // Every one of the 5 blocks holds "DATE" (deduplicated to a single warning entry, same
         // aggregation convention as every other WarningTracker in this codebase).
         result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
@@ -116,22 +122,22 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     [Fact]
     public void Extract_D8570Fixture_WithCouleurEtiquetteCellAndNoAllowedList_ImportsTheRawDateTextAsIs()
     {
-        var rule = CreateSheetRule(couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+        var rule = CreateSheetRule(couleurEtiquetteCell: new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false));
         using var stream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
 
-        var result = _sut.Extract(workbookReader, rule);
+        var result = _sut.Extract(workbookReader, rule, ReperePrefix);
 
-        result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "DATE");
+        result.Elements.Should().HaveCount(5);
+        result.Elements.Should().OnlyContain(i => i.CouleurEtiquette == "DATE");
         result.Errors.Should().BeEmpty();
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixture(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixture(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule());
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
     }
 
     private static string FixturePath(string fileName)

@@ -1,4 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 
@@ -58,43 +59,23 @@ public static class ImportSheetUsage
                     new(FixedBehaviorKind.TaskWithoutOrdreIsSectionTitle)
                 ]
             },
-        [Isolement] = new(
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
-                SheetRuleMember.ZeroEnergieExpectedValue
-            ],
-            [], []) {
-                FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:T6")],
-                FixedStopFieldName = IsolementFieldNames.Identification,
-                RequiredBlockFieldNames =
-                [
-                    IsolementFieldNames.Identification, IsolementFieldNames.Designation, IsolementFieldNames.PositionALaPose,
-                    IsolementFieldNames.TypeElement
-                ]
-            },
-        [Platines] = PlatinesStyle(),
-        [OrificesCapacites] = PlatinesStyle(),
-        [AutresJointsTouches] = new(
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
-                SheetRuleMember.ConditionalPointRules, SheetRuleMember.CouleurEtiquette
-            ],
-            RepereEchoOnly, []),
-        [Divers] = new(
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
-                SheetRuleMember.ConditionalPointRules
-            ],
-            RepereEchoOnly, []) { FixedBehaviors = [new(FixedBehaviorKind.ZoneFromCell, "B6:E6")] },
+        // Lot 084.6: the five element sheets share ElementSheetExtractionService -- one shape.
+        [Isolement] = ElementSheet(),
+        [Platines] = ElementSheet(),
+        [OrificesCapacites] = ElementSheet(),
+        [AutresJointsTouches] = ElementSheet(),
+        // G16: the zone broadcast on the whole run is DIVERS' "zone" header field.
+        [Divers] = ElementSheet() with { OptionalHeaderFields = [new(ElementFieldNames.ZoneHeader, HeaderRole.Zone)] },
     };
 
-    // PLATINES and ORIFICES CAPACITES share UnconditionalIsolementSheetExtractionService.
-    private static ImportSheetUsageEntry PlatinesStyle() => new(
+    // Every setting of an element sheet is read, except the three retired by lot 084 (removed in 84.8):
+    // FieldPresencePointRules, ZeroEnergieExpectedValue and CouleurEtiquetteCell.
+    private static ImportSheetUsageEntry ElementSheet() => new(
         [
-            SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.FieldPresencePointRules,
-            SheetRuleMember.CouleurEtiquette
+            SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
+            SheetRuleMember.ConditionalPointRules, SheetRuleMember.CouleurEtiquette
         ],
-        [], []) { FixedBehaviors = [new(FixedBehaviorKind.ElementRepereFromCell, "K6:U6")] };
+        RepereEchoOnly, []);
 
     // Null when the sheet name isn't one the import pipeline processes.
     public static ImportSheetUsageEntry? For(string sheetName) => BySheetName.GetValueOrDefault(sheetName);
@@ -115,20 +96,23 @@ public sealed record ImportSheetUsageEntry(
     // matches, with no warning otherwise (lot 083) -- ProcedureExtractionService.
     public bool PointsTickTheEquipement { get; init; }
 
-    // Behaviors coded in the extraction service, not editable in the profile (D3). Ranges copied from
-    // IsolementExtractionService (K6:T6), UnconditionalIsolementSheetExtractionService (K6:U6) and
-    // DiversExtractionService (B6:E6); the others from ProcedureExtractionService.
+    // Behaviors coded in the extraction service, not editable in the profile (D3) -- all from
+    // ProcedureExtractionService since lot 084 (the element sheets' repère and zone are header fields).
     public IReadOnlyList<FixedBehavior> FixedBehaviors { get; init; } = [];
+
+    // Header fields read by name when present, never required (DIVERS' zone).
+    public IReadOnlyList<RequiredHeaderName> OptionalHeaderFields { get; init; } = [];
 
     // Block field names the service looks up by name -- a missing one makes extraction fail.
     public IReadOnlyList<string> RequiredBlockFieldNames { get; init; } = ElementBlockFieldNames;
 
     // Non-null when the service walks the block itself and always stops on this field, ignoring the
-    // locator's StopFieldName (ProcedureExtractionService, IsolementExtractionService).
+    // locator's StopFieldName (ProcedureExtractionService).
     public string? FixedStopFieldName { get; init; }
 
+    // ElementSheetExtractionService needs these two; every other known field is optional.
     private static readonly string[] ElementBlockFieldNames =
-        [IsolementFieldNames.Identification, IsolementFieldNames.Designation, IsolementFieldNames.TypeElement];
+        [ElementFieldNames.Identification, ElementFieldNames.TypeElement];
 
     public ImportSheetUsageEntry(
         SheetRuleMember[] readMembers, RequiredHeaderName[] requiredHeaderFields, RequiredHeaderName[] requiredHeaderComposites)
@@ -164,9 +148,11 @@ public enum SheetRuleMember
     ConditionalPointRules,
     FieldPresencePointRules,
     ZeroEnergieExpectedValue,
-    // CouleurEtiquetteCell, DefaultCouleurEtiquette and AllowedCouleursEtiquette, read together by
-    // CouleurEtiquetteResolver.
-    CouleurEtiquette
+    // The "CouleurEtiquette" block field, DefaultCouleurEtiquette and AllowedCouleursEtiquette, read together
+    // by ElementSheetExtractionService (lot 084, G10).
+    CouleurEtiquette,
+    // The dedicated couleur cell, read by no sheet since lot 084.6 (removed in 84.8).
+    CouleurEtiquetteCell
 }
 
 public enum HeaderRole
@@ -175,5 +161,6 @@ public enum HeaderRole
     Revision,
     RevisionDate,
     EquipementDesignation,
-    RepereEcho
+    RepereEcho,
+    Zone
 }

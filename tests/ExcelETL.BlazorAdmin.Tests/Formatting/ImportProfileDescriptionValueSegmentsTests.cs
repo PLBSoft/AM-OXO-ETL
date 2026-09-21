@@ -74,15 +74,22 @@ public class ImportProfileDescriptionValueSegmentsTests
     {
         var description = Describe(Profile([
             Rule("PLATINES", firstBlockStartRow: 17, step: 8,
-                fieldPresencePointRules:
+                fields:
                 [
-                    new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "C", "DEBUT MAD"),
-                    new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "C", "DEBUT MAD")
+                    new BlockFieldDefinition("Identification", "B:E", 0, 1),
+                    new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
+                    new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)
                 ],
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))],
+                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "C", "DEBUT MAD")],
+                couleurEtiquetteCell: new BlockFieldDefinition("CelluleCouleur", "H:N", 4, 4),
                 zeroEnergieExpectedValue: "IGNOREE"),
             Rule("DIVERS", fields: [new BlockFieldDefinition("Identification", "H:K", 0, 2)],
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6")), new HeaderFieldRule("inutile", new DirectCell("DIVERS", "A1"))])
+                headerFields:
+                [
+                    new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6")), new HeaderFieldRule("zone", new DirectCell("DIVERS", "B6:E6")),
+                    new HeaderFieldRule("inutile", new DirectCell("DIVERS", "A1"))
+                ])
         ]));
 
         var cells = description.Sections
@@ -93,12 +100,13 @@ public class ImportProfileDescriptionValueSegmentsTests
 
         cells.Should().Contain([
             "B17:E18", // block field
-            "K6:U6", // fixed behavior
-            "H19:N19", "H20:N20", // field-presence cells, one segment each
-            "H18:N18", // couleur cell
+            "K6:U6", // header field
+            "H19:N19", // optional block field
+            "H18:N18", // couleur block field
+            "H21:N21", // retired couleur cell, ignored
             "N6", // header field
             "H17:K19", // block field on DIVERS (first block at row 17)
-            "B6:E6", // fixed zone
+            "B6:E6", // zone header field
             "A1" // ignored header field
         ]);
     }

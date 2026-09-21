@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Profile;
@@ -9,7 +7,8 @@ using Microsoft.Extensions.Logging;
 
 namespace ExcelETL.Application.Extraction.Oxo;
 
-// Runs the 6 per-sheet services (Lot C) and aggregates their contributions into one ImportResult.
+// Runs PROCEDURE, then the five element sheets through the one ElementSheetExtractionService (lot 084),
+// and aggregates their contributions into one ImportResult.
 // PROCEDURE runs first: per model doc §3.1, an invalid Equipement rejects the whole file (returned
 // immediately, none of the other 5 services are even invoked -- not just "their output is discarded",
 // see the unit tests' Mock.Verify(..., Times.Never)).
@@ -22,10 +21,7 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // rename these tabs while keeping the same logical role, which nothing today requires.
 public sealed class ImportPipelineOrchestrator(
     IProcedureExtractionService procedureExtractionService,
-    IIsolementExtractionService isolementExtractionService,
-    IUnconditionalIsolementSheetExtractionService unconditionalIsolementSheetExtractionService,
-    IAutresJointsTouchesExtractionService autresJointsTouchesExtractionService,
-    IDiversExtractionService diversExtractionService,
+    IElementSheetExtractionService elementSheetExtractionService,
     ILogger<ImportPipelineOrchestrator> logger)
     : IImportPipelineOrchestrator
 {
@@ -36,10 +32,11 @@ public sealed class ImportPipelineOrchestrator(
     private const string AutresJointsTouchesSheetName = "AUTRES JOINTS TOUCHES";
     private const string DiversSheetName = "DIVERS";
 
-    // A successful run always processes exactly these 6 sheets -- PROCEDURE plus the other 5,
-    // unconditionally, once PROCEDURE itself succeeds. Not derived from a collection count because
-    // there's no single list of "the 6 sheets" in this class (PLATINES/ORIFICES CAPACITES share one
-    // service call each, see below), so a literal is clearer than reconstructing one just to count it.
+    // Element sheets in pipeline order -- the order their elements, Points and errors are aggregated in.
+    private static readonly string[] ElementSheetNames =
+        [IsolementSheetName, PlatinesSheetName, OrificesCapacitesSheetName, AutresJointsTouchesSheetName, DiversSheetName];
+
+    // PROCEDURE plus the five element sheets, all processed once PROCEDURE itself succeeds.
     private const int SheetsProcessedOnSuccess = 6;
 
     public ImportResult Run(IWorkbookReader workbookReader, ImportProfile profile)
@@ -64,16 +61,12 @@ public sealed class ImportPipelineOrchestrator(
                 return procedureResult;
             }
 
-            var isolementResult = isolementExtractionService.Extract(workbookReader, FindRule(profile, IsolementSheetName));
-            var platinesResult = unconditionalIsolementSheetExtractionService.Extract(workbookReader, FindRule(profile, PlatinesSheetName));
-            var orificesCapacitesResult = unconditionalIsolementSheetExtractionService.Extract(
-                workbookReader, FindRule(profile, OrificesCapacitesSheetName));
-            var autresJointsTouchesResult = autresJointsTouchesExtractionService.Extract(
-                workbookReader, FindRule(profile, AutresJointsTouchesSheetName), profile.ReperePrefix);
-            var diversResult = diversExtractionService.Extract(
-                workbookReader, FindRule(profile, DiversSheetName), profile.ReperePrefix);
+            var elementResults = ElementSheetNames.ToDictionary(
+                name => name,
+                name => elementSheetExtractionService.Extract(workbookReader, FindRule(profile, name), profile.ReperePrefix));
 
-            var loc1 = diversResult.Loc1;
+            // The zone ("loc1") broadcast on the whole run is DIVERS' one (G16).
+            var loc1 = elementResults[DiversSheetName].Zone;
             var repereParent = procedureResult.Equipement.Repere;
             var equipement = procedureResult.Equipement with
             {
@@ -83,28 +76,16 @@ public sealed class ImportPipelineOrchestrator(
             };
 
             var isolements = new List<IsolementPivot>();
-            isolements.AddRange(isolementResult.Isolements);
-            isolements.AddRange(platinesResult.Isolements);
-            isolements.AddRange(orificesCapacitesResult.Isolements);
-            isolements.AddRange(autresJointsTouchesResult.Isolements);
-            isolements.AddRange(diversResult.Isolements);
+            var points = new List<PointPivot>(procedureResult.Points);
+            var errors = new List<ExtractionError>(procedureResult.Errors);
+            foreach (var name in ElementSheetNames)
+            {
+                isolements.AddRange(elementResults[name].Elements);
+                points.AddRange(elementResults[name].Points);
+                errors.AddRange(elementResults[name].Errors);
+            }
+
             BroadcastEquipementContext(isolements, loc1, profile, repereParent);
-
-            var points = new List<PointPivot>();
-            points.AddRange(procedureResult.Points);
-            points.AddRange(isolementResult.Points);
-            points.AddRange(platinesResult.Points);
-            points.AddRange(orificesCapacitesResult.Points);
-            points.AddRange(autresJointsTouchesResult.Points);
-            points.AddRange(diversResult.Points);
-
-            var errors = new List<ExtractionError>();
-            errors.AddRange(procedureResult.Errors);
-            errors.AddRange(isolementResult.Errors);
-            errors.AddRange(platinesResult.Errors);
-            errors.AddRange(orificesCapacitesResult.Errors);
-            errors.AddRange(autresJointsTouchesResult.Errors);
-            errors.AddRange(diversResult.Errors);
 
             var tachesMultiples = BroadcastTachesMultiplesContext(
                 procedureResult.TachesMultiples, equipement, profile.TacheMultipleTypeLabels);

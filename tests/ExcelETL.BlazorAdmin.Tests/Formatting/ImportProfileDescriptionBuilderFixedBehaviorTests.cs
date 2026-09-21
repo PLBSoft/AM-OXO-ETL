@@ -22,11 +22,12 @@ public class ImportProfileDescriptionBuilderFixedBehaviorTests
                 "Une ligne sans ordre est un titre de section, pas une tâche à réaliser."
             ]
         },
-        { "ISOLEMENT", ["Le repère de l'élément est la cellule K6:T6, un tiret, puis l'identifiant."] },
-        { "PLATINES", ["Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant."] },
-        { "ORIFICES CAPACITES", ["Le repère de l'élément est la cellule K6:U6, un tiret, puis l'identifiant."] },
+        // Lot 084.6: the element sheets' repère and zone are header fields of the profile, nothing is fixed.
+        { "ISOLEMENT", [] },
+        { "PLATINES", [] },
+        { "ORIFICES CAPACITES", [] },
         { "AUTRES JOINTS TOUCHES", [] },
-        { "DIVERS", ["La zone lue en B6:E6 est appliquée à l'équipement et à tous les éléments du fichier."] },
+        { "DIVERS", [] },
     };
 
     [Theory]
@@ -41,10 +42,10 @@ public class ImportProfileDescriptionBuilderFixedBehaviorTests
     [Fact]
     public void FixedSentences_ComeRightAfterTheBlockSentences()
     {
-        var texts = Section("ISOLEMENT").Texts();
+        var sentences = Section("PROCEDURE").Sentences.ToList();
 
-        texts[1].Should().StartWith("Pour le premier élément");
-        texts[2].Should().Be("Le repère de l'élément est la cellule K6:T6, un tiret, puis l'identifiant.");
+        sentences.FindIndex(s => s.IsFixed).Should().Be(2);
+        sentences[2].Text.Should().Be("Une date de révision illisible fait refuser le fichier entier.");
     }
 
     [Fact]

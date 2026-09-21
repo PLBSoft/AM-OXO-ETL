@@ -2044,4 +2044,10 @@
   <data name="ImportProfileEditor_WarnWhenNoConditionalPointLabel" xml:space="preserve">
     <value>Warn when an element gets none of the conditional columns</value>
   </data>
+  <data name="ImportProfileEditor_CouleurEtiquetteCellIgnoredWarning" xml:space="preserve">
+    <value>This cell is no longer read: declare the colour as a block field named « CouleurEtiquette ».</value>
+  </data>
+  <data name="ImportProfileDetails_HeaderField_Zone" xml:space="preserve">
+    <value>En-tête : la zone ({0}) est lue en {1}{2}. Elle est appliquée à l'équipement et à tous les éléments du fichier.</value>
+  </data>
 </root>

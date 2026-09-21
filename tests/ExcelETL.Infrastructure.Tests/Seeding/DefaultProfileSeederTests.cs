@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Application.Generation;
@@ -118,69 +118,55 @@ public class DefaultProfileSeederTests
             new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", "PROCÉDURE MAD"),
             new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", "PROCÉDURE REL"));
 
+        // Lot 084.6: the five element sheets share one engine; the seed reproduces the output of the
+        // services it replaced (FixtureOutputSnapshotTests).
         var isolement = profile.SheetRules.Single(r => r.SheetName == "ISOLEMENT");
         isolement.Locator.FirstBlockStartRow.Should().Be(19);
         isolement.Locator.Step.Should().Be(7);
         isolement.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES", "DEPROLOCK VANNES");
-        isolement.PointRules.Should().ContainSingle();
-        isolement.PointRules.Single().SourceFieldName.Should().Be(IsolementFieldNames.HasZeroEnergie);
-        isolement.PointRules.Single().ComparisonValue.Should().Be("true");
-        isolement.PointRules.Single().ColonneName.Should().Be("ZÉRO ENERGIE EN PRESENCE EE (PS941)");
-        isolement.ZeroEnergieExpectedValue.Should().Be("ZERO ENERGIE");
-        var hasZeroEnergieField = isolement.Locator.Fields.Single(f => f.Name == IsolementFieldNames.HasZeroEnergie);
-        hasZeroEnergieField.ColumnRange.Should().Be("V");
-        hasZeroEnergieField.RowOffsetStart.Should().Be(-1);
-        hasZeroEnergieField.RowOffsetEnd.Should().Be(0);
+        // G5: zéro énergie is an ordinary optional block field (column V) read by an ordinary rule.
+        isolement.PointRules.Should().Equal(
+            new ConditionalPointRule("ZeroEnergie", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE EN PRESENCE EE (PS941)"));
+        isolement.Locator.Fields.Single(f => f.Name == "ZeroEnergie").Should().Be(new BlockFieldDefinition("ZeroEnergie", "V", -1, 0, isRequired: false));
+        // Blank on the real D8570 "V4"/"VANNE" row, which must still be extracted.
+        isolement.Locator.Fields.Single(f => f.Name == ElementFieldNames.Designation).IsRequired.Should().BeFalse();
+        isolement.Locator.Fields.Where(f => f.Name is not ("ZeroEnergie" or ElementFieldNames.Designation))
+            .Should().OnlyContain(f => f.IsRequired);
+        isolement.WarnWhenNoConditionalPoint.Should().BeTrue();
 
         var platines = profile.SheetRules.Single(r => r.SheetName == "PLATINES");
         platines.Locator.Step.Should().Be(8);
-        // Client feedback (2026-09): "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" moved out of the
-        // unconditional list (7 -> 5) into FieldPresencePointRules -- see below.
         platines.UnconditionalColonneNames.Should().HaveCount(5);
-        platines.UnconditionalColonneNames.Should().NotContain(name => name.Contains("FIN"));
         platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT MAD");
         platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT REL");
-        platines.PointRules.Should().BeEmpty();
-
-        // Client clarification (2026-09-16): a DEBUT Colonne is ticked when either H cell of the block
-        // (POSÉE LE row +2 or DÉPOSÉE LE row +3 -- the row label itself doesn't matter) holds the exact
-        // text, not just any value. One rule per (cell, Colonne) pair: 4 rules.
-        platines.FieldPresencePointRules
-            .Select(r => (r.ColonneName, r.Cell.ColumnRange, r.Cell.RowOffsetStart, r.Cell.RowOffsetEnd, r.ExpectedValue))
-            .Should().BeEquivalentTo(new (string, string, int, int, string?)[]
-            {
-                ("RECEPTION DEBUT MAD", "H:N", 2, 2, "DEBUT MAD"),
-                ("RECEPTION DEBUT MAD", "H:N", 3, 3, "DEBUT MAD"),
-                ("RECEPTION DEBUT REL", "H:N", 2, 2, "DEBUT REL"),
-                ("RECEPTION DEBUT REL", "H:N", 3, 3, "DEBUT REL")
-            });
-
-        // Lot 068 (couleur d'étiquette, client remark) -- PLATINES-only.
-        platines.CouleurEtiquetteCell.Should().NotBeNull();
-        platines.CouleurEtiquetteCell!.ColumnRange.Should().Be("H:N");
-        platines.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
-        platines.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
+        // Client clarification (2026-09-16): a DEBUT Colonne is ticked when either H value cell of the
+        // block (POSÉE LE +2, DÉPOSÉE LE +3) holds the exact text -- two optional block fields, four rules.
+        platines.Locator.Fields.Where(f => !f.IsRequired).Should().BeEquivalentTo(new[]
+        {
+            new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false),
+            new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
+            new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3, isRequired: false)
+        });
+        platines.PointRules.Should().Equal(
+            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD"),
+            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD"),
+            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL"),
+            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL"));
+        // G7: a FIN value is legitimate data, never a warning.
+        platines.WarnWhenNoConditionalPoint.Should().BeFalse();
         platines.DefaultCouleurEtiquette.Should().BeNull();
-        // Client feedback (2026-09-11): the whitelist replacing the earlier hardcoded "DATE"
-        // blacklist -- so a garbage/template-artifact cell value warns instead of being imported.
-        // "BLEUE" is the client's own stated set (ROUGE/BLANC/JAUNE/VERT) plus "BLEUE" -- omitted by
-        // the client but confirmed as a genuine, already-extracted color for this sheet by the real
-        // D8570 fixture (8 of 21 blocks) -- kept, client-confirmed, rather than dropped.
+        // "BLEUE" is kept on top of the client's own set -- a genuine color on 8 of D8570's 21 blocks.
         platines.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLANC", "JAUNE", "VERT", "BLEUE"]);
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
         orificesCapacites.UnconditionalColonneNames.Should().HaveCount(4);
-        // Client feedback (2026-09): shares PLATINES' exact "couleur d'étiquette" cell (both sheets
-        // share FirstBlockStartRow=17).
-        orificesCapacites.CouleurEtiquetteCell.Should().NotBeNull();
-        orificesCapacites.CouleurEtiquetteCell!.ColumnRange.Should().Be("H:N");
-        orificesCapacites.CouleurEtiquetteCell.RowOffsetStart.Should().Be(1);
-        orificesCapacites.CouleurEtiquetteCell.RowOffsetEnd.Should().Be(1);
+        // Same "couleur d'étiquette" cell as PLATINES.
+        orificesCapacites.Locator.Fields.Single(f => f.Name == ElementFieldNames.CouleurEtiquette)
+            .Should().Be(new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false));
+        orificesCapacites.PointRules.Should().BeEmpty();
+        orificesCapacites.WarnWhenNoConditionalPoint.Should().BeFalse();
         orificesCapacites.DefaultCouleurEtiquette.Should().BeNull();
-        // Client feedback (2026-09-11): its own stated set -- distinct from PLATINES', client-confirmed
-        // as a genuine business difference. No real fixture has ever shown an actual color here (every
-        // block's cell holds only the "DATE" template artifact), so there's nothing to reconcile.
         orificesCapacites.AllowedCouleursEtiquette.Should().BeEquivalentTo(["ROUGE", "BLANC"]);
 
         var autresJointsTouches = profile.SheetRules.Single(r => r.SheetName == "AUTRES JOINTS TOUCHES");
@@ -188,8 +174,9 @@ public class DefaultProfileSeederTests
         autresJointsTouches.PointRules.Should().ContainSingle();
         autresJointsTouches.PointRules.Single().ColonneName.Should().Be("POSE ÉTIQUETTES");
         autresJointsTouches.PointRules.Single().ComparisonValue.Should().Be("TUBING");
+        autresJointsTouches.WarnWhenNoConditionalPoint.Should().BeTrue();
         // Client feedback (2026-09): no per-block cell -- every isolement it produces is "BLEUE".
-        autresJointsTouches.CouleurEtiquetteCell.Should().BeNull();
+        autresJointsTouches.Locator.Fields.Should().NotContain(f => f.Name == ElementFieldNames.CouleurEtiquette);
         autresJointsTouches.DefaultCouleurEtiquette.Should().Be("BLEUE");
         // No allowlist needed -- DefaultCouleurEtiquette is admin-typed config, not read from a cell.
         autresJointsTouches.AllowedCouleursEtiquette.Should().BeNull();
@@ -199,6 +186,7 @@ public class DefaultProfileSeederTests
         divers.Locator.Step.Should().Be(3);
         divers.UnconditionalColonneNames.Should().BeEmpty();
         divers.PointRules.Should().HaveCount(7);
+        divers.WarnWhenNoConditionalPoint.Should().BeTrue();
         divers.PointRules.Select(r => r.ColonneName).Should().Contain("PF : ACCORD TRAVAUX FEU");
         divers.PointRules.Select(r => r.ColonneName).Should().NotContain(name => name.Contains("POINT DE FEU"));
 
@@ -254,19 +242,16 @@ public class DefaultProfileSeederTests
         ajtRepereEcho.Cell.Range.Should().Be("N6");
         autresJointsTouches.HeaderComposites.Should().BeEmpty();
 
+        // Lot 084.6 (G6, G16): every element sheet declares its repère echo; DIVERS also its zone.
         var divers = profile.SheetRules.Single(r => r.SheetName == "DIVERS");
-        divers.HeaderFields.Should().ContainSingle();
-        var diversRepereEcho = divers.HeaderFields.Single();
-        diversRepereEcho.Name.Should().Be("repereEcho");
-        diversRepereEcho.Cell.Sheet.Should().Be("DIVERS");
-        diversRepereEcho.Cell.Range.Should().Be("N6");
+        divers.HeaderFields.Select(f => (f.Name, f.Cell.Sheet, f.Cell.Range)).Should().Equal(
+            ("repereEcho", "DIVERS", "N6"), ("zone", "DIVERS", "B6:E6"));
         divers.HeaderComposites.Should().BeEmpty();
 
-        // ISOLEMENT/PLATINES/ORIFICES CAPACITES have no header rules -- out of this lot's scope.
-        foreach (var sheetName in new[] { "ISOLEMENT", "PLATINES", "ORIFICES CAPACITES" })
+        foreach (var (sheetName, range) in new[] { ("ISOLEMENT", "K6:T6"), ("PLATINES", "K6:U6"), ("ORIFICES CAPACITES", "K6:U6") })
         {
             var rule = profile.SheetRules.Single(r => r.SheetName == sheetName);
-            rule.HeaderFields.Should().BeEmpty();
+            rule.HeaderFields.Select(f => (f.Name, f.Cell.Sheet, f.Cell.Range)).Should().Equal(("repereEcho", sheetName, range));
             rule.HeaderComposites.Should().BeEmpty();
         }
     }

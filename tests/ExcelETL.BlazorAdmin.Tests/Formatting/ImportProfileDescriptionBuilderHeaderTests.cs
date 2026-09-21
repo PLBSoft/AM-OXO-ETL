@@ -82,9 +82,20 @@ public class ImportProfileDescriptionBuilderHeaderTests
         Describe(Profile([ProcedureRule(composites: [new HeaderCompositeRule("Designation", "Procédure")])]))
             .SheetSection("PROCEDURE").Texts().Should().Contain("La désignation de l'équipement est toujours « Procédure ».");
 
+    // Lot 084.6: every element sheet reads its repère echo from the header (G6).
     [Fact]
-    public void SheetThatDoesNotReadHeaderRules_DescribesNoHeader() =>
+    public void ElementSheet_DescribesItsRepereEcho() =>
         Describe(Profile([Rule("ISOLEMENT",
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "N6"))])]))
-            .SheetSection("ISOLEMENT").Texts().Should().NotContain(t => t.Contains("En-tête"));
+                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "K6:T6"))])]))
+            .SheetSection("ISOLEMENT").Texts().Should().StartWith(
+                "En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:T6. " +
+                "Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.");
+
+    // G16: DIVERS' zone is a header field, broadcast on the whole run.
+    [Fact]
+    public void Divers_DescribesItsZone() =>
+        Describe(Profile([Rule("DIVERS",
+                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6")), new HeaderFieldRule("zone", new DirectCell("DIVERS", "B6:E6"))])]))
+            .SheetSection("DIVERS").Texts().Should().Contain(
+                "En-tête : la zone (« zone ») est lue en B6:E6. Elle est appliquée à l'équipement et à tous les éléments du fichier.");
 }

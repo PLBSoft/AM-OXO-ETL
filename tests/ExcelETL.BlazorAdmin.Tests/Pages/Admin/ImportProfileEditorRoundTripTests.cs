@@ -190,12 +190,17 @@ public class ImportProfileEditorRoundTripTests : BunitContext
     {
         var rules = LoadFixture(DefaultFixture).SheetRules;
         rules.Should().Contain(r => r.HeaderFields.Count > 0 && r.HeaderComposites.Count > 0);
-        rules.Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue != null));
-        rules.Should().Contain(r => r.ZeroEnergieExpectedValue != null);
-        rules.Should().Contain(r => r.CouleurEtiquetteCell != null && r.AllowedCouleursEtiquette != null);
+        rules.Should().Contain(r => r.Locator.Fields.Any(f => !f.IsRequired));
+        rules.Should().Contain(r => r.WarnWhenNoConditionalPoint);
+        rules.Should().Contain(r => r.Locator.Fields.Any(f => f.Name == "CouleurEtiquette") && r.AllowedCouleursEtiquette != null);
         rules.Should().Contain(r => r.DefaultCouleurEtiquette != null);
-        LoadFixture(NullExpectedValueFixture).SheetRules
-            .Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue == null));
+        // Lot 084.6: the settings the standard profile no longer uses (removed in 84.8) stay guarded by
+        // the hand-built fixture until then.
+        var handBuilt = LoadFixture(NullExpectedValueFixture).SheetRules;
+        handBuilt.Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue == null));
+        handBuilt.Should().Contain(r => r.FieldPresencePointRules.Any(f => f.ExpectedValue != null));
+        handBuilt.Should().Contain(r => r.ZeroEnergieExpectedValue != null);
+        handBuilt.Should().Contain(r => r.CouleurEtiquetteCell != null);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -243,7 +248,13 @@ public class ImportProfileEditorRoundTripTests : BunitContext
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var rule = new SheetExtractionRule(
             "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["POSE PLATINES"], [], [],
-            fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD")]);
+            zeroEnergieExpectedValue: "ZERO ENERGIE",
+            fieldPresencePointRules:
+            [
+                new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD"),
+                new FieldPresencePointRule(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL")
+            ],
+            couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
         return new ImportProfile(
             Guid.NewGuid(), "Round trip null ExpectedValue", ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
             ["TRAVAUX COMPLET"], ["PROGRESS"], [rule]);

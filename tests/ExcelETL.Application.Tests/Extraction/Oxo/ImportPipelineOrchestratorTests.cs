@@ -1,7 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Divers;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
@@ -19,19 +17,32 @@ public class ImportPipelineOrchestratorTests
     private const string EquipementTypeElementNom = "MAD TRAVAUX";
 
     private readonly Mock<IProcedureExtractionService> _procedureService = new();
-    private readonly Mock<IIsolementExtractionService> _isolementService = new();
-    private readonly Mock<IUnconditionalIsolementSheetExtractionService> _unconditionalService = new();
-    private readonly Mock<IAutresJointsTouchesExtractionService> _autresJointsTouchesService = new();
-    private readonly Mock<IDiversExtractionService> _diversService = new();
+    private readonly Mock<IElementSheetExtractionService> _elementService = new();
 
     private readonly ImportPipelineOrchestrator _sut;
 
     public ImportPipelineOrchestratorTests()
     {
         _sut = new ImportPipelineOrchestrator(
-            _procedureService.Object, _isolementService.Object, _unconditionalService.Object,
-            _autresJointsTouchesService.Object, _diversService.Object,
-            NullLogger<ImportPipelineOrchestrator>.Instance);
+            _procedureService.Object, _elementService.Object, NullLogger<ImportPipelineOrchestrator>.Instance);
+    }
+
+    // Lot 084.6: one element service for the five element sheets, set up per sheet name.
+    private void SetupSheet(
+        string sheet, IReadOnlyList<IsolementPivot>? elements = null, IReadOnlyList<PointPivot>? points = null,
+        IReadOnlyList<ExtractionError>? errors = null, string zone = "") =>
+        _elementService
+            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.Is<SheetExtractionRule>(r => r.SheetName == sheet), It.IsAny<string>()))
+            .Returns(new ElementSheetExtractionResult(elements ?? [], points ?? [], errors ?? [], zone));
+
+    private void SetupEmptyElementSheets(string diversZone = "")
+    {
+        foreach (var sheet in new[] { "ISOLEMENT", "PLATINES", "ORIFICES CAPACITES", "AUTRES JOINTS TOUCHES" })
+        {
+            SetupSheet(sheet);
+        }
+
+        SetupSheet("DIVERS", zone: diversZone);
     }
 
     private static RepeatingBlockLocator TrivialLocator(string sheet) =>
@@ -80,11 +91,7 @@ public class ImportPipelineOrchestratorTests
         result.Points.Should().BeEmpty();
         result.TachesMultiples.Should().BeEmpty();
 
-        _isolementService.Verify(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()), Times.Never);
-        _unconditionalService.Verify(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()), Times.Never);
-        _autresJointsTouchesService.Verify(
-            s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()), Times.Never);
-        _diversService.Verify(
+        _elementService.Verify(
             s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()), Times.Never);
     }
 
@@ -95,35 +102,23 @@ public class ImportPipelineOrchestratorTests
             .Setup(s => s.Extract(
                 It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
-        _isolementService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")],
-                [new PointPivot("PROLOCK VANNES", "38-C7401-V1")],
-                []));
-        _unconditionalService
-            .SetupSequence(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-PT1", "Platine 1", "PLATINE", "", "")],
-                [new PointPivot("POSE ÉTIQUETTES", "38-C7401-PT1")],
-                []))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-TH1", "Trou 1", "TROU D'HOMME", "", "")],
-                [new PointPivot("POSE ÉTIQUETTES", "38-C7401-TH1")],
-                []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-J1", "Joint 1", "TUYAUTERIE", "", "")],
-                [new PointPivot("CONTRÔLE ETANCHÉITÉS", "38-C7401-J1")],
-                []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult(
-                "ZONE 1",
-                [new IsolementPivot("38-C7401-LT1", "Transmetteur", "INSTRUMENTATION", "", "")],
-                [new PointPivot("SYNCHRONISATION INSTRUMENTATION", "38-C7401-LT1")],
-                [new ExtractionError("DIVERS", "38-C7401-XX", ExtractionErrorCode.NoConditionalPointCreated, "warning")]));
+        SetupSheet("ISOLEMENT",
+            [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")],
+            [new PointPivot("PROLOCK VANNES", "38-C7401-V1")]);
+        SetupSheet("PLATINES",
+            [new IsolementPivot("38-C7401-PT1", "Platine 1", "PLATINE", "", "")],
+            [new PointPivot("POSE ÉTIQUETTES", "38-C7401-PT1")]);
+        SetupSheet("ORIFICES CAPACITES",
+            [new IsolementPivot("38-C7401-TH1", "Trou 1", "TROU D'HOMME", "", "")],
+            [new PointPivot("POSE ÉTIQUETTES", "38-C7401-TH1")]);
+        SetupSheet("AUTRES JOINTS TOUCHES",
+            [new IsolementPivot("38-C7401-J1", "Joint 1", "TUYAUTERIE", "", "")],
+            [new PointPivot("CONTRÔLE ETANCHÉITÉS", "38-C7401-J1")]);
+        SetupSheet("DIVERS",
+            [new IsolementPivot("38-C7401-LT1", "Transmetteur", "INSTRUMENTATION", "", "")],
+            [new PointPivot("SYNCHRONISATION INSTRUMENTATION", "38-C7401-LT1")],
+            [new ExtractionError("DIVERS", "38-C7401-XX", ExtractionErrorCode.NoConditionalPointCreated, "warning")],
+            "ZONE 1");
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());
@@ -139,8 +134,8 @@ public class ImportPipelineOrchestratorTests
         result.TachesMultiples.Should().ContainSingle();
         result.Errors.Should().ContainSingle();
 
-        _unconditionalService.Verify(
-            s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()), Times.Exactly(2));
+        _elementService.Verify(
+            s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()), Times.Exactly(5));
     }
 
     [Fact]
@@ -150,19 +145,8 @@ public class ImportPipelineOrchestratorTests
             .Setup(s => s.Extract(
                 It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
-        _isolementService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")], [], []));
-        _unconditionalService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("ZONE 4", [], [], []));
+        SetupEmptyElementSheets("ZONE 4");
+        SetupSheet("ISOLEMENT", [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")]);
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());
@@ -180,19 +164,8 @@ public class ImportPipelineOrchestratorTests
             .Setup(s => s.Extract(
                 It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
-        _isolementService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")], [], []));
-        _unconditionalService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        SetupEmptyElementSheets();
+        SetupSheet("ISOLEMENT", [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")]);
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(
@@ -214,19 +187,8 @@ public class ImportPipelineOrchestratorTests
             .Setup(s => s.Extract(
                 It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(ValidProcedureResult());
-        _isolementService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult(
-                [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")], [], []));
-        _unconditionalService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        SetupEmptyElementSheets();
+        SetupSheet("ISOLEMENT", [new IsolementPivot("38-C7401-V1", "Vanne 1", "PROLOCK", "FERMÉE", "")]);
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());
@@ -251,16 +213,7 @@ public class ImportPipelineOrchestratorTests
             .Setup(s => s.Extract(
                 It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
             .Returns(procedureResult);
-        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("", [], [], []));
+        SetupEmptyElementSheets();
     }
 
     [Fact]
@@ -295,16 +248,7 @@ public class ImportPipelineOrchestratorTests
                     new TacheMultiplePivot(2, "Déconsigner", "ADF", "Aucun", "TM_PROC_REL", null, false, 53)
                 ],
                 []));
-        _isolementService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _unconditionalService.Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _autresJointsTouchesService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new IsolementSheetExtractionResult([], [], []));
-        _diversService
-            .Setup(s => s.Extract(It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), It.IsAny<string>()))
-            .Returns(new DiversSheetExtractionResult("ZONE 4", [], [], []));
+        SetupEmptyElementSheets("ZONE 4");
         var workbookReader = Mock.Of<IWorkbookReader>();
 
         var result = _sut.Run(workbookReader, CreateProfile());

@@ -1,3 +1,4 @@
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.BlazorAdmin.Resources;
 using ExcelETL.Domain.Extraction.Primitives;
@@ -120,7 +121,8 @@ public static class ImportProfileDescriptionBuilder
         var (usedComposites, referencedFieldNames) = readsHeader ? UsedHeaderRules(rule, usage) : ([], []);
         ignored.AddRange(rule.HeaderFields
             .Where(f => !readsHeader
-                || (usage.RequiredHeaderFields.All(required => required.Name != f.Name) && !referencedFieldNames.Contains(f.Name)))
+                || (usage.RequiredHeaderFields.Concat(usage.OptionalHeaderFields).All(known => known.Name != f.Name)
+                    && !referencedFieldNames.Contains(f.Name)))
             .Select(f => loc["ImportProfileDetails_IgnoredHeaderField", Quote(f.Name, loc), CellRef(f.Cell.Range)].Value));
         ignored.AddRange(rule.HeaderComposites
             .Where(c => !usedComposites.Contains(c))
@@ -144,6 +146,11 @@ public static class ImportProfileDescriptionBuilder
                 loc["ImportProfileDetails_IgnoredFieldPresenceRule", Quote(r.ColonneName, loc)].Value));
         }
 
+        if (!Reads(SheetRuleMember.CouleurEtiquetteCell) && rule.CouleurEtiquetteCell is { } retiredCell)
+        {
+            ignored.Add(loc["ImportProfileDetails_IgnoredCouleurCell", CellRange(rule.Locator.FirstBlockStartRow, retiredCell)]);
+        }
+
         if (!Reads(SheetRuleMember.ZeroEnergieExpectedValue) && rule.ZeroEnergieExpectedValue is not null)
         {
             ignored.Add(loc["ImportProfileDetails_IgnoredZeroEnergieExpectedValue", Quote(rule.ZeroEnergieExpectedValue, loc)]);
@@ -153,18 +160,13 @@ public static class ImportProfileDescriptionBuilder
         return ignored;
     }
 
-    // Mirrors CouleurEtiquetteResolver: with a cell the default is never used; without one the allowed
-    // list has nothing to filter.
+    // Mirrors ElementSheetExtractionService: with a "CouleurEtiquette" block field the default is never
+    // used; without one the allowed list has nothing to filter.
     private static IEnumerable<string> DescribeIgnoredCouleur(
         SheetExtractionRule rule, bool isRead, IStringLocalizer<BlazorAdminMessages> loc)
     {
         if (!isRead)
         {
-            if (rule.CouleurEtiquetteCell is { } cell)
-            {
-                yield return loc["ImportProfileDetails_IgnoredCouleurCell", CellRange(rule.Locator.FirstBlockStartRow, cell)];
-            }
-
             if (rule.DefaultCouleurEtiquette is not null)
             {
                 yield return loc["ImportProfileDetails_IgnoredDefaultCouleur", Quote(rule.DefaultCouleurEtiquette, loc)];
@@ -178,12 +180,13 @@ public static class ImportProfileDescriptionBuilder
             yield break;
         }
 
-        if (rule.CouleurEtiquetteCell is not null && rule.DefaultCouleurEtiquette is not null)
+        var hasField = CouleurField(rule) is not null;
+        if (hasField && rule.DefaultCouleurEtiquette is not null)
         {
             yield return loc["ImportProfileDetails_IgnoredDefaultCouleurBecauseCell", Quote(rule.DefaultCouleurEtiquette, loc)];
         }
 
-        if (rule.CouleurEtiquetteCell is null && rule.AllowedCouleursEtiquette is not null)
+        if (!hasField && rule.AllowedCouleursEtiquette is not null)
         {
             yield return loc["ImportProfileDetails_IgnoredAllowedCouleursWithoutCell", QuoteList(rule.AllowedCouleursEtiquette, loc)];
         }
@@ -225,7 +228,8 @@ public static class ImportProfileDescriptionBuilder
 
         foreach (var field in rule.HeaderFields)
         {
-            var role = usage.RequiredHeaderFields.FirstOrDefault(required => required.Name == field.Name)?.Role;
+            var role = usage.RequiredHeaderFields.Concat(usage.OptionalHeaderFields)
+                .FirstOrDefault(known => known.Name == field.Name)?.Role;
             if (role is null && !referencedFieldNames.Contains(field.Name))
             {
                 continue;
@@ -264,11 +268,11 @@ public static class ImportProfileDescriptionBuilder
         }
     }
 
-    // Mirrors CouleurEtiquetteResolver: a configured cell wins, and the default is then never used (even for
-    // a blank cell); the allowed list only filters a cell's value.
+    // Mirrors ElementSheetExtractionService (lot 084, G10): a "CouleurEtiquette" block field wins, and the
+    // default is then never used (even for a blank cell); the allowed list only filters that field's value.
     private static IEnumerable<ProfileDescriptionSentence> DescribeCouleur(SheetExtractionRule rule, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        if (rule.CouleurEtiquetteCell is { } cell)
+        if (CouleurField(rule) is { } cell)
         {
             var range = CellRange(rule.Locator.FirstBlockStartRow, cell);
             yield return new(rule.AllowedCouleursEtiquette is null
@@ -302,8 +306,9 @@ public static class ImportProfileDescriptionBuilder
                 yield return new(DescribeConditionalGroup(rule, group, usage.PointsTickTheEquipement, loc));
             }
 
-            // PROCEDURE: no Point when no task matches is normal, not a warning (lot 083).
-            if (!usage.PointsTickTheEquipement)
+            // PROCEDURE: no Point when no task matches is normal, not a warning (lot 083). Element sheets
+            // warn only when asked to (lot 084, G3).
+            if (!usage.PointsTickTheEquipement && rule.WarnWhenNoConditionalPoint)
             {
                 yield return new(loc["ImportProfileDetails_PointNoConditionMet"]);
             }
@@ -431,6 +436,9 @@ public static class ImportProfileDescriptionBuilder
         values.Count == 0 ? loc[noneKey] : OneOrSeveral(values, loc, oneKey, severalKey);
 
     // Absolute range of a block cell in the first block.
+    private static BlockFieldDefinition? CouleurField(SheetExtractionRule rule) =>
+        rule.Locator.Fields.FirstOrDefault(f => f.Name == ElementFieldNames.CouleurEtiquette);
+
     private static string CellRange(int firstBlockStartRow, BlockFieldDefinition cell) =>
         CellRef(BlockFieldRangeFormatter.ToAbsoluteRange(firstBlockStartRow, cell.ColumnRange, cell.RowOffsetStart, cell.RowOffsetEnd));
 }

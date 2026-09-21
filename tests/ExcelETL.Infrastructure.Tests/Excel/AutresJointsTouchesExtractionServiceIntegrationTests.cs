@@ -1,6 +1,6 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -11,7 +11,8 @@ using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
-// Runs AutresJointsTouchesExtractionService (Application, Lot C5) against the real
+// Runs the AUTRES JOINTS TOUCHES settings through ElementSheetExtractionService (lot 084;
+// AutresJointsTouchesExtractionService, Lot C5, before it) against the real
 // ClosedXmlWorkbookReader and the 3 real client fixtures.
 public class AutresJointsTouchesExtractionServiceIntegrationTests
 {
@@ -25,25 +26,26 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         "CONTRÔLE ETANCHÉITÉS"
     ];
 
-    private readonly AutresJointsTouchesExtractionService _sut =
-        new(new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance);
+    private readonly ElementSheetExtractionService _sut = new(
+        new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
 
     // Lot 047: the "repereEcho" header rule (N6), transcribed from the coordinate previously
     // hardcoded in AutresJointsTouchesExtractionService.
     private static SheetExtractionRule CreateSheetRule(string? defaultCouleurEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 7, IsolementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 7, ElementFieldNames.Identification,
         [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "F:Y", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+            new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
+            new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4)
         ]),
-        [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
+        [new ConditionalPointRule(ElementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
         UnconditionalColonneNames,
         [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "N6"))],
         [],
-        defaultCouleurEtiquette: defaultCouleurEtiquette);
+        defaultCouleurEtiquette: defaultCouleurEtiquette,
+        warnWhenNoConditionalPoint: true);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsNoIsolements()
@@ -52,7 +54,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
         // entirely empty for this dossier -- same "unused sheet" pattern as ORIFICES CAPACITES (C4).
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Isolements.Should().BeEmpty();
+        result.Elements.Should().BeEmpty();
         result.Points.Should().BeEmpty();
         result.Errors.Should().BeEmpty();
     }
@@ -62,8 +64,8 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
-        result.Isolements.Should().HaveCount(13);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "TUYAUTERIE");
+        result.Elements.Should().HaveCount(13);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "TUYAUTERIE");
         // 2 unconditional + 1 conditional ("POSE ÉTIQUETTES", since none are "TUBING") per Isolement.
         result.Points.Should().HaveCount(13 * 3);
         result.Errors.Should().BeEmpty();
@@ -74,11 +76,11 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
 
-        result.Isolements.Should().HaveCount(4);
-        result.Isolements.Should().Contain(i => i.TypeElementNom == "TUYAUTERIE")
+        result.Elements.Should().HaveCount(4);
+        result.Elements.Should().Contain(i => i.TypeElementNom == "TUYAUTERIE")
             .And.Contain(i => i.TypeElementNom == "TUBING");
 
-        var tubingReperes = result.Isolements.Where(i => i.TypeElementNom == "TUBING").Select(i => i.Repere).ToList();
+        var tubingReperes = result.Elements.Where(i => i.TypeElementNom == "TUBING").Select(i => i.Repere).ToList();
         tubingReperes.Should().HaveCount(2);
         result.Points.Should().NotContain(p => p.ColonneNom == PoseEtiquettesColonneName && tubingReperes.Contains(p.ParentRepere));
         result.Points.Should().Contain(p => p.ColonneNom == PoseEtiquettesColonneName && !tubingReperes.Contains(p.ParentRepere));
@@ -101,11 +103,11 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
 
         var result = _sut.Extract(workbookReader, rule, ReperePrefix);
 
-        result.Isolements.Should().HaveCount(13);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
+        result.Elements.Should().HaveCount(13);
+        result.Elements.Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixture(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixture(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);

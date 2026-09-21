@@ -1,3 +1,4 @@
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.BlazorAdmin.Formatting;
 
 namespace ExcelETL.BlazorAdmin.Editing.Import;
@@ -18,7 +19,8 @@ public sealed record SheetRuleIgnoredSettings(
     bool ZeroEnergieExpectedValueIgnored,
     bool CouleurEtiquetteIgnored,
     bool DefaultCouleurIgnoredBecauseCell,
-    bool AllowedCouleursIgnoredWithoutCell)
+    bool AllowedCouleursIgnoredWithoutCell,
+    bool CouleurEtiquetteCellIgnored = false)
 {
     public static SheetRuleIgnoredSettings None { get; } = new(false, false, false, false, null, false, false, false, false);
 
@@ -54,23 +56,27 @@ public sealed record SheetRuleIgnoredSettings(
 
         var zeroEnergieIgnored = Ignores(SheetRuleMember.ZeroEnergieExpectedValue) && Filled(rule.ZeroEnergieExpectedValue);
 
+        // Lot 084 (G10): the couleur is read from a block field named "CouleurEtiquette"; the dedicated cell
+        // is read by no sheet any more (removed in 84.8).
         var readsCouleur = !Ignores(SheetRuleMember.CouleurEtiquette);
-        var hasCell = Filled(rule.CouleurEtiquetteCellRange);
-        var couleurIgnored = !readsCouleur
-            && (hasCell || Filled(rule.DefaultCouleurEtiquette) || Filled(rule.AllowedCouleursEtiquette));
-        var defaultIgnoredBecauseCell = readsCouleur && hasCell && Filled(rule.DefaultCouleurEtiquette);
-        var allowedIgnoredWithoutCell = readsCouleur && !hasCell && Filled(rule.AllowedCouleursEtiquette);
+        var hasCouleurField = rule.Fields.Append(rule.PendingField)
+            .Any(f => f.Name.Trim() == ElementFieldNames.CouleurEtiquette);
+        var couleurIgnored = !readsCouleur && (Filled(rule.DefaultCouleurEtiquette) || Filled(rule.AllowedCouleursEtiquette));
+        var defaultIgnoredBecauseCell = readsCouleur && hasCouleurField && Filled(rule.DefaultCouleurEtiquette);
+        var allowedIgnoredWithoutCell = readsCouleur && !hasCouleurField && Filled(rule.AllowedCouleursEtiquette);
+        var couleurCellIgnored = Ignores(SheetRuleMember.CouleurEtiquetteCell) && Filled(rule.CouleurEtiquetteCellRange);
 
         var anyConfigured =
             (conditionalIgnored && rule.PointRules.Count > 0)
             || (fieldPresenceIgnored && rule.FieldPresencePointRules.Count > 0)
             || (headerIgnored && (rule.HeaderFields.Count > 0 || rule.HeaderComposites.Count > 0))
             || ignoredStopFieldFixedName is not null
-            || zeroEnergieIgnored || couleurIgnored || defaultIgnoredBecauseCell || allowedIgnoredWithoutCell;
+            || zeroEnergieIgnored || couleurIgnored || defaultIgnoredBecauseCell || allowedIgnoredWithoutCell
+            || couleurCellIgnored;
 
         return new SheetRuleIgnoredSettings(
             SheetNotProcessed: false, conditionalIgnored, fieldPresenceIgnored, headerIgnored, ignoredStopFieldFixedName,
-            zeroEnergieIgnored, couleurIgnored, defaultIgnoredBecauseCell, allowedIgnoredWithoutCell)
+            zeroEnergieIgnored, couleurIgnored, defaultIgnoredBecauseCell, allowedIgnoredWithoutCell, couleurCellIgnored)
         {
             AnyConfiguredSettingIgnored = anyConfigured
         };

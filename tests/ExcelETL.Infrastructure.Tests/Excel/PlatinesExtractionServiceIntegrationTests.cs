@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -10,7 +10,8 @@ using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
-// Runs UnconditionalIsolementSheetExtractionService (Application, Lot C3) against the real
+// Runs the PLATINES settings through ElementSheetExtractionService (lot 084; before it
+// UnconditionalIsolementSheetExtractionService, Lot C3) against the real
 // ClosedXmlWorkbookReader and the 3 real client fixtures, configured for PLATINES specifically.
 public class PlatinesExtractionServiceIntegrationTests
 {
@@ -27,20 +28,28 @@ public class PlatinesExtractionServiceIntegrationTests
         "PLATINES / TAMPONS PLEINS"
     ];
 
-    private readonly UnconditionalIsolementSheetExtractionService _sut = new(
-        new RepeatingBlockReader(), new TextTransformEvaluator(),
-        NullLogger<UnconditionalIsolementSheetExtractionService>.Instance);
+    private readonly ElementSheetExtractionService _sut = new(
+        new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
+
+    private const string ReperePrefix = "MAD-OXO-";
+
+    // Lot 084.6: run through the generic element engine; the repère echo is a header field (G6).
+    private static readonly HeaderFieldRule[] RepereEcho =
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "K6:U6"))];
+
+    private static readonly BlockFieldDefinition[] KnownFields =
+    [
+        new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+        new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+        new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5)
+    ];
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
-        [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
-        ]),
+        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification, KnownFields),
         [],
-        UnconditionalColonneNames, [], []);
+        UnconditionalColonneNames, RepereEcho, []);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsAllPlatinesWithNoErrors()
@@ -48,8 +57,8 @@ public class PlatinesExtractionServiceIntegrationTests
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(15);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE");
+        result.Elements.Should().HaveCount(15);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE");
         result.Points.Should().HaveCount(15 * 7);
     }
 
@@ -59,8 +68,8 @@ public class PlatinesExtractionServiceIntegrationTests
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(21);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE" || i.TypeElementNom == "TAMPON PLEIN");
+        result.Elements.Should().HaveCount(21);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE" || i.TypeElementNom == "TAMPON PLEIN");
         result.Points.Should().HaveCount(21 * 7);
     }
 
@@ -70,8 +79,8 @@ public class PlatinesExtractionServiceIntegrationTests
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(5);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE" || i.TypeElementNom == "TAMPON PLEIN");
+        result.Elements.Should().HaveCount(5);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "PLATINE" || i.TypeElementNom == "TAMPON PLEIN");
         result.Points.Should().HaveCount(5 * 7);
     }
 
@@ -84,23 +93,24 @@ public class PlatinesExtractionServiceIntegrationTests
     private const string DebutMad = "RECEPTION DEBUT MAD";
     private const string DebutRel = "RECEPTION DEBUT REL";
 
-    private static readonly FieldPresencePointRule[] DebutRules =
+    // Lot 084.6: the two H value cells are optional block fields read by ordinary point rules (G2).
+    private static readonly ConditionalPointRule[] DebutRules =
     [
-        new(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), DebutMad, "DEBUT MAD"),
-        new(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), DebutMad, "DEBUT MAD"),
-        new(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), DebutRel, "DEBUT REL"),
-        new(new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), DebutRel, "DEBUT REL")
+        new("PoseeLe", ConditionOperator.Equals, "DEBUT MAD", DebutMad),
+        new("DeposeeLe", ConditionOperator.Equals, "DEBUT MAD", DebutMad),
+        new("PoseeLe", ConditionOperator.Equals, "DEBUT REL", DebutRel),
+        new("DeposeeLe", ConditionOperator.Equals, "DEBUT REL", DebutRel)
     ];
 
     private static SheetExtractionRule CreateSheetRuleWithFieldPresenceRules() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
         [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+            .. KnownFields,
+            new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
+            new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3, isRequired: false)
         ]),
-        [],
+        DebutRules,
         // The 5 Colonnes that stay unconditional (PoseEtiquettes and friends) -- unaffected by this
         // feature, kept here only so the total Point count assertions below are meaningful.
         [
@@ -110,12 +120,11 @@ public class PlatinesExtractionServiceIntegrationTests
             "RÉCEPTION PLATINES/TAMPONS PLEINS",
             "PLATINES / TAMPONS PLEINS"
         ],
-        [], [],
-        fieldPresencePointRules: DebutRules);
+        RepereEcho, []);
 
-    private static IReadOnlyList<string> DebutColonnesOf(IsolementSheetExtractionResult result, string identification) =>
+    private static IReadOnlyList<string> DebutColonnesOf(ElementSheetExtractionResult result, string identification) =>
         result.Points
-            .Where(p => p.ParentRepere == result.Isolements
+            .Where(p => p.ParentRepere == result.Elements
                 .Single(i => i.Repere.EndsWith("-" + identification, StringComparison.Ordinal)).Repere)
             .Select(p => p.ColonneNom)
             .Where(c => c is DebutMad or DebutRel)
@@ -130,7 +139,7 @@ public class PlatinesExtractionServiceIntegrationTests
         var result = ExtractFromFixtureWithFieldPresenceRules("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(15);
+        result.Elements.Should().HaveCount(15);
         DebutColonnesOf(result, "PT15A").Should().Equal(DebutMad);
         DebutColonnesOf(result, "PT15B").Should().Equal(DebutRel);
         result.Points.Should().HaveCount(15 * 5 + 2);
@@ -173,31 +182,27 @@ public class PlatinesExtractionServiceIntegrationTests
         var result = ExtractFromFixtureWithFieldPresenceRules(fixtureFileName);
 
         result.Errors.Should().BeEmpty();
-        result.Isolements.Should().HaveCount(expectedIsolementCount);
+        result.Elements.Should().HaveCount(expectedIsolementCount);
         result.Points.Should().NotContain(p => p.ColonneNom == DebutMad || p.ColonneNom == DebutRel);
         result.Points.Should().HaveCount(expectedIsolementCount * 5);
     }
 
     // Lot 068 (couleur d'étiquette, client remark) -- verified against the real fixtures, not
     // hand-built cells, per the ticket's own explicit requirement (68.7).
+    // Lot 084.6 (G10): the couleur cell is an optional block field with a known name.
     private static SheetExtractionRule CreateSheetRuleWithCouleurEtiquetteCell() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, IsolementFieldNames.Identification,
-        [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
-        ]),
-        [], UnconditionalColonneNames, [], [],
-        couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1));
+        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
+            [.. KnownFields, new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false)]),
+        [], UnconditionalColonneNames, RepereEcho, []);
 
     [Fact]
     public void Extract_C7401Fixture_WithCouleurEtiquetteCell_EveryPlatineIsRouge()
     {
         var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Isolements.Should().HaveCount(15);
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+        result.Elements.Should().HaveCount(15);
+        result.Elements.Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
     }
 
     [Fact]
@@ -205,11 +210,11 @@ public class PlatinesExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
-        result.Isolements.Should().HaveCount(21);
+        result.Elements.Should().HaveCount(21);
         // Confirmed by direct inspection of the real fixture (PLATINES, column H, rows 18..178):
         // the first 13 blocks are ROUGE, the next 8 are BLEUE -- no block is blank on this fixture.
-        result.Isolements.Take(13).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
-        result.Isolements.Skip(13).Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
+        result.Elements.Take(13).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+        result.Elements.Skip(13).Should().OnlyContain(i => i.CouleurEtiquette == "BLEUE");
     }
 
     [Fact]
@@ -217,11 +222,11 @@ public class PlatinesExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixtureWithCouleurEtiquetteCell("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
 
-        result.Isolements.Should().HaveCount(5);
+        result.Elements.Should().HaveCount(5);
         // Confirmed by direct inspection: real free text, not a closed ROUGE/BLEUE set -- block 5
         // (0-indexed 4, row 50) is JAUNE, every other block is ROUGE.
-        result.Isolements.Where((_, index) => index != 4).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
-        result.Isolements[4].CouleurEtiquette.Should().Be("JAUNE");
+        result.Elements.Where((_, index) => index != 4).Should().OnlyContain(i => i.CouleurEtiquette == "ROUGE");
+        result.Elements[4].CouleurEtiquette.Should().Be("JAUNE");
     }
 
     [Fact]
@@ -229,28 +234,28 @@ public class PlatinesExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Isolements.Should().OnlyContain(i => i.CouleurEtiquette == "");
+        result.Elements.Should().OnlyContain(i => i.CouleurEtiquette == "");
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixtureWithCouleurEtiquetteCell(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixtureWithCouleurEtiquetteCell(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRuleWithCouleurEtiquetteCell());
+        return _sut.Extract(workbookReader, CreateSheetRuleWithCouleurEtiquetteCell(), ReperePrefix);
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixtureWithFieldPresenceRules(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixtureWithFieldPresenceRules(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRuleWithFieldPresenceRules());
+        return _sut.Extract(workbookReader, CreateSheetRuleWithFieldPresenceRules(), ReperePrefix);
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixture(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixture(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule());
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
     }
 
     private static string FixturePath(string fileName)

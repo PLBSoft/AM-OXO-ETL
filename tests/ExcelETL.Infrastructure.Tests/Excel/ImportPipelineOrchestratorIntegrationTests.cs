@@ -1,4 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
@@ -28,17 +29,9 @@ public class ImportPipelineOrchestratorIntegrationTests
 
     private readonly ImportPipelineOrchestrator _sut = new(
         new ProcedureExtractionService(new HeaderRuleResolver(new TextTransformEvaluator()), new ConditionalPointRuleEvaluator(), NullLogger<ProcedureExtractionService>.Instance),
-        new IsolementExtractionService(
-            new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance),
-        new UnconditionalIsolementSheetExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(),
-            NullLogger<UnconditionalIsolementSheetExtractionService>.Instance),
-        new AutresJointsTouchesExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<AutresJointsTouchesExtractionService>.Instance),
-        new DiversExtractionService(
-            new RepeatingBlockReader(), new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(),
-            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<DiversExtractionService>.Instance),
+        new ElementSheetExtractionService(
+            new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+            new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
         NullLogger<ImportPipelineOrchestrator>.Instance);
 
     private static ImportProfile CreateProfile() => new(
@@ -73,12 +66,14 @@ public class ImportPipelineOrchestratorIntegrationTests
                 new RepeatingBlockLocator("ISOLEMENT", 19, 7, IsolementFieldNames.Identification,
                 [
                     new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
+                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
                     new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
                     new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
                 ]),
                 [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
-                ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], []),
+                ["PROLOCK VANNES", "DEPROLOCK VANNES"],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ISOLEMENT", "K6:T6"))], [],
+                warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "PLATINES",
                 new RepeatingBlockLocator("PLATINES", 17, 8, IsolementFieldNames.Identification,
@@ -96,7 +91,8 @@ public class ImportPipelineOrchestratorIntegrationTests
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RECEPTION DEBUT REL",
                     "PLATINES / TAMPONS PLEINS"
-                ], [], []),
+                ],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("PLATINES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
                 new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
@@ -111,7 +107,8 @@ public class ImportPipelineOrchestratorIntegrationTests
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS"
-                ], [], []),
+                ],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ORIFICES CAPACITES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
                 new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
@@ -123,7 +120,8 @@ public class ImportPipelineOrchestratorIntegrationTests
                 [new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)],
                 ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
-                []),
+                [],
+                warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "DIVERS",
                 new RepeatingBlockLocator("DIVERS", 9, 3, IsolementFieldNames.Identification,
@@ -142,8 +140,12 @@ public class ImportPipelineOrchestratorIntegrationTests
                     new ConditionalPointRule(IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
                 [],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6"))],
-                [])
+                [
+                    new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6")),
+                    new HeaderFieldRule("zone", new DirectCell("DIVERS", "B6:E6"))
+                ],
+                [],
+                warnWhenNoConditionalPoint: true)
         ]);
 
     [Fact]

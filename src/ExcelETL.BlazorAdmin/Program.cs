@@ -4,6 +4,7 @@ using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
@@ -105,6 +106,7 @@ builder.Services.AddSingleton<IIsolementExtractionService, IsolementExtractionSe
 builder.Services.AddSingleton<IUnconditionalIsolementSheetExtractionService, UnconditionalIsolementSheetExtractionService>();
 builder.Services.AddSingleton<IAutresJointsTouchesExtractionService, AutresJointsTouchesExtractionService>();
 builder.Services.AddSingleton<IDiversExtractionService, DiversExtractionService>();
+builder.Services.AddSingleton<IElementSheetExtractionService, ElementSheetExtractionService>();
 builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
 
 // Lot J: the target-workbook generation pipeline (Lot I), wired here so /export-profiles/test can

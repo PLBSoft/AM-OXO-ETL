@@ -1,4 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.AutresJointsTouches;
 using ExcelETL.Application.Extraction.Oxo.Divers;
 using ExcelETL.Application.Extraction.Oxo.Isolement;
@@ -32,6 +33,12 @@ public class ImportSheetUsageTests
     private const string FixtureFileName = "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx";
     private const string TestColonneName = "COLONNE TEST 078";
 
+    private static readonly SheetRuleMember[] ElementSheetMembers =
+    [
+        SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
+        SheetRuleMember.ConditionalPointRules, SheetRuleMember.CouleurEtiquette
+    ];
+
     public static TheoryData<string, SheetRuleMember[]> ReadMembersBySheet => new()
     {
         // Lot 082: PROCEDURE's unconditional Colonnes create Points on the Equipement.
@@ -43,41 +50,12 @@ public class ImportSheetUsageTests
                 SheetRuleMember.ConditionalPointRules
             ]
         },
-        {
-            Isolement,
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
-                SheetRuleMember.ZeroEnergieExpectedValue
-            ]
-        },
-        {
-            Platines,
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.FieldPresencePointRules,
-                SheetRuleMember.CouleurEtiquette
-            ]
-        },
-        {
-            OrificesCapacites,
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.FieldPresencePointRules,
-                SheetRuleMember.CouleurEtiquette
-            ]
-        },
-        {
-            AutresJointsTouches,
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
-                SheetRuleMember.ConditionalPointRules, SheetRuleMember.CouleurEtiquette
-            ]
-        },
-        {
-            Divers,
-            [
-                SheetRuleMember.BlockLocator, SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes,
-                SheetRuleMember.ConditionalPointRules
-            ]
-        },
+        // Lot 084.6: the five element sheets share one engine and read every remaining setting.
+        { Isolement, ElementSheetMembers },
+        { Platines, ElementSheetMembers },
+        { OrificesCapacites, ElementSheetMembers },
+        { AutresJointsTouches, ElementSheetMembers },
+        { Divers, ElementSheetMembers },
     };
 
     [Theory]
@@ -131,6 +109,9 @@ public class ImportSheetUsageTests
     }
 
     [Theory]
+    [InlineData(Isolement)]
+    [InlineData(Platines)]
+    [InlineData(OrificesCapacites)]
     [InlineData(AutresJointsTouches)]
     [InlineData(Divers)]
     public void For_SheetsEchoingTheEquipementRepere_RequireRepereEcho(string sheetName)
@@ -186,7 +167,8 @@ public class ImportSheetUsageTests
         { Procedure, SheetRuleMember.ConditionalPointRules },
         { Isolement, SheetRuleMember.ConditionalPointRules },
         { AutresJointsTouches, SheetRuleMember.ConditionalPointRules },
-        { Platines, SheetRuleMember.FieldPresencePointRules },
+        { Platines, SheetRuleMember.ConditionalPointRules },
+        { Platines, SheetRuleMember.HeaderRules },
         { AutresJointsTouches, SheetRuleMember.CouleurEtiquette },
     };
 
@@ -220,10 +202,10 @@ public class ImportSheetUsageTests
         unchanged.Should().BeFalse();
     }
 
-    // Lot 078.8: PROCEDURE and ISOLEMENT walk their block themselves and always stop on a fixed field.
+    // Lot 078.8: PROCEDURE walks its block itself and always stops on a fixed field (ISOLEMENT did too
+    // until lot 084.6).
     [Theory]
     [InlineData(Procedure, "Ordre")]
-    [InlineData(Isolement, "Designation")]
     public void FixedStopField_WhenAnotherStopFieldIsConfigured_DoesNotChangeTheRealPipelineOutput(string sheetName, string otherStopField)
     {
         ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().NotBeNull().And.NotBe(otherStopField);
@@ -238,9 +220,11 @@ public class ImportSheetUsageTests
     }
 
     [Theory]
+    [InlineData(Isolement)]
+    [InlineData(Platines)]
+    [InlineData(OrificesCapacites)]
     [InlineData(AutresJointsTouches)]
     [InlineData(Divers)]
-    [InlineData(Platines)]
     public void SheetsUsingTheConfiguredStopField_HaveNoFixedStopField(string sheetName) =>
         ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().BeNull();
 
@@ -283,14 +267,15 @@ public class ImportSheetUsageTests
                     : new SheetExtractionRule(
                         rule.SheetName, change(rule.Locator), rule.PointRules, rule.UnconditionalColonneNames, rule.HeaderFields,
                         rule.HeaderComposites, rule.ZeroEnergieExpectedValue, rule.FieldPresencePointRules, rule.CouleurEtiquetteCell,
-                        rule.DefaultCouleurEtiquette, rule.AllowedCouleursEtiquette))
+                        rule.DefaultCouleurEtiquette, rule.AllowedCouleursEtiquette, rule.WarnWhenNoConditionalPoint))
             ],
             profile.TacheMultipleTypeLabels);
 
     private static readonly SheetRuleMember[] MutableMembers =
     [
         SheetRuleMember.HeaderRules, SheetRuleMember.UnconditionalColonnes, SheetRuleMember.ConditionalPointRules,
-        SheetRuleMember.FieldPresencePointRules, SheetRuleMember.ZeroEnergieExpectedValue, SheetRuleMember.CouleurEtiquette
+        SheetRuleMember.FieldPresencePointRules, SheetRuleMember.ZeroEnergieExpectedValue, SheetRuleMember.CouleurEtiquette,
+        SheetRuleMember.CouleurEtiquetteCell
     ];
 
     // Independent copy of the expected table, so the drift guard doesn't just trust the production table.
@@ -318,9 +303,10 @@ public class ImportSheetUsageTests
             member == SheetRuleMember.FieldPresencePointRules
                 ? [.. rule.FieldPresencePointRules, new FieldPresencePointRule(FirstFieldOf(rule), TestColonneName)]
                 : rule.FieldPresencePointRules,
-            rule.CouleurEtiquetteCell,
+            member == SheetRuleMember.CouleurEtiquetteCell ? new BlockFieldDefinition("CelluleCouleur", "H:N", 1, 1) : rule.CouleurEtiquetteCell,
             member == SheetRuleMember.CouleurEtiquette ? "VERT" : rule.DefaultCouleurEtiquette,
-            rule.AllowedCouleursEtiquette);
+            rule.AllowedCouleursEtiquette,
+            rule.WarnWhenNoConditionalPoint);
 
     // Reads the stop field's own cell: always filled in for every extracted block.
     private static BlockFieldDefinition FirstFieldOf(SheetExtractionRule rule)
@@ -354,16 +340,9 @@ public class ImportSheetUsageTests
         var headerRuleResolver = new HeaderRuleResolver(textTransformEvaluator);
         var orchestrator = new ImportPipelineOrchestrator(
             new ProcedureExtractionService(headerRuleResolver, conditionalPointRuleEvaluator, NullLogger<ProcedureExtractionService>.Instance),
-            new IsolementExtractionService(
-                textTransformEvaluator, conditionalPointRuleEvaluator, NullLogger<IsolementExtractionService>.Instance),
-            new UnconditionalIsolementSheetExtractionService(
-                repeatingBlockReader, textTransformEvaluator, NullLogger<UnconditionalIsolementSheetExtractionService>.Instance),
-            new AutresJointsTouchesExtractionService(
-                repeatingBlockReader, textTransformEvaluator, conditionalPointRuleEvaluator, headerRuleResolver,
-                NullLogger<AutresJointsTouchesExtractionService>.Instance),
-            new DiversExtractionService(
-                repeatingBlockReader, textTransformEvaluator, conditionalPointRuleEvaluator, headerRuleResolver,
-                NullLogger<DiversExtractionService>.Instance),
+            new ElementSheetExtractionService(
+                new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+                new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance),
             NullLogger<ImportPipelineOrchestrator>.Instance);
 
         using var stream = File.OpenRead(FixturePath(FixtureFileName));

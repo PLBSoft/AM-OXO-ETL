@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Domain.Extraction.Pivot;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
@@ -10,7 +10,8 @@ using Xunit;
 
 namespace ExcelETL.Infrastructure.Tests.Excel;
 
-// Runs IsolementExtractionService (Application, Lot C2) against the real ClosedXmlWorkbookReader and
+// Runs the ISOLEMENT settings through ElementSheetExtractionService (lot 084; IsolementExtractionService,
+// Lot C2, before it) against the real ClosedXmlWorkbookReader and
 // the 3 real client fixtures. None of the 3 files contain a "ZERO ENERGIE"-typed row in ISOLEMENT, so
 // every extracted isolement (all "PROLOCK" except D8570's one "VANNE") legitimately produces an
 // NoConditionalPointCreated warning for the unmatched conditional Colonne -- see
@@ -21,33 +22,36 @@ public class IsolementExtractionServiceIntegrationTests
 {
     private const string Sheet = "ISOLEMENT";
     private const string ZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
+    private const string ReperePrefix = "MAD-OXO-";
 
-    private readonly IsolementExtractionService _sut =
-        new(new TextTransformEvaluator(), new ConditionalPointRuleEvaluator(), NullLogger<IsolementExtractionService>.Instance);
+    private readonly ElementSheetExtractionService _sut = new(
+        new RepeatingBlockReader(), new ConditionalPointRuleEvaluator(),
+        new HeaderRuleResolver(new TextTransformEvaluator()), NullLogger<ElementSheetExtractionService>.Instance);
 
-    // Lot 063: PS941's condition now tests HasZeroEnergie (derived from the dedicated column V cell),
-    // not TypeElement -- see IsolementExtractionService's own comment. ZeroEnergieExpectedValue
-    // reproduces the client's current real value, same as the seeded default import profile.
+    // Lot 084.6: the ISOLEMENT settings of the standard profile, run through the generic element engine.
+    // G5: the dedicated column V cell is an ordinary optional block field read by an ordinary rule.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 19, 7, IsolementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 19, 7, ElementFieldNames.Identification,
         [
-            new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-            new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
-            new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
-            new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
-            new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
+            new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+            new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
+            new BlockFieldDefinition(ElementFieldNames.PositionALaPose, "H:O", 1, 2),
+            new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4),
+            new BlockFieldDefinition("ZeroEnergie", "V", -1, 0, isRequired: false)
         ]),
-        [new ConditionalPointRule(IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", ZeroEnergieColonneName)],
-        ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE");
+        [new ConditionalPointRule("ZeroEnergie", ConditionOperator.Equals, "ZERO ENERGIE", ZeroEnergieColonneName)],
+        ["PROLOCK VANNES", "DEPROLOCK VANNES"],
+        [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell(Sheet, "K6:T6"))], [],
+        warnWhenNoConditionalPoint: true);
 
     [Fact]
     public void Extract_C7401Fixture_ReturnsAllPlainProlockIsolements()
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        result.Isolements.Should().HaveCount(8);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
+        result.Elements.Should().HaveCount(8);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         // 8 isolements * 2 unconditional Points, plus 1 PS941 Point for the "V4" block (Lot 063 --
         // see the dedicated test below).
         result.Points.Should().HaveCount(8 * 2 + 1);
@@ -65,9 +69,8 @@ public class IsolementExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.C7401.xlsx");
 
-        var v4 = result.Isolements.Should().ContainSingle(i => i.Repere == "C7401-V4").Which;
+        var v4 = result.Elements.Should().ContainSingle(i => i.Repere == "C7401-V4").Which;
         v4.TypeElementNom.Should().Be("PROLOCK");
-        v4.HasZeroEnergie.Should().BeTrue();
         result.Points.Should().Contain(new PointPivot(ZeroEnergieColonneName, "C7401-V4"));
         result.Errors.Should().NotContain(e => e.BlockIdentifier == "C7401-V4");
     }
@@ -77,8 +80,8 @@ public class IsolementExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
-        result.Isolements.Should().HaveCount(15);
-        var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
+        result.Elements.Should().HaveCount(15);
+        var vanne = result.Elements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
         vanne.Repere.Should().Be("D8570-V4");
         vanne.Designation.Should().BeEmpty();
         result.Points.Should().Contain(
@@ -95,18 +98,18 @@ public class IsolementExtractionServiceIntegrationTests
     {
         var result = ExtractFromFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
 
-        result.Isolements.Should().HaveCount(3);
-        result.Isolements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
+        result.Elements.Should().HaveCount(3);
+        result.Elements.Should().OnlyContain(i => i.TypeElementNom == "PROLOCK");
         result.Points.Should().HaveCount(3 * 2);
         result.Errors.Should().ContainSingle().Which.Should().Match<ExtractionError>(
             e => e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.ExtractedValue == "PROLOCK");
     }
 
-    private IsolementSheetExtractionResult ExtractFromFixture(string fileName)
+    private ElementSheetExtractionResult ExtractFromFixture(string fileName)
     {
         using var stream = File.OpenRead(FixturePath(fileName));
         using var workbookReader = new ClosedXmlWorkbookReader(stream);
-        return _sut.Extract(workbookReader, CreateSheetRule());
+        return _sut.Extract(workbookReader, CreateSheetRule(), ReperePrefix);
     }
 
     private static string FixturePath(string fileName)

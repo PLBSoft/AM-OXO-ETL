@@ -108,6 +108,12 @@
                placeholder="@Loc["ImportProfileEditor_CouleurEtiquetteCellPlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-couleur-etiquette-cell-input")">@Loc["ImportProfileEditor_CouleurEtiquetteCellLabel"]</label>
     </div>
+    @if (ignored.CouleurEtiquetteCellIgnored)
+    {
+        <div id="@($"{IdPrefix}couleur-etiquette-cell-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_CouleurEtiquetteCellIgnoredWarning"]
+        </div>
+    }
 </div>
 <div class="mb-3">
     <div class="form-floating">

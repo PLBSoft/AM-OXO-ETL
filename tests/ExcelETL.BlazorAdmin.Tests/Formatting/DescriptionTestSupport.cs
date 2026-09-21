@@ -81,7 +81,8 @@ internal static class DescriptionTestSupport
         IReadOnlyList<FieldPresencePointRule>? fieldPresencePointRules = null,
         BlockFieldDefinition? couleurEtiquetteCell = null,
         string? defaultCouleurEtiquette = null,
-        IReadOnlyList<string>? allowedCouleursEtiquette = null)
+        IReadOnlyList<string>? allowedCouleursEtiquette = null,
+        bool warnWhenNoConditionalPoint = false)
     {
         // Lot 084.1: a point rule may only read a field of its own block -- by default, declare one
         // block field per source field the rules read.
@@ -103,7 +104,8 @@ internal static class DescriptionTestSupport
             fieldPresencePointRules,
             couleurEtiquetteCell,
             defaultCouleurEtiquette,
-            allowedCouleursEtiquette);
+            allowedCouleursEtiquette,
+            warnWhenNoConditionalPoint);
     }
 
     public static ImportProfile Profile(

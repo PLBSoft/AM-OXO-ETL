@@ -3270,12 +3270,13 @@ public class ImportProfileEditorTests : BunitContext
         });
 
     [Fact]
-    public void SheetRuleForm_IsolementSheet_ShowsNoWarning() => WithCulture("en-US", () =>
+    // Lot 084.6 (G6): ISOLEMENT reads its repère echo from the header, like every element sheet.
+    public void SheetRuleForm_IsolementSheet_WarnsWhenRepereEchoIsMissing() => WithCulture("en-US", () =>
     {
         var cut = Render<ImportProfileEditor>();
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
 
-        cut.FindAll("#header-well-known-names-warning").Should().BeEmpty();
+        cut.Find("#header-well-known-names-warning").TextContent.Should().Contain("repereEcho");
     });
 
     [Fact]

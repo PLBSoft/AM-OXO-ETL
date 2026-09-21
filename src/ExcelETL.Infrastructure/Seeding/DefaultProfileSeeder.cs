@@ -1,5 +1,5 @@
 using ExcelETL.Application.Extraction.Oxo;
-using ExcelETL.Application.Extraction.Oxo.Isolement;
+using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
 using ExcelETL.Domain.Extraction.Primitives;
@@ -42,6 +42,13 @@ public class DefaultProfileSeeder(
     // spec-extraction-fichier-source-oxo.md §6/§7.
     private const string IsolementZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
+    private const string ReceptionDebutMadColonneName = "RECEPTION DEBUT MAD";
+    private const string ReceptionDebutRelColonneName = "RECEPTION DEBUT REL";
+
+    // Lot 084: optional block fields read only by point rules.
+    private const string ZeroEnergieFieldName = "ZeroEnergie";
+    private const string PoseeLeFieldName = "PoseeLe";
+    private const string DeposeeLeFieldName = "DeposeeLe";
 
     // The two tables every element of a MAD dossier belongs to -- the DefaultTableaux value seeded
     // below. Since lot 082 they only fill the "Tableaux" column; they create no Point (lot U3 used to
@@ -213,72 +220,78 @@ public class DefaultProfileSeeder(
                         ProcedureHeaderFieldNames.Designation,
                         $"Rév {{{ProcedureHeaderFieldNames.Revision}}} du {{{ProcedureHeaderFieldNames.DateRev}}}")
                 ]),
+            // Lot 084 (docs/tickets/tickets-tdd-lot-084-moteur-generique-feuilles-elements.md): the five
+            // element sheets share one engine (ElementSheetExtractionService). Everything that used to be
+            // coded per sheet is now declared here: the repère echo and the zone as header fields (G6,
+            // G16), which block fields are optional (G4), and whether an element that ticks no
+            // conditional Colonne is reported (G3). The settings below reproduce the output of the
+            // services they replace, cell for cell, on the 14 real fixtures (FixtureOutputSnapshotTests).
             new SheetExtractionRule(
                 "ISOLEMENT",
-                new RepeatingBlockLocator("ISOLEMENT", 19, 7, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("ISOLEMENT", 19, 7, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:U", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.PositionALaPose, "H:O", 1, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4),
-                    new BlockFieldDefinition(IsolementFieldNames.HasZeroEnergie, "V", -1, 0)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    // Blank on the real D8570 "V4"/"VANNE" row, which must still be extracted.
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
+                    new BlockFieldDefinition(ElementFieldNames.PositionALaPose, "H:O", 1, 2),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4),
+                    // G5: the dedicated "zéro énergie" cell (column V), an ordinary optional field.
+                    new BlockFieldDefinition(ZeroEnergieFieldName, "V", -1, 0, isRequired: false)
                 ]),
                 [
                     new ConditionalPointRule(
-                        IsolementFieldNames.HasZeroEnergie, ConditionOperator.Equals, "true", IsolementZeroEnergieColonneName)
+                        ZeroEnergieFieldName, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName)
                 ],
-                ["PROLOCK VANNES", "DEPROLOCK VANNES"], [], [], zeroEnergieExpectedValue: "ZERO ENERGIE"),
+                ["PROLOCK VANNES", "DEPROLOCK VANNES"],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ISOLEMENT", "K6:T6"))],
+                [],
+                warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "PLATINES",
-                new RepeatingBlockLocator("PLATINES", 17, 8, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("PLATINES", 17, 8, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5),
+                    // Lot 068: "couleur d'étiquette", H:N at block offset +1 (same row as the form's
+                    // "ÉTIQUETTE" label in column F). Free text, filtered by the allowed list below.
+                    new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false),
+                    // The two H value cells of the block (POSÉE LE +2, DÉPOSÉE LE +3, merged H:N).
+                    new BlockFieldDefinition(PoseeLeFieldName, "H:N", 2, 2, isRequired: false),
+                    new BlockFieldDefinition(DeposeeLeFieldName, "H:N", 3, 3, isRequired: false)
                 ]),
-                [],
+                // Client clarification (2026-09-16), the 4 PLATINES reception Colonnes are the DEB/FIN x
+                // MAD/REL variants: "RÉCEPTION PLATINES/TAMPONS PLEINS" (FIN MAD) and "PLATINES / TAMPONS
+                // PLEINS" (FIN REL) stay unconditional; "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" are
+                // ticked when either H value cell holds "DEBUT MAD"/"DEBUT REL" -- the row label doesn't
+                // matter (real fixtures: DEBUT MAD in both rows, DEBUT REL only in POSÉE LE). A FIN value
+                // ticks nothing, and is not a warning (G7).
+                [
+                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", ReceptionDebutMadColonneName),
+                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", ReceptionDebutMadColonneName),
+                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT REL", ReceptionDebutRelColonneName),
+                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT REL", ReceptionDebutRelColonneName)
+                ],
                 [
                     PoseEtiquettesColonneName,
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS",
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "PLATINES / TAMPONS PLEINS"
-                ], [], [],
-                // Client clarification (2026-09-16), the 4 PLATINES reception Colonnes are the DEB/FIN
-                // x MAD/REL variants: "RÉCEPTION PLATINES/TAMPONS PLEINS" (FIN MAD) and "PLATINES /
-                // TAMPONS PLEINS" (FIN REL) stay unconditional above; "RECEPTION DEBUT MAD"/"RECEPTION
-                // DEBUT REL" are ticked only when one of the block's two H value cells (POSÉE LE +2,
-                // DÉPOSÉE LE +3, merged H:N) holds the exact text "DEBUT MAD"/"DEBUT REL" -- the client
-                // confirmed the row label itself doesn't matter, only the H cell values. Real fixtures
-                // back this: DEBUT MAD appears in both rows (E6431A TP1-4, C8503, E8582) and DEBUT REL
-                // only ever in POSÉE LE (C7401 PT15B, C8503, RANGEE N°1). A FIN MAD/FIN REL value no
-                // longer ticks a DEBUT Colonne. The service deduplicates, so a block with the value in
-                // both cells still gets one Point.
-                fieldPresencePointRules:
-                [
-                    new FieldPresencePointRule(
-                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT MAD", "DEBUT MAD"),
-                    new FieldPresencePointRule(
-                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT MAD", "DEBUT MAD"),
-                    new FieldPresencePointRule(
-                        new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "RECEPTION DEBUT REL", "DEBUT REL"),
-                    new FieldPresencePointRule(
-                        new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3), "RECEPTION DEBUT REL", "DEBUT REL")
                 ],
-                // Lot 068: "couleur d'étiquette" (client remark, no written spec) -- PLATINES-only,
-                // read directly into IsolementPivot.CouleurEtiquette (not a Point/Colonne). H:N,
-                // block offset +1 -- same row as the form's own "ÉTIQUETTE" label in column F
-                // (ignored, it's just the paper form's field name), confirmed against all 4 real
-                // client fixtures on disk (ROUGE/BLEUE/JAUNE observed, free text, no closed value set).
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("PLATINES", "K6:U6"))],
+                [],
                 allowedCouleursEtiquette: PlatinesAllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
-                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "H:V", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 5)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 5),
+                    // Same "couleur d'étiquette" cell as PLATINES (client screenshot, 2026-09-11). The
+                    // allowed list turns the unfilled template's "DATE" into a non-blocking warning.
+                    new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false)
                 ]),
                 [],
                 [
@@ -286,72 +299,67 @@ public class DefaultProfileSeeder(
                     "RÉCEPTION PLATINES/TAMPONS PLEINS",
                     "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
                     "CONTRÔLE ETANCHÉITÉS"
-                ], [], [],
-                // Client feedback (2026-09): shares PLATINES' exact "couleur d'étiquette" cell (same
-                // FirstBlockStartRow=17, so H18:N18 for the first block) -- a real client screenshot
-                // (2026-09-11) confirmed this genuinely is the right cell (2 filled-in "ROUGE" blocks
-                // right next to an unfilled 3rd one). AllowedCouleursEtiquette normalizes the unfilled
-                // one's own template placeholder ("DATE", never a real color) into a non-blocking
-                // warning instead of a silently-imported value -- see
-                // OrificesCapacitesExtractionServiceIntegrationTests.
-                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1),
+                ],
+                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ORIFICES CAPACITES", "K6:U6"))],
+                [],
                 allowedCouleursEtiquette: OrificesCapacitesAllowedCouleursEtiquette),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
-                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "B:E", 0, 1),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "F:Y", -1, 0),
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:E", 3, 4)
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:E", 3, 4)
                 ]),
                 [
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)
+                        ElementFieldNames.TypeElement, ConditionOperator.NotEquals, "TUBING", PoseEtiquettesColonneName)
                 ],
                 ["RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS"],
+                // The repère echo lives at N6 on this sheet (K6:U6, stated by the spec, is blank).
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("AUTRES JOINTS TOUCHES", "N6"))],
                 [],
-                // Client feedback (2026-09): this sheet has no per-block "couleur d'étiquette" cell --
-                // every isolement it produces is always "BLEUE".
-                defaultCouleurEtiquette: "BLEUE"),
+                // Client feedback (2026-09): no per-block cell -- every element is "BLEUE".
+                defaultCouleurEtiquette: "BLEUE",
+                warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "DIVERS",
-                new RepeatingBlockLocator("DIVERS", 9, 3, IsolementFieldNames.Identification,
+                new RepeatingBlockLocator("DIVERS", 9, 3, ElementFieldNames.Identification,
                 [
-                    new BlockFieldDefinition(IsolementFieldNames.TypeElement, "B:G", 0, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.Identification, "H:K", 0, 2),
-                    new BlockFieldDefinition(IsolementFieldNames.Designation, "L:V", 0, 2)
+                    new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:G", 0, 2),
+                    new BlockFieldDefinition(ElementFieldNames.Identification, "H:K", 0, 2),
+                    new BlockFieldDefinition(ElementFieldNames.Designation, "L:V", 0, 2)
                 ]),
                 [
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
-                    // Lot 066 (docs/tickets/tickets-tdd-lot-066-completion-colonnes-parents-enfants-export.md,
-                    // 66.1): retargeted onto ISOLEMENT's own "ZERO ENERGIE" Colonne name (client decision,
-                    // "fusionner les deux colonnes") -- DIVERS' "ZERO ENERGIE" TypeElement used to produce a
-                    // second, differently-spelled real Colonne ("ZÉRO ENERGIE EN PRESENCE EE", no "(PS941)"
-                    // suffix), confirmed by this ticket's own 66.0 investigation to be a genuinely distinct,
-                    // real extraction output (not the accidental export-side duplicate the ticket originally
-                    // assumed -- D8570 alone produces 13 of these). Merging both sheets onto the same target
-                    // Colonne name means a single PointColumnDefinition on the export profile now covers both.
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
+                    // Lot 066 (66.1): retargeted onto ISOLEMENT's own "ZERO ENERGIE" Colonne name (client
+                    // decision, "fusionner les deux colonnes"), so one export column covers both sheets.
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName),
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "ZERO ENERGIE", IsolementZeroEnergieColonneName),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT"),
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE", "SOUPAPE : CONSTAT ENCRASSEMENT"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE",
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "SOUPAPE",
                         "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
                         "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU",
                         "PF : VALIDATION CONSTAT ENCRASSEMENT"),
                     new ConditionalPointRule(
-                        IsolementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU", "PF : ACCORD TRAVAUX FEU")
+                        ElementFieldNames.TypeElement, ConditionOperator.Equals, "POINT DE FEU", "PF : ACCORD TRAVAUX FEU")
                 ],
                 [],
-                [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6"))],
-                [])
+                [
+                    // Same N6 discrepancy as AUTRES JOINTS TOUCHES.
+                    new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("DIVERS", "N6")),
+                    // "loc1": the zone broadcast on the equipment and every element of the run (G16).
+                    new HeaderFieldRule(ElementFieldNames.ZoneHeader, new DirectCell("DIVERS", "B6:E6"))
+                ],
+                [],
+                warnWhenNoConditionalPoint: true)
         ],
         // Lot 067 (docs/tickets/tickets-tdd-lot-067-tache-multiple-repere-type-colonne-travaux.md):
         // the "Colonne Travaux" values discussed with Simon -- configuration, no longer a hardcoded

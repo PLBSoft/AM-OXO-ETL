@@ -42,8 +42,8 @@ public class ImportProfileDetailsTests : BunitContext
         }
     }
 
-    // ISOLEMENT with every required block field (no blocking problem on its own section), a fixed
-    // behavior (repère K6:T6) and an ignored setting (a colour on a sheet that reads none).
+    // ISOLEMENT with every required block field and header (no blocking problem on its own section), and an
+    // ignored setting (the zéro énergie value, read by no sheet since lot 084.6).
     private static ImportProfile BuildProfile()
     {
         var isolement = new SheetExtractionRule(
@@ -53,10 +53,33 @@ public class ImportProfileDetailsTests : BunitContext
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0),
                 new BlockFieldDefinition("PositionALaPose", "H:O", 1, 2), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)
             ]),
-            [], ["PROLOCK VANNES"], [], [],
-            defaultCouleurEtiquette: "VERT");
+            [], ["PROLOCK VANNES"],
+            [new HeaderFieldRule("repereEcho", new DirectCell("ISOLEMENT", "K6:T6"))], [],
+            zeroEnergieExpectedValue: "ZERO ENERGIE");
 
         return new ImportProfile("Profil détaillé", "OXO-", "MAD TRAVAUX", [], [], [isolement]);
+    }
+
+    // Since lot 084.6 only PROCEDURE carries fixed (non-editable) behaviors.
+    private static ImportProfile BuildProcedureProfile()
+    {
+        var procedure = new SheetExtractionRule(
+            "PROCEDURE",
+            new RepeatingBlockLocator("PROCEDURE", 9, 1, "Action",
+            [
+                new BlockFieldDefinition("Action", "C:L", 0, 0), new BlockFieldDefinition("Ordre", "B", 0, 0),
+                new BlockFieldDefinition("Acteur", "M:N", 0, 0), new BlockFieldDefinition("Risques", "O:Q", 0, 0),
+                new BlockFieldDefinition("TypeTacheMultipleAlias", "R", 0, 0), new BlockFieldDefinition("DateValidation", "T:U", 0, 0)
+            ]),
+            [], [],
+            [
+                new HeaderFieldRule("nomMAD", new DirectCell("PROCEDURE", "M2:O2"), stripReperePrefix: true),
+                new HeaderFieldRule("revision", new DirectCell("PROCEDURE", "P2:Q2")),
+                new HeaderFieldRule("dateRev", new DirectCell("PROCEDURE", "R2:T2"), dateFormat: "dd/MM/yyyy")
+            ],
+            [new HeaderCompositeRule("Designation", "Rév {revision} du {dateRev}")]);
+
+        return new ImportProfile("Profil procédure", "OXO-", "MAD TRAVAUX", [], [], [procedure]);
     }
 
     private IRenderedComponent<ImportProfileDetails> RenderDetails(Guid id) =>
@@ -80,15 +103,17 @@ public class ImportProfileDetailsTests : BunitContext
     [Fact]
     public void FixedSentence_CarriesTheNonEditableBadge_OtherSentencesDoNot() => WithFrenchCulture(() =>
     {
-        var profile = BuildProfile();
+        var profile = BuildProcedureProfile();
         Store.SaveAsync(profile).GetAwaiter().GetResult();
 
         var cut = RenderDetails(profile.Id);
 
-        var items = cut.FindAll("#details-section-sheet-0 .profile-details-sentences > li");
-        var fixedItem = items.Single(li => li.TextContent.StartsWith("Le repère de l'élément est la cellule K6:T6"));
+        var items = cut.FindAll("#details-section-sheet-0 .profile-details-sentences > li").ToList();
+        var fixedItems = items.Where(li => li.QuerySelector(".badge") != null).ToList();
+        fixedItems.Should().HaveCount(3);
+        var fixedItem = fixedItems.Single(li => li.TextContent.StartsWith("Une date de révision illisible"));
         fixedItem.QuerySelector(".badge")!.TextContent.Should().Be("non modifiable");
-        items.Where(li => li != fixedItem).Should().OnlyContain(li => li.QuerySelector(".badge") == null);
+        items.Where(li => !fixedItems.Contains(li)).Should().OnlyContain(li => li.QuerySelector(".badge") == null);
     });
 
     [Fact]
@@ -102,7 +127,7 @@ public class ImportProfileDetailsTests : BunitContext
         var ignored = cut.Find("#details-section-sheet-0-ignored");
         ignored.ClassList.Should().Contain(["alert", "alert-warning"]);
         ignored.HasAttribute("role").Should().BeFalse();
-        ignored.TextContent.Should().Contain("Configuré mais ignoré pour cette feuille").And.Contain("couleur d'étiquette par défaut « VERT »");
+        ignored.TextContent.Should().Contain("Configuré mais ignoré pour cette feuille").And.Contain("valeur zéro énergie attendue « ZERO ENERGIE »");
         cut.FindAll("#details-section-sheet-0-blocking").Should().BeEmpty();
 
         var blocking = cut.Find("#details-section-general-blocking");
@@ -111,27 +136,27 @@ public class ImportProfileDetailsTests : BunitContext
         cut.FindAll("#details-section-general-ignored").Should().BeEmpty();
     });
 
-    // Client ticket J2M76: conditional rules on PLATINES, with the note saying what to use instead.
+    // Since lot 084.6 the "filled cell" rules are read by no sheet: the note points to the conditional rules.
     [Fact]
-    public void IgnoredConditionalRuleOnPlatines_ShowsTheNoteInTheIgnoredAlert() => WithFrenchCulture(() =>
+    public void IgnoredFieldPresenceRuleOnPlatines_ShowsTheNoteInTheIgnoredAlert() => WithFrenchCulture(() =>
     {
         var platines = new SheetExtractionRule(
             "PLATINES",
             new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
-                new BlockFieldDefinition("TypeElement", "B:E", 3, 5),
-                new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)
+                new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
             ]),
-            [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "DEB MAD")], [], [], []);
+            [], [], [new HeaderFieldRule("repereEcho", new DirectCell("PLATINES", "K6:U6"))], [],
+            fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "DEB MAD", "DEBUT MAD")]);
         var profile = new ImportProfile("Profil PLATINES", "OXO-", "MAD TRAVAUX", [], [], [platines]);
         Store.SaveAsync(profile).GetAwaiter().GetResult();
 
         var cut = RenderDetails(profile.Id);
 
         var note = cut.Find("#details-section-sheet-0-ignored .profile-details-ignored-note");
-        note.TextContent.Should().StartWith("Cette feuille n'applique pas les règles de point conditionnelles")
-            .And.Contain("« Colonnes cochées si une cellule est renseignée »");
+        note.TextContent.Should().StartWith("Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée")
+            .And.Contain("« Règles de point conditionnelles »");
     });
 
     // Lot 078.12.2: profile values are emphasised, the guillemets stay outside the emphasis.
@@ -146,7 +171,7 @@ public class ImportProfileDetailsTests : BunitContext
         var typeSentence = cut.FindAll("#details-section-general li").Single(li => li.TextContent.StartsWith("L'équipement est créé"));
         typeSentence.QuerySelectorAll("strong.profile-details-value").Select(s => s.TextContent).Should().Equal("MAD TRAVAUX");
         typeSentence.InnerHtml.Should().Contain("« <strong class=\"profile-details-value\">MAD TRAVAUX</strong> »");
-        cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("VERT");
+        cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("ZERO ENERGIE");
     });
 
     // Lot 078.12.3: cell coordinates rendered as <code>.
@@ -158,9 +183,9 @@ public class ImportProfileDetailsTests : BunitContext
 
         var cut = RenderDetails(profile.Id);
 
-        var fixedSentence = cut.FindAll("#details-section-sheet-0 li").Single(li => li.TextContent.StartsWith("Le repère de l'élément"));
-        fixedSentence.QuerySelectorAll("code.profile-details-cell").Select(c => c.TextContent).Should().Equal("K6:T6");
-        fixedSentence.InnerHtml.Should().Contain("la cellule <code class=\"profile-details-cell\">K6:T6</code>, un tiret");
+        var headerSentence = cut.FindAll("#details-section-sheet-0 li").Single(li => li.TextContent.StartsWith("En-tête : le repère"));
+        headerSentence.QuerySelectorAll("code.profile-details-cell").Select(c => c.TextContent).Should().Equal("K6:T6");
+        headerSentence.InnerHtml.Should().Contain("est lu en <code class=\"profile-details-cell\">K6:T6</code>.");
     });
 
     [Fact]
