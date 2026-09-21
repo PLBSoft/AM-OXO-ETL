@@ -32,7 +32,7 @@ public class IsolementExtractionServiceIntegrationTests
     // G5: the dedicated column V cell is an ordinary optional block field read by an ordinary rule.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 19, 7, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 19, 7,
         [
             new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),

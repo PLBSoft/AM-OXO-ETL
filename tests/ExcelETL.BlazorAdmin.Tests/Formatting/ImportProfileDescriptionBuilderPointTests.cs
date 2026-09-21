@@ -102,7 +102,7 @@ public class ImportProfileDescriptionBuilderPointTests
 
     [Fact]
     public void IsNotBlankRule_OnProcedure_TicksTheEquipementWhenAnyTaskHasTheField() =>
-        Texts("PROCEDURE", name => Rule(name, firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+        Texts("PROCEDURE", name => Rule(name, firstBlockStartRow: 9, step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0), new BlockFieldDefinition("Acteur", "M:N", 0, 0)],
             pointRules: [new ConditionalPointRule("Acteur", ConditionOperator.IsNotBlank, null, "A")]))
             .Should().Contain(t => t.StartsWith("Si au moins une tâche a ") && t.EndsWith(" renseigné, l'équipement est coché dans la colonne « A »."));

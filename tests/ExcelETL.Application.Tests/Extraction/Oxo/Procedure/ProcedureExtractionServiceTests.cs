@@ -28,7 +28,7 @@ public class ProcedureExtractionServiceTests
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<string>? unconditionalColonneNames = null, IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+        new RepeatingBlockLocator(Sheet, 9, 1,
         [
             new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -282,7 +282,7 @@ public class ProcedureExtractionServiceTests
         const string AlternateSheetName = "PROC_ALT";
         var sheetRule = new SheetExtractionRule(
             AlternateSheetName,
-            new RepeatingBlockLocator(AlternateSheetName, 9, 1, ProcedureFieldNames.Action,
+            new RepeatingBlockLocator(AlternateSheetName, 9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -321,7 +321,7 @@ public class ProcedureExtractionServiceTests
         // literal baked into the service.
         var sheetRule = new SheetExtractionRule(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+            new RepeatingBlockLocator(Sheet, 9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -363,7 +363,7 @@ public class ProcedureExtractionServiceTests
         // Lot 047, 47.5: two profiles, two gabarits -> two different results.
         var sheetRule = new SheetExtractionRule(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+            new RepeatingBlockLocator(Sheet, 9, 1,
             [
                 new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                 new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),

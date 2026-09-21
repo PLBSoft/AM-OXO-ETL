@@ -5,7 +5,8 @@ using Xunit;
 namespace ExcelETL.BlazorAdmin.Tests.Editing.Import;
 
 // What the import editor warns about (ImportSheetUsage, the same table as the Details page). Since lot
-// 084.7: an unprocessed sheet name, what PROCEDURE ignores, and colour combinations with no effect.
+// 084.7: an unprocessed sheet name, the colour settings PROCEDURE ignores, and colour combinations
+// with no effect (84.9: the stop field is no longer a setting).
 public class SheetRuleIgnoredSettingsTests
 {
     private static SheetExtractionRuleDraft Rule(string sheetName) => new() { SheetName = sheetName };
@@ -24,7 +25,6 @@ public class SheetRuleIgnoredSettingsTests
         var result = SheetRuleIgnoredSettings.For(Rule("platines"));
 
         result.SheetNotProcessed.Should().BeTrue();
-        result.IgnoredStopFieldFixedName.Should().BeNull();
         result.CouleurEtiquetteIgnored.Should().BeFalse();
         result.AnyConfiguredSettingIgnored.Should().BeTrue();
     }
@@ -44,23 +44,6 @@ public class SheetRuleIgnoredSettingsTests
         rule.HeaderFields.Add(new HeaderFieldRuleDraft { Name = "repereEcho", Range = "N6" });
 
         SheetRuleIgnoredSettings.For(rule).AnyConfiguredSettingIgnored.Should().BeFalse();
-    }
-
-    [Theory]
-    [InlineData("PROCEDURE", "Action", null)]
-    [InlineData("PROCEDURE", "Ordre", "Action")]
-    [InlineData("ISOLEMENT", "TypeElement", null)]
-    [InlineData("PLATINES", "Anything", null)]
-    [InlineData("PROCEDURE", "", null)]
-    public void StopField_IsIgnored_WhenTheSheetAlwaysStopsOnAnotherField(string sheetName, string stopField, string? expectedFixedName)
-    {
-        var rule = Rule(sheetName);
-        rule.StopFieldName = stopField;
-
-        var result = SheetRuleIgnoredSettings.For(rule);
-
-        result.IgnoredStopFieldFixedName.Should().Be(expectedFixedName);
-        result.AnyConfiguredSettingIgnored.Should().Be(expectedFixedName is not null);
     }
 
     // Every element sheet reads a colour; only PROCEDURE doesn't.

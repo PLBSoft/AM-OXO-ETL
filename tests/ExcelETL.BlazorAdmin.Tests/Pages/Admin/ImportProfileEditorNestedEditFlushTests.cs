@@ -52,7 +52,7 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+                "ISOLEMENT", firstBlockStartRow: 9, step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [], [], []);
@@ -76,7 +76,7 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+                "PROCEDURE", firstBlockStartRow: 9, step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
             var headerFields = new List<HeaderFieldRule> { new("nomMAD", new DirectCell("PROCEDURE", "M2:O2")) };
             var sheetRule = new SheetExtractionRule(
@@ -101,7 +101,7 @@ public class ImportProfileEditorNestedEditFlushTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+                "PROCEDURE", firstBlockStartRow: 9, step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
             var headerFields = new List<HeaderFieldRule> { new("revision", new DirectCell("PROCEDURE", "P2:Q2")) };
             var headerComposites = new List<HeaderCompositeRule> { new("Designation", "Rev {revision}") };

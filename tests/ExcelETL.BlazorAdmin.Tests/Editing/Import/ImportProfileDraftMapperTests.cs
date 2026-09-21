@@ -30,7 +30,7 @@ public class ImportProfileDraftMapperTests
     private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8, "Identification",
+            "PLATINES", 17, 8,
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0, isRequired: false),
                 new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false),
@@ -65,7 +65,6 @@ public class ImportProfileDraftMapperTests
         SheetName = "ISOLEMENT",
         FirstBlockStartRow = 19,
         Step = 7,
-        StopFieldName = "Identification",
         Fields = [new BlockFieldDefinitionDraft { Name = "Identification", AbsoluteRange = "B19:E20" }],
     };
 

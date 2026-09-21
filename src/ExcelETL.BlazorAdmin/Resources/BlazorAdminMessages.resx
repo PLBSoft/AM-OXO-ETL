@@ -524,7 +524,7 @@
     <value>No sheet rules added yet.</value>
   </data>
   <data name="ImportProfileEditor_SheetMetadata" xml:space="preserve">
-    <value>start row {0}, step {1}, stop field '{2}'</value>
+    <value>start row {0}, step {1}</value>
   </data>
   <data name="ImportProfileEditor_AddSheetHeading" xml:space="preserve">
     <value>Add a sheet rule</value>
@@ -549,12 +549,6 @@
   </data>
   <data name="ImportProfileEditor_StepLabel" xml:space="preserve">
     <value>Step</value>
-  </data>
-  <data name="ImportProfileEditor_StopFieldNamePlaceholder" xml:space="preserve">
-    <value>Stop field name</value>
-  </data>
-  <data name="ImportProfileEditor_StopFieldNameLabel" xml:space="preserve">
-    <value>Stop field name</value>
   </data>
   <data name="ImportProfileEditor_DefaultCouleurEtiquettePlaceholder" xml:space="preserve">
     <value>Default couleur etiquette (leave empty if read per block)</value>
@@ -1684,9 +1678,6 @@
   <data name="ImportProfileDetails_IgnoredAllowedCouleursWithoutCell" xml:space="preserve">
     <value>couleurs d'étiquette autorisées {0} (inutilisées : aucune cellule de couleur configurée)</value>
   </data>
-  <data name="ImportProfileDetails_IgnoredStopField" xml:space="preserve">
-    <value>champ d'arrêt {0} (la lecture s'arrête toujours sur {1})</value>
-  </data>
   <data name="ImportProfileDetails_IgnoredUnprocessedSheet" xml:space="preserve">
     <value>Cette feuille n'est pas traitée par l'import (nom non reconnu).</value>
   </data>
@@ -1701,9 +1692,6 @@
   </data>
   <data name="ImportProfileDetails_BlockingMissingBlockField" xml:space="preserve">
     <value>Champ de bloc {0} absent : l'extraction de cette feuille échoue.</value>
-  </data>
-  <data name="ImportProfileDetails_BlockingStopFieldNotInBlock" xml:space="preserve">
-    <value>Le champ d'arrêt {0} ne fait pas partie du bloc : l'extraction de cette feuille échoue.</value>
   </data>
   <data name="ImportProfileDetails_BlockingMissingSheet" xml:space="preserve">
     <value>Feuille {0} absente du profil : l'import échoue.</value>
@@ -1914,9 +1902,6 @@
   </data>
   <data name="ImportProfileEditor_SheetNotProcessedWarning" xml:space="preserve">
     <value>The sheet "{0}" is not processed by the import: none of the settings of this rule has any effect. Sheets processed: {1}.</value>
-  </data>
-  <data name="ImportProfileEditor_StopFieldIgnoredWarning" xml:space="preserve">
-    <value>On the sheet "{0}", reading always stops on the field "{1}": this stop field has no effect.</value>
   </data>
   <data name="ImportProfileEditor_CouleurEtiquetteIgnoredWarning" xml:space="preserve">
     <value>The sheet "{0}" reads no label colour: the colour settings have no effect.</value>

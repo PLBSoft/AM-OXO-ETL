@@ -46,7 +46,7 @@ public class ImportPipelineOrchestratorTests
     }
 
     private static RepeatingBlockLocator TrivialLocator(string sheet) =>
-        new(sheet, 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]);
+        new(sheet, 1, 1, [new BlockFieldDefinition("Stop", "A", 0, 0)]);
 
     private static ImportProfile CreateProfile(
         IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null,

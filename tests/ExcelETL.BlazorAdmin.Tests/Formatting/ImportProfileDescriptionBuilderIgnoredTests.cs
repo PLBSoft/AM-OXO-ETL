@@ -33,9 +33,8 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     private static SheetExtractionRule ProcedureRule(
         IReadOnlyList<string>? unconditionalColonneNames = null,
         IReadOnlyList<HeaderFieldRule>? headerFields = null,
-        IReadOnlyList<HeaderCompositeRule>? headerComposites = null,
-        string stopFieldName = "Action") =>
-        Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields: ProcedureFields, stopFieldName: stopFieldName,
+        IReadOnlyList<HeaderCompositeRule>? headerComposites = null) =>
+        Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields: ProcedureFields,
             unconditionalColonneNames: unconditionalColonneNames,
             headerFields: headerFields ??
             [
@@ -106,7 +105,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     public void ColourSettingsOnProcedure_AreReportedAsIgnored()
     {
         var baseRule = ProcedureRule();
-        var rule = Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields: ProcedureFields, stopFieldName: "Action",
+        var rule = Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields: ProcedureFields,
             headerFields: baseRule.HeaderFields, headerComposites: baseRule.HeaderComposites,
             defaultCouleurEtiquette: "VERT", allowedCouleursEtiquette: ["ROUGE", "BLANC"]);
 
@@ -153,16 +152,6 @@ public class ImportProfileDescriptionBuilderIgnoredTests
             .Ignored.Select(i => i.Text).Should().Equal("couleurs d'étiquette autorisées « ROUGE » (inutilisées : aucune cellule de couleur configurée)");
     }
 
-    // Only PROCEDURE ignores its configured stop field since lot 084.6 (the element sheets go back to a
-    // fixed one in 84.9).
-    [Fact]
-    public void StopFieldOnProcedure_IsIgnored()
-    {
-        var section = Section(ProcedureRule(stopFieldName: "Ordre"));
-
-        section.Ignored.Select(i => i.Text).Should().ContainSingle().Which.Should().StartWith("champ d'arrêt « Ordre »");
-    }
-
     [Fact]
     public void UnknownSheetName_GetsASectionWithOnlyAnIgnoredNotice_AfterTheKnownSheets()
     {
@@ -203,12 +192,6 @@ public class ImportProfileDescriptionBuilderIgnoredTests
             .Blocking.Select(b => b.Text).Should().Equal(
                 "Champ d'en-tête « repereEcho » absent : l'extraction de cette feuille échoue.",
                 "Champ de bloc « TypeElement » absent : l'extraction de cette feuille échoue.");
-
-    [Fact]
-    public void StopFieldOutsideTheBlock_IsBlocking_OnSheetsThatUseIt() =>
-        Section(Rule("DIVERS", fields: ElementFields, stopFieldName: "Repere",
-                headerFields: [new HeaderFieldRule("repereEcho", new DirectCell("DIVERS", "N6"))]))
-            .Blocking.Select(b => b.Text).Should().Equal("Le champ d'arrêt « Repere » ne fait pas partie du bloc : l'extraction de cette feuille échoue.");
 
     [Fact]
     public void KnownSheetsMissingFromTheProfile_AreBlockingInTheGeneralSection() =>

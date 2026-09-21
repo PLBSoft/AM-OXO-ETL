@@ -34,7 +34,7 @@ public class DiversExtractionServiceIntegrationTests
     // hardcoded in DiversExtractionService.
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 3, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 9, 3,
         [
             new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:G", 0, 2),
             new BlockFieldDefinition(ElementFieldNames.Identification, "H:K", 0, 2),

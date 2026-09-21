@@ -44,7 +44,7 @@ public sealed class ElementSheetExtractionService(
         var zone = header.Fields.TryGetValue(ElementFieldNames.ZoneHeader, out var zoneField) ? zoneField.Value ?? "" : "";
         var hasCouleurField = sheetRule.Locator.Fields.Any(f => f.Name == ElementFieldNames.CouleurEtiquette);
 
-        var blockResult = repeatingBlockReader.Read(sheetRule.Locator, workbookReader);
+        var blockResult = repeatingBlockReader.Read(sheetRule.Locator, ElementFieldNames.Identification, workbookReader);
         var errors = new List<ExtractionError>(blockResult.Errors);
         foreach (var error in blockResult.Errors)
         {
@@ -68,7 +68,7 @@ public sealed class ElementSheetExtractionService(
                 var error = new ExtractionError(
                     sheet, block.StartRow.ToString(), ExtractionErrorCode.RequiredFieldMissing,
                     $"Block at row {block.StartRow} has required field(s) '{ElementFieldNames.TypeElement}' empty " +
-                    $"while stop field '{sheetRule.Locator.StopFieldName}' is populated.");
+                    $"while stop field '{ElementFieldNames.Identification}' is populated.");
                 ExtractionErrorLogging.Log(logger, error);
                 errors.Add(error);
                 continue;

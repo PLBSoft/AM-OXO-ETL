@@ -81,7 +81,6 @@ public class ImportProfilesTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -96,7 +95,6 @@ public class ImportProfilesTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -142,7 +140,7 @@ public class ImportProfilesTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             static RepeatingBlockLocator BuildLocator(string sheet) => new(
-                sheet, firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+                sheet, firstBlockStartRow: 9, step: 7,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var profile = new ImportProfile(
                 "MAD OXO multi", "MAD TRAVAUX", [], [],

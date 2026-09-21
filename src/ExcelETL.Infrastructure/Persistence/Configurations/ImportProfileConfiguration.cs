@@ -115,11 +115,6 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
                     .IsRequired()
                     .HasColumnName("LocatorStep");
 
-                locator.Property(l => l.StopFieldName)
-                    .IsRequired()
-                    .HasMaxLength(200)
-                    .HasColumnName("LocatorStopFieldName");
-
                 locator.OwnsMany(l => l.Fields, fields =>
                 {
                     fields.ToTable("ImportProfileSheetRuleBlockFields");

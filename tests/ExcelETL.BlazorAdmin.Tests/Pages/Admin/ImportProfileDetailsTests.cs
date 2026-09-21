@@ -48,7 +48,7 @@ public class ImportProfileDetailsTests : BunitContext
     {
         var isolement = new SheetExtractionRule(
             "ISOLEMENT",
-            new RepeatingBlockLocator("ISOLEMENT", 19, 7, "Identification",
+            new RepeatingBlockLocator("ISOLEMENT", 19, 7,
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:U", -1, 0),
                 new BlockFieldDefinition("PositionALaPose", "H:O", 1, 2), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)
@@ -65,7 +65,7 @@ public class ImportProfileDetailsTests : BunitContext
     {
         var procedure = new SheetExtractionRule(
             "PROCEDURE",
-            new RepeatingBlockLocator("PROCEDURE", 9, 1, "Action",
+            new RepeatingBlockLocator("PROCEDURE", 9, 1,
             [
                 new BlockFieldDefinition("Action", "C:L", 0, 0), new BlockFieldDefinition("Ordre", "B", 0, 0),
                 new BlockFieldDefinition("Acteur", "M:N", 0, 0), new BlockFieldDefinition("Risques", "O:Q", 0, 0),

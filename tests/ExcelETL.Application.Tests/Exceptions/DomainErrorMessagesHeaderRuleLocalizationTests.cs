@@ -116,7 +116,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithUnknownPlaceholder()
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+            "PROCEDURE", firstBlockStartRow: 9, step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         return new SheetExtractionRule(
@@ -128,7 +128,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithBlankDefaultCouleurEtiquette()
     {
         var locator = new RepeatingBlockLocator(
-            "AUTRES JOINTS TOUCHES", firstBlockStartRow: 17, step: 7, stopFieldName: "Identification",
+            "AUTRES JOINTS TOUCHES", firstBlockStartRow: 17, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(
@@ -139,7 +139,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithBlankEntryInAllowedCouleursEtiquette()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            "PLATINES", firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(
@@ -178,7 +178,7 @@ public class DomainErrorMessagesHeaderRuleLocalizationTests
     private static object BuildRuleWithPointRuleOutsideTheBlock()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            "PLATINES", firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
 
         return new SheetExtractionRule(

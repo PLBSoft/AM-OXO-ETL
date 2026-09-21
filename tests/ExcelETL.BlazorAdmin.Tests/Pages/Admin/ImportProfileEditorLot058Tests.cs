@@ -116,7 +116,7 @@ public class ImportProfileEditorLot058Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(

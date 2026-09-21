@@ -46,7 +46,6 @@ public static class ImportProfileDraftMapper
             SheetName = rule.SheetName,
             FirstBlockStartRow = startRow,
             Step = rule.Locator.Step,
-            StopFieldName = rule.Locator.StopFieldName,
             DefaultCouleurEtiquette = rule.DefaultCouleurEtiquette ?? string.Empty,
             AllowedCouleursEtiquette = rule.AllowedCouleursEtiquette is null ? string.Empty : string.Join(", ", rule.AllowedCouleursEtiquette),
             WarnWhenNoConditionalPoint = rule.WarnWhenNoConditionalPoint,
@@ -202,7 +201,7 @@ public static class ImportProfileDraftMapper
 
         try
         {
-            var locator = new RepeatingBlockLocator(draft.SheetName, startRow, draft.Step, draft.StopFieldName, fields);
+            var locator = new RepeatingBlockLocator(draft.SheetName, startRow, draft.Step, fields);
 
             var rule = new SheetExtractionRule(
                 draft.SheetName, locator, pointRules, unconditionalColonneNames,

@@ -32,7 +32,7 @@ public class ImportProfileDescriptionBuilderBlockTests
     [Fact]
     public void Procedure_UsesTaskVocabulary_OneLinePerTask_AndSingleCellRanges()
     {
-        var rule = Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action", fields:
+        var rule = Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, fields:
         [
             new BlockFieldDefinition("Action", "C:L", 0, 0),
             new BlockFieldDefinition("Ordre", "B", 0, 0),
@@ -52,7 +52,7 @@ public class ImportProfileDescriptionBuilderBlockTests
 
     [Fact]
     public void Divers_StepOfThree() =>
-        Describe(Profile([Rule("DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification", fields:
+        Describe(Profile([Rule("DIVERS", firstBlockStartRow: 9, step: 3, fields:
             [
                 new BlockFieldDefinition("TypeElement", "B:G", 0, 2),
                 new BlockFieldDefinition("Identification", "H:K", 0, 2),
@@ -83,13 +83,6 @@ public class ImportProfileDescriptionBuilderBlockTests
                 "Pour le premier élément : identifiant en B19:E20, champ « Commentaire » en W19.");
 
     [Fact]
-    public void UnknownStopFieldName_IsShownQuoted() =>
-        Describe(Profile([Rule("DIVERS", firstBlockStartRow: 19, step: 7, fields: [new BlockFieldDefinition("Repere", "B:E", 0, 1)])]))
-            .SheetSection("DIVERS").Texts().Should().Contain(
-                "Un élément est lu toutes les 7 lignes à partir de la ligne 19. " +
-                "La lecture s'arrête au premier bloc dont le champ « Repere » est vide.");
-
-    [Fact]
     public void KnownSheetSections_FollowPipelineOrder_WhateverTheProfileOrder()
     {
         var description = Describe(Profile([Rule("DIVERS"), Rule("PROCEDURE"), Rule("ISOLEMENT")]));
@@ -112,7 +105,7 @@ public class ImportProfileDescriptionBuilderBlockTests
 
     [Fact]
     public void OptionalFieldOnProcedure_IsNotMarked() =>
-        Describe(Profile([Rule("PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+        Describe(Profile([Rule("PROCEDURE", firstBlockStartRow: 9, step: 1,
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0, isRequired: false)])]))
             .SheetSection("PROCEDURE").Texts().Should().NotContain(t => t.Contains("facultatif"));
 }

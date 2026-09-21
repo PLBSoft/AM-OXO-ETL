@@ -13,7 +13,6 @@ public enum DomainErrorCode
     RepeatingBlockLocator_EmptySheet,
     RepeatingBlockLocator_NonPositiveFirstBlockStartRow,
     RepeatingBlockLocator_NonPositiveStep,
-    RepeatingBlockLocator_EmptyStopFieldName,
     RepeatingBlockLocator_EmptyFields,
     ConditionalPointRule_EmptySourceFieldName,
     ConditionalPointRule_EmptyComparisonValue,

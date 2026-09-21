@@ -50,7 +50,7 @@ public class ImportProfileEditorLot057Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -63,13 +63,13 @@ public class ImportProfileEditorLot057Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var isolementLocator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 9, step: 7, stopFieldName: "Identification",
+            "ISOLEMENT", firstBlockStartRow: 9, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
 
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            "PLATINES", firstBlockStartRow: 17, step: 8,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
@@ -145,7 +145,6 @@ public class ImportProfileEditorLot057Tests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("PLATINES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E17");
             cut.Find("#add-block-field-button").Click();
@@ -204,7 +203,6 @@ public class ImportProfileEditorLot057Tests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("PLATINES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E17");
             cut.Find("#add-block-field-button").Click();
@@ -228,16 +226,16 @@ public class ImportProfileEditorLot057Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.Find("#modify-sheet-rule-button-1").Click();
 
-            cut.FindAll("#edit-0-sheet-rule-stop-field-name-input").Should().BeEmpty();
+            cut.FindAll("#edit-0-sheet-rule-step-input").Should().BeEmpty();
             cut.FindAll("#edit-1-sheet-rule-name-input").Should().HaveCount(1);
 
             // The feuille 0 modification (commit via the flush, not an explicit "Save changes"
             // click) is visible in its own read-only card's metadata line.
-            cut.FindAll("li.sheet-rule-card").Should().Contain(li => li.TextContent.Contains("Autre"));
+            cut.FindAll("li.sheet-rule-card").Should().Contain(li => li.TextContent.Contains("step 5"));
         });
 
     [Fact]
@@ -270,7 +268,6 @@ public class ImportProfileEditorLot057Tests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("PLATINES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E17");
             cut.Find("#add-block-field-button").Click();
@@ -290,11 +287,11 @@ public class ImportProfileEditorLot057Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.Find("#toggle-add-sheet-rule-form-button").Click();
 
-            cut.FindAll("#edit-0-sheet-rule-stop-field-name-input").Should().BeEmpty();
+            cut.FindAll("#edit-0-sheet-rule-step-input").Should().BeEmpty();
             cut.FindAll("#sheet-rule-name-input").Should().HaveCount(1);
         });
 
@@ -307,13 +304,13 @@ public class ImportProfileEditorLot057Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.Find("#cancel-sheet-rule-button-0").Click();
 
             cut.Find("#save-profile-button").Click();
             var reloaded = (await Store.GetAllAsync()).Single();
-            reloaded.SheetRules.Single().Locator.StopFieldName.Should().Be("Identification");
+            reloaded.SheetRules.Single().Locator.Step.Should().Be(7);
             cut.FindAll("#sheet-rule-name-input").Should().BeEmpty();
             cut.FindAll("#edit-0-sheet-rule-name-input").Should().BeEmpty();
         });

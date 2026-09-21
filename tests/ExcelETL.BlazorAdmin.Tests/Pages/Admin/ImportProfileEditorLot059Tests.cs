@@ -56,7 +56,6 @@ public class ImportProfileEditorLot059Tests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -103,7 +102,7 @@ public class ImportProfileEditorLot059Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.Find("#save-profile-button").HasAttribute("disabled").Should().BeFalse();
         });

@@ -37,7 +37,7 @@ public class ImportPipelineOrchestratorIntegrationTests
         [
             new SheetExtractionRule(
                 "PROCEDURE",
-                new RepeatingBlockLocator("PROCEDURE", 9, 1, ProcedureFieldNames.Action,
+                new RepeatingBlockLocator("PROCEDURE", 9, 1,
                 [
                     new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
                     new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),
@@ -60,7 +60,7 @@ public class ImportPipelineOrchestratorIntegrationTests
                 ]),
             new SheetExtractionRule(
                 "ISOLEMENT",
-                new RepeatingBlockLocator("ISOLEMENT", 19, 7, ElementFieldNames.Identification,
+                new RepeatingBlockLocator("ISOLEMENT", 19, 7,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:U", -1, 0, isRequired: false),
@@ -73,7 +73,7 @@ public class ImportPipelineOrchestratorIntegrationTests
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "PLATINES",
-                new RepeatingBlockLocator("PLATINES", 17, 8, ElementFieldNames.Identification,
+                new RepeatingBlockLocator("PLATINES", 17, 8,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
@@ -92,7 +92,7 @@ public class ImportPipelineOrchestratorIntegrationTests
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("PLATINES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "ORIFICES CAPACITES",
-                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8, ElementFieldNames.Identification,
+                new RepeatingBlockLocator("ORIFICES CAPACITES", 17, 8,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),
@@ -108,7 +108,7 @@ public class ImportPipelineOrchestratorIntegrationTests
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, new DirectCell("ORIFICES CAPACITES", "K6:U6"))], []),
             new SheetExtractionRule(
                 "AUTRES JOINTS TOUCHES",
-                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7, ElementFieldNames.Identification,
+                new RepeatingBlockLocator("AUTRES JOINTS TOUCHES", 17, 7,
                 [
                     new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
                     new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),
@@ -121,7 +121,7 @@ public class ImportPipelineOrchestratorIntegrationTests
                 warnWhenNoConditionalPoint: true),
             new SheetExtractionRule(
                 "DIVERS",
-                new RepeatingBlockLocator("DIVERS", 9, 3, ElementFieldNames.Identification,
+                new RepeatingBlockLocator("DIVERS", 9, 3,
                 [
                     new BlockFieldDefinition(ElementFieldNames.TypeElement, "B:G", 0, 2),
                     new BlockFieldDefinition(ElementFieldNames.Identification, "H:K", 0, 2),

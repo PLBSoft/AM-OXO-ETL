@@ -49,9 +49,6 @@
   <data name="RepeatingBlockLocator_NonPositiveStep" xml:space="preserve">
     <value>Le pas doit être positif.</value>
   </data>
-  <data name="RepeatingBlockLocator_EmptyStopFieldName" xml:space="preserve">
-    <value>Le nom du champ d'arrêt ne doit pas être vide.</value>
-  </data>
   <data name="RepeatingBlockLocator_EmptyFields" xml:space="preserve">
     <value>La liste des champs doit contenir au moins une définition de champ.</value>
   </data>

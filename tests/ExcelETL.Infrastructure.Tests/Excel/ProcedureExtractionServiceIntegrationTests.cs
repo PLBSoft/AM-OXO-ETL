@@ -30,7 +30,7 @@ public class ProcedureExtractionServiceIntegrationTests
     // hardcoded in ProcedureExtractionService -- same values as DefaultProfileSeeder's own seeded rule.
     private static SheetExtractionRule CreateSheetRule(IReadOnlyList<ConditionalPointRule>? pointRules = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1, ProcedureFieldNames.Action,
+        new RepeatingBlockLocator(Sheet, 9, 1,
         [
             new BlockFieldDefinition(ProcedureFieldNames.Action, "C:L", 0, 0),
             new BlockFieldDefinition(ProcedureFieldNames.Ordre, "B", 0, 0),

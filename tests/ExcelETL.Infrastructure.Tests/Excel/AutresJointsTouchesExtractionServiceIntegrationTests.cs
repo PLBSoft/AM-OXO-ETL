@@ -33,7 +33,7 @@ public class AutresJointsTouchesExtractionServiceIntegrationTests
     // hardcoded in AutresJointsTouchesExtractionService.
     private static SheetExtractionRule CreateSheetRule(string? defaultCouleurEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 7, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 7,
         [
             new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(ElementFieldNames.Designation, "F:Y", -1, 0),

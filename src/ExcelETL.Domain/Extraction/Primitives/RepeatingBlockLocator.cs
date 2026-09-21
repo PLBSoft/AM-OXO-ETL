@@ -5,7 +5,8 @@ namespace ExcelETL.Domain.Extraction.Primitives;
 // The primitive shared by all repeating-block sheets (ISOLEMENT, PLATINES, ORIFICES CAPACITES,
 // AUTRES JOINTS TOUCHES, DIVERS, PROCEDURE) -- see docs/modele-domaine-import-profile-2026-07-16.md §1.2.
 // Fields is a list, so the default record-synthesized equality (reference equality on the list) is
-// overridden below with SequenceEqual to give true structural equality.
+// overridden below with SequenceEqual to give true structural equality. There is no stop-field setting
+// (lot 084, G12): element sheets always stop on Identification, PROCEDURE on Action.
 public sealed record RepeatingBlockLocator
 {
     // Backing field rather than a plain auto-property: EF Core's constructor-binding materialization
@@ -19,11 +20,10 @@ public sealed record RepeatingBlockLocator
     public string Sheet { get; }
     public int FirstBlockStartRow { get; }
     public int Step { get; }
-    public string StopFieldName { get; }
     public IReadOnlyList<BlockFieldDefinition> Fields => _fields;
 
     public RepeatingBlockLocator(
-        string sheet, int firstBlockStartRow, int step, string stopFieldName, IReadOnlyList<BlockFieldDefinition> fields)
+        string sheet, int firstBlockStartRow, int step, IReadOnlyList<BlockFieldDefinition> fields)
     {
         if (string.IsNullOrWhiteSpace(sheet))
         {
@@ -45,13 +45,6 @@ public sealed record RepeatingBlockLocator
                 DomainErrorCode.RepeatingBlockLocator_NonPositiveStep);
         }
 
-        if (string.IsNullOrWhiteSpace(stopFieldName))
-        {
-            throw new DomainValidationException(
-                "Stop field name must not be empty.", nameof(stopFieldName),
-                DomainErrorCode.RepeatingBlockLocator_EmptyStopFieldName);
-        }
-
         ArgumentNullException.ThrowIfNull(fields);
 
         if (fields.Count == 0)
@@ -64,7 +57,6 @@ public sealed record RepeatingBlockLocator
         Sheet = sheet;
         FirstBlockStartRow = firstBlockStartRow;
         Step = step;
-        StopFieldName = stopFieldName;
         _fields = [.. fields];
     }
 
@@ -73,7 +65,6 @@ public sealed record RepeatingBlockLocator
     private RepeatingBlockLocator()
     {
         Sheet = string.Empty;
-        StopFieldName = string.Empty;
     }
 
     public bool Equals(RepeatingBlockLocator? other) =>
@@ -81,7 +72,6 @@ public sealed record RepeatingBlockLocator
         && Sheet == other.Sheet
         && FirstBlockStartRow == other.FirstBlockStartRow
         && Step == other.Step
-        && StopFieldName == other.StopFieldName
         && Fields.SequenceEqual(other.Fields);
 
     public override int GetHashCode()
@@ -90,7 +80,6 @@ public sealed record RepeatingBlockLocator
         hash.Add(Sheet);
         hash.Add(FirstBlockStartRow);
         hash.Add(Step);
-        hash.Add(StopFieldName);
         foreach (var field in Fields)
         {
             hash.Add(field);

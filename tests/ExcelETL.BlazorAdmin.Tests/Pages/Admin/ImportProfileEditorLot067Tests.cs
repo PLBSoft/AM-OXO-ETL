@@ -52,7 +52,7 @@ public class ImportProfileEditorLot067Tests : BunitContext
         string name = "MAD OXO", IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", 9, 1, "Action", [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
+            "PROCEDURE", 9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
         var rule = new SheetExtractionRule("PROCEDURE", locator, [], [], [], []);
 
         return new ImportProfile(
@@ -76,7 +76,6 @@ public class ImportProfileEditorLot067Tests : BunitContext
         cut.Find("#sheet-rule-name-input").Change("PROCEDURE");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("1");
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Action");
         cut.Find("#block-field-name-input").Change("Action");
         cut.Find("#block-field-absolute-range-input").Change("C9:L9");
         cut.Find("#add-block-field-button").Click();

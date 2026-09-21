@@ -40,7 +40,7 @@ public class OrificesCapacitesExtractionServiceIntegrationTests
     private static SheetExtractionRule CreateSheetRule(
         BlockFieldDefinition? couleurEtiquetteCell = null, IReadOnlyList<string>? allowedCouleursEtiquette = null) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8,
         [
             new BlockFieldDefinition(ElementFieldNames.Identification, "B:E", 0, 1),
             new BlockFieldDefinition(ElementFieldNames.Designation, "H:V", -1, 0),

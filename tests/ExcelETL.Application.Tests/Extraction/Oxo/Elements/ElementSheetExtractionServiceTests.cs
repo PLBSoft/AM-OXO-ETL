@@ -35,7 +35,7 @@ public class ElementSheetExtractionServiceTests
         IReadOnlyList<BlockFieldDefinition>? fields = null) =>
         new(
             Sheet,
-            new RepeatingBlockLocator(Sheet, 17, 8, "Identification",
+            new RepeatingBlockLocator(Sheet, 17, 8,
                 fields ?? [Identification, Designation, TypeElement, .. extraFields ?? []]),
             pointRules ?? [],
             unconditional ?? [],
@@ -243,7 +243,7 @@ public class ElementSheetExtractionServiceTests
     {
         var fields = new[] { Identification, Designation, TypeElement }.Where(f => f.Name != missingField).ToList();
         var rule = new SheetExtractionRule(
-            Sheet, new RepeatingBlockLocator(Sheet, 17, 8, fields[0].Name, fields), [], [],
+            Sheet, new RepeatingBlockLocator(Sheet, 17, 8, fields), [], [],
             [new HeaderFieldRule("repereEcho", new DirectCell(Sheet, "K6:U6"))], []);
 
         var act = () => _sut.Extract(Reader(TwoBlocks()), rule, "MAD-OXO-");

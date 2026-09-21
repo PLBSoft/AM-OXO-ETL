@@ -52,7 +52,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
     private static ImportProfile BuildProfileWithAjtAndPlatinesSheetRules(string name = "MAD OXO")
     {
         var ajtLocator = new RepeatingBlockLocator(
-            "AUTRES JOINTS TOUCHES", 17, 7, "Identification",
+            "AUTRES JOINTS TOUCHES", 17, 7,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var ajtRule = new SheetExtractionRule(
             "AUTRES JOINTS TOUCHES", ajtLocator, [], ["POSE ÉTIQUETTES"], [], [],
@@ -60,7 +60,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
 
         // Lot 084 (G10): the couleur is an optional block field named "CouleurEtiquette".
         var platinesLocator = new RepeatingBlockLocator(
-            "PLATINES", 17, 8, "Identification",
+            "PLATINES", 17, 8,
             [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1, isRequired: false)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], []);
@@ -101,7 +101,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("AUTRES JOINTS TOUCHES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("7");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#sheet-rule-default-couleur-etiquette-input").Change("BLEUE");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E18");
@@ -128,7 +127,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("19");
             cut.Find("#sheet-rule-step-input").Change("7");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B19:E20");
             cut.Find("#add-block-field-button").Click();
@@ -219,7 +217,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("PLATINES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#sheet-rule-allowed-couleurs-etiquette-input").Change(" ROUGE, BLEUE ,JAUNE");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E18");
@@ -246,7 +243,6 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("PLATINES");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("17");
             cut.Find("#sheet-rule-step-input").Change("8");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B17:E18");
             cut.Find("#add-block-field-button").Click();
@@ -264,7 +260,7 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var platinesLocator = new RepeatingBlockLocator(
-                "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                "PLATINES", 17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
@@ -287,12 +283,12 @@ public class ImportProfileEditorCouleurEtiquetteTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var platinesLocator = new RepeatingBlockLocator(
-                "PLATINES", 17, 8, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                "PLATINES", 17, 8, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var platinesRule = new SheetExtractionRule(
                 "PLATINES", platinesLocator, [], ["POSE ÉTIQUETTES"], [], [],
                 allowedCouleursEtiquette: ["ROUGE", "BLEUE", "JAUNE"]);
             var isolementLocator = new RepeatingBlockLocator(
-                "ISOLEMENT", 19, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
+                "ISOLEMENT", 19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
             var isolementRule = new SheetExtractionRule("ISOLEMENT", isolementLocator, [], [], [], []);
             var profile = new ImportProfile("MAD OXO", "MAD TRAVAUX", [], [], [platinesRule, isolementRule]);
             await Store.SaveAsync(profile);

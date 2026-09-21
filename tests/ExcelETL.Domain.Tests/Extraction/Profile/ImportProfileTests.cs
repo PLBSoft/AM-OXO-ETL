@@ -12,7 +12,7 @@ public class ImportProfileTests
 
     private static SheetExtractionRule ValidRule(string sheet = "ISOLEMENT") => new(
         sheet,
-        new RepeatingBlockLocator(sheet, 19, 7, "Identification", [new BlockFieldDefinition("Identification", "B:E", 0, 1)]),
+        new RepeatingBlockLocator(sheet, 19, 7, [new BlockFieldDefinition("Identification", "B:E", 0, 1)]),
         [],
         [],
         [],

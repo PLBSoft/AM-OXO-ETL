@@ -25,7 +25,7 @@ public class HeaderRuleResolverTests
     private static SheetExtractionRule CreateSheetRule(
         IReadOnlyList<HeaderFieldRule> headerFields, IReadOnlyList<HeaderCompositeRule> headerComposites) => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 9, 1, "Action", [new BlockFieldDefinition("Action", "C:L", 0, 0)]),
+        new RepeatingBlockLocator(Sheet, 9, 1, [new BlockFieldDefinition("Action", "C:L", 0, 0)]),
         [],
         [],
         headerFields,

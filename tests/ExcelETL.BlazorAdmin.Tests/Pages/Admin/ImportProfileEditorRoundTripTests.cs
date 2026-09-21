@@ -240,7 +240,7 @@ public class ImportProfileEditorRoundTripTests : BunitContext
     private static ImportProfile BuildHandBuiltProfile()
     {
         var locator = new RepeatingBlockLocator(
-            "PLATINES", firstBlockStartRow: 17, step: 8, stopFieldName: "Identification",
+            "PLATINES", firstBlockStartRow: 17, step: 8,
             fields:
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1),

@@ -46,7 +46,6 @@ public static class ImportSheetUsage
             [new(ProcedureHeaderFieldNames.Designation, HeaderRole.EquipementDesignation)]) {
                 ItemKind = BlockItemKind.Task,
                 PointsTickTheEquipement = true,
-                FixedStopFieldName = ProcedureFieldNames.Action,
                 RequiredBlockFieldNames =
                 [
                     ProcedureFieldNames.Action, ProcedureFieldNames.Ordre, ProcedureFieldNames.Acteur, ProcedureFieldNames.Risques,
@@ -102,12 +101,12 @@ public sealed record ImportSheetUsageEntry(
     // Header fields read by name when present, never required (DIVERS' zone).
     public IReadOnlyList<RequiredHeaderName> OptionalHeaderFields { get; init; } = [];
 
+    // The block field whose blank value ends the reading -- fixed by the services, not a setting (lot 084,
+    // G12): PROCEDURE walks its tasks until Action is blank, the element sheets until Identification is.
+    public string StopFieldName => ItemKind == BlockItemKind.Task ? ProcedureFieldNames.Action : ElementFieldNames.Identification;
+
     // Block field names the service looks up by name -- a missing one makes extraction fail.
     public IReadOnlyList<string> RequiredBlockFieldNames { get; init; } = ElementBlockFieldNames;
-
-    // Non-null when the service walks the block itself and always stops on this field, ignoring the
-    // locator's StopFieldName (ProcedureExtractionService).
-    public string? FixedStopFieldName { get; init; }
 
     // ElementSheetExtractionService needs these two; every other known field is optional.
     private static readonly string[] ElementBlockFieldNames =

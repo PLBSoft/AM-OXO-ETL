@@ -112,7 +112,6 @@ public class ImportProfileEditorFormFloatingAuditTests : BunitContext
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("7");
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
         cut.Find("#block-field-name-input").Change("Identification");
         cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();

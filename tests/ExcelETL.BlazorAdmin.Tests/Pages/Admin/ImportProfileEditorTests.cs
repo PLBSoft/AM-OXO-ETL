@@ -54,7 +54,6 @@ public class ImportProfileEditorTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -72,7 +71,6 @@ public class ImportProfileEditorTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 19,
             step: 7,
-            stopFieldName: "Identification",
             fields:
             [
                 new BlockFieldDefinition("Identification", "B:E", 0, 1),
@@ -94,7 +92,6 @@ public class ImportProfileEditorTests : BunitContext
             "PROCEDURE",
             firstBlockStartRow: 9,
             step: 1,
-            stopFieldName: "Action",
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var headerFields = new List<HeaderFieldRule>
@@ -121,7 +118,6 @@ public class ImportProfileEditorTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
@@ -130,7 +126,6 @@ public class ImportProfileEditorTests : BunitContext
             "PLATINES",
             firstBlockStartRow: 17,
             step: 8,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
@@ -160,7 +155,6 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("7");
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
 
         cut.Find("#block-field-name-input").Change("Identification");
         cut.Find("#block-field-absolute-range-input").Change("B9:E9");
@@ -278,7 +272,6 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("0");
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
 
         cut.Find("#block-field-name-input").Change("Identification");
         cut.Find("#block-field-absolute-range-input").Change("B9:E9");
@@ -319,7 +312,6 @@ public class ImportProfileEditorTests : BunitContext
             rule.SheetName.Should().Be("ISOLEMENT");
             rule.Locator.FirstBlockStartRow.Should().Be(9);
             rule.Locator.Step.Should().Be(7);
-            rule.Locator.StopFieldName.Should().Be("Identification");
             rule.Locator.Fields.Should().ContainSingle(f => f.Name == "Identification" && f.ColumnRange == "B:E");
             rule.UnconditionalColonneNames.Should().Equal("PROLOCK VANNES");
             rule.PointRules.Should().ContainSingle(r => r.ColonneName == "ZÉRO ENERGIE..." && r.ComparisonValue == "ZERO ENERGIE");
@@ -651,7 +643,6 @@ public class ImportProfileEditorTests : BunitContext
     [InlineData("sheet-rule-name-input")]
     [InlineData("sheet-rule-first-block-start-row-input")]
     [InlineData("sheet-rule-step-input")]
-    [InlineData("sheet-rule-stop-field-name-input")]
     [InlineData("block-field-name-input")]
     [InlineData("block-field-absolute-range-input")]
     [InlineData("unconditional-colonne-name-input")]
@@ -672,14 +663,13 @@ public class ImportProfileEditorTests : BunitContext
             container.GetAttribute("class").Should().NotContain("row");
         });
 
-    // Lot 077: the sheet rule's 8 general settings sit in the same bg-light card as "Block fields",
+    // Lot 077: the sheet rule's general settings sit in the same bg-light card as "Block fields",
     // headed by their own section title. Each field's mb-3 wrapper is a direct child of the card body.
     private static readonly string[] SheetGeneralSettingsInputIds =
     [
         "sheet-rule-name-input",
         "sheet-rule-first-block-start-row-input",
         "sheet-rule-step-input",
-        "sheet-rule-stop-field-name-input",
         "sheet-rule-default-couleur-etiquette-input",
         "sheet-rule-allowed-couleurs-etiquette-input",
     ];
@@ -848,7 +838,6 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#edit-0-sheet-rule-name-input").GetAttribute("value").Should().Be("ISOLEMENT");
             cut.Find("#edit-0-sheet-rule-first-block-start-row-input").GetAttribute("value").Should().Be("9");
             cut.Find("#edit-0-sheet-rule-step-input").GetAttribute("value").Should().Be("7");
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").GetAttribute("value").Should().Be("Identification");
             cut.Find(".block-field-name").TextContent.Should().Be("Identification");
             cut.Find(".block-field-range").TextContent.Should().Be("B9:E9");
             cut.Markup.Should().Contain("PROLOCK VANNES");
@@ -910,7 +899,6 @@ public class ImportProfileEditorTests : BunitContext
                 "ISOLEMENT",
                 firstBlockStartRow: 9,
                 step: 7,
-                stopFieldName: "Identification",
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
@@ -936,7 +924,6 @@ public class ImportProfileEditorTests : BunitContext
                 "ISOLEMENT",
                 firstBlockStartRow: 9,
                 step: 7,
-                stopFieldName: "Identification",
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var pointRule = new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "ZERO ENERGIE", "ZÉRO ENERGIE...");
             var sheetRule = new SheetExtractionRule(
@@ -976,7 +963,6 @@ public class ImportProfileEditorTests : BunitContext
                 "PLATINES",
                 firstBlockStartRow: 17,
                 step: 8,
-                stopFieldName: "Identification",
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "PLATINES", locator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);
@@ -1000,7 +986,6 @@ public class ImportProfileEditorTests : BunitContext
                 "PROCEDURE",
                 firstBlockStartRow: 9,
                 step: 1,
-                stopFieldName: "Action",
                 fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
             var sheetRule = new SheetExtractionRule(
                 "PROCEDURE", locator, pointRules: [], unconditionalColonneNames: [], [], []);
@@ -1190,7 +1175,6 @@ public class ImportProfileEditorTests : BunitContext
             "PROCEDURE",
             firstBlockStartRow: 9,
             step: 1,
-            stopFieldName: "Action",
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -1210,7 +1194,6 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
             cut.Find("#sheet-rule-step-input").Change("7");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B9:E9");
             cut.Find("#add-block-field-button").Click();
@@ -1242,7 +1225,6 @@ public class ImportProfileEditorTests : BunitContext
             var meta = cut.Find(".sheet-rule-card-meta").TextContent;
             meta.Should().Contain("9");
             meta.Should().Contain("7");
-            meta.Should().Contain("Identification");
             meta.Should().NotContain("ISOLEMENT");
         });
 
@@ -1451,7 +1433,6 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find("label[for='sheet-rule-name-input']").TextContent.Should().Be("Sheet name");
         cut.Find("label[for='sheet-rule-first-block-start-row-input']").TextContent.Should().Be("First block start row");
         cut.Find("label[for='sheet-rule-step-input']").TextContent.Should().Be("Step");
-        cut.Find("label[for='sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
     });
 
     // Client feedback (screenshot, 2026-07-22): every input in the "Add a sheet rule" section
@@ -1483,7 +1464,6 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("label[for='edit-0-sheet-rule-name-input']").TextContent.Should().Be("Sheet name");
             cut.Find("label[for='edit-0-sheet-rule-first-block-start-row-input']").TextContent.Should().Be("First block start row");
             cut.Find("label[for='edit-0-sheet-rule-step-input']").TextContent.Should().Be("Step");
-            cut.Find("label[for='edit-0-sheet-rule-stop-field-name-input']").TextContent.Should().Be("Stop field name");
         });
 
     // Client feedback (screenshot, 2026-07-22): the Save/Cancel (or Add) buttons at the bottom of
@@ -1650,7 +1630,6 @@ public class ImportProfileEditorTests : BunitContext
             cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
             cut.Find("#sheet-rule-first-block-start-row-input").Change("19");
             cut.Find("#sheet-rule-step-input").Change("7");
-            cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
 
             cut.Find("#block-field-name-input").Change("Identification");
             cut.Find("#block-field-absolute-range-input").Change("B19:E20");
@@ -2479,7 +2458,7 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
+                "DIVERS", firstBlockStartRow: 9, step: 3,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
@@ -2506,7 +2485,7 @@ public class ImportProfileEditorTests : BunitContext
         await WithCultureAsync("en-US", async () =>
         {
             var locator = new RepeatingBlockLocator(
-                "DIVERS", firstBlockStartRow: 9, step: 3, stopFieldName: "Identification",
+                "DIVERS", firstBlockStartRow: 9, step: 3,
                 fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
             var sheetRule = new SheetExtractionRule(
                 "DIVERS", locator, pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "TUBING", "ZERO ENERGIE")],
@@ -2856,7 +2835,6 @@ public class ImportProfileEditorTests : BunitContext
         cut.Find($"#{idPrefix}sheet-rule-name-input").Change("PROCEDURE");
         cut.Find($"#{idPrefix}sheet-rule-first-block-start-row-input").Change("9");
         cut.Find($"#{idPrefix}sheet-rule-step-input").Change("1");
-        cut.Find($"#{idPrefix}sheet-rule-stop-field-name-input").Change("Action");
         cut.Find($"#{idPrefix}block-field-name-input").Change("Action");
         cut.Find($"#{idPrefix}block-field-absolute-range-input").Change("C9:L9");
         cut.Find($"#{idPrefix}add-block-field-button").Click();

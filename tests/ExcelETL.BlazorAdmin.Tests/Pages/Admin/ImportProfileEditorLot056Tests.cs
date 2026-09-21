@@ -60,7 +60,6 @@ public class ImportProfileEditorLot056Tests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
 
         var sheetRule = new SheetExtractionRule(
@@ -148,7 +147,6 @@ public class ImportProfileEditorLot056Tests : BunitContext
         cut.Find("#sheet-rule-name-input").Change("ISOLEMENT");
         cut.Find("#sheet-rule-first-block-start-row-input").Change("9");
         cut.Find("#sheet-rule-step-input").Change("7");
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Identification");
         cut.Find("#block-field-name-input").Change("Identification");
         cut.Find("#block-field-absolute-range-input").Change("B9:E9");
         cut.Find("#add-block-field-button").Click();
@@ -212,7 +210,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.FindAll("#unsaved-changes-indicator").Should().NotBeEmpty();
         });
@@ -270,7 +268,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
             cut.Find("#save-profile-button").Click();
 
             cut.FindAll("#unsaved-changes-indicator").Should().BeEmpty();
@@ -327,7 +325,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
 
             var cut = Render<ImportProfileEditor>(parameters => parameters.Add(p => p.Id, profile.Id));
             cut.Find("#modify-sheet-rule-button-0").Click();
-            cut.Find("#edit-0-sheet-rule-stop-field-name-input").Change("Autre");
+            cut.Find("#edit-0-sheet-rule-step-input").Change("5");
 
             cut.Find(".profile-editor-container").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs
             {
@@ -336,7 +334,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
             });
 
             var reloaded = (await Store.GetAllAsync()).Single();
-            reloaded.SheetRules.Single().Locator.StopFieldName.Should().Be("Autre");
+            reloaded.SheetRules.Single().Locator.Step.Should().Be(5);
         });
 
     [Fact]
@@ -534,7 +532,7 @@ public class ImportProfileEditorLot056Tests : BunitContext
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX")
     {
         var locator = new RepeatingBlockLocator(
-            "PROCEDURE", firstBlockStartRow: 9, step: 1, stopFieldName: "Action",
+            "PROCEDURE", firstBlockStartRow: 9, step: 1,
             fields: [new BlockFieldDefinition("Action", "C:L", 0, 0)]);
 
         var headerFields = new List<HeaderFieldRule>

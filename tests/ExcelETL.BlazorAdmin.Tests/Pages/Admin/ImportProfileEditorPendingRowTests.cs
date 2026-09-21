@@ -50,7 +50,7 @@ public class ImportProfileEditorPendingRowTests : BunitContext
     private async Task<IRenderedComponent<ImportProfileEditor>> RenderExistingProfileAsync()
     {
         var locator = new RepeatingBlockLocator(
-            "ISOLEMENT", firstBlockStartRow: 19, step: 7, stopFieldName: "Identification",
+            "ISOLEMENT", firstBlockStartRow: 19, step: 7,
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 1)]);
         var sheetRule = new SheetExtractionRule("ISOLEMENT", locator, pointRules: [], unconditionalColonneNames: [], [], []);
         var profile = new ImportProfile(

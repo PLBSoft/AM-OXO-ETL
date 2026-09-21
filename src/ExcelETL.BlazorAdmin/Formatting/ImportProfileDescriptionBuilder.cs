@@ -88,12 +88,6 @@ public static class ImportProfileDescriptionBuilder
         var ignored = new List<string>();
         bool Reads(SheetRuleMember member) => usage.ReadMembers.Contains(member);
 
-        if (usage.FixedStopFieldName is { } fixedStopField && rule.Locator.StopFieldName != fixedStopField)
-        {
-            ignored.Add(loc["ImportProfileDetails_IgnoredStopField", Quote(rule.Locator.StopFieldName, loc),
-                FieldLabel(fixedStopField, definite: true, loc)]);
-        }
-
         var readsHeader = Reads(SheetRuleMember.HeaderRules);
         var (usedComposites, referencedFieldNames) = readsHeader ? UsedHeaderRules(rule, usage) : ([], []);
         ignored.AddRange(rule.HeaderFields
@@ -171,11 +165,6 @@ public static class ImportProfileDescriptionBuilder
         blocking.AddRange(usage.RequiredBlockFieldNames
             .Where(name => rule.Locator.Fields.All(f => f.Name != name))
             .Select(name => loc["ImportProfileDetails_BlockingMissingBlockField", Quote(name, loc)].Value));
-
-        if (usage.FixedStopFieldName is null && rule.Locator.Fields.All(f => f.Name != rule.Locator.StopFieldName))
-        {
-            blocking.Add(loc["ImportProfileDetails_BlockingStopFieldNotInBlock", Quote(rule.Locator.StopFieldName, loc)]);
-        }
 
         return blocking;
     }
@@ -313,8 +302,8 @@ public static class ImportProfileDescriptionBuilder
     private static IEnumerable<ProfileDescriptionSentence> DescribeBlocks(
         RepeatingBlockLocator locator, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
     {
-        // The field reading really stops on -- not the configured one when the service ignores it.
-        var stopField = FieldLabel(usage.FixedStopFieldName ?? locator.StopFieldName, definite: true, loc);
+        // Lot 084 (G12): the stop field is fixed by the service, never a setting.
+        var stopField = FieldLabel(usage.StopFieldName, definite: true, loc);
         var isTask = usage.ItemKind == BlockItemKind.Task;
 
         yield return new(locator.Step == 1

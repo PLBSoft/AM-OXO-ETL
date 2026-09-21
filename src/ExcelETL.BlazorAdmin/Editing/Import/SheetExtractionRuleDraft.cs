@@ -15,7 +15,6 @@ public sealed class SheetExtractionRuleDraft : IDraftWithError
     public string SheetName { get; set; } = string.Empty;
     public int FirstBlockStartRow { get; set; }
     public int Step { get; set; }
-    public string StopFieldName { get; set; } = string.Empty;
     public string DefaultCouleurEtiquette { get; set; } = string.Empty;
     public string AllowedCouleursEtiquette { get; set; } = string.Empty;
     public bool WarnWhenNoConditionalPoint { get; set; }

@@ -42,8 +42,8 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
     private static void WithCulture(string cultureName, Action action) =>
         WithCultureAsync(cultureName, () => { action(); return Task.CompletedTask; }).GetAwaiter().GetResult();
 
-    private static RepeatingBlockLocator Locator(string sheet, string stopField = "Identification") => new(
-        sheet, 17, 8, stopField,
+    private static RepeatingBlockLocator Locator(string sheet) => new(
+        sheet, 17, 8,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
             new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
@@ -53,7 +53,7 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
     // Lot 084.1: the rule's field must now be declared in the block, as the client did (optional here).
     private static SheetExtractionRule PlatinesWithConditionalRules() => new(
         "PLATINES",
-        new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
+        new RepeatingBlockLocator("PLATINES", 17, 8,
         [
             .. Locator("PLATINES").Fields,
             new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)
@@ -133,11 +133,7 @@ public class ImportProfileEditorIgnoredSettingsTests : BunitContext
         var cut = Render<ImportProfileEditor>();
         cut.Find("#sheet-rule-name-input").Change("PROCEDURE");
 
-        cut.FindAll("#stop-field-ignored-warning").Should().BeEmpty();
         cut.FindAll("#couleur-etiquette-ignored-warning").Should().BeEmpty();
-
-        cut.Find("#sheet-rule-stop-field-name-input").Change("Ordre");
-        cut.Find("#stop-field-ignored-warning").TextContent.Should().Contain("« Action »");
 
         cut.Find("#sheet-rule-default-couleur-etiquette-input").Change("BLEUE");
         cut.FindAll("#couleur-etiquette-ignored-warning").Should().ContainSingle();

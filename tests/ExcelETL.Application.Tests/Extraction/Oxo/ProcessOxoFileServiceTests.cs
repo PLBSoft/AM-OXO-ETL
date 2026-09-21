@@ -52,7 +52,7 @@ public class ProcessOxoFileServiceTests
         "Profil import test", "MAD TRAVAUX", [], [],
         [new SheetExtractionRule(
             "PROCEDURE",
-            new RepeatingBlockLocator("PROCEDURE", 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]),
+            new RepeatingBlockLocator("PROCEDURE", 1, 1, [new BlockFieldDefinition("Stop", "A", 0, 0)]),
             [],
             [], [], [])]);
 

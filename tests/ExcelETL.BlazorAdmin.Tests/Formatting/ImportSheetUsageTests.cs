@@ -199,31 +199,16 @@ public class ImportSheetUsageTests
         unchanged.Should().BeFalse();
     }
 
-    // Lot 078.8: PROCEDURE walks its block itself and always stops on a fixed field (ISOLEMENT did too
-    // until lot 084.6).
+    // Lot 084.9 (G12): the stop field is fixed by each service, never a setting.
     [Theory]
-    [InlineData(Procedure, "Ordre")]
-    public void FixedStopField_WhenAnotherStopFieldIsConfigured_DoesNotChangeTheRealPipelineOutput(string sheetName, string otherStopField)
-    {
-        ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().NotBeNull().And.NotBe(otherStopField);
-        var profile = LoadSeededDefaultProfile();
-
-        var baseline = RunPipeline(profile);
-        var mutated = RunPipeline(WithLocator(profile, sheetName, locator =>
-            new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step, otherStopField, locator.Fields)));
-
-        mutated.Isolements.Should().BeEquivalentTo(baseline.Isolements, o => o.WithStrictOrdering());
-        mutated.TachesMultiples.Should().BeEquivalentTo(baseline.TachesMultiples, o => o.WithStrictOrdering());
-    }
-
-    [Theory]
-    [InlineData(Isolement)]
-    [InlineData(Platines)]
-    [InlineData(OrificesCapacites)]
-    [InlineData(AutresJointsTouches)]
-    [InlineData(Divers)]
-    public void SheetsUsingTheConfiguredStopField_HaveNoFixedStopField(string sheetName) =>
-        ImportSheetUsage.For(sheetName)!.FixedStopFieldName.Should().BeNull();
+    [InlineData(Procedure, "Action")]
+    [InlineData(Isolement, "Identification")]
+    [InlineData(Platines, "Identification")]
+    [InlineData(OrificesCapacites, "Identification")]
+    [InlineData(AutresJointsTouches, "Identification")]
+    [InlineData(Divers, "Identification")]
+    public void StopField_IsTheOneTheServiceAlwaysStopsOn(string sheetName, string expectedStopField) =>
+        ImportSheetUsage.For(sheetName)!.StopFieldName.Should().Be(expectedStopField);
 
     public static TheoryData<string, string> RequiredBlockFieldCases()
     {
@@ -247,7 +232,6 @@ public class ImportSheetUsageTests
         // building it is part of what must fail.
         var run = () => RunPipeline(WithLocator(LoadSeededDefaultProfile(), sheetName, locator =>
             new RepeatingBlockLocator(locator.Sheet, locator.FirstBlockStartRow, locator.Step,
-                locator.StopFieldName == fieldName ? locator.Fields.First(f => f.Name != fieldName).Name : locator.StopFieldName,
                 [.. locator.Fields.Where(f => f.Name != fieldName)])));
 
         run.Should().Throw<Exception>("the extraction service looks the field up by name (First() or an indexer)");

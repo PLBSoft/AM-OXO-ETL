@@ -4,5 +4,6 @@ namespace ExcelETL.Application.Extraction.Oxo;
 
 public interface IRepeatingBlockReader
 {
-    RepeatingBlockReadResult Read(RepeatingBlockLocator locator, IWorkbookReader workbookReader);
+    // stopFieldName: the block field whose blank value ends the reading (lot 084, G12).
+    RepeatingBlockReadResult Read(RepeatingBlockLocator locator, string stopFieldName, IWorkbookReader workbookReader);
 }

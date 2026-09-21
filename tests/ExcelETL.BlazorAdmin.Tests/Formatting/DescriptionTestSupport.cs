@@ -72,7 +72,6 @@ internal static class DescriptionTestSupport
         int firstBlockStartRow = 17,
         int step = 7,
         IReadOnlyList<BlockFieldDefinition>? fields = null,
-        string? stopFieldName = null,
         IReadOnlyList<ConditionalPointRule>? pointRules = null,
         IReadOnlyList<string>? unconditionalColonneNames = null,
         IReadOnlyList<HeaderFieldRule>? headerFields = null,
@@ -92,7 +91,7 @@ internal static class DescriptionTestSupport
         ];
         return new SheetExtractionRule(
             sheetName,
-            new RepeatingBlockLocator(sheetName, firstBlockStartRow, step, stopFieldName ?? fields[0].Name, fields),
+            new RepeatingBlockLocator(sheetName, firstBlockStartRow, step, fields),
             pointRules ?? [],
             unconditionalColonneNames ?? [],
             headerFields ?? [],

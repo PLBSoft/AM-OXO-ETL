@@ -47,7 +47,6 @@ public class ProfileEditorParityTests : BunitContext
             "ISOLEMENT",
             firstBlockStartRow: 9,
             step: 7,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var isolementRule = new SheetExtractionRule(
             "ISOLEMENT", isolementLocator, pointRules: [], unconditionalColonneNames: ["PROLOCK VANNES"], [], []);
@@ -56,7 +55,6 @@ public class ProfileEditorParityTests : BunitContext
             "PLATINES",
             firstBlockStartRow: 17,
             step: 8,
-            stopFieldName: "Identification",
             fields: [new BlockFieldDefinition("Identification", "B:E", 0, 0)]);
         var platinesRule = new SheetExtractionRule(
             "PLATINES", platinesLocator, pointRules: [], unconditionalColonneNames: ["TROU D'HOMME"], [], []);

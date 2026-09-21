@@ -47,7 +47,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     private static SheetExtractionRule CreateSheetRule() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification, KnownFields),
+        new RepeatingBlockLocator(Sheet, 17, 8, KnownFields),
         [],
         UnconditionalColonneNames, RepereEcho, []);
 
@@ -104,7 +104,7 @@ public class PlatinesExtractionServiceIntegrationTests
 
     private static SheetExtractionRule CreateSheetRuleWithFieldPresenceRules() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8,
         [
             .. KnownFields,
             new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false),
@@ -192,7 +192,7 @@ public class PlatinesExtractionServiceIntegrationTests
     // Lot 084.6 (G10): the couleur cell is an optional block field with a known name.
     private static SheetExtractionRule CreateSheetRuleWithCouleurEtiquetteCell() => new(
         Sheet,
-        new RepeatingBlockLocator(Sheet, 17, 8, ElementFieldNames.Identification,
+        new RepeatingBlockLocator(Sheet, 17, 8,
             [.. KnownFields, new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false)]),
         [], UnconditionalColonneNames, RepereEcho, []);
 

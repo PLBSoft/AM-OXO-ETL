@@ -33,7 +33,7 @@ public class HomeIndicatorsServiceTests
     private static ImportProfile CreateImportProfile()
     {
         var locator = new RepeatingBlockLocator(
-            "SHEET", 1, 1, "Stop", [new BlockFieldDefinition("Stop", "A", 0, 0)]);
+            "SHEET", 1, 1, [new BlockFieldDefinition("Stop", "A", 0, 0)]);
         var sheetRule = new SheetExtractionRule("SHEET", locator, [], [], [], []);
         return new ImportProfile(
             "Profile", ImportProfile.DefaultReperePrefix, "MAD TRAVAUX", [], [], [sheetRule]);

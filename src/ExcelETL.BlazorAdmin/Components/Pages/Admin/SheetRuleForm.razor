@@ -65,19 +65,6 @@
 </div>
 <div class="mb-3">
     <div class="form-floating">
-        <input id="@($"{IdPrefix}sheet-rule-stop-field-name-input")" class="form-control" @bind="Draft.StopFieldName" @bind:after="MarkDirty"
-               placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
-        <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
-    </div>
-    @if (ignored.IgnoredStopFieldFixedName is { } fixedStopField)
-    {
-        <div id="@($"{IdPrefix}stop-field-ignored-warning")" class="alert alert-warning mt-2 mb-0">
-            @Loc["ImportProfileEditor_StopFieldIgnoredWarning", Draft.SheetName, fixedStopField]
-        </div>
-    }
-</div>
-<div class="mb-3">
-    <div class="form-floating">
         <input id="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")" class="form-control" @bind="Draft.DefaultCouleurEtiquette" @bind:after="MarkDirty"
                placeholder="@Loc["ImportProfileEditor_DefaultCouleurEtiquettePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteLabel"]</label>

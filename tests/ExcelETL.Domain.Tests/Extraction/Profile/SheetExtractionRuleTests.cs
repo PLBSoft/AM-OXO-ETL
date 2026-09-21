@@ -9,7 +9,7 @@ namespace ExcelETL.Domain.Tests.Extraction.Profile;
 public class SheetExtractionRuleTests
 {
     private static RepeatingBlockLocator Locator(string sheet) => new(
-        sheet, 19, 7, "Identification",
+        sheet, 19, 7,
         [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("TypeElement", "B:E", 3, 4)]);
 
     [Fact]
@@ -232,7 +232,7 @@ public class SheetExtractionRuleTests
     [Fact]
     public void Constructor_WithPointRuleOnABlockField_CreatesSheetExtractionRule()
     {
-        var locator = new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
+        var locator = new RepeatingBlockLocator("PLATINES", 17, 8,
         [
             new BlockFieldDefinition("Identification", "B:E", 0, 1),
             new BlockFieldDefinition("HasDebMad", "H:N", 2, 2, isRequired: false)

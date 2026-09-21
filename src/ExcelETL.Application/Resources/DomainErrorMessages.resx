@@ -49,9 +49,6 @@
   <data name="RepeatingBlockLocator_NonPositiveStep" xml:space="preserve">
     <value>Step must be positive.</value>
   </data>
-  <data name="RepeatingBlockLocator_EmptyStopFieldName" xml:space="preserve">
-    <value>Stop field name must not be empty.</value>
-  </data>
   <data name="RepeatingBlockLocator_EmptyFields" xml:space="preserve">
     <value>Fields must contain at least one field definition.</value>
   </data>

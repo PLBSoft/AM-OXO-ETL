@@ -482,7 +482,7 @@ else
                 {
                     <div class="sheet-rule-card-header">
                         <h3 class="sheet-rule-card-title h4">@rule.SheetName</h3>
-                        <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.FirstBlockStartRow, rule.Step, rule.StopFieldName]</span>
+                        <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_SheetMetadata", rule.FirstBlockStartRow, rule.Step]</span>
                         @if (!string.IsNullOrWhiteSpace(rule.DefaultCouleurEtiquette))
                         {
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteSummary", rule.DefaultCouleurEtiquette]</span>
