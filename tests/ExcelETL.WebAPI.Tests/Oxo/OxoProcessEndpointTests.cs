@@ -1,3 +1,4 @@
+using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo.Elements;
 using System.Net;
 using System.Net.Http.Headers;
@@ -432,6 +433,43 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         body.Should().NotContain("exceptionType").And.NotContain("exceptionMessage");
     }
 
+    // Lot 084.11: an import profile that doesn't declare a field the extraction needs (typically one saved
+    // before lot 084 and never reset: an element sheet without its "repereEcho" header field) is a profile
+    // problem, not a server error -- a localized 422 naming the field, like the other profile/file rejections.
+    [Theory]
+    [InlineData("en-US", "The import profile does not declare the field 'repereEcho'")]
+    [InlineData("fr-FR", "Le profil d'import ne déclare pas le champ 'repereEcho'")]
+    public async Task Process_WhenTheImportProfileMissesAFieldTheExtractionNeeds_ReturnsUnprocessableEntityWithLocalizedMessage(
+        string culture, string expectedMessageStart)
+    {
+        using var brokenProfileFactory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                var orchestrator = new Mock<IImportPipelineOrchestrator>();
+                orchestrator
+                    .Setup(o => o.Run(It.IsAny<IWorkbookReader>(), It.IsAny<ImportProfile>()))
+                    .Throws(new UnknownFieldReferenceException("repereEcho"));
+                services.RemoveAll<IImportPipelineOrchestrator>();
+                services.AddSingleton(orchestrator.Object);
+            });
+        });
+        var client = brokenProfileFactory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Api-Key", ValidApiKey);
+        client.DefaultRequestHeaders.AcceptLanguage.Add(new StringWithQualityHeaderValue(culture));
+
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync(brokenProfileFactory);
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream);
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().Contain(expectedMessageStart);
+        body.Should().NotContain("exceptionType").And.NotContain("exceptionMessage");
+    }
+
     [Fact]
     public async Task Process_WithValidRequestProducingNoWarnings_ReturnsZeroWarningCountHeaderAndGeneratedFileIdHeader()
     {
@@ -658,22 +696,21 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         body.Should().Contain(exceptionMessage);
     }
 
-    // Correctif (2026-09-01): reproduces the real production case that prompted this ticket --
-    // UnknownFieldReferenceException *is* a mapped business exception (IHasApplicationErrorCode),
-    // so it used to take the "detail is not null" branch and skip the exceptionType/exceptionMessage
-    // extensions entirely; since it has no explicit StatusCodeFor case and no ApplicationMessages
-    // resx entry, the response was a 500 whose Detail was just the raw, unhelpful resource key
-    // string ("UnknownFieldReference") -- indistinguishable from the pre-Lot-065 generic message
-    // once ApiTest.razor only reads the extensions. This is the case the standing guard-rail below
-    // (0/1) protects: the extensions must be present whenever the final status is 500, whether or
-    // not BusinessExceptionLocalizer produced a Detail.
+    // Correctif (2026-09-01): the real production case that prompted this was
+    // UnknownFieldReferenceException -- a business exception with an error code
+    // (IHasApplicationErrorCode) but no explicit StatusCodeFor case, so it took the "detail is not
+    // null" branch, skipped the exceptionType/exceptionMessage extensions and came back as a bare 500.
+    // That exception is a localized 422 since lot 084.11; ProfileNameAlreadyExistsException is still in
+    // the same situation (coded, no status case) and keeps the guard-rail: the extensions must be
+    // present whenever the final status is 500, whether or not BusinessExceptionLocalizer produced a
+    // Detail.
     [Fact]
     public async Task Process_WhenAMappedExceptionHasNoExplicitStatusCodeCase_StillReturnsExceptionTypeAndMessage()
     {
         var throwingService = new Mock<IProcessOxoFileService>();
         throwingService
             .Setup(s => s.ProcessAsync(It.IsAny<ProcessOxoFileCommand>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new UnknownFieldReferenceException("HasZeroEnergie"));
+            .ThrowsAsync(new ProfileNameAlreadyExistsException("Profil OXO standard"));
 
         using var throwingFactory = _factory.WithWebHostBuilder(builder =>
         {
@@ -694,8 +731,8 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
         var body = await response.Content.ReadAsStringAsync();
-        body.Should().Contain("UnknownFieldReferenceException");
-        body.Should().Contain("HasZeroEnergie");
+        body.Should().Contain("ProfileNameAlreadyExistsException");
+        body.Should().Contain("Profil OXO standard");
     }
 
     // Explicit guard-rail: this must keep failing a future refactor that starts serializing

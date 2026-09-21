@@ -38,6 +38,10 @@ public sealed class OxoApiTestResult
 
     public IReadOnlyList<OxoApiTestRejectionError> RejectionErrors { get; private init; } = [];
 
+    // The 422's own message. Lot 084.11: some rejections carry no error list (the import profile misses a
+    // field, a generated sheet name clashes -- lot 080), only this.
+    public string? RejectionDetail { get; private init; }
+
     public string? ProfileNotFoundDetail { get; private init; }
 
     public int? HttpStatusCode { get; private init; }
@@ -53,10 +57,11 @@ public sealed class OxoApiTestResult
         GeneratedFileName = generatedFileName
     };
 
-    public static OxoApiTestResult BusinessRejection(IReadOnlyList<OxoApiTestRejectionError> errors) => new()
+    public static OxoApiTestResult BusinessRejection(IReadOnlyList<OxoApiTestRejectionError> errors, string? detail = null) => new()
     {
         Status = OxoApiTestResultStatus.BusinessRejection,
-        RejectionErrors = errors
+        RejectionErrors = errors,
+        RejectionDetail = detail
     };
 
     public static OxoApiTestResult ProfileNotFound(string? detail) => new()

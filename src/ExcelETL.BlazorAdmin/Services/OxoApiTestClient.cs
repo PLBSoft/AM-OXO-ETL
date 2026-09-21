@@ -98,7 +98,7 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
 
             case HttpStatusCode.UnprocessableEntity:
                 var rejectionBody = await TryReadProblemDetailsAsync(response, cancellationToken);
-                return OxoApiTestResult.BusinessRejection(rejectionBody?.Errors ?? []);
+                return OxoApiTestResult.BusinessRejection(rejectionBody?.Errors ?? [], rejectionBody?.Detail);
 
             case HttpStatusCode.InternalServerError:
                 // Lot 065: GlobalExceptionHandler now surfaces the exception's short type name and

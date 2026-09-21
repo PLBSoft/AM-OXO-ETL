@@ -64,4 +64,7 @@
   <data name="GeneratedSheetNameConflict" xml:space="preserve">
     <value>The generated workbook would contain two sheets named '{0}' (Excel ignores upper and lower case): a sheet name of the export profile matches a task type of the imported file.</value>
   </data>
+  <data name="UnknownFieldReference" xml:space="preserve">
+    <value>The import profile does not declare the field '{0}', which the extraction needs. Complete or reset the import profile.</value>
+  </data>
 </root>

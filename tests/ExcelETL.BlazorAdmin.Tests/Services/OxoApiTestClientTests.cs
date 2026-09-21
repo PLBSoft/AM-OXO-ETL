@@ -112,6 +112,25 @@ public class OxoApiTestClientTests
             new OxoApiTestRejectionError("PROCEDURE", "M2:O2", "RequiredFieldMissing", "Repere is required."));
     }
 
+    // Lot 084.11: a profile/file rejection that isn't about the file's own data (a field the import
+    // profile misses, a generated sheet name clash -- lot 080) is a 422 with only a detail message.
+    [Fact]
+    public async Task ProcessAsync_WithUnprocessableEntityResponseWithoutErrors_KeepsTheDetail()
+    {
+        var (client, _) = CreateClient(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.UnprocessableEntity)
+        {
+            Content = new StringContent(
+                """{"status":422,"detail":"The import profile does not declare the field 'repereEcho'."}""",
+                Encoding.UTF8, "application/problem+json")
+        }));
+
+        var result = await client.ProcessAsync(Guid.NewGuid(), Guid.NewGuid(), new MemoryStream(), "source.xlsx", CancellationToken.None);
+
+        result.Status.Should().Be(OxoApiTestResultStatus.BusinessRejection);
+        result.RejectionErrors.Should().BeEmpty();
+        result.RejectionDetail.Should().Be("The import profile does not declare the field 'repereEcho'.");
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.BadRequest)]
     [InlineData(HttpStatusCode.InternalServerError)]

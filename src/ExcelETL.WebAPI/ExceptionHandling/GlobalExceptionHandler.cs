@@ -22,7 +22,7 @@ namespace ExcelETL.WebAPI.ExceptionHandling;
 // IHasDomainErrorCode) can still resolve to 500 when StatusCodeFor below has no explicit case for
 // it -- e.g. UnknownFieldReferenceException, the real exception that motivated this lot, which had
 // no ApplicationMessages resx entry at all, so its Detail was just the raw, unhelpful resource key
-// string. The exceptionType/exceptionMessage extensions are therefore attached whenever the final
+// string (mapped to a localized 422 since lot 084.11). The exceptionType/exceptionMessage extensions are therefore attached whenever the final
 // status is 500, regardless of which branch below produced it -- not only for a fully unmapped
 // exception.
 public sealed class GlobalExceptionHandler(
@@ -79,6 +79,9 @@ public sealed class GlobalExceptionHandler(
         // Lot 080.5 (D5): the imported file and the export profile are incompatible -- same status as a
         // business rejection of the file.
         GeneratedSheetNameException => StatusCodes.Status422UnprocessableEntity,
+        // Lot 084.11: the import profile misses a field the extraction needs (typically a profile saved
+        // before lot 084 and never reset) -- a profile problem the caller can fix, not a server error.
+        UnknownFieldReferenceException => StatusCodes.Status422UnprocessableEntity,
         _ => StatusCodes.Status500InternalServerError
     };
 }

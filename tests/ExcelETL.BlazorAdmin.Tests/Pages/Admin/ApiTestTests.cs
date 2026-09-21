@@ -285,6 +285,27 @@ public class ApiTestTests : BunitContext
         result.TextContent.Should().Contain("Repere is required.");
     }));
 
+    // Lot 084.11: a 422 without an error list (profile misses a field, lot 080 sheet name clash) shows
+    // the API's own message instead of an empty list.
+    [Fact]
+    public void ProcessButton_Click_WithBusinessRejectionWithoutErrors_RendersTheDetail() => WithCulture("en-US", () => RunAsync(async () =>
+    {
+        var (importProfile, exportProfile) = await SeedProfilesAsync();
+        _oxoApiTestClientMock
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .ReturnsAsync(OxoApiTestResult.BusinessRejection([], "The import profile does not declare the field 'repereEcho'."));
+
+        var cut = Render<ApiTest>();
+        cut.Find("#import-profile-select").Change(importProfile.Id.ToString());
+        cut.Find("#export-profile-select").Change(exportProfile.Id.ToString());
+        SelectFile(cut);
+
+        cut.Find("#process-button").Click();
+
+        cut.Find("#api-test-rejection-detail").TextContent.Should().Be("The import profile does not declare the field 'repereEcho'.");
+        cut.Find("#api-test-result").QuerySelectorAll("li").Should().BeEmpty();
+    }));
+
     // Lot 042 (42.2): the rejected-file heading previously skipped straight from h1 to h4 -- fixed
     // to h2, keeping its pre-existing visual size via the Bootstrap `.h4` utility class.
     [Fact]

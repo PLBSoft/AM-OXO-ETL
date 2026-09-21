@@ -64,4 +64,7 @@
   <data name="GeneratedSheetNameConflict" xml:space="preserve">
     <value>Le classeur généré contiendrait deux feuilles nommées '{0}' (Excel ne distingue pas majuscules et minuscules) : un nom de feuille du profil d'export correspond à un type de tâche du fichier importé.</value>
   </data>
+  <data name="UnknownFieldReference" xml:space="preserve">
+    <value>Le profil d'import ne déclare pas le champ '{0}', nécessaire à l'extraction. Complétez ou réinitialisez le profil d'import.</value>
+  </data>
 </root>
