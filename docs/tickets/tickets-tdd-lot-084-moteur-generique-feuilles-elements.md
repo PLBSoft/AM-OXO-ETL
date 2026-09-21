@@ -133,17 +133,14 @@ et les avertissements de `b645159`. Il est faisable maintenant parce qu'une réf
 | G12 | Champ d'arrêt | Réglage supprimé : les éléments s'arrêtent toujours sur `Identification`, PROCEDURE sur `Action` (déjà le cas). |
 | G13 | Nom de feuille unique | Le nom de feuille n'est plus répété : `RepeatingBlockLocator.Sheet` supprimé, et un champ d'en-tête ne porte plus qu'une plage (`DirectCell` supprimé). Seul `SheetExtractionRule.SheetName` reste. |
 
-Choix pris pendant la rédaction, **à confirmer à la relecture** :
-- **Valeur par défaut de la case « obligatoire » pour un champ ajouté dans l'éditeur : décochée.** Le cas
-  J2M76 fonctionne alors tel que le client l'a saisi. Côté domaine et base, la valeur par défaut reste
-  « obligatoire » (profils déjà enregistrés inchangés jusqu'à la réinitialisation).
+| G14 | Case « obligatoire » d'un champ ajouté dans l'éditeur | Décochée par défaut : le cas J2M76 fonctionne tel que le client l'a saisi. Côté domaine et base, la valeur par défaut reste « obligatoire » (profils déjà enregistrés inchangés jusqu'à la réinitialisation). |
+| G15 | Avertissement « valeur zéro énergie inattendue » (lot 063) | Supprimé : une autre valeur en colonne V ne coche simplement pas PS941, comme un `FIN MAD` sur PLATINES. Aucune fixture ne le déclenche. |
+| G16 | Zone (loc1) | Champ d'en-tête au nom connu `zone`, semé sur DIVERS en `B6:E6` ; l'orchestrateur prend celui de DIVERS, comme aujourd'hui. |
+
+Autres choix pris pendant la rédaction (sans enjeu métier fort) :
 - **Le repère d'un élément** reste `{repereEcho}-{Identification}`, et le pivot est rempli à partir de noms
   de champs connus (`Identification`, `Designation`, `TypeElement`, `PositionALaPose`, `IsolementFieldNames`).
   `Identification` et `TypeElement` doivent être déclarés dans le bloc ; sinon erreur de paramétrage.
-- **La zone** devient un champ d'en-tête `zone` (nouveau nom connu), semé sur DIVERS en `B6:E6`.
-  L'orchestrateur continue de prendre celle de DIVERS.
-- **L'avertissement de valeur zéro énergie inattendue (lot 063) disparaît** : aucune fixture ne le
-  déclenche ; une valeur autre que `ZERO ENERGIE` en colonne V ne coche simplement pas PS941.
 - **Validation dans le domaine** : `SheetExtractionRule` refuse une règle de point dont le champ source
   n'est pas un champ de son bloc (même principe que les champs composés du lot 047). Un profil enregistré
   avant le lot peut encore contenir un nom inconnu : l'import répond alors **422** avec un message localisé
