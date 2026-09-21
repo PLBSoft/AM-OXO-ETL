@@ -67,7 +67,29 @@ public static class ImportProfileDescriptionBuilder
 
         return new ProfileDescriptionSection(
             loc["ImportProfileDetails_SheetSectionTitle", rule.SheetName], sentences,
-            Marked(DescribeIgnored(rule, usage, loc)), Marked(DescribeBlocking(rule, usage, loc)));
+            Marked(DescribeIgnored(rule, usage, loc)), Marked(DescribeBlocking(rule, usage, loc)))
+        {
+            IgnoredNotes = Marked(DescribeIgnoredNotes(rule, usage, loc))
+        };
+    }
+
+    // Client ticket J2M76: a point rule of a type this sheet doesn't apply is the easiest mistake to make --
+    // the editor offers both sections for every sheet -- so say which mechanism the sheet does use.
+    private static List<string> DescribeIgnoredNotes(
+        SheetExtractionRule rule, ImportSheetUsageEntry usage, IStringLocalizer<BlazorAdminMessages> loc)
+    {
+        var notes = new List<string>();
+        if (!usage.ReadMembers.Contains(SheetRuleMember.ConditionalPointRules) && rule.PointRules.Count > 0)
+        {
+            notes.Add(loc["ImportProfileDetails_IgnoredConditionalRulesNote"]);
+        }
+
+        if (!usage.ReadMembers.Contains(SheetRuleMember.FieldPresencePointRules) && rule.FieldPresencePointRules.Count > 0)
+        {
+            notes.Add(loc["ImportProfileDetails_IgnoredFieldPresenceRulesNote"]);
+        }
+
+        return notes;
     }
 
     // Header rules extraction uses: the composites the sheet requires, and the fields those composites

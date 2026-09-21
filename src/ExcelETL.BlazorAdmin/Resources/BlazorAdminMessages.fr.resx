@@ -1990,4 +1990,40 @@
   <data name="ExportProfiles_Details" xml:space="preserve">
     <value>Voir les dÃ©tails</value>
   </data>
+  <data name="ImportProfileEditor_SheetNotProcessedWarning" xml:space="preserve">
+    <value>La feuille « {0} » n'est pas traitée par l'import : aucun réglage de cette règle n'a d'effet. Feuilles traitées : {1}.</value>
+  </data>
+  <data name="ImportProfileEditor_PointRulesIgnoredWarning" xml:space="preserve">
+    <value>La feuille « {0} » n'applique pas les règles de point conditionnelles : les règles de cette section ne cochent aucune colonne. Sur cette feuille, les colonnes se cochent avec les colonnes inconditionnelles ou avec la section « {1} ».</value>
+  </data>
+  <data name="ImportProfileEditor_FieldPresencePointRulesIgnoredWarning" xml:space="preserve">
+    <value>La feuille « {0} » n'applique pas les règles de cette section : elles ne cochent aucune colonne. Sur cette feuille, les colonnes se cochent avec les colonnes inconditionnelles ou avec la section « {1} ».</value>
+  </data>
+  <data name="ImportProfileEditor_HeaderRulesIgnoredWarning" xml:space="preserve">
+    <value>La feuille « {0} » ne lit aucun en-tête : les réglages de cette section sont sans effet.</value>
+  </data>
+  <data name="ImportProfileEditor_StopFieldIgnoredWarning" xml:space="preserve">
+    <value>Sur la feuille « {0} », la lecture s'arrête toujours sur le champ « {1} » : ce champ d'arrêt est sans effet.</value>
+  </data>
+  <data name="ImportProfileEditor_ZeroEnergieIgnoredWarning" xml:space="preserve">
+    <value>La feuille « {0} » n'utilise pas de valeur zéro énergie : ce réglage est sans effet.</value>
+  </data>
+  <data name="ImportProfileEditor_CouleurEtiquetteIgnoredWarning" xml:space="preserve">
+    <value>La feuille « {0} » ne lit aucune couleur d'étiquette : les réglages de couleur sont sans effet.</value>
+  </data>
+  <data name="ImportProfileEditor_DefaultCouleurIgnoredBecauseCellWarning" xml:space="preserve">
+    <value>Une cellule de couleur est configurée : la couleur par défaut n'est jamais utilisée.</value>
+  </data>
+  <data name="ImportProfileEditor_AllowedCouleursIgnoredWithoutCellWarning" xml:space="preserve">
+    <value>Aucune cellule de couleur n'est configurée : la liste des couleurs autorisées n'a rien à contrôler.</value>
+  </data>
+  <data name="ImportProfileEditor_SheetRuleIgnoredSettingsWarning" xml:space="preserve">
+    <value>Certains réglages de cette règle sont sans effet sur la feuille « {0} ». Ouvrez la règle (bouton Modifier) ou la vue Détails du profil pour les voir.</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredConditionalRulesNote" xml:space="preserve">
+    <value>Cette feuille n'applique pas les règles de point conditionnelles : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Colonnes cochées si une cellule est renseignée » de l'éditeur.</value>
+  </data>
+  <data name="ImportProfileDetails_IgnoredFieldPresenceRulesNote" xml:space="preserve">
+    <value>Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section « Règles de point conditionnelles » de l'éditeur.</value>
+  </data>
 </root>

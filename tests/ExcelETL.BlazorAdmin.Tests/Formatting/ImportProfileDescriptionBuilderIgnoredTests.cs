@@ -96,6 +96,31 @@ public class ImportProfileDescriptionBuilderIgnoredTests
                 pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")]))
             .Ignored.Select(i => i.Text).Should().Equal("règle conditionnelle pour la colonne « A »");
 
+    // Client ticket J2M76: listing the rule as ignored didn't say why nor what to use instead.
+    [Fact]
+    public void ConditionalRuleOnPlatines_CarriesANoteNamingTheSectionToUseInstead() =>
+        Section(Rule("PLATINES", fields: ElementFields,
+                pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")]))
+            .IgnoredNotes.Select(n => n.Text).Should().Equal(
+                "Cette feuille n'applique pas les règles de point conditionnelles : elles ne cochent aucune colonne. "
+                + "Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section "
+                + "« Colonnes cochées si une cellule est renseignée » de l'éditeur.");
+
+    [Fact]
+    public void FieldPresenceRuleOnIsolement_CarriesANoteNamingTheSectionToUseInstead() =>
+        Section(Rule("ISOLEMENT", fields: IsolementFields,
+                fieldPresencePointRules: [new FieldPresencePointRule(new BlockFieldDefinition("PoseeLe", "H:N", 2, 2), "B")]))
+            .IgnoredNotes.Select(n => n.Text).Should().Equal(
+                "Cette feuille n'applique pas les colonnes cochées si une cellule est renseignée : elles ne cochent aucune colonne. "
+                + "Les colonnes s'y cochent avec les colonnes inconditionnelles ou avec la section "
+                + "« Règles de point conditionnelles » de l'éditeur.");
+
+    [Fact]
+    public void NoIgnoredPointRule_NoNote() =>
+        Section(Rule("PLATINES", fields: ElementFields, defaultCouleurEtiquette: "ROUGE",
+                couleurEtiquetteCell: new BlockFieldDefinition("CouleurEtiquette", "H:N", 1, 1)))
+            .IgnoredNotes.Should().BeEmpty();
+
     [Fact]
     public void FieldPresenceRuleOnIsolement_IsReportedAsIgnored() =>
         Section(Rule("ISOLEMENT", fields: IsolementFields,

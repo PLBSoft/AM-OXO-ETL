@@ -111,6 +111,28 @@ public class ImportProfileDetailsTests : BunitContext
         cut.FindAll("#details-section-general-ignored").Should().BeEmpty();
     });
 
+    // Client ticket J2M76: conditional rules on PLATINES, with the note saying what to use instead.
+    [Fact]
+    public void IgnoredConditionalRuleOnPlatines_ShowsTheNoteInTheIgnoredAlert() => WithFrenchCulture(() =>
+    {
+        var platines = new SheetExtractionRule(
+            "PLATINES",
+            new RepeatingBlockLocator("PLATINES", 17, 8, "Identification",
+            [
+                new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Designation", "H:V", -1, 0),
+                new BlockFieldDefinition("TypeElement", "B:E", 3, 5)
+            ]),
+            [new ConditionalPointRule("HasDebMad", ConditionOperator.Equals, "DEBUT MAD", "DEB MAD")], [], [], []);
+        var profile = new ImportProfile("Profil PLATINES", "OXO-", "MAD TRAVAUX", [], [], [platines]);
+        Store.SaveAsync(profile).GetAwaiter().GetResult();
+
+        var cut = RenderDetails(profile.Id);
+
+        var note = cut.Find("#details-section-sheet-0-ignored .profile-details-ignored-note");
+        note.TextContent.Should().StartWith("Cette feuille n'applique pas les règles de point conditionnelles")
+            .And.Contain("« Colonnes cochées si une cellule est renseignée »");
+    });
+
     // Lot 078.12.2: profile values are emphasised, the guillemets stay outside the emphasis.
     [Fact]
     public void ProfileValues_AreRenderedInStrong_InSentencesAndInIgnoredItems() => WithFrenchCulture(() =>

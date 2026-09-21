@@ -22,6 +22,17 @@
     <div class="alert alert-danger" role="alert">@Draft.PendingPointRule.Error</div>
 }
 
+@* Client ticket J2M76: every section is offered for every sheet, but each sheet's extraction only reads
+   some of them -- say so where the user types, not in a code comment. No role="alert": these follow the
+   sheet name as it is typed and would otherwise be announced on every keystroke. *@
+@{ var ignored = SheetRuleIgnoredSettings.For(Draft); }
+@if (ignored.SheetNotProcessed)
+{
+    <div id="@($"{IdPrefix}sheet-not-processed-warning")" class="alert alert-warning">
+        @Loc["ImportProfileEditor_SheetNotProcessedWarning", Draft.SheetName, string.Join(", ", ImportSheetUsage.KnownSheetNames)]
+    </div>
+}
+
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_SheetGeneralSettingsHeading"]</h3>
@@ -52,6 +63,12 @@
                placeholder="@Loc["ImportProfileEditor_StopFieldNamePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-stop-field-name-input")">@Loc["ImportProfileEditor_StopFieldNameLabel"]</label>
     </div>
+    @if (ignored.IgnoredStopFieldFixedName is { } fixedStopField)
+    {
+        <div id="@($"{IdPrefix}stop-field-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_StopFieldIgnoredWarning", Draft.SheetName, fixedStopField]
+        </div>
+    }
 </div>
 <div class="mb-3">
     <div class="form-floating">
@@ -59,6 +76,12 @@
                placeholder="@Loc["ImportProfileEditor_ZeroEnergieExpectedValuePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-zero-energie-expected-value-input")">@Loc["ImportProfileEditor_ZeroEnergieExpectedValueLabel"]</label>
     </div>
+    @if (ignored.ZeroEnergieExpectedValueIgnored)
+    {
+        <div id="@($"{IdPrefix}zero-energie-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_ZeroEnergieIgnoredWarning", Draft.SheetName]
+        </div>
+    }
 </div>
 <div class="mb-3">
     <div class="form-floating">
@@ -66,6 +89,12 @@
                placeholder="@Loc["ImportProfileEditor_DefaultCouleurEtiquettePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-default-couleur-etiquette-input")">@Loc["ImportProfileEditor_DefaultCouleurEtiquetteLabel"]</label>
     </div>
+    @if (ignored.DefaultCouleurIgnoredBecauseCell)
+    {
+        <div id="@($"{IdPrefix}default-couleur-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_DefaultCouleurIgnoredBecauseCellWarning"]
+        </div>
+    }
 </div>
 <div class="mb-3">
     <div class="form-floating">
@@ -80,6 +109,18 @@
                placeholder="@Loc["ImportProfileEditor_AllowedCouleursEtiquettePlaceholder"]" />
         <label for="@($"{IdPrefix}sheet-rule-allowed-couleurs-etiquette-input")">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteLabel"]</label>
     </div>
+    @if (ignored.AllowedCouleursIgnoredWithoutCell)
+    {
+        <div id="@($"{IdPrefix}allowed-couleurs-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_AllowedCouleursIgnoredWithoutCellWarning"]
+        </div>
+    }
+    @if (ignored.CouleurEtiquetteIgnored)
+    {
+        <div id="@($"{IdPrefix}couleur-etiquette-ignored-warning")" class="alert alert-warning mt-2 mb-0">
+            @Loc["ImportProfileEditor_CouleurEtiquetteIgnoredWarning", Draft.SheetName]
+        </div>
+    }
 </div>
 </div>
 </div>
@@ -249,6 +290,12 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_PointRulesHeading"]</h3>
+@if (ignored.ConditionalPointRulesIgnored)
+{
+    <div id="@($"{IdPrefix}point-rules-ignored-warning")" class="alert alert-warning">
+        @Loc["ImportProfileEditor_PointRulesIgnoredWarning", Draft.SheetName, Loc["ImportProfileEditor_FieldPresencePointRulesHeading"]]
+    </div>
+}
 @if (Draft.PointRules.Count > 0)
 {
     <ul class="block-field-list">
@@ -381,6 +428,12 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_FieldPresencePointRulesHeading"]</h3>
+@if (ignored.FieldPresencePointRulesIgnored)
+{
+    <div id="@($"{IdPrefix}field-presence-rules-ignored-warning")" class="alert alert-warning">
+        @Loc["ImportProfileEditor_FieldPresencePointRulesIgnoredWarning", Draft.SheetName, Loc["ImportProfileEditor_PointRulesHeading"]]
+    </div>
+}
 <div class="form-text mb-2">@Loc["ImportProfileEditor_FieldPresencePointRulesHint"]</div>
 @if (Draft.FieldPresencePointRules.Count > 0)
 {
@@ -443,6 +496,12 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_HeaderFieldsHeading"]</h3>
+@if (ignored.HeaderRulesIgnored)
+{
+    <div id="@($"{IdPrefix}header-fields-ignored-warning")" class="alert alert-warning">
+        @Loc["ImportProfileEditor_HeaderRulesIgnoredWarning", Draft.SheetName]
+    </div>
+}
 @if (GetMissingWellKnownNames() is { Count: > 0 } missingNames)
 {
     <div id="@($"{IdPrefix}header-well-known-names-warning")" class="alert alert-warning" role="alert">
@@ -510,6 +569,12 @@
 <div class="card bg-light mb-3">
 <div class="card-body">
 <h3 class="h5">@Loc["ImportProfileEditor_HeaderCompositesHeading"]</h3>
+@if (ignored.HeaderRulesIgnored)
+{
+    <div id="@($"{IdPrefix}header-composites-ignored-warning")" class="alert alert-warning">
+        @Loc["ImportProfileEditor_HeaderRulesIgnoredWarning", Draft.SheetName]
+    </div>
+}
 @if (Draft.HeaderComposites.Count > 0)
 {
     <ul class="block-field-list">

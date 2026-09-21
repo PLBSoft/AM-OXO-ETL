@@ -53,6 +53,10 @@
                         <li>@RenderText(setting)</li>
                     }
                 </ul>
+                @foreach (var note in section.IgnoredNotes)
+                {
+                    <p class="profile-details-ignored-note mt-2 mb-0">@RenderText(note)</p>
+                }
             </div>
         }
     </section>

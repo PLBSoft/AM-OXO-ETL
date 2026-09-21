@@ -500,6 +500,12 @@ else
                             <span class="sheet-rule-card-meta text-muted">@Loc["ImportProfileEditor_AllowedCouleursEtiquetteSummary", rule.AllowedCouleursEtiquette]</span>
                         }
                     </div>
+                    @if (SheetRuleIgnoredSettings.For(rule).AnyConfiguredSettingIgnored)
+                    {
+                        <div id="@($"sheet-rule-ignored-settings-warning-{index}")" class="alert alert-warning py-2">
+                            @Loc["ImportProfileEditor_SheetRuleIgnoredSettingsWarning", rule.SheetName]
+                        </div>
+                    }
                     <ul class="block-field-list block-field-grid">
                         @foreach (var field in rule.Fields)
                         {
