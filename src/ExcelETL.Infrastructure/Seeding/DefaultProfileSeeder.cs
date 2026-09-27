@@ -42,8 +42,15 @@ public class DefaultProfileSeeder(
     // spec-extraction-fichier-source-oxo.md §6/§7.
     private const string IsolementZeroEnergieColonneName = "ZÉRO ENERGIE EN PRESENCE EE (PS941)";
     private const string PoseEtiquettesColonneName = "POSE ÉTIQUETTES";
-    private const string ReceptionDebutMadColonneName = "RECEPTION DEBUT MAD";
-    private const string ReceptionDebutRelColonneName = "RECEPTION DEBUT REL";
+    private const string ReceptionAssemblagesColonneName = "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS";
+    private const string ControleEtancheitesColonneName = "CONTRÔLE ETANCHÉITÉS";
+
+    // The 4 PLATINES reception Colonnes, DEB/FIN x MAD/REL (client clarification 2026-09-16). Renamed
+    // after the client's own profile (2026-09-27) so each name states its variant.
+    private const string DebutMadReceptionColonneName = "DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS";
+    private const string DebutRelReceptionColonneName = "DEBUT REL PLATINES/TAMPONS PLEINS";
+    private const string FinMadReceptionColonneName = "FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS";
+    private const string FinRelReceptionColonneName = "FIN REL PLATINES/TAMPONS PLEINS";
 
     // Lot 084: optional block fields read only by point rules.
     private const string ZeroEnergieFieldName = "ZeroEnergie";
@@ -71,12 +78,11 @@ public class DefaultProfileSeeder(
     private const string AutorisationRemiseEnServiceColonneName = "AUTORISATION DE REMISE EN SERVICE";
     private const string ReceptionFinaleChantierColonneName = "RÉCEPTION FINALE CHANTIER";
 
-    private static readonly string[] EquipementPointColonneNames =
-    [
-        VisitePrealableChantierColonneName, ProcedureMadColonneName, AutorisationDeplatinagesColonneName,
-        ProcedureRelColonneName, AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName
-    ];
+    // Added by the client's own profile (2026-09-27): two more Equipement Points, unconditional.
+    private const string AutorisationDeTravauxColonneName = "AUTORISATION DE TRAVAUX";
+    private const string ValidationFinDeTravauxColonneName = "VALIDATION FIN DE TRAVAUX";
 
+    
     // Lot U (docs/tickets-tdd-pivot-tableaux-applications-export.md), decision #4: the only
     // Application name seeded by default. "PROGRESS" is the legacy EF6 AMProgress Application name
     // this deployment cares about today -- an admin can add more via the profile editor.
@@ -183,7 +189,7 @@ public class DefaultProfileSeeder(
     // against the 5 real extraction services as part of this ticket's own pre-implementation
     // checklist (docs/tickets-tdd-seed-profils-defaut.md, closing section) -- zero divergence found.
     private static ImportProfile BuildDefaultImportProfile() => new(
-        ImportProfileId, ProfileName, ImportProfile.DefaultReperePrefix, "MAD TRAVAUX",
+        ImportProfileId, ProfileName, ImportProfile.DefaultReperePrefix, "MAD",
         [TravauxCompletColonneName, TravauxDetailColonneName],
         [ProgressApplicationName],
         [
@@ -206,7 +212,8 @@ public class DefaultProfileSeeder(
                 ],
                 [
                     VisitePrealableChantierColonneName, AutorisationDeplatinagesColonneName,
-                    AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName
+                    AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName,
+                    AutorisationDeTravauxColonneName, ValidationFinDeTravauxColonneName
                 ],
                 [
                     new HeaderFieldRule(
@@ -260,24 +267,24 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(PoseeLeFieldName, "H:N", 2, 2, isRequired: false),
                     new BlockFieldDefinition(DeposeeLeFieldName, "H:N", 3, 3, isRequired: false)
                 ]),
-                // Client clarification (2026-09-16), the 4 PLATINES reception Colonnes are the DEB/FIN x
-                // MAD/REL variants: "RÉCEPTION PLATINES/TAMPONS PLEINS" (FIN MAD) and "PLATINES / TAMPONS
-                // PLEINS" (FIN REL) stay unconditional; "RECEPTION DEBUT MAD"/"RECEPTION DEBUT REL" are
-                // ticked when either H value cell holds "DEBUT MAD"/"DEBUT REL" -- the row label doesn't
-                // matter (real fixtures: DEBUT MAD in both rows, DEBUT REL only in POSÉE LE). A FIN value
-                // ticks nothing, and is not a warning (G7).
+                // Client clarification (2026-09-16): the FIN MAD/FIN REL reception Colonnes stay
+                // unconditional; the DEBUT MAD/DEBUT REL ones are ticked when either H value cell holds
+                // "DEBUT MAD"/"DEBUT REL" -- the row label doesn't matter (real fixtures: DEBUT MAD in both
+                // rows, DEBUT REL only in POSÉE LE). Kept on both cells on 2026-09-27 although the client's
+                // own profile read each value in one row only: that would drop real blocks (E6431A, C8503).
+                // A FIN value ticks nothing, and is not a warning (G7).
                 [
-                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", ReceptionDebutMadColonneName),
-                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", ReceptionDebutMadColonneName),
-                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT REL", ReceptionDebutRelColonneName),
-                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT REL", ReceptionDebutRelColonneName)
+                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", DebutMadReceptionColonneName),
+                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT MAD", DebutMadReceptionColonneName),
+                    new ConditionalPointRule(PoseeLeFieldName, ConditionOperator.Equals, "DEBUT REL", DebutRelReceptionColonneName),
+                    new ConditionalPointRule(DeposeeLeFieldName, ConditionOperator.Equals, "DEBUT REL", DebutRelReceptionColonneName)
                 ],
                 [
                     PoseEtiquettesColonneName,
-                    "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
-                    "CONTRÔLE ETANCHÉITÉS",
-                    "RÉCEPTION PLATINES/TAMPONS PLEINS",
-                    "PLATINES / TAMPONS PLEINS"
+                    ReceptionAssemblagesColonneName,
+                    ControleEtancheitesColonneName,
+                    FinMadReceptionColonneName,
+                    FinRelReceptionColonneName
                 ],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")],
                 [],
@@ -294,11 +301,12 @@ public class DefaultProfileSeeder(
                     new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false)
                 ]),
                 [],
+                // Same FIN MAD reception Colonne as PLATINES, so it reaches the export (2026-09-27).
                 [
                     PoseEtiquettesColonneName,
-                    "RÉCEPTION PLATINES/TAMPONS PLEINS",
-                    "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS",
-                    "CONTRÔLE ETANCHÉITÉS"
+                    FinMadReceptionColonneName,
+                    ReceptionAssemblagesColonneName,
+                    ControleEtancheitesColonneName
                 ],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:U6")],
                 [],
@@ -399,37 +407,37 @@ public class DefaultProfileSeeder(
     //   express (ColumnDefinitions are always rendered before ApplicationColumnDefinitions, regardless
     //   of list order -- see SheetGenerationEngine.GenerateSheet) -- placed at the end of the
     //   descriptive-columns block instead, per the ticket's own fallback instruction.
-    // - 66.3/66.4: the same 16 Point columns now live on both Parents and Enfants (built from this one
-    //   shared definition, so the two rules can never silently drift apart) -- marked on Parents via
-    //   SheetGenerationEngine's new aggregation (66.3: at least one child IsolementPivot of this
-    //   Équipement carries the Point), on Enfants exactly as before (direct match). A *method*, not a
-    //   shared list, and called separately for each rule below -- deliberately, not an oversight: EF
-    //   Core's owned-collection change tracker cannot have the very same PointColumnDefinition object
-    //   instances be owned by two different SheetGenerationRule rows at once (confirmed empirically --
-    //   sharing one static list silently orphaned Parents' whole PointColumnDefinitions collection on
-    //   the very first SaveChangesAsync). Same "factory method, not a shared instance" precedent as
-    //   BuildTacheMultipleSheetRule below.
-    private static List<PointColumnDefinition> BuildIsolementStylePointColumnDefinitions() =>
+    // - 66.3/66.4: Point columns on Parents are ticked by aggregation (at least one child
+    //   IsolementPivot of this Équipement carries the Point), on Enfants by direct match.
+    // Point column order taken from the client's own export profile (2026-09-27), with one name
+    // corrected so it matches a Colonne the import produces ("DEB MAD" -> "DEBUT MAD" on Parents). Each call builds fresh instances: EF Core's owned-collection change tracker cannot have
+    // one PointColumnDefinition owned by two SheetGenerationRule rows (sharing one list silently
+    // orphaned Parents' collection) -- same precedent as BuildTacheMultipleSheetRule below.
+    private static readonly string[] ParentsPointColonneNames =
     [
-        new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES"),
-        new PointColumnDefinition("DEPROLOCK VANNES", "DEPROLOCK VANNES"),
-        new PointColumnDefinition(IsolementZeroEnergieColonneName, IsolementZeroEnergieColonneName),
-        new PointColumnDefinition(PoseEtiquettesColonneName, PoseEtiquettesColonneName),
-        new PointColumnDefinition(
-            "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS"),
-        new PointColumnDefinition("CONTRÔLE ETANCHÉITÉS", "CONTRÔLE ETANCHÉITÉS"),
-        new PointColumnDefinition("RECEPTION DEBUT MAD", "RECEPTION DEBUT MAD"),
-        new PointColumnDefinition("RÉCEPTION PLATINES/TAMPONS PLEINS", "RÉCEPTION PLATINES/TAMPONS PLEINS"),
-        new PointColumnDefinition("RECEPTION DEBUT REL", "RECEPTION DEBUT REL"),
-        new PointColumnDefinition("PLATINES / TAMPONS PLEINS", "PLATINES / TAMPONS PLEINS"),
-        new PointColumnDefinition("SYNCHRONISATION INSTRUMENTATION", "SYNCHRONISATION INSTRUMENTATION"),
-        new PointColumnDefinition("SOUPAPE : CONSTAT ENCRASSEMENT", "SOUPAPE : CONSTAT ENCRASSEMENT"),
-        new PointColumnDefinition(
-            "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS"),
-        new PointColumnDefinition("PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES"),
-        new PointColumnDefinition("PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : VALIDATION CONSTAT ENCRASSEMENT"),
-        new PointColumnDefinition("PF : ACCORD TRAVAUX FEU", "PF : ACCORD TRAVAUX FEU")
+        VisitePrealableChantierColonneName, ProcedureMadColonneName, AutorisationDeplatinagesColonneName,
+        ProcedureRelColonneName, AutorisationRemiseEnServiceColonneName, ReceptionFinaleChantierColonneName,
+        PoseEtiquettesColonneName, ReceptionAssemblagesColonneName, ControleEtancheitesColonneName,
+        DebutRelReceptionColonneName, FinRelReceptionColonneName, AutorisationDeTravauxColonneName,
+        "SOUPAPE : CONSTAT ENCRASSEMENT", "PROLOCK VANNES", "DEPROLOCK VANNES",
+        "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES",
+        IsolementZeroEnergieColonneName, "PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : ACCORD TRAVAUX FEU",
+        DebutMadReceptionColonneName, FinMadReceptionColonneName, ValidationFinDeTravauxColonneName,
+        "SYNCHRONISATION INSTRUMENTATION"
     ];
+
+    private static readonly string[] EnfantsPointColonneNames =
+    [
+        "PROLOCK VANNES", "DEPROLOCK VANNES", IsolementZeroEnergieColonneName, PoseEtiquettesColonneName,
+        ReceptionAssemblagesColonneName, ControleEtancheitesColonneName, FinMadReceptionColonneName,
+        DebutRelReceptionColonneName, FinRelReceptionColonneName, "SYNCHRONISATION INSTRUMENTATION",
+        "SOUPAPE : CONSTAT ENCRASSEMENT", "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS",
+        "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES", "PF : VALIDATION CONSTAT ENCRASSEMENT",
+        "PF : ACCORD TRAVAUX FEU", DebutMadReceptionColonneName
+    ];
+
+    private static List<PointColumnDefinition> BuildPointColumnDefinitions(IEnumerable<string> colonneNames) =>
+        [.. colonneNames.Select(name => new PointColumnDefinition(name, name))];
 
     // The third rule (Tâches multiples, Lot T) needs no Guid of its own, unlike ImportProfileId/
     // ExportProfileId above -- SheetGenerationRule is a plain record with no identity property (see
@@ -461,12 +469,7 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("ADR Email", null),
                     new ColumnDefinition("COMMENTAIRES", null)
                 ],
-                // Lot 082 (D6): the Equipement's own Points first, then the ones aggregated from its
-                // children (66.4).
-                [
-                    .. EquipementPointColonneNames.Select(name => new PointColumnDefinition(name, name)),
-                    .. BuildIsolementStylePointColumnDefinitions()
-                ],
+                BuildPointColumnDefinitions(ParentsPointColonneNames),
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             new SheetGenerationRule(
                 "Enfants",
@@ -498,7 +501,7 @@ public class DefaultProfileSeeder(
                     new ColumnDefinition("Tableaux", PivotFieldRef.IsolementTableaux),
                     new ColumnDefinition("SUPPRESSION", null)
                 ],
-                BuildIsolementStylePointColumnDefinitions(),
+                BuildPointColumnDefinitions(EnfantsPointColonneNames),
                 [new ApplicationColumnDefinition(ProgressApplicationName, ProgressApplicationName, "O")]),
             BuildTacheMultipleSheetRule()
         ]);

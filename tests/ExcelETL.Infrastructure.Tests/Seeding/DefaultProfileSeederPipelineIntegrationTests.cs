@@ -297,7 +297,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
                 row.Cell(Col("ZONE")).GetString().Should().Be(expectedZone);
                 row.Cell(Col("LOC2")).GetString().Should().BeEmpty();
                 row.Cell(Col("LOC3")).GetString().Should().BeEmpty();
-                row.Cell(Col("TYPE ELEMENT CODE")).GetString().Should().Be("MAD TRAVAUX");
+                row.Cell(Col("TYPE ELEMENT CODE")).GetString().Should().Be("MAD");
                 row.Cell(Col("LOT")).GetString().Should().BeEmpty();
                 row.Cell(Col("Ressource")).GetString().Should().BeEmpty();
                 row.Cell(Col("Ligne")).GetValue<int>().Should().BePositive();

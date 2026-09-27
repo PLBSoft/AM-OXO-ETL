@@ -220,7 +220,7 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 
 **Paramètres généraux**
 - Le repère de l'équipement est lu dans la feuille PROCEDURE. Il doit commencer par « OXO- » (majuscules comprises), qui est retiré ; sinon le fichier entier est refusé.
-- L'équipement est créé avec le type d'élément « MAD TRAVAUX ».
+- L'équipement est créé avec le type d'élément « MAD ».
 - L'équipement et tous ses éléments sont rattachés aux tableaux « TRAVAUX COMPLET », « TRAVAUX DETAIL ».
 - L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».
 - Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».
@@ -236,7 +236,7 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 - Une date de révision illisible fait refuser le fichier entier. (fixe)
 - Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ». (fixe)
 - Une ligne sans ordre est un titre de section, pas une tâche à réaliser. (fixe)
-- L'équipement est coché dans les 4 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER ».
+- L'équipement est coché dans les 6 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER », « AUTORISATION DE TRAVAUX », « VALIDATION FIN DE TRAVAUX ».
 - Si au moins une tâche a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ».
 - Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».
 
@@ -252,18 +252,18 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif), champ « PoseeLe » en H19:N19 (facultatif), champ « DeposeeLe » en H20:N20 (facultatif).
-- Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « RÉCEPTION PLATINES/TAMPONS PLEINS », « PLATINES / TAMPONS PLEINS ».
-- Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
-- Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « RECEPTION DEBUT MAD ».
-- Si le champ « PoseeLe » est « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
-- Si le champ « DeposeeLe » est « DEBUT REL », l'élément est coché dans la colonne « RECEPTION DEBUT REL ».
+- Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « FIN REL PLATINES/TAMPONS PLEINS ».
+- Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».
+- Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».
+- Si le champ « PoseeLe » est « DEBUT REL », l'élément est coché dans la colonne « DEBUT REL PLATINES/TAMPONS PLEINS ».
+- Si le champ « DeposeeLe » est « DEBUT REL », l'élément est coché dans la colonne « DEBUT REL PLATINES/TAMPONS PLEINS ».
 - La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC », « JAUNE », « VERT », « BLEUE ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille ORIFICES CAPACITES**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
 - Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif).
-- Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
+- Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
 - La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille AUTRES JOINTS TOUCHES**

@@ -101,7 +101,7 @@ public class DefaultProfileSeederTests
         var profile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
 
         profile!.ReperePrefix.Should().Be(ImportProfile.DefaultReperePrefix);
-        profile.EquipementTypeElementNom.Should().Be("MAD TRAVAUX");
+        profile.EquipementTypeElementNom.Should().Be("MAD");
         profile.SheetRules.Select(r => r.SheetName).Should().Equal(
             "PROCEDURE", "ISOLEMENT", "PLATINES", "ORIFICES CAPACITES", "AUTRES JOINTS TOUCHES", "DIVERS");
 
@@ -109,11 +109,11 @@ public class DefaultProfileSeederTests
         // unconditional Colonnes.
         profile.DefaultTableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
         var procedure = profile.SheetRules.Single(r => r.SheetName == "PROCEDURE");
-        // Lot 083: the client's 6 Equipement Points -- 4 unconditional, 2 when at least one task of the type
-        // exists.
+        // Lot 083 + client profile (2026-09-27): 8 Equipement Points -- 6 unconditional, 2 when at least
+        // one task of the type exists.
         procedure.UnconditionalColonneNames.Should().Equal(
             "VISITE PRÉALABLE CHANTIER", "AUTORISATION DÉPLATINAGES", "AUTORISATION DE REMISE EN SERVICE",
-            "RÉCEPTION FINALE CHANTIER");
+            "RÉCEPTION FINALE CHANTIER", "AUTORISATION DE TRAVAUX", "VALIDATION FIN DE TRAVAUX");
         procedure.PointRules.Should().Equal(
             new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "MAD", "PROCÉDURE MAD"),
             new ConditionalPointRule(ProcedureFieldNames.TypeTacheMultipleAlias, ConditionOperator.Equals, "REL", "PROCÉDURE REL"));
@@ -136,9 +136,9 @@ public class DefaultProfileSeederTests
 
         var platines = profile.SheetRules.Single(r => r.SheetName == "PLATINES");
         platines.Locator.Step.Should().Be(8);
-        platines.UnconditionalColonneNames.Should().HaveCount(5);
-        platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT MAD");
-        platines.UnconditionalColonneNames.Should().NotContain("RECEPTION DEBUT REL");
+        platines.UnconditionalColonneNames.Should().Equal(
+            "POSE ÉTIQUETTES", "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS",
+            "FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS", "FIN REL PLATINES/TAMPONS PLEINS");
         // Client clarification (2026-09-16): a DEBUT Colonne is ticked when either H value cell of the
         // block (POSÉE LE +2, DÉPOSÉE LE +3) holds the exact text -- two optional block fields, four rules.
         platines.Locator.Fields.Where(f => !f.IsRequired).Should().BeEquivalentTo(new[]
@@ -148,10 +148,10 @@ public class DefaultProfileSeederTests
             new BlockFieldDefinition("DeposeeLe", "H:N", 3, 3, isRequired: false)
         });
         platines.PointRules.Should().Equal(
-            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD"),
-            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT MAD", "RECEPTION DEBUT MAD"),
-            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL"),
-            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT REL", "RECEPTION DEBUT REL"));
+            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT MAD", "DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS"),
+            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT MAD", "DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS"),
+            new ConditionalPointRule("PoseeLe", ConditionOperator.Equals, "DEBUT REL", "DEBUT REL PLATINES/TAMPONS PLEINS"),
+            new ConditionalPointRule("DeposeeLe", ConditionOperator.Equals, "DEBUT REL", "DEBUT REL PLATINES/TAMPONS PLEINS"));
         // G7: a FIN value is legitimate data, never a warning.
         platines.WarnWhenNoConditionalPoint.Should().BeFalse();
         platines.DefaultCouleurEtiquette.Should().BeNull();
@@ -160,7 +160,10 @@ public class DefaultProfileSeederTests
 
         var orificesCapacites = profile.SheetRules.Single(r => r.SheetName == "ORIFICES CAPACITES");
         orificesCapacites.Locator.Step.Should().Be(8);
-        orificesCapacites.UnconditionalColonneNames.Should().HaveCount(4);
+        // Same FIN MAD reception Colonne as PLATINES, so the point reaches the export.
+        orificesCapacites.UnconditionalColonneNames.Should().Equal(
+            "POSE ÉTIQUETTES", "FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS",
+            "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS");
         // Same "couleur d'étiquette" cell as PLATINES.
         orificesCapacites.Locator.Fields.Single(f => f.Name == ElementFieldNames.CouleurEtiquette)
             .Should().Be(new BlockFieldDefinition(ElementFieldNames.CouleurEtiquette, "H:N", 1, 1, isRequired: false));
@@ -389,11 +392,10 @@ public class DefaultProfileSeederTests
             .Which.Source.Should().Be(PivotFieldRef.IsolementCouleurEtiquette);
     }
 
-    // Lot 066, 66.4: the same 16 Point columns live on Parents too, in the same order as Enfants --
-    // marked via SheetGenerationEngine's aggregation mechanism (66.3). Lot 082 (D6): Parents' own
-    // Equipement Point ("VISITE PRÉALABLE CHANTIER") comes first, before them.
+    // Point column order taken from the client's own export profile (2026-09-27): Parents carries the
+    // Equipement's own Points and the ones aggregated from its children (66.3), Enfants only the latter.
     [Fact]
-    public async Task SeedAsync_CreatesExportProfile_WithParentsPointColumns_EquipementPointThenEnfantsOnes()
+    public async Task SeedAsync_CreatesExportProfile_WithPointColumnsInTheClientsOrder()
     {
         var seeder = CreateSeeder(out _, out var exportProfileStore);
         await seeder.SeedAsync();
@@ -403,16 +405,27 @@ public class DefaultProfileSeederTests
         var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
         var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
 
-        // Lot 083 (E4): the client's order.
-        string[] equipementColonnes =
-        [
+        parents.PointColumnDefinitions.Should().OnlyContain(p => p.Header == p.ColonneNom);
+        parents.PointColumnDefinitions.Select(p => p.ColonneNom).Should().Equal(
             "VISITE PRÉALABLE CHANTIER", "PROCÉDURE MAD", "AUTORISATION DÉPLATINAGES", "PROCÉDURE REL",
-            "AUTORISATION DE REMISE EN SERVICE", "RÉCEPTION FINALE CHANTIER"
-        ];
-        parents.PointColumnDefinitions.Take(6).Should().Equal(
-            equipementColonnes.Select(name => new PointColumnDefinition(name, name)));
-        parents.PointColumnDefinitions.Skip(6).Should().Equal(enfants.PointColumnDefinitions);
-        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().NotIntersectWith(equipementColonnes);
+            "AUTORISATION DE REMISE EN SERVICE", "RÉCEPTION FINALE CHANTIER", "POSE ÉTIQUETTES",
+            "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS",
+            "DEBUT REL PLATINES/TAMPONS PLEINS", "FIN REL PLATINES/TAMPONS PLEINS", "AUTORISATION DE TRAVAUX",
+            "SOUPAPE : CONSTAT ENCRASSEMENT", "PROLOCK VANNES", "DEPROLOCK VANNES",
+            "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES",
+            "ZÉRO ENERGIE EN PRESENCE EE (PS941)", "PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : ACCORD TRAVAUX FEU",
+            "DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS", "FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS",
+            "VALIDATION FIN DE TRAVAUX", "SYNCHRONISATION INSTRUMENTATION");
+
+        enfants.PointColumnDefinitions.Should().OnlyContain(p => p.Header == p.ColonneNom);
+        enfants.PointColumnDefinitions.Select(p => p.ColonneNom).Should().Equal(
+            "PROLOCK VANNES", "DEPROLOCK VANNES", "ZÉRO ENERGIE EN PRESENCE EE (PS941)", "POSE ÉTIQUETTES",
+            "RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS", "CONTRÔLE ETANCHÉITÉS",
+            "FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS", "DEBUT REL PLATINES/TAMPONS PLEINS",
+            "FIN REL PLATINES/TAMPONS PLEINS", "SYNCHRONISATION INSTRUMENTATION", "SOUPAPE : CONSTAT ENCRASSEMENT",
+            "SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS", "PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES",
+            "PF : VALIDATION CONSTAT ENCRASSEMENT", "PF : ACCORD TRAVAUX FEU",
+            "DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS");
     }
 
     [Fact]
