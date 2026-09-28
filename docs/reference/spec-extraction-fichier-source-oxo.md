@@ -104,8 +104,9 @@ dans le profil d'import ; les sections 2 à 6 ne décrivent que le paramétrage 
   « Détails » du profil le signale avant tout import.
 - **Repère unique (lot 085)** : deux éléments du même fichier, quelle que soit leur feuille, ne peuvent pas
   avoir le même repère (comparaison sans tenir compte des majuscules ni des espaces autour). Sinon le
-  fichier entier est **rejeté** : aucun fichier cible, une erreur bloquante `DuplicateRepere` par ligne en
-  double (feuille, ligne Excel du bloc, repère), et seulement celles-ci. AlphaMaintenance identifie un
+  fichier entier est **rejeté** : aucun fichier cible, une erreur bloquante `DuplicateRepere` par repère en
+  double (lot 086), et seulement celles-ci. L'erreur porte la feuille et la ligne Excel du bloc de la
+  première ligne concernée ; son message cite le repère et toutes les lignes concernées. AlphaMaintenance identifie un
   isolement par son repère ; un même appareil décrit sur deux feuilles (par ex. une vanne en ISOLEMENT et
   en DIVERS) doit donc recevoir deux identifications différentes dans le fichier source.
 

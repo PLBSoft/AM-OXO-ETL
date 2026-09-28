@@ -124,7 +124,17 @@ Mêmes fichiers qu'au lot 085.7, assertions ajustées au nouveau nombre d'entré
 
 ---
 
-## 5. Hors périmètre
+## 5. Résultat (28/09)
+
+Livré en 2 commits : `faab3f0` (086.1 et 086.2 regroupés, le détecteur seul cassant les tests
+d'intégration), puis la documentation (086.3). Nombre d'entrées conforme au §1 ; instantanés : seules les
+lignes supplémentaires des 4 dossiers rejetés disparaissent, les messages sont identiques. Suites
+complètes vertes : Domain 434, Application 283, Infrastructure 292, WebAPI 78, Hosting 15,
+BlazorAdmin 1603.
+
+---
+
+## 6. Hors périmètre
 
 - Tout le reste du contrat du lot 085 (périmètre, comparaison, rejet total, 422, pas de fichier cible).
 - Fusion de doublons.

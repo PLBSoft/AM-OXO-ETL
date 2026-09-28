@@ -5,6 +5,10 @@ de la demande de l'équipe AlphaMaintenance « Rejeter les repères d'isolement 
 `POST /api/oxo/process` » (fichier reçu hors dépôt, résumé en §0). Investigation faite sans rien
 implémenter. **Décisions du §3 validées par Simon le 28/09 (D0 = A, D1-D7 comme proposé).***
 
+> **Lot 086 (28/09)** : à la demande du même demandeur, une seule entrée par repère en double (feuille et
+> ligne de la première ligne concernée, message inchangé). Les décisions D3 (une entrée par ligne) et D7
+> (ordre des entrées) ci-dessous sont remplacées ; voir `tickets-tdd-lot-086-une-entree-par-repere-en-double.md`.
+
 ---
 
 ## 0. La demande (résumé)
