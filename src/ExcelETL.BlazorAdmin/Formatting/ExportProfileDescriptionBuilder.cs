@@ -123,7 +123,7 @@ public static class ExportProfileDescriptionBuilder
                         Quote(application.MarkValue, loc), Quote(application.ApplicationNom, loc)], loc);
                     break;
                 case ColumnDefinition { Source: null }:
-                    yield return ColumnSentence(column, loc["ExportProfileDetails_ColumnEmpty"], loc);
+                    yield return ColumnSentence(column, loc["ExportProfileDetails_ColumnEmpty"], loc) with { IsMuted = true };
                     break;
                 case ColumnDefinition { Source: { } source }:
                     // CRITERE's two values are coded in PivotFieldResolver, not editable in the profile.
@@ -159,11 +159,12 @@ public static class ExportProfileDescriptionBuilder
         var letters = isConsecutive
             ? loc["ExportProfileDetails_PointGroupRange", CellRef(columns[group[0]].Letter), CellRef(columns[group[^1]].Letter)].Value
             : loc["ExportProfileDetails_PointGroupLetters", JoinWithAnd([.. group.Select(i => CellRef(columns[i].Letter))], loc)].Value;
-        var items = string.Join(ListSeparator, group.Select(i =>
-            loc["ExportProfileDetails_PointGroupItem", Quote(columns[i].Header, loc), CellRef(columns[i].Letter)].Value));
+        // Lot 087: one sub-item per column, letter first, like the single-column sentences.
+        var items = group.Select(i => ProfileDescriptionText.FromMarked(
+            loc["ExportProfileDetails_PointGroupItem", Quote(columns[i].Header, loc), CellRef(columns[i].Letter)].Value)).ToList();
 
-        return new(loc[isEquipement ? "ExportProfileDetails_PointGroupEquipement" : "ExportProfileDetails_PointGroupIsolement",
-            letters, Quote(markValue, loc), items]);
+        return new ProfileDescriptionSentence(loc[isEquipement ? "ExportProfileDetails_PointGroupEquipement" : "ExportProfileDetails_PointGroupIsolement",
+            letters, Quote(markValue, loc)]) { SubItems = items };
     }
 
     // "Colonne A « Repère » : {content}." -- the letter marked as a cell coordinate (D1).

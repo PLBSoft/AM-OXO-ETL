@@ -24,6 +24,12 @@ public sealed record ProfileDescriptionSentence(ProfileDescriptionText Content, 
     }
 
     public string Text => Content.Text;
+
+    // Lot 087: items listed one per line under the sentence (a group of point columns), empty otherwise.
+    public IReadOnlyList<ProfileDescriptionText> SubItems { get; init; } = [];
+
+    // Lot 087: a column that stays empty -- the page greys it out so the eye goes to the columns with content.
+    public bool IsMuted { get; init; }
 }
 // Lot 078.12.2/3: a text split into plain parts, profile values (a Tableau name, a compared value...) and
 // cell coordinates, so the page can emphasise each. The guillemets around a value stay plain text.

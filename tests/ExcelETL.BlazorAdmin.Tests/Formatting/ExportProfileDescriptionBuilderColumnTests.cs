@@ -26,6 +26,19 @@ public class ExportProfileDescriptionBuilderColumnTests
             "Colonne C « SUPPRESSION » : toujours « N ».");
     }
 
+    // Lot 087: only an always-empty column is muted.
+    [Fact]
+    public void AlwaysEmptyColumn_IsMuted_OtherColumnsAreNot()
+    {
+        var section = OnlyRuleSection(ExportRule("Parents", PivotSource.Equipement,
+            [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere), new ColumnDefinition("LOC2", null)],
+            pointColumns: [new PointColumnDefinition("A1", "A1", "X"), new PointColumnDefinition("A2", "A2", "X")],
+            constantColumns: [new ConstantColumnDefinition("SUPPRESSION", "N")]));
+
+        section.Sentences.Where(s => s.IsMuted).Select(s => s.Text)
+            .Should().Equal("Colonne B « LOC2 » : toujours vide.");
+    }
+
     [Fact]
     public void IsolementColumns_DescribeTheElementFields()
     {

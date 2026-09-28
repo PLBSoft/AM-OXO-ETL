@@ -31,11 +31,20 @@
             <ul class="profile-details-sentences">
                 @foreach (var sentence in section.Sentences)
                 {
-                    <li>
+                    <li class="@(sentence.IsMuted ? "text-muted" : null)">
                         @RenderText(sentence.Content)
                         @if (sentence.IsFixed)
                         {
                             <span class="badge text-bg-secondary ms-1">@Loc["ProfileDescription_FixedMarker"]</span>
+                        }
+                        @if (sentence.SubItems.Count > 0)
+                        {
+                            <ul class="profile-details-subitems">
+                                @foreach (var item in sentence.SubItems)
+                                {
+                                    <li>@RenderText(item)</li>
+                                }
+                            </ul>
                         }
                     </li>
                 }

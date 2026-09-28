@@ -61,8 +61,12 @@ internal static class DescriptionTestSupport
     public static ExportProfile ExportProfile(params SheetGenerationRule[] sheetRules) =>
         new("Profil d'export de test", sheetRules);
 
+    // Lot 087: a sentence's sub-items follow it, one line each, prefixed with "- ".
     public static IReadOnlyList<string> Texts(this ProfileDescriptionSection section) =>
-        [.. section.Sentences.Select(s => s.Text)];
+        [.. section.Sentences.SelectMany(s => s.Lines())];
+
+    public static IEnumerable<string> Lines(this ProfileDescriptionSentence sentence) =>
+        new[] { sentence.Text }.Concat(sentence.SubItems.Select(item => "- " + item.Text));
 
     public static ProfileDescriptionSection SheetSection(this ProfileDescription description, string sheetName) =>
         description.Sections.Single(s => s.Title == $"Feuille {sheetName}");

@@ -85,6 +85,43 @@ public class ExportProfileDetailsTests : BunitContext
         sentence.QuerySelector("strong.profile-details-value")!.TextContent.Should().Be("Repère");
     });
 
+    // Lot 087: a group of point columns lists one column per line under its sentence, letter first.
+    [Fact]
+    public void PointGroup_ListsItsColumnsAsNestedItems_LetterInCode() => WithFrenchCulture(() =>
+    {
+        var profile = Saved(new ExportProfile("Profil d'export détaillé",
+        [
+            new SheetGenerationRule("Parents", PivotSource.Equipement,
+                [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere)],
+                [new PointColumnDefinition("PROLOCK VANNES", "PROLOCK VANNES", "X"), new PointColumnDefinition("POSE ÉTIQUETTES", "POSE ÉTIQUETTES", "X")], [])
+        ]));
+
+        var cut = RenderDetails(profile.Id);
+
+        var group = cut.FindAll("#details-section-sheet-0 .profile-details-sentences > li").Single(li => li.TextContent.StartsWith("Colonnes B à C"));
+        var items = group.QuerySelectorAll("ul.profile-details-subitems > li");
+        items.Select(li => li.TextContent).Should().Equal("B « PROLOCK VANNES »", "C « POSE ÉTIQUETTES »");
+        items[0].QuerySelector("code.profile-details-cell")!.TextContent.Should().Be("B");
+        items[0].QuerySelector("strong.profile-details-value")!.TextContent.Should().Be("PROLOCK VANNES");
+    });
+
+    // Lot 087: an always-empty column is greyed out, the others keep the normal text colour.
+    [Fact]
+    public void AlwaysEmptyColumn_IsGreyedOut() => WithFrenchCulture(() =>
+    {
+        var profile = Saved(new ExportProfile("Profil d'export détaillé",
+        [
+            new SheetGenerationRule("Parents", PivotSource.Equipement,
+                [new ColumnDefinition("Repère", PivotFieldRef.EquipementRepere), new ColumnDefinition("LOC2", null)], [], [])
+        ]));
+
+        var cut = RenderDetails(profile.Id);
+
+        var items = cut.FindAll("#details-section-sheet-0 .profile-details-sentences > li");
+        items.Where(li => li.ClassList.Contains("text-muted")).Select(li => li.TextContent.Trim())
+            .Should().Equal("Colonne B « LOC2 » : toujours vide.");
+    });
+
     [Fact]
     public void FixedSentence_CarriesTheNonEditableBadge_ColumnSentencesDoNot() => WithFrenchCulture(() =>
     {
