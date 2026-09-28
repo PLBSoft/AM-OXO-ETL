@@ -1,4 +1,5 @@
 using Bunit;
+using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Home;
 using ExcelETL.BlazorAdmin.Components.Pages;
 using ExcelETL.BlazorAdmin.Services;
@@ -45,7 +46,8 @@ public class HomeTests : BunitContext
             HomeIndicatorValue<int>.Known(importProfileCount),
             HomeIndicatorValue<int>.Known(exportProfileCount),
             HomeIndicatorValue<int>.Known(generatedFileCount),
-            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc)));
+            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc)),
+            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
 
     [Fact]
     public void WhileLoading_ShowsLoadingIndicator_NoTilesRendered()
@@ -99,7 +101,8 @@ public class HomeTests : BunitContext
             HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<int>.Known(0),
-            HomeIndicatorValue<DateTime?>.Absent());
+            HomeIndicatorValue<DateTime?>.Absent(),
+            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
 
         var cut = Render<Home>();
@@ -144,7 +147,8 @@ public class HomeTests : BunitContext
             HomeIndicatorValue<int>.Known(3),
             HomeIndicatorValue<int>.Unavailable(),
             HomeIndicatorValue<int>.Known(12),
-            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc)));
+            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc)),
+            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
 
         var cut = Render<Home>();

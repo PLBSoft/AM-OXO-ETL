@@ -110,6 +110,8 @@ builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
 
 // Lot 054: composes the three stores registered above (all Scoped), so this stays Scoped too.
 builder.Services.AddScoped<IHomeIndicatorsService, HomeIndicatorsService>();
+// Lot 088 (088.3): the recent-activity window is computed from this clock, replaceable in tests.
+builder.Services.AddSingleton(TimeProvider.System);
 
 // Lot 038: this is a deliberate, conscious reopening of the "BlazorAdmin never talks to WebAPI
 // over HTTP" rule (see CLAUDE.md's BlazorAdmin-state bullet on Lot K4/UploadTest.razor's retired

@@ -146,13 +146,14 @@ Un commit par ticket. Tests filtrés sur la classe en cours ; en fin de lot, les
 
 ### 088.3 — Indicateur d'activité récente dans le service (Application)
 
-- `HomeIndicators` : `GeneratedFileCount` remplacé par `RecentActivity`. Commentaire du lot 054
-  (« exactement quatre ») mis à jour.
+- `HomeIndicators` : `RecentActivity` ajouté. Commentaire du lot 054 (« exactement quatre ») mis à jour.
+  *Écart assumé (28/09)* : `GeneratedFileCount` n'est retiré qu'au 088.5, avec la tuile qui l'affiche,
+  pour que chaque commit reste vert.
 - `HomeIndicatorsService` : `TimeProvider` injecté, fenêtre `now - 31 jours`, lecture isolée.
 - `Program.cs` : `TimeProvider.System` enregistré.
 - Tests `HomeIndicatorsServiceTests` : fenêtre demandée au store ; échec de cette lecture → seule
-  `RecentActivity` indisponible ; tests existants adaptés au remplacement du champ (le cumul n'est plus
-  exposé).
+  `RecentActivity` indisponible. `HomeTests` : les 3 constructions de `HomeIndicators` reçoivent le
+  nouveau champ.
 
 ### 088.4 — Fuseau du navigateur
 
@@ -169,6 +170,8 @@ Un commit par ticket. Tests filtrés sur la classe en cours ; en fin de lot, les
 - Tests `HomeTests` : total et détail ; « 0 rejeté » affiché sans `text-danger` ; rejets > 0 en
   `text-danger` ; indisponible ; lien conservé ; mise à jour après résolution du fuseau (interactif,
   `ILocalTimeFormatter` simulé renvoyant `Pacific/Noumea`, un fichier qui change de jour).
+- `HomeIndicators.GeneratedFileCount` retiré (reporté du 088.3), avec sa lecture dans le service et ses
+  assertions dans `HomeIndicatorsServiceTests`.
 - Test existant sur le cumul corrigé sur place (il n'est plus affiché).
 
 ### 088.6 — Graphique

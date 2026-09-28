@@ -2,6 +2,7 @@ using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Generation;
 using ExcelETL.Application.Home;
+using ExcelETL.Domain.Archiving;
 using ExcelETL.Domain.Extraction.Primitives;
 using ExcelETL.Domain.Extraction.Profile;
 using ExcelETL.Domain.Generation.Profile;
@@ -28,7 +29,15 @@ public class HomeIndicatorsServiceTests
         _importProfileStore.Object,
         _exportProfileStore.Object,
         _generatedFileArchiveStore.Object,
+        new FixedTimeProvider(NowUtc),
         NullLogger<HomeIndicatorsService>.Instance);
+
+    private static readonly DateTime NowUtc = new(2026, 9, 28, 10, 0, 0, DateTimeKind.Utc);
+
+    private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(utcNow);
+    }
 
     private static ImportProfile CreateImportProfile()
     {
@@ -156,5 +165,50 @@ public class HomeIndicatorsServiceTests
         var indicators = await CreateService().GetIndicatorsAsync();
 
         indicators.LastGenerationAtUtc.Value.Should().Be(actualMostRecent);
+    }
+    [Fact]
+    public async Task GetIndicatorsAsync_ReadsRecentActivityOverThirtyDaysPlusOneDayOfMargin_AndReturnsItAsKnown()
+    {
+        _importProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
+        _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GeneratedFileArchiveSummary(0, null));
+        IReadOnlyList<GeneratedFileActivityEntry> entries =
+        [
+            new(NowUtc.AddDays(-2), GeneratedFileArchiveStatus.Success),
+            new(NowUtc.AddHours(-1), GeneratedFileArchiveStatus.Rejected),
+        ];
+        _generatedFileArchiveStore
+            .Setup(s => s.GetActivitySinceAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entries);
+
+        var indicators = await CreateService().GetIndicatorsAsync();
+
+        // One day beyond the 30 displayed ones covers any browser time-zone offset (up to 14 h);
+        // GenerationActivityBuilder drops what falls outside the local days afterwards.
+        _generatedFileArchiveStore.Verify(s => s.GetActivitySinceAsync(
+            NowUtc.AddDays(-(GenerationActivityBuilder.DayCount + 1)), It.IsAny<CancellationToken>()));
+        indicators.RecentActivity.State.Should().Be(HomeIndicatorState.Known);
+        indicators.RecentActivity.Value.Should().Equal(entries);
+    }
+
+    [Fact]
+    public async Task GetIndicatorsAsync_WhenRecentActivityReadThrows_MarksOnlyThatIndicatorUnavailable()
+    {
+        _importProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateImportProfile()]);
+        _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateExportProfile()]);
+        var mostRecent = new DateTime(2026, 9, 27, 10, 0, 0, DateTimeKind.Utc);
+        _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new GeneratedFileArchiveSummary(4, mostRecent));
+        _generatedFileArchiveStore
+            .Setup(s => s.GetActivitySinceAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("boom"));
+
+        var indicators = await CreateService().GetIndicatorsAsync();
+
+        indicators.RecentActivity.State.Should().Be(HomeIndicatorState.Unavailable);
+        indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
+        indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
+        indicators.LastGenerationAtUtc.Value.Should().Be(mostRecent);
     }
 }

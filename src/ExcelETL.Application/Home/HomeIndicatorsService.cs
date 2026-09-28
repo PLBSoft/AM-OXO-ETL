@@ -6,13 +6,14 @@ using Microsoft.Extensions.Logging;
 namespace ExcelETL.Application.Home;
 
 // Lot 054 (54.2): composes the three existing stores -- no EF Core/SQL knowledge here, no new
-// persistence mechanism. Every read is isolated: one store failing never prevents the other three
+// persistence mechanism. Every read is isolated: one store failing never prevents the other
 // indicators from being reported, and this method itself never throws (54.4's own requirement, since
 // / is the post-login redirect target).
 public class HomeIndicatorsService(
     IImportProfileStore importProfileStore,
     IExportProfileStore exportProfileStore,
     IGeneratedFileArchiveStore generatedFileArchiveStore,
+    TimeProvider timeProvider,
     ILogger<HomeIndicatorsService> logger) : IHomeIndicatorsService
 {
     public async Task<HomeIndicators> GetIndicatorsAsync(CancellationToken cancellationToken = default)
@@ -41,7 +42,16 @@ public class HomeIndicatorsService(
                 ? HomeIndicatorValue<DateTime?>.Known(mostRecent)
                 : HomeIndicatorValue<DateTime?>.Absent();
 
-        return new HomeIndicators(importProfileCount, exportProfileCount, generatedFileCount, lastGenerationAtUtc);
+        // Lot 088 (088.3): one day beyond the displayed ones covers any browser time-zone offset
+        // (up to 14 h); GenerationActivityBuilder drops what falls outside the local days afterwards.
+        var recentActivityFromUtc = timeProvider.GetUtcNow().UtcDateTime
+            .AddDays(-(GenerationActivityBuilder.DayCount + 1));
+        var recentActivity = await ReadAsync(
+            "recent activity",
+            () => generatedFileArchiveStore.GetActivitySinceAsync(recentActivityFromUtc, cancellationToken));
+
+        return new HomeIndicators(
+            importProfileCount, exportProfileCount, generatedFileCount, lastGenerationAtUtc, recentActivity);
     }
 
     private async Task<int> ReadImportProfileCountAsync(CancellationToken cancellationToken) =>
