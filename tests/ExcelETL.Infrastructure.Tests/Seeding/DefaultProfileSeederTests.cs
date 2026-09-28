@@ -132,7 +132,8 @@ public class DefaultProfileSeederTests
         isolement.Locator.Fields.Single(f => f.Name == ElementFieldNames.Designation).IsRequired.Should().BeFalse();
         isolement.Locator.Fields.Where(f => f.Name is not ("ZeroEnergie" or ElementFieldNames.Designation))
             .Should().OnlyContain(f => f.IsRequired);
-        isolement.WarnWhenNoConditionalPoint.Should().BeTrue();
+        // 2026-09-28: no "no conditional point" warning (fired on nearly every file).
+        isolement.WarnWhenNoConditionalPoint.Should().BeFalse();
 
         var platines = profile.SheetRules.Single(r => r.SheetName == "PLATINES");
         platines.Locator.Step.Should().Be(8);
@@ -177,7 +178,8 @@ public class DefaultProfileSeederTests
         autresJointsTouches.PointRules.Should().ContainSingle();
         autresJointsTouches.PointRules.Single().ColonneName.Should().Be("POSE ÉTIQUETTES");
         autresJointsTouches.PointRules.Single().ComparisonValue.Should().Be("TUBING");
-        autresJointsTouches.WarnWhenNoConditionalPoint.Should().BeTrue();
+        // 2026-09-28: no warning -- it only ever reported TUBING, excluded on purpose.
+        autresJointsTouches.WarnWhenNoConditionalPoint.Should().BeFalse();
         // Client feedback (2026-09): no per-block cell -- every isolement it produces is "BLEUE".
         autresJointsTouches.Locator.Fields.Should().NotContain(f => f.Name == ElementFieldNames.CouleurEtiquette);
         autresJointsTouches.DefaultCouleurEtiquette.Should().Be("BLEUE");

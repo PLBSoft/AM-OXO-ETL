@@ -130,51 +130,22 @@ public class DefaultProfileSeederPipelineIntegrationTests
         result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
     }
 
-    // Lot 055 §55.8: the deduplicated NoConditionalPointCreated warnings expected against the real
-    // seeded profile -- exactly one entry per (feuille, valeur normalisée) that produced no
-    // conditional Point, and nothing else. Confirms both the emission rule (55.4) and the
-    // deduplication (55.5) end-to-end against real fixture data, not just hand-built unit cases.
-    [Fact]
-    public async Task Run_C7401Fixture_WithSeededProfile_ProducesExactlyOneNoConditionalPointCreatedWarning()
+    // 2026-09-28: the seeded profile only asks DIVERS for the "no conditional point" warning.
+    // ISOLEMENT (its only rule reads the zéro énergie cell, blank on almost every block) and AUTRES
+    // JOINTS TOUCHES (its rule excludes TUBING on purpose) no longer report it: on these fixtures it
+    // was a PROLOCK/TUBING warning on nearly every file. The Lot 055 deduplication itself stays
+    // covered at sheet level (IsolementExtractionServiceIntegrationTests, hand-built rule).
+    [Theory]
+    [InlineData("Dossier.de.MaD.IDL.-.C7401.xlsx", 23)]
+    [InlineData("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx", 18)]
+    public async Task Run_WithSeededProfile_NoLongerWarnsForIsolementOrAutresJointsTouches(
+        string fixtureFileName, int expectedIsolementCount)
     {
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
-        var result = RunOnFixture("Dossier.de.MaD.IDL.-.C7401.xlsx", importProfile);
+        var result = RunOnFixture(fixtureFileName, importProfile);
 
-        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
-        var warning = warnings.Should().ContainSingle().Subject;
-        warning.Sheet.Should().Be("ISOLEMENT");
-        warning.ExtractedValue.Should().Be("PROLOCK");
-
-        // Same isolement count as the pre-existing regression assertions above -- extraction itself
-        // is unaffected by this lot, only the warnings are.
-        result.Isolements.Should().HaveCount(23);
-    }
-
-    // Lot 085: the former D8570 case (PROLOCK + VANNE, two warnings on ISOLEMENT) can't run through the
-    // pipeline any more -- D8570 is rejected for duplicated repères. The same two deduplicated warnings
-    // stay covered at the ISOLEMENT sheet level (IsolementExtractionServiceIntegrationTests).
-
-    [Fact]
-    public async Task Run_G6306BFixture_WithSeededProfile_ProducesExactlyTwoNoConditionalPointCreatedWarnings()
-    {
-        var (importProfile, _) = await SeedAndFetchProfilesAsync();
-        var result = RunOnFixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx", importProfile);
-
-        // Short task (2026-09-07): DIVERS' "POINT FEU" comparison value was renamed to "POINT DE FEU"
-        // to match the real client fixture's own spelling -- G6306B's one DIVERS "POINT DE FEU" row now
-        // matches the rule and produces its 3 PF Points normally, so DIVERS no longer contributes a
-        // NoConditionalPointCreated warning here (was 3 warnings, one per sheet, before this change).
-        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
-        warnings.Should().HaveCount(2);
-        warnings.Should().Contain(e => e.Sheet == "ISOLEMENT" && e.ExtractedValue == "PROLOCK");
-        warnings.Should().Contain(e => e.Sheet == "AUTRES JOINTS TOUCHES" && e.ExtractedValue == "TUBING");
-        warnings.Should().NotContain(e => e.Sheet == "DIVERS");
-
-        // PLATINES / ORIFICES CAPACITES never carry a ConditionalPointRule in this profile -- neither
-        // can ever produce this code.
-        warnings.Should().NotContain(e => e.Sheet == "PLATINES" || e.Sheet == "ORIFICES CAPACITES");
-
-        result.Isolements.Should().HaveCount(18);
+        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+        result.Isolements.Should().HaveCount(expectedIsolementCount);
     }
 
     [Fact]

@@ -265,7 +265,6 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
   - « PROLOCK VANNES »
   - « DEPROLOCK VANNES »
 - Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
-- Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 
 **Feuille PLATINES**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
@@ -315,7 +314,6 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
   - « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »
   - « CONTRÔLE ETANCHÉITÉS »
 - Si le type d'élément n'est pas « TUBING », l'élément est coché dans la colonne « POSE ÉTIQUETTES ».
-- Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 - La couleur d'étiquette de chaque élément est toujours « BLEUE ».
 
 **Feuille DIVERS**

@@ -46,7 +46,6 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("Pour le premier élément :", false), ("- identifiant en B19:E20", false), ("- désignation en H18:U19 (facultatif)", false), ("- position à la pose en H20:O21", false), ("- type d'élément en B22:E23", false), ("- champ « ZeroEnergie » en V18:V19 (facultatif)", false),
                 ("Chaque élément est coché dans les 2 colonnes :", false), ("- « PROLOCK VANNES »", false), ("- « DEPROLOCK VANNES »", false),
                 ("Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».", false),
-                ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
             ]),
         ("Feuille PLATINES",
             [
@@ -75,7 +74,6 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("Pour le premier élément :", false), ("- identifiant en B17:E18", false), ("- désignation en F16:Y17", false), ("- type d'élément en B20:E21", false),
                 ("Chaque élément est coché dans les 2 colonnes :", false), ("- « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »", false), ("- « CONTRÔLE ETANCHÉITÉS »", false),
                 ("Si le type d'élément n'est pas « TUBING », l'élément est coché dans la colonne « POSE ÉTIQUETTES ».", false),
-                ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
                 ("La couleur d'étiquette de chaque élément est toujours « BLEUE ».", false),
             ]),
         ("Feuille DIVERS",

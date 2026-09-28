@@ -251,8 +251,10 @@ public class DefaultProfileSeeder(
                 ],
                 ["PROLOCK VANNES", "DEPROLOCK VANNES"],
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "K6:T6")],
-                [],
-                warnWhenNoConditionalPoint: true),
+                // No "no conditional point" warning (2026-09-28): the only rule reads the zéro énergie
+                // cell, blank on almost every block, so the warning fired on nearly every file and named
+                // the element type, which the rule doesn't read.
+                []),
             new SheetExtractionRule(
                 "PLATINES",
                 new RepeatingBlockLocator(17, 8,
@@ -328,8 +330,9 @@ public class DefaultProfileSeeder(
                 [new HeaderFieldRule(SharedHeaderFieldNames.RepereEcho, "N6")],
                 [],
                 // Client feedback (2026-09): no per-block cell -- every element is "BLEUE".
-                defaultCouleurEtiquette: "BLEUE",
-                warnWhenNoConditionalPoint: true),
+                // No "no conditional point" warning (2026-09-28): it only ever reported TUBING elements,
+                // which the rule excludes on purpose.
+                defaultCouleurEtiquette: "BLEUE"),
             new SheetExtractionRule(
                 "DIVERS",
                 new RepeatingBlockLocator(9, 3,

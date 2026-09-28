@@ -116,14 +116,10 @@ G6306B-PF1 | PF : ACCORD TRAVAUX FEU
   DEMARRAGE DE LA POMPE SUR SNCC (SI COMMANDE ) |  | Perte de confinement | TM_PROC_REL |  |  | 602-G6306B | MAD | Procédure REL | ZONE 4
 32 | 22 | CONTROLE D ETANCHEITE  DES JOINTS  ASP ET REF  |  |  | TM_PROC_REL |  |  | 602-G6306B | MAD | Procédure REL | ZONE 4
 
-## Errors (3)
-NoConditionalPointCreated | AUTRES JOINTS TOUCHES | TUBING
-NoConditionalPointCreated | ISOLEMENT | PROLOCK
+## Errors (1)
 UnexpectedCouleurEtiquetteValue | ORIFICES CAPACITES | DATE
 
 ## Error block identifiers and messages
-NoConditionalPointCreated | AUTRES JOINTS TOUCHES | G6306B-TB1 | Aucun Point conditionnel n'a été créé pour la valeur « TUBING » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
-NoConditionalPointCreated | ISOLEMENT | G6306B-V1 | Aucun Point conditionnel n'a été créé pour la valeur « PROLOCK » : aucune condition du profil d'import ne correspond à cette valeur pour cette feuille.
 UnexpectedCouleurEtiquetteValue | ORIFICES CAPACITES | G6306B-TH1 | La cellule « couleur d'étiquette » contient une valeur inattendue « DATE » : elle ne correspond à aucune des couleurs autorisées configurées sur le profil d'import. L'isolement est extrait normalement, sans couleur d'étiquette associée.
 
 ## Generated workbook
