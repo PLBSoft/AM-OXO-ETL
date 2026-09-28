@@ -1,70 +1,14 @@
-/* Lot 088 (088.6): colours come from the theme tokens only (D5) -- the same success/warning/danger
-   used by the status badges of /generated-files, redefined by theme-m3.css for the dark theme.
-   Known limit (accepted, D5): the light theme's orange --m3-warning is under 3:1 against the page
-   background; each segment is separated by a surface-coloured gap and every number is also
-   available as text (tooltip, hidden table, the "30 derniers jours" tile). */
-/* The SVG scales with its width: capped on wide screens so it doesn't grow very tall (900px wide
-   is 270px high, labels about 13px). */
-.home-activity-chart svg {
-    display: block;
-    width: 100%;
-    max-width: 900px;
-    height: auto;
-}
-
-.home-activity-axis {
-    stroke: var(--bs-border-color);
-    stroke-width: 1;
-}
-
-/* Font sizes are in viewBox units, so they shrink with the chart: larger on a phone (a 343px-wide
-   chart is drawn at about 0.57 scale) to stay around 10px on screen. */
-.home-activity-axis-label {
-    fill: var(--bs-secondary-color);
-    font-size: 9px;
+/* Lot 089 (D5): Chart.js fills the width of this container and the height set here
+   (maintainAspectRatio: false in wwwroot/js/activityChart.js), redrawing itself when the width
+   changes -- its text keeps its size. position: relative is what Chart.js needs to size the canvas
+   to the container. Colours come from the theme inside the script, not from here. */
+.home-activity-chart-canvas {
+    position: relative;
+    height: 280px;
 }
 
 @media (max-width: 575.98px) {
-    .home-activity-axis-label {
-        font-size: 18px;
+    .home-activity-chart-canvas {
+        height: 220px;
     }
-}
-
-.home-activity-segment-success {
-    fill: var(--m3-success);
-    background-color: var(--m3-success);
-}
-
-.home-activity-segment-warning {
-    fill: var(--m3-warning);
-    background-color: var(--m3-warning);
-}
-
-.home-activity-segment-rejected {
-    fill: var(--m3-danger);
-    background-color: var(--m3-danger);
-}
-
-/* A 2px gap in the card's own colour between stacked segments, so adjacent statuses stay apart. */
-.home-activity-segment {
-    stroke: var(--bs-card-bg);
-    stroke-width: 2;
-}
-
-/* Full-height invisible hover target: a short bar (or an empty day) is still easy to point at. */
-.home-activity-hit {
-    fill: transparent;
-}
-
-.home-activity-bar:hover .home-activity-hit {
-    fill: rgba(var(--bs-body-color-rgb), 0.06);
-}
-
-.home-activity-swatch {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 2px;
-    margin-right: 0.35rem;
-    vertical-align: -1px;
 }

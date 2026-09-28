@@ -41,6 +41,8 @@ public class HomeTests : BunitContext
         Services.AddSingleton(_serviceMock.Object);
         Services.AddSingleton<TimeProvider>(new FixedTimeProvider(NowUtc));
         Services.AddSingleton(_localTimeFormatterMock.Object);
+        // Lot 089: the activity chart draws through Chart.js once interactive -- a stand-in here.
+        Services.AddSingleton(Mock.Of<IActivityChartInterop>());
         Services.AddLocalization();
         // Follow-up (post-062): Home.razor now also injects ApplicationBuildInfo for its mobile-only
         // client-logo/version footer.
@@ -535,7 +537,8 @@ public class HomeTests : BunitContext
         cut.WaitForState(() => cut.FindAll("#home-activity").Count == 1);
 
         cut.Find("#home-activity-title").TagName.Should().Be("H2");
-        cut.FindAll("#home-activity-chart g.home-activity-bar").Should().HaveCount(30);
+        cut.FindAll("canvas#home-activity-chart").Should().HaveCount(1);
+        cut.FindAll("#home-activity-table tbody tr").Should().HaveCount(30);
         cut.FindAll("#home-activity-empty").Should().BeEmpty();
         HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
     }

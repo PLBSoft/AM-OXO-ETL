@@ -4,35 +4,39 @@ using Xunit;
 
 namespace ExcelETL.BlazorAdmin.Tests.Styling;
 
-// Lot 088 (088.6): bUnit computes no CSS, so the chart's colours are checked on the stylesheet text,
-// same convention as the rest of this folder. Every segment colour must come from a theme token
-// (redefined for the dark theme by theme-m3.css), never a colour written by hand (D5).
+// Lot 089 (089.4, D5): Chart.js draws at the width of its container and at the height CSS gives it
+// (maintainAspectRatio: false in activityChart.js), so the size lives here. Colours now come from
+// the theme inside the script (ActivityChartScriptTests), not from this stylesheet.
 public class HomeActivityChartCssTests
 {
     private static string Css { get; } = File.ReadAllText(RepoPath(
         "src", "ExcelETL.BlazorAdmin", "Components", "Pages", "HomeActivityChart.razor.css"));
 
-    [Theory]
-    [InlineData("success", "--m3-success")]
-    [InlineData("warning", "--m3-warning")]
-    [InlineData("rejected", "--m3-danger")]
-    public void EachStatusSegment_IsFilledWithItsThemeToken(string status, string token)
+    [Fact]
+    public void CanvasContainer_Is280PixelsHigh_AndPositionedForChartJs()
+    {
+        Css.Should().MatchRegex(@"\.home-activity-chart-canvas\s*\{[^}]*position:\s*relative;[^}]*height:\s*280px;");
+    }
+
+    [Fact]
+    public void CanvasContainer_Is220PixelsHigh_OnAPhone()
     {
         Css.Should().MatchRegex(
-            $@"\.home-activity-segment-{status}\s*\{{[^}}]*fill:\s*var\({token}\);");
+            @"@media \(max-width: 575\.98px\)\s*\{\s*\.home-activity-chart-canvas\s*\{\s*height:\s*220px;");
+    }
+
+    [Fact]
+    public void Chart_IsNoLongerCappedInWidth()
+    {
+        // A max-width declaration inside a rule (the media query's own "(max-width: ...)" is fine).
+        Css.Should().NotMatchRegex(@"\{[^}]*max-width\s*:");
     }
 
     [Fact]
     public void Stylesheet_ContainsNoHardCodedColour()
     {
         Regex.IsMatch(Css, @"#[0-9a-fA-F]{3,8}\b").Should().BeFalse();
-        Regex.IsMatch(Css, @"rgba?\(\s*\d").Should().BeFalse();
-    }
-
-    [Fact]
-    public void StackedSegments_AreSeparatedByAGapInTheCardColour()
-    {
-        Css.Should().MatchRegex(@"\.home-activity-segment\s*\{[^}]*stroke:\s*var\(--bs-card-bg\);[^}]*stroke-width:\s*2;");
+        Regex.IsMatch(Css, @"rgba?\(").Should().BeFalse();
     }
 
     private static string RepoPath(params string[] parts)

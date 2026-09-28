@@ -1456,9 +1456,6 @@
   <data name="Home_ActivityChartSummary" xml:space="preserve">
     <value>{0} fichier(s) traité(s) du {1} au {2} : {3} succès, {4} avec avertissements, {5} rejeté(s).</value>
   </data>
-  <data name="Home_ActivityBarTooltip" xml:space="preserve">
-    <value>{0} : {1} fichier(s) ({2} succès, {3} avec avertissements, {4} rejeté(s))</value>
-  </data>
   <data name="Home_ActivityLegendSuccess" xml:space="preserve">
     <value>Succès</value>
   </data>
