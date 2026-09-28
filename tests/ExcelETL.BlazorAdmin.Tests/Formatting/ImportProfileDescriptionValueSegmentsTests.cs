@@ -93,7 +93,7 @@ public class ImportProfileDescriptionValueSegmentsTests
         ]));
 
         var cells = description.Sections
-            .SelectMany(s => s.Sentences.Select(x => x.Content).Concat(s.Ignored))
+            .SelectMany(s => s.Sentences.SelectMany(x => x.SubItems.Prepend(x.Content)).Concat(s.Ignored))
             .SelectMany(t => t.Segments)
             .Where(seg => seg.Kind == ProfileDescriptionSegmentKind.CellReference)
             .Select(seg => seg.Text);
@@ -117,7 +117,7 @@ public class ImportProfileDescriptionValueSegmentsTests
             pointRules: [new ConditionalPointRule("TypeElement", ConditionOperator.Equals, "SOUPAPE", "A")])]));
 
         var allTexts = description.Sections.SelectMany(s =>
-            s.Sentences.Select(x => x.Text).Concat(s.Ignored.Select(x => x.Text)).Concat(s.Blocking.Select(x => x.Text)));
+            s.Sentences.SelectMany(x => x.Lines()).Concat(s.Ignored.Select(x => x.Text)).Concat(s.Blocking.Select(x => x.Text)));
         allTexts.Should().OnlyContain(t => !t.Any(c => c >= (char)0xE000 && c <= (char)0xF8FF));
     }
 }

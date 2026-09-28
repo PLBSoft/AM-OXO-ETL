@@ -232,27 +232,57 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 - En-tête : la date de révision (« dateRev ») est lue en R2:T2, au format « dd/MM/yyyy ».
 - La désignation de l'équipement suit le modèle « Rév {revision} du {dateRev} », où {revision} et {dateRev} sont remplacés par les valeurs lues ci-dessus.
 - Une tâche est lue par ligne à partir de la ligne 9. La lecture s'arrête à la première ligne dont l'action est vide.
-- Pour la première tâche : action en C9:L9, ordre en B9, acteur en M9:N9, risques en O9:Q9, type en R9, date de validation en T9:U9.
+- Pour la première tâche :
+  - action en C9:L9
+  - ordre en B9
+  - acteur en M9:N9
+  - risques en O9:Q9
+  - type en R9
+  - date de validation en T9:U9
 - Une date de révision illisible fait refuser le fichier entier. (fixe)
 - Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ». (fixe)
 - Une ligne sans ordre est un titre de section, pas une tâche à réaliser. (fixe)
-- L'équipement est coché dans les 6 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER », « AUTORISATION DE TRAVAUX », « VALIDATION FIN DE TRAVAUX ».
+- L'équipement est coché dans les 6 colonnes :
+  - « VISITE PRÉALABLE CHANTIER »
+  - « AUTORISATION DÉPLATINAGES »
+  - « AUTORISATION DE REMISE EN SERVICE »
+  - « RÉCEPTION FINALE CHANTIER »
+  - « AUTORISATION DE TRAVAUX »
+  - « VALIDATION FIN DE TRAVAUX »
 - Si au moins une tâche a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ».
 - Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».
 
 **Feuille ISOLEMENT**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:T6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B19:E20, désignation en H18:U19 (facultatif), position à la pose en H20:O21, type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19 (facultatif).
-- Chaque élément est coché dans les 2 colonnes « PROLOCK VANNES », « DEPROLOCK VANNES ».
+- Pour le premier élément :
+  - identifiant en B19:E20
+  - désignation en H18:U19 (facultatif)
+  - position à la pose en H20:O21
+  - type d'élément en B22:E23
+  - champ « ZeroEnergie » en V18:V19 (facultatif)
+- Chaque élément est coché dans les 2 colonnes :
+  - « PROLOCK VANNES »
+  - « DEPROLOCK VANNES »
 - Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 
 **Feuille PLATINES**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif), champ « PoseeLe » en H19:N19 (facultatif), champ « DeposeeLe » en H20:N20 (facultatif).
-- Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « FIN REL PLATINES/TAMPONS PLEINS ».
+- Pour le premier élément :
+  - identifiant en B17:E18
+  - désignation en H16:V17
+  - type d'élément en B20:E22
+  - champ « CouleurEtiquette » en H18:N18 (facultatif)
+  - champ « PoseeLe » en H19:N19 (facultatif)
+  - champ « DeposeeLe » en H20:N20 (facultatif)
+- Chaque élément est coché dans les 5 colonnes :
+  - « POSE ÉTIQUETTES »
+  - « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »
+  - « CONTRÔLE ETANCHÉITÉS »
+  - « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS »
+  - « FIN REL PLATINES/TAMPONS PLEINS »
 - Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».
 - Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».
 - Si le champ « PoseeLe » est « DEBUT REL », l'élément est coché dans la colonne « DEBUT REL PLATINES/TAMPONS PLEINS ».
@@ -262,15 +292,28 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 **Feuille ORIFICES CAPACITES**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif).
-- Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
+- Pour le premier élément :
+  - identifiant en B17:E18
+  - désignation en H16:V17
+  - type d'élément en B20:E22
+  - champ « CouleurEtiquette » en H18:N18 (facultatif)
+- Chaque élément est coché dans les 4 colonnes :
+  - « POSE ÉTIQUETTES »
+  - « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS »
+  - « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »
+  - « CONTRÔLE ETANCHÉITÉS »
 - La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.
 
 **Feuille AUTRES JOINTS TOUCHES**
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - Un élément est lu toutes les 7 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : identifiant en B17:E18, désignation en F16:Y17, type d'élément en B20:E21.
-- Chaque élément est coché dans les 2 colonnes « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».
+- Pour le premier élément :
+  - identifiant en B17:E18
+  - désignation en F16:Y17
+  - type d'élément en B20:E21
+- Chaque élément est coché dans les 2 colonnes :
+  - « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »
+  - « CONTRÔLE ETANCHÉITÉS »
 - Si le type d'élément n'est pas « TUBING », l'élément est coché dans la colonne « POSE ÉTIQUETTES ».
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 - La couleur d'étiquette de chaque élément est toujours « BLEUE ».
@@ -279,11 +322,19 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 - En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.
 - En-tête : la zone (« zone ») est lue en B6:E6. Elle est appliquée à l'équipement et à tous les éléments du fichier.
 - Un élément est lu toutes les 3 lignes à partir de la ligne 9. La lecture s'arrête au premier bloc dont l'identifiant est vide.
-- Pour le premier élément : type d'élément en B9:G11, identifiant en H9:K11, désignation en L9:V11.
+- Pour le premier élément :
+  - type d'élément en B9:G11
+  - identifiant en H9:K11
+  - désignation en L9:V11
 - Si le type d'élément est « INSTRUMENTATION », l'élément est coché dans la colonne « SYNCHRONISATION INSTRUMENTATION ».
 - Si le type d'élément est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».
-- Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes « SOUPAPE : CONSTAT ENCRASSEMENT », « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS ».
-- Si le type d'élément est « POINT DE FEU », l'élément est coché dans les 3 colonnes « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES », « PF : VALIDATION CONSTAT ENCRASSEMENT », « PF : ACCORD TRAVAUX FEU ».
+- Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes :
+  - « SOUPAPE : CONSTAT ENCRASSEMENT »
+  - « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS »
+- Si le type d'élément est « POINT DE FEU », l'élément est coché dans les 3 colonnes :
+  - « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES »
+  - « PF : VALIDATION CONSTAT ENCRASSEMENT »
+  - « PF : ACCORD TRAVAUX FEU »
 - Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.
 
 #### 6. Décisions à trancher avant d'écrire 78.1+

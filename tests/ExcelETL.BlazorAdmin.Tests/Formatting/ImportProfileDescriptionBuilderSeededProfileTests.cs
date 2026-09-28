@@ -31,11 +31,11 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("En-tête : la date de révision (« dateRev ») est lue en R2:T2, au format « dd/MM/yyyy ».", false),
                 ("La désignation de l'équipement suit le modèle « Rév {revision} du {dateRev} », où {revision} et {dateRev} sont remplacés par les valeurs lues ci-dessus.", false),
                 ("Une tâche est lue par ligne à partir de la ligne 9. La lecture s'arrête à la première ligne dont l'action est vide.", false),
-                ("Pour la première tâche : action en C9:L9, ordre en B9, acteur en M9:N9, risques en O9:Q9, type en R9, date de validation en T9:U9.", false),
+                ("Pour la première tâche :", false), ("- action en C9:L9", false), ("- ordre en B9", false), ("- acteur en M9:N9", false), ("- risques en O9:Q9", false), ("- type en R9", false), ("- date de validation en T9:U9", false),
                 ("Une date de révision illisible fait refuser le fichier entier.", true),
                 ("Un type « MAD » devient « TM_PROC_MAD », un type « REL » devient « TM_PROC_REL ».", true),
                 ("Une ligne sans ordre est un titre de section, pas une tâche à réaliser.", true),
-                ("L'équipement est coché dans les 6 colonnes « VISITE PRÉALABLE CHANTIER », « AUTORISATION DÉPLATINAGES », « AUTORISATION DE REMISE EN SERVICE », « RÉCEPTION FINALE CHANTIER », « AUTORISATION DE TRAVAUX », « VALIDATION FIN DE TRAVAUX ».", false),
+                ("L'équipement est coché dans les 6 colonnes :", false), ("- « VISITE PRÉALABLE CHANTIER »", false), ("- « AUTORISATION DÉPLATINAGES »", false), ("- « AUTORISATION DE REMISE EN SERVICE »", false), ("- « RÉCEPTION FINALE CHANTIER »", false), ("- « AUTORISATION DE TRAVAUX »", false), ("- « VALIDATION FIN DE TRAVAUX »", false),
                 ("Si au moins une tâche a le type « MAD », l'équipement est coché dans la colonne « PROCÉDURE MAD ».", false),
                 ("Si au moins une tâche a le type « REL », l'équipement est coché dans la colonne « PROCÉDURE REL ».", false),
             ]),
@@ -43,8 +43,8 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:T6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 7 lignes à partir de la ligne 19. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B19:E20, désignation en H18:U19 (facultatif), position à la pose en H20:O21, type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19 (facultatif).", false),
-                ("Chaque élément est coché dans les 2 colonnes « PROLOCK VANNES », « DEPROLOCK VANNES ».", false),
+                ("Pour le premier élément :", false), ("- identifiant en B19:E20", false), ("- désignation en H18:U19 (facultatif)", false), ("- position à la pose en H20:O21", false), ("- type d'élément en B22:E23", false), ("- champ « ZeroEnergie » en V18:V19 (facultatif)", false),
+                ("Chaque élément est coché dans les 2 colonnes :", false), ("- « PROLOCK VANNES »", false), ("- « DEPROLOCK VANNES »", false),
                 ("Si le champ « ZeroEnergie » est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».", false),
                 ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
             ]),
@@ -52,8 +52,8 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif), champ « PoseeLe » en H19:N19 (facultatif), champ « DeposeeLe » en H20:N20 (facultatif).", false),
-                ("Chaque élément est coché dans les 5 colonnes « POSE ÉTIQUETTES », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « FIN REL PLATINES/TAMPONS PLEINS ».", false),
+                ("Pour le premier élément :", false), ("- identifiant en B17:E18", false), ("- désignation en H16:V17", false), ("- type d'élément en B20:E22", false), ("- champ « CouleurEtiquette » en H18:N18 (facultatif)", false), ("- champ « PoseeLe » en H19:N19 (facultatif)", false), ("- champ « DeposeeLe » en H20:N20 (facultatif)", false),
+                ("Chaque élément est coché dans les 5 colonnes :", false), ("- « POSE ÉTIQUETTES »", false), ("- « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »", false), ("- « CONTRÔLE ETANCHÉITÉS »", false), ("- « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS »", false), ("- « FIN REL PLATINES/TAMPONS PLEINS »", false),
                 ("Si le champ « PoseeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».", false),
                 ("Si le champ « DeposeeLe » est « DEBUT MAD », l'élément est coché dans la colonne « DEBUT MAD RÉCEPTION PLATINES/TAMPONS PLEINS ».", false),
                 ("Si le champ « PoseeLe » est « DEBUT REL », l'élément est coché dans la colonne « DEBUT REL PLATINES/TAMPONS PLEINS ».", false),
@@ -64,16 +64,16 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en K6:U6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 8 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B17:E18, désignation en H16:V17, type d'élément en B20:E22, champ « CouleurEtiquette » en H18:N18 (facultatif).", false),
-                ("Chaque élément est coché dans les 4 colonnes « POSE ÉTIQUETTES », « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS », « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».", false),
+                ("Pour le premier élément :", false), ("- identifiant en B17:E18", false), ("- désignation en H16:V17", false), ("- type d'élément en B20:E22", false), ("- champ « CouleurEtiquette » en H18:N18 (facultatif)", false),
+                ("Chaque élément est coché dans les 4 colonnes :", false), ("- « POSE ÉTIQUETTES »", false), ("- « FIN MAD RÉCEPTION PLATINES/TAMPONS PLEINS »", false), ("- « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »", false), ("- « CONTRÔLE ETANCHÉITÉS »", false),
                 ("La couleur d'étiquette est lue en H18:N18. Couleurs acceptées : « ROUGE », « BLANC ». Une autre valeur est ignorée, avec un avertissement.", false),
             ]),
         ("Feuille AUTRES JOINTS TOUCHES",
             [
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("Un élément est lu toutes les 7 lignes à partir de la ligne 17. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : identifiant en B17:E18, désignation en F16:Y17, type d'élément en B20:E21.", false),
-                ("Chaque élément est coché dans les 2 colonnes « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS », « CONTRÔLE ETANCHÉITÉS ».", false),
+                ("Pour le premier élément :", false), ("- identifiant en B17:E18", false), ("- désignation en F16:Y17", false), ("- type d'élément en B20:E21", false),
+                ("Chaque élément est coché dans les 2 colonnes :", false), ("- « RÉCEPTIONS ASSEMBLAGES : BOULONNÉS (PS938) OU TUBINGS »", false), ("- « CONTRÔLE ETANCHÉITÉS »", false),
                 ("Si le type d'élément n'est pas « TUBING », l'élément est coché dans la colonne « POSE ÉTIQUETTES ».", false),
                 ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
                 ("La couleur d'étiquette de chaque élément est toujours « BLEUE ».", false),
@@ -83,11 +83,11 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("En-tête : le repère de l'équipement (« repereEcho ») est lu en N6. Le repère de l'élément est cette valeur, un tiret, puis l'identifiant.", false),
                 ("En-tête : la zone (« zone ») est lue en B6:E6. Elle est appliquée à l'équipement et à tous les éléments du fichier.", false),
                 ("Un élément est lu toutes les 3 lignes à partir de la ligne 9. La lecture s'arrête au premier bloc dont l'identifiant est vide.", false),
-                ("Pour le premier élément : type d'élément en B9:G11, identifiant en H9:K11, désignation en L9:V11.", false),
+                ("Pour le premier élément :", false), ("- type d'élément en B9:G11", false), ("- identifiant en H9:K11", false), ("- désignation en L9:V11", false),
                 ("Si le type d'élément est « INSTRUMENTATION », l'élément est coché dans la colonne « SYNCHRONISATION INSTRUMENTATION ».", false),
                 ("Si le type d'élément est « ZERO ENERGIE », l'élément est coché dans la colonne « ZÉRO ENERGIE EN PRESENCE EE (PS941) ».", false),
-                ("Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes « SOUPAPE : CONSTAT ENCRASSEMENT », « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS ».", false),
-                ("Si le type d'élément est « POINT DE FEU », l'élément est coché dans les 3 colonnes « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES », « PF : VALIDATION CONSTAT ENCRASSEMENT », « PF : ACCORD TRAVAUX FEU ».", false),
+                ("Si le type d'élément est « SOUPAPE », l'élément est coché dans les 2 colonnes :", false), ("- « SOUPAPE : CONSTAT ENCRASSEMENT »", false), ("- « SOUPAPE : RÉCEPTION REPOSE AVEC ABSENCE BOUCHONS »", false),
+                ("Si le type d'élément est « POINT DE FEU », l'élément est coché dans les 3 colonnes :", false), ("- « PF : SIGNATURE ÉTIQUETTE ET ACCORD COUPES »", false), ("- « PF : VALIDATION CONSTAT ENCRASSEMENT »", false), ("- « PF : ACCORD TRAVAUX FEU »", false),
                 ("Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.", false),
             ]),
     ];
@@ -100,7 +100,7 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
         description.Sections.Select(s => s.Title).Should().Equal(ExpectedCatalogue.Select(e => e.Title));
         foreach (var (section, expected) in description.Sections.Zip(ExpectedCatalogue))
         {
-            section.Sentences.Select(s => (s.Text, s.IsFixed)).Should().Equal(expected.Sentences, $"section « {expected.Title} »");
+            section.Sentences.SelectMany(s => s.Lines().Select(line => (line, s.IsFixed))).Should().Equal(expected.Sentences, $"section « {expected.Title} »");
             section.Ignored.Should().BeEmpty();
             section.Blocking.Should().BeEmpty();
         }

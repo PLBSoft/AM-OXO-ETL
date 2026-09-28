@@ -37,3 +37,18 @@ familles de phrases. **Décisions validées par Simon le 28/09.***
   `AlwaysEmptyColumn_IsMuted_OtherColumnsAreNot`, `PointGroup_ListsItsColumnsAsNestedItems_LetterInCode`,
   `AlwaysEmptyColumn_IsGreyedOut`. Périmètre filtré 154/154.
 - Non vérifié dans un navigateur réel.
+
+## 3. Extension à la vue « Détails » du profil d'import (même jour, demande de Simon)
+
+- Même traitement pour les longues listes : une phrase qui coche **plusieurs** colonnes (colonnes
+  inconditionnelles, règle conditionnelle groupée, PROCEDURE comprise) se termine par « : » et liste ses
+  colonnes en sous-liste ; « Pour le premier élément / la première tâche : » liste un champ par ligne
+  (`identifiant en B19:E20`). Une seule colonne reste en ligne ; tableaux, applications et couleurs
+  acceptées (listes courtes) aussi.
+- Rien à griser côté import : aucune colonne « toujours vide ».
+- Clés modifiées (mêmes valeurs FR dans les deux `.resx`, D5 du lot 078) : les 8
+  `ImportProfileDetails_Point*Several` (« … colonnes : », sans la liste), `ImportProfileDetails_BlockFirstTaskFields`/
+  `BlockFirstElementFields` (sans `{0}`).
+- Tests : catalogue figé (`ImportProfileDescriptionBuilderSeededProfileTests`, lot 078 §5) et tests du builder
+  mis à jour ; `ImportProfileDescriptionValueSegmentsTests` couvre aussi les sous-éléments ; ajout de
+  `ImportProfileDetailsTests.FirstBlockFields_AreListedAsNestedItems`. Périmètre filtré 155/155.

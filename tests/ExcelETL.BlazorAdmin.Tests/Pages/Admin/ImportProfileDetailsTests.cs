@@ -151,6 +151,23 @@ public class ImportProfileDetailsTests : BunitContext
         cut.Find("#details-section-sheet-0-ignored strong.profile-details-value").TextContent.Should().Be("Libelle");
     });
 
+    // Lot 087: the first block's fields are listed one per line under their sentence.
+    [Fact]
+    public void FirstBlockFields_AreListedAsNestedItems() => WithFrenchCulture(() =>
+    {
+        var profile = BuildProfile();
+        Store.SaveAsync(profile).GetAwaiter().GetResult();
+
+        var cut = RenderDetails(profile.Id);
+
+        var sentence = cut.FindAll("#details-section-sheet-0 .profile-details-sentences > li")
+            .Single(li => li.TextContent.StartsWith("Pour le premier élément"));
+        var items = sentence.QuerySelectorAll("ul.profile-details-subitems > li");
+        items.Select(li => li.TextContent).Should().Equal(
+            "identifiant en B19:E20", "désignation en H18:U19", "position à la pose en H20:O21", "type d'élément en B22:E23");
+        items[0].QuerySelector("code.profile-details-cell")!.TextContent.Should().Be("B19:E20");
+    });
+
     // Lot 078.12.3: cell coordinates rendered as <code>.
     [Fact]
     public void CellCoordinates_AreRenderedInCode() => WithFrenchCulture(() =>

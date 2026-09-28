@@ -1484,10 +1484,10 @@
     <value>Un élément est lu toutes les {0} lignes à partir de la ligne {1}. La lecture s'arrête au premier bloc dont {2} est vide.</value>
   </data>
   <data name="ImportProfileDetails_BlockFirstTaskFields" xml:space="preserve">
-    <value>Pour la première tâche : {0}.</value>
+    <value>Pour la première tâche :</value>
   </data>
   <data name="ImportProfileDetails_BlockFirstElementFields" xml:space="preserve">
-    <value>Pour le premier élément : {0}.</value>
+    <value>Pour le premier élément :</value>
   </data>
   <data name="ImportProfileDetails_BlockFieldAt" xml:space="preserve">
     <value>{0} en {1}</value>
@@ -1595,37 +1595,37 @@
     <value>Chaque élément est coché dans la colonne {0}.</value>
   </data>
   <data name="ImportProfileDetails_PointUnconditionalSeveral" xml:space="preserve">
-    <value>Chaque élément est coché dans les {0} colonnes {1}.</value>
+    <value>Chaque élément est coché dans les {0} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointEquipementUnconditionalOne" xml:space="preserve">
     <value>L'équipement est coché dans la colonne {0}.</value>
   </data>
   <data name="ImportProfileDetails_PointEquipementUnconditionalSeveral" xml:space="preserve">
-    <value>L'équipement est coché dans les {0} colonnes {1}.</value>
+    <value>L'équipement est coché dans les {0} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointTaskEqualsOne" xml:space="preserve">
     <value>Si au moins une tâche a {0} {1}, l'équipement est coché dans la colonne {2}.</value>
   </data>
   <data name="ImportProfileDetails_PointTaskEqualsSeveral" xml:space="preserve">
-    <value>Si au moins une tâche a {0} {1}, l'équipement est coché dans les {2} colonnes {3}.</value>
+    <value>Si au moins une tâche a {0} {1}, l'équipement est coché dans les {2} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointTaskNotEqualsOne" xml:space="preserve">
     <value>Si au moins une tâche n'a pas {0} {1}, l'équipement est coché dans la colonne {2}.</value>
   </data>
   <data name="ImportProfileDetails_PointTaskNotEqualsSeveral" xml:space="preserve">
-    <value>Si au moins une tâche n'a pas {0} {1}, l'équipement est coché dans les {2} colonnes {3}.</value>
+    <value>Si au moins une tâche n'a pas {0} {1}, l'équipement est coché dans les {2} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointEqualsOne" xml:space="preserve">
     <value>Si {0} est {1}, l'élément est coché dans la colonne {2}.</value>
   </data>
   <data name="ImportProfileDetails_PointEqualsSeveral" xml:space="preserve">
-    <value>Si {0} est {1}, l'élément est coché dans les {2} colonnes {3}.</value>
+    <value>Si {0} est {1}, l'élément est coché dans les {2} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointNotEqualsOne" xml:space="preserve">
     <value>Si {0} n'est pas {1}, l'élément est coché dans la colonne {2}.</value>
   </data>
   <data name="ImportProfileDetails_PointNotEqualsSeveral" xml:space="preserve">
-    <value>Si {0} n'est pas {1}, l'élément est coché dans les {2} colonnes {3}.</value>
+    <value>Si {0} n'est pas {1}, l'élément est coché dans les {2} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointNoConditionMet" xml:space="preserve">
     <value>Un élément qui ne remplit aucune de ces conditions est importé normalement, avec un avertissement.</value>
@@ -1937,13 +1937,13 @@
     <value>Si {0} est renseigné, l'élément est coché dans la colonne {1}.</value>
   </data>
   <data name="ImportProfileDetails_PointIsNotBlankSeveral" xml:space="preserve">
-    <value>Si {0} est renseigné, l'élément est coché dans les {1} colonnes {2}.</value>
+    <value>Si {0} est renseigné, l'élément est coché dans les {1} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_PointTaskIsNotBlankOne" xml:space="preserve">
     <value>Si au moins une tâche a {0} renseigné, l'équipement est coché dans la colonne {1}.</value>
   </data>
   <data name="ImportProfileDetails_PointTaskIsNotBlankSeveral" xml:space="preserve">
-    <value>Si au moins une tâche a {0} renseigné, l'équipement est coché dans les {1} colonnes {2}.</value>
+    <value>Si au moins une tâche a {0} renseigné, l'équipement est coché dans les {1} colonnes :</value>
   </data>
   <data name="ImportProfileDetails_BlockFieldAtOptional" xml:space="preserve">
     <value>{0} en {1} (facultatif)</value>

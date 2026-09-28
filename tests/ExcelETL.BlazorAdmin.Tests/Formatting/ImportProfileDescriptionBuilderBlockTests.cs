@@ -25,8 +25,12 @@ public class ImportProfileDescriptionBuilderBlockTests
         texts.Should().ContainInOrder(
             "Un élément est lu toutes les 7 lignes à partir de la ligne 19. " +
             "La lecture s'arrête au premier bloc dont l'identifiant est vide.",
-            "Pour le premier élément : identifiant en B19:E20, désignation en H18:U19, position à la pose en H20:O21, " +
-            "type d'élément en B22:E23, champ « ZeroEnergie » en V18:V19.");
+            "Pour le premier élément :",
+            "- identifiant en B19:E20",
+            "- désignation en H18:U19",
+            "- position à la pose en H20:O21",
+            "- type d'élément en B22:E23",
+            "- champ « ZeroEnergie » en V18:V19");
     }
 
     [Fact]
@@ -46,8 +50,13 @@ public class ImportProfileDescriptionBuilderBlockTests
 
         texts.Should().ContainInOrder(
             "Une tâche est lue par ligne à partir de la ligne 9. La lecture s'arrête à la première ligne dont l'action est vide.",
-            "Pour la première tâche : action en C9:L9, ordre en B9, acteur en M9:N9, risques en O9:Q9, type en R9, " +
-            "date de validation en T9:U9.");
+            "Pour la première tâche :",
+            "- action en C9:L9",
+            "- ordre en B9",
+            "- acteur en M9:N9",
+            "- risques en O9:Q9",
+            "- type en R9",
+            "- date de validation en T9:U9");
     }
 
     [Fact]
@@ -61,7 +70,7 @@ public class ImportProfileDescriptionBuilderBlockTests
             .SheetSection("DIVERS").Texts().Should().ContainInOrder(
                 "Un élément est lu toutes les 3 lignes à partir de la ligne 9. " +
                 "La lecture s'arrête au premier bloc dont l'identifiant est vide.",
-                "Pour le premier élément : type d'élément en B9:G11, identifiant en H9:K11, désignation en L9:V11.");
+                "Pour le premier élément :", "- type d'élément en B9:G11", "- identifiant en H9:K11", "- désignation en L9:V11");
 
     [Fact]
     public void ElementSheetWithStepOfOne_UsesPerLineWording() =>
@@ -80,7 +89,7 @@ public class ImportProfileDescriptionBuilderBlockTests
         Describe(Profile([Rule("ISOLEMENT", firstBlockStartRow: 19, fields:
             [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("Commentaire", "W", 0, 0)])]))
             .SheetSection("ISOLEMENT").Texts().Should().Contain(
-                "Pour le premier élément : identifiant en B19:E20, champ « Commentaire » en W19.");
+                "Pour le premier élément :", "- identifiant en B19:E20", "- champ « Commentaire » en W19");
 
     [Fact]
     public void KnownSheetSections_FollowPipelineOrder_WhateverTheProfileOrder()
@@ -101,7 +110,7 @@ public class ImportProfileDescriptionBuilderBlockTests
         Describe(Profile([Rule("PLATINES", firstBlockStartRow: 17, step: 8, fields:
             [new BlockFieldDefinition("Identification", "B:E", 0, 1), new BlockFieldDefinition("PoseeLe", "H:N", 2, 2, isRequired: false)])]))
             .SheetSection("PLATINES").Texts().Should().Contain(
-                "Pour le premier élément : identifiant en B17:E18, champ « PoseeLe » en H19:N19 (facultatif).");
+                "Pour le premier élément :", "- identifiant en B17:E18", "- champ « PoseeLe » en H19:N19 (facultatif)");
 
     [Fact]
     public void OptionalFieldOnProcedure_IsNotMarked() =>

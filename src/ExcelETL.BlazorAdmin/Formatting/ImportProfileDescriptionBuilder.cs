@@ -238,18 +238,21 @@ public static class ImportProfileDescriptionBuilder
     {
         if (usage.ReadMembers.Contains(SheetRuleMember.UnconditionalColonnes) && rule.UnconditionalColonneNames.Count > 0)
         {
-            yield return new(usage.PointsTickTheEquipement
-                ? OneOrSeveral(rule.UnconditionalColonneNames, loc,
-                    "ImportProfileDetails_PointEquipementUnconditionalOne", "ImportProfileDetails_PointEquipementUnconditionalSeveral")
-                : OneOrSeveral(rule.UnconditionalColonneNames, loc,
-                    "ImportProfileDetails_PointUnconditionalOne", "ImportProfileDetails_PointUnconditionalSeveral"));
+            var names = rule.UnconditionalColonneNames;
+            yield return usage.PointsTickTheEquipement
+                ? ColonnesSentence(names, loc,
+                    loc["ImportProfileDetails_PointEquipementUnconditionalOne", Quote(names[0], loc)],
+                    loc["ImportProfileDetails_PointEquipementUnconditionalSeveral", names.Count])
+                : ColonnesSentence(names, loc,
+                    loc["ImportProfileDetails_PointUnconditionalOne", Quote(names[0], loc)],
+                    loc["ImportProfileDetails_PointUnconditionalSeveral", names.Count]);
         }
 
         if (usage.ReadMembers.Contains(SheetRuleMember.ConditionalPointRules) && rule.PointRules.Count > 0)
         {
             foreach (var group in GroupConditionalRules(rule.PointRules))
             {
-                yield return new(DescribeConditionalGroup(rule, group, usage.PointsTickTheEquipement, loc));
+                yield return DescribeConditionalGroup(group, usage.PointsTickTheEquipement, loc);
             }
 
             // PROCEDURE: no Point when no task matches is normal, not a warning (lot 083). Element sheets
@@ -266,8 +269,7 @@ public static class ImportProfileDescriptionBuilder
         GroupConditionalRules(IEnumerable<ConditionalPointRule> rules) =>
         rules.GroupBy(r => (r.SourceFieldName, r.Operator, Value: (r.ComparisonValue ?? "").Trim().ToUpperInvariant()));
 
-    private static string DescribeConditionalGroup(
-        SheetExtractionRule rule,
+    private static ProfileDescriptionSentence DescribeConditionalGroup(
         IGrouping<(string SourceFieldName, ConditionOperator Operator, string Value), ConditionalPointRule> group,
         bool anyTask,
         IStringLocalizer<BlazorAdminMessages> loc)
@@ -281,18 +283,24 @@ public static class ImportProfileDescriptionBuilder
         // Lot 084 (G2): "is filled in" compares no value.
         if (first.Operator == ConditionOperator.IsNotBlank)
         {
-            return colonnes.Count == 1
-                ? loc[prefix + "IsNotBlankOne", field, Quote(colonnes[0], loc)]
-                : loc[prefix + "IsNotBlankSeveral", field, colonnes.Count, QuoteList(colonnes, loc)];
+            return ColonnesSentence(colonnes, loc,
+                loc[prefix + "IsNotBlankOne", field, Quote(colonnes[0], loc)],
+                loc[prefix + "IsNotBlankSeveral", field, colonnes.Count]);
         }
 
         var value = Quote((first.ComparisonValue ?? "").Trim(), loc);
         var isEquals = first.Operator == ConditionOperator.Equals;
-        return colonnes.Count == 1
-            ? loc[prefix + (isEquals ? "EqualsOne" : "NotEqualsOne"), field, value, Quote(colonnes[0], loc)]
-            : loc[prefix + (isEquals ? "EqualsSeveral" : "NotEqualsSeveral"), field, value,
-                colonnes.Count, QuoteList(colonnes, loc)];
+        return ColonnesSentence(colonnes, loc,
+            loc[prefix + (isEquals ? "EqualsOne" : "NotEqualsOne"), field, value, Quote(colonnes[0], loc)],
+            loc[prefix + (isEquals ? "EqualsSeveral" : "NotEqualsSeveral"), field, value, colonnes.Count]);
     }
+
+    // Lot 087: one Colonne stays inline; several are listed one per line under the sentence.
+    private static ProfileDescriptionSentence ColonnesSentence(
+        IReadOnlyList<string> colonnes, IStringLocalizer<BlazorAdminMessages> loc, string oneSentence, string severalSentence) =>
+        colonnes.Count == 1
+            ? new(oneSentence)
+            : new ProfileDescriptionSentence(severalSentence) { SubItems = Marked(colonnes.Select(c => Quote(c, loc))) };
 
     // D1: where the data is read -- step, start row, stop field, then each field's range in the first block.
     private static IEnumerable<ProfileDescriptionSentence> DescribeBlocks(
@@ -310,12 +318,17 @@ public static class ImportProfileDescriptionBuilder
 
         // Lot 084 (G4): an optional element field keeps its block when blank. PROCEDURE walks its tasks
         // tolerantly and ignores the setting, so it's not mentioned there.
-        var fields = string.Join(ListSeparator, locator.Fields.Select(field => loc[
+        // Lot 087: one field per line under the sentence.
+        var fields = locator.Fields.Select(field => loc[
             !isTask && !field.IsRequired ? "ImportProfileDetails_BlockFieldAtOptional" : "ImportProfileDetails_BlockFieldAt",
             FieldLabel(field.Name, definite: false, loc),
-            CellRange(locator.FirstBlockStartRow, field)].Value));
+            CellRange(locator.FirstBlockStartRow, field)].Value);
 
-        yield return new(loc[isTask ? "ImportProfileDetails_BlockFirstTaskFields" : "ImportProfileDetails_BlockFirstElementFields", fields]);
+        yield return new ProfileDescriptionSentence(
+            loc[isTask ? "ImportProfileDetails_BlockFirstTaskFields" : "ImportProfileDetails_BlockFirstElementFields"])
+        {
+            SubItems = Marked(fields),
+        };
     }
 
     // Known technical field names get a business label; any other name (typed by an admin) is shown quoted.

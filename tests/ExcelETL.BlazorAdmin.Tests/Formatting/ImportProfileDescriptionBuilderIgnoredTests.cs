@@ -62,7 +62,7 @@ public class ImportProfileDescriptionBuilderIgnoredTests
     [Fact]
     public void SeveralUnconditionalColonnesOnProcedure_AreDescribedInOneSentence() =>
         Section(ProcedureRule(unconditionalColonneNames: ["A", "B"])).Texts()
-            .Should().Contain("L'équipement est coché dans les 2 colonnes « A », « B ».");
+            .Should().ContainInOrder("L'équipement est coché dans les 2 colonnes :", "- « A »", "- « B »");
 
     // Lot 083: PROCEDURE's conditional rules tick the Equipement when at least one real task matches,
     // with no "no condition met" warning sentence.
