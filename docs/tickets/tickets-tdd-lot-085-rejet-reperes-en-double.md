@@ -241,7 +241,31 @@ Selon D0 = A, D8570, E6431A, LRS4504 et RANGEE N°1 deviennent des fichiers reje
 
 ---
 
-## 6. Hors périmètre
+## 6. Résultat (28/09)
+
+Livré en 5 commits : `09ae108` (085.1), `5b9e5d4` (085.2), `f06f96a` (085.3), `15f724e` (085.4 à 085.7,
+regroupés pour ne jamais pousser une suite rouge : le contrôle seul casse les tests sur D8570), puis la
+documentation (085.8).
+
+- **Lignes réelles** (profil standard) : LRS4504 → DIVERS lignes 9 et 12 (les deux premiers blocs, les
+  « lignes 1 et 2 » de la demande) ; D8570 → V4 ISOLEMENT 117 / DIVERS 9, PT1 PLATINES 17 / 177,
+  V7 DIVERS 15 / 18.
+- **085.5/085.6 sans code de production** : le chemin de rejet existant a suffi (422, archive `Rejected`
+  avec les entrées, statut « Rejeté » et pas de bouton de génération sur les pages de test).
+- **085.7, reprise des tests** (aucune assertion affaiblie) : tests d'orchestration et de génération sur
+  D8570 basculés sur G4010A (tâches MAD seules, un avertissement ISOLEMENT « PROLOCK », un ZERO ENERGIE en
+  DIVERS) ; `ImportSheetUsageTests` sur G6306B (éléments sur les 5 feuilles, aucun doublon) ; les tests
+  propres à D8570 réécrits en tests de rejet. Le cas « deux avertissements PROLOCK + VANNE » reste couvert au
+  niveau de la feuille ISOLEMENT (`IsolementExtractionServiceIntegrationTests`). Instantanés : seuls les
+  4 dossiers du §1.2 changent, en « rejeté ».
+- **Suites complètes** : Domain 434, Application 283, Infrastructure 292, WebAPI 78, Hosting 15,
+  BlazorAdmin 1603, toutes vertes.
+- **Écart à la demande** : l'affichage de la page de test BlazorAdmin reste `{feuille} / {ligne}: {message}`
+  (sans le code), comme pour tout rejet ; l'API renvoie bien les 5 champs.
+
+---
+
+## 7. Hors périmètre
 
 - Fusion de doublons (options B/C), sauf changement de D0.
 - Unicité d'autre chose que le repère des éléments (tâches multiples, repère de l'équipement parent).
