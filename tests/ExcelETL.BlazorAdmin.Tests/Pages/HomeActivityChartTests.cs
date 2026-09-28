@@ -91,6 +91,19 @@ public class HomeActivityChartTests : BunitContext
     }
 
     [Fact]
+    public void AccessibleTable_IsHiddenThroughItsWrapper_NotItself()
+    {
+        // A table never shrinks below its rows: visually-hidden on the table itself left 30 invisible
+        // rows making the home page scroll.
+        var cut = RenderChart(Days((27, 3, 1, 2)));
+
+        var table = cut.Find("#home-activity-table");
+        table.ClassList.Should().NotContain("visually-hidden");
+        table.ParentElement!.ClassList.Should().Contain("visually-hidden");
+        table.ParentElement.TagName.Should().Be("DIV");
+    }
+
+    [Fact]
     public void BeforeTheCircuitIsInteractive_NothingIsDrawn()
     {
         RenderChart(Days((27, 1, 0, 0)));

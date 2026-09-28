@@ -65,6 +65,15 @@ public class ActivityChartScriptTests
     }
 
     [Fact]
+    public void TooltipOnADayWithNoFile_ReadsNoItem()
+    {
+        // The filter keeps only non-zero statuses, so an empty day hands the callbacks no item:
+        // reading items[0] unguarded threw on every mouse move over that day.
+        Script.Should().Contain("items.length === 0 ? \"\" : texts[items[0].dataIndex]");
+        Regex.Matches(Script, @"items\[0\]").Count.Should().Be(2, "only the guarded read and its comment");
+    }
+
+    [Fact]
     public void TurnsAnimationOff_WhenTheSystemAsksForReducedMotion()
     {
         Script.Should().Contain("prefers-reduced-motion: reduce");

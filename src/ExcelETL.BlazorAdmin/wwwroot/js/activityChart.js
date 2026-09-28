@@ -29,6 +29,10 @@ window.amOxoActivityChart = (function () {
             && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     }
 
+    function dayText(texts, items) {
+        return items.length === 0 ? "" : texts[items[0].dataIndex];
+    }
+
     function buildConfiguration(model) {
         var textColour = themeValue("--bs-secondary-color");
         var gridColour = themeValue("--bs-border-color");
@@ -78,11 +82,13 @@ window.amOxoActivityChart = (function () {
                         labels: { color: textColour, boxWidth: 12, boxHeight: 12 }
                     },
                     tooltip: {
-                        // Only the statuses present that day; a day with no file shows no tooltip.
+                        // Only the statuses present that day. On a day with no file the filter leaves
+                        // no item at all: title and footer then stay empty and Chart.js draws no
+                        // tooltip (reading items[0] there threw on every mouse move).
                         filter: function (item) { return item.parsed.y > 0; },
                         callbacks: {
-                            title: function (items) { return model.tooltipTitles[items[0].dataIndex]; },
-                            footer: function (items) { return model.totalLabels[items[0].dataIndex]; }
+                            title: function (items) { return dayText(model.tooltipTitles, items); },
+                            footer: function (items) { return dayText(model.totalLabels, items); }
                         }
                     }
                 }

@@ -21,7 +21,11 @@
 
     <p id="home-activity-chart-summary" class="visually-hidden">@Summary()</p>
 
-    <table id="home-activity-table" class="visually-hidden">
+    @* The table sits inside a hidden div rather than carrying visually-hidden itself: a table never
+       shrinks below its rows, so the 30-row table stayed full height (invisible) and made the whole
+       page scroll. *@
+    <div class="visually-hidden">
+    <table id="home-activity-table">
         <caption>@Loc["Home_ActivityChartTitle"]</caption>
         <thead>
             <tr>
@@ -43,6 +47,7 @@
             }
         </tbody>
     </table>
+    </div>
 </figure>
 
 @code {
