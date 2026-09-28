@@ -163,6 +163,25 @@ else
             </div>
         </div>
     </div>
+
+    <!-- Lot 088 (088.6): same grouped days as the "30 derniers jours" tile above. -->
+    <section id="home-activity" class="card mt-4" aria-labelledby="home-activity-title">
+        <div class="card-body">
+            <h2 id="home-activity-title" class="h5">@Loc["Home_ActivityChartTitle"]</h2>
+            @if (_recentDays is null)
+            {
+                <p id="home-activity-unavailable" class="text-danger mb-0">@Loc["Home_IndicatorUnavailable"]</p>
+            }
+            else if (_recentDays.All(d => d.Total == 0))
+            {
+                <p id="home-activity-empty" class="text-muted mb-0">@Loc["Home_NoRecentActivity"]</p>
+            }
+            else
+            {
+                <HomeActivityChart Days="_recentDays" />
+            }
+        </div>
+    </section>
 }
 </div>
 

@@ -524,4 +524,60 @@ public class HomeTests : BunitContext
 
         _localTimeFormatterMock.Verify(f => f.GetBrowserTimeZoneIdAsync(), Times.Once);
     }
+    // --- Lot 088 (088.6): the activity chart section. --------------------------------------------------
+
+    [Fact]
+    public void ActivitySection_WithRecentFiles_RendersTheChart_UnderAnH2()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-activity").Count == 1);
+
+        cut.Find("#home-activity-title").TagName.Should().Be("H2");
+        cut.FindAll("#home-activity-chart g.home-activity-bar").Should().HaveCount(30);
+        cut.FindAll("#home-activity-empty").Should().BeEmpty();
+        HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
+    }
+
+    [Fact]
+    public void ActivitySection_WithNoFileInThirtyDays_ShowsAMessage_InsteadOfAnEmptyChart()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(KnownIndicators(recentActivity: []));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-activity").Count == 1);
+
+        cut.Find("#home-activity-empty").TextContent.Should().NotBeNullOrWhiteSpace();
+        cut.FindAll("#home-activity-chart").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ActivitySection_WhenRecentActivityIsUnavailable_ShowsTheDegradedState()
+    {
+        var indicators = KnownIndicators() with
+        {
+            RecentActivity = HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Unavailable(),
+        };
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-activity").Count == 1);
+
+        cut.FindAll("#home-activity-unavailable").Should().HaveCount(1);
+        cut.FindAll("#home-activity-chart").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ActivityChart_AndTile_ShowTheSameTotal()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-activity-chart").Count == 1);
+
+        var tableTotal = cut.FindAll("#home-activity-table tbody td").Sum(td => int.Parse(td.TextContent));
+        tableTotal.ToString().Should().Be(cut.Find("#home-kpi-generated-files-total").TextContent.Trim());
+    }
 }

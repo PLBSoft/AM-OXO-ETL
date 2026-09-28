@@ -1,6 +1,8 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Home;
+using ExcelETL.Domain.Archiving;
 using ExcelETL.Infrastructure.Identity;
 using ExcelETL.Infrastructure.Persistence;
 using FluentAssertions;
@@ -71,6 +73,37 @@ public class HomeHttpTests : IClassFixture<WebApplicationFactory<Program>>
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         (await response.Content.ReadAsStringAsync()).Should().Contain(HomePageMarker);
+    }
+
+    // Lot 088 (088.6): the real store -> service -> page chain renders the activity chart, prerendered
+    // in the HTTP response itself (grouped in UTC until the circuit reports the browser's time zone).
+    [Fact]
+    public async Task Get_Root_WithAFileGeneratedYesterday_RendersTheActivityChart()
+    {
+        var databaseName = "HomeHttpTests_Activity_" + Guid.NewGuid();
+        var factory = ConfigureFactory(_factory, databaseName);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var archiveStore = scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>();
+            await archiveStore.SaveAsync(new GeneratedFileRecord(
+                Guid.NewGuid(),
+                DateTime.UtcNow.AddDays(-1),
+                "C7401",
+                "source.xlsx",
+                @"2026\09\source.xlsx",
+                "target.xlsx",
+                @"2026\09\target.xlsx",
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                GeneratedFileArchiveStatus.Rejected));
+        }
+
+        var client = await CreateSignedInClientAsync(factory, "non_admin_" + Guid.NewGuid().ToString("N")[..8]);
+
+        var body = await (await client.GetAsync("/")).Content.ReadAsStringAsync();
+
+        body.Should().Contain("id=\"home-activity-chart\"");
+        body.Should().MatchRegex(@"id=""home-kpi-generated-files-total""[^>]*>\s*1\s*<");
     }
 
     // Non-regression: the ticket's own decision requires identical content regardless of role.

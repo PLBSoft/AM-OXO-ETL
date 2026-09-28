@@ -1,0 +1,136 @@
+@using System.Globalization
+@using ExcelETL.Application.Home
+
+@inject IStringLocalizer<BlazorAdminMessages> Loc
+
+<!-- Lot 088 (088.6): files processed per local day over the last 30 days, stacked by status.
+     Plain SVG written here, no chart library and no JavaScript (D6): 30 bars don't justify a
+     dependency, and bUnit can check every mark. Heights are computed in C#, colours come from the
+     theme through HomeActivityChart.razor.css, so light and dark themes need no extra code. Each
+     bar's native <title> is its hover tooltip; the hidden summary and table give screen readers the
+     same numbers, so no information is carried by colour alone. -->
+<figure class="home-activity-chart mb-0">
+    <svg id="home-activity-chart" viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" role="img"
+         aria-labelledby="home-activity-chart-summary" focusable="false">
+        <line class="home-activity-axis" x1="@N(PlotLeft)" y1="@N(Baseline)" x2="@N(ViewBoxWidth - PlotRight)" y2="@N(Baseline)" />
+        <text id="home-activity-chart-max" class="home-activity-axis-label" x="@N(PlotLeft - 6)" y="@N(PlotTop)" text-anchor="end" dominant-baseline="hanging">@_max</text>
+        <text class="home-activity-axis-label" x="@N(PlotLeft - 6)" y="@N(Baseline)" text-anchor="end">0</text>
+
+        @for (var index = 0; index < Days.Count; index++)
+        {
+            var day = Days[index];
+            var slotLeft = PlotLeft + index * SlotWidth;
+            var barLeft = slotLeft + (SlotWidth - BarWidth) / 2;
+            <g class="home-activity-bar" data-day="@day.Day.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)">
+                <title>@Tooltip(day)</title>
+                <rect class="home-activity-hit" x="@N(slotLeft)" y="@N(PlotTop)" width="@N(SlotWidth)" height="@N(PlotHeight)" />
+                @foreach (var segment in Segments(day))
+                {
+                    <rect class="home-activity-segment @segment.CssClass" x="@N(barLeft)" y="@N(segment.Top)" width="@N(BarWidth)" height="@N(segment.Height)" />
+                }
+            </g>
+            @if (index % 7 == (Days.Count - 1) % 7)
+            {
+                @* Wrapped in a <g>: a bare text tag opening a code block is Razor's own directive. *@
+                <g><text class="home-activity-axis-label home-activity-day-label" x="@N(slotLeft + SlotWidth / 2)" y="@N(ViewBoxHeight - 4)" text-anchor="middle">@day.Day.ToString("dd/MM", CultureInfo.InvariantCulture)</text></g>
+            }
+        }
+    </svg>
+
+    <p id="home-activity-chart-summary" class="visually-hidden">@Summary()</p>
+
+    <figcaption>
+        <ul id="home-activity-legend" class="list-inline small text-muted mb-0 mt-2">
+            <li class="list-inline-item"><span class="home-activity-swatch home-activity-segment-success" aria-hidden="true"></span>@Loc["Home_ActivityLegendSuccess"]</li>
+            <li class="list-inline-item"><span class="home-activity-swatch home-activity-segment-warning" aria-hidden="true"></span>@Loc["Home_ActivityLegendWarning"]</li>
+            <li class="list-inline-item"><span class="home-activity-swatch home-activity-segment-rejected" aria-hidden="true"></span>@Loc["Home_ActivityLegendRejected"]</li>
+        </ul>
+    </figcaption>
+
+    <table id="home-activity-table" class="visually-hidden">
+        <caption>@Loc["Home_ActivityChartTitle"]</caption>
+        <thead>
+            <tr>
+                <th scope="col">@Loc["Home_ActivityTableDate"]</th>
+                <th scope="col">@Loc["Home_ActivityLegendSuccess"]</th>
+                <th scope="col">@Loc["Home_ActivityLegendWarning"]</th>
+                <th scope="col">@Loc["Home_ActivityLegendRejected"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var day in Days)
+            {
+                <tr>
+                    <th scope="row">@day.Day.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</th>
+                    <td>@day.Success</td>
+                    <td>@day.Warning</td>
+                    <td>@day.Rejected</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</figure>
+
+@code {
+    // Geometry in viewBox units -- the SVG itself scales to the card's width (see the .razor.css).
+    public const double ViewBoxWidth = 600;
+    public const double ViewBoxHeight = 180;
+    public const double PlotTop = 8;
+    public const double PlotHeight = 150;
+    private const double PlotLeft = 32;
+    private const double PlotRight = 4;
+    private const double BarWidth = 12;
+    private const double Baseline = PlotTop + PlotHeight;
+    private static readonly double SlotWidth = (ViewBoxWidth - PlotLeft - PlotRight) / GenerationActivityBuilder.DayCount;
+
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DailyGenerationActivity> Days { get; set; } = [];
+
+    private int _max;
+
+    protected override void OnParametersSet() => _max = Math.Max(1, Days.Count == 0 ? 0 : Days.Max(d => d.Total));
+
+    // Bottom to top: success, warnings, rejections. A zero count draws no segment at all.
+    private IEnumerable<(string CssClass, double Top, double Height)> Segments(DailyGenerationActivity day)
+    {
+        var top = Baseline;
+        foreach (var (cssClass, count) in new[]
+                 {
+                     ("home-activity-segment-success", day.Success),
+                     ("home-activity-segment-warning", day.Warning),
+                     ("home-activity-segment-rejected", day.Rejected),
+                 })
+        {
+            if (count == 0)
+            {
+                continue;
+            }
+
+            var height = PlotHeight * count / _max;
+            top -= height;
+            yield return (cssClass, top, height);
+        }
+    }
+
+    private string Tooltip(DailyGenerationActivity day) => Loc[
+        "Home_ActivityBarTooltip",
+        day.Day.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+        day.Total,
+        day.Success,
+        day.Warning,
+        day.Rejected];
+
+    private string Summary() => Days.Count == 0
+        ? string.Empty
+        : Loc[
+            "Home_ActivityChartSummary",
+            Days.Sum(d => d.Total),
+            Days[0].Day.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+            Days[^1].Day.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture),
+            Days.Sum(d => d.Success),
+            Days.Sum(d => d.Warning),
+            Days.Sum(d => d.Rejected)];
+
+    // SVG attributes need a '.' decimal separator whatever the UI culture (fr-FR would write a ',').
+    private static string N(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+}

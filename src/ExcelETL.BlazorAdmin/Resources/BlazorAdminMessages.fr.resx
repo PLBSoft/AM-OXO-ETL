@@ -1450,6 +1450,30 @@
   <data name="Home_RecentActivityRejectedPlural" xml:space="preserve">
     <value>{0} rejetés</value>
   </data>
+  <data name="Home_ActivityChartTitle" xml:space="preserve">
+    <value>Fichiers traités par jour</value>
+  </data>
+  <data name="Home_ActivityChartSummary" xml:space="preserve">
+    <value>{0} fichier(s) traité(s) du {1} au {2} : {3} succès, {4} avec avertissements, {5} rejeté(s).</value>
+  </data>
+  <data name="Home_ActivityBarTooltip" xml:space="preserve">
+    <value>{0} : {1} fichier(s) ({2} succès, {3} avec avertissements, {4} rejeté(s))</value>
+  </data>
+  <data name="Home_ActivityLegendSuccess" xml:space="preserve">
+    <value>Succès</value>
+  </data>
+  <data name="Home_ActivityLegendWarning" xml:space="preserve">
+    <value>Avec avertissements</value>
+  </data>
+  <data name="Home_ActivityLegendRejected" xml:space="preserve">
+    <value>Rejetés</value>
+  </data>
+  <data name="Home_ActivityTableDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Home_NoRecentActivity" xml:space="preserve">
+    <value>Aucun fichier traité ces 30 derniers jours.</value>
+  </data>
   <data name="ImportProfileDetails_GeneralSectionTitle" xml:space="preserve">
     <value>Paramètres généraux</value>
   </data>
