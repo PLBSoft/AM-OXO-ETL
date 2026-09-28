@@ -236,6 +236,26 @@ public class ElementSheetExtractionServiceTests
         result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
     }
 
+    // Lot 085.2: each element keeps the Excel start row of its own block.
+    [Fact]
+    public void Extract_EachElementCarriesTheStartRowOfItsBlock()
+    {
+        var result = _sut.Extract(Reader(TwoBlocks()), Rule(), "MAD-OXO-");
+
+        result.Elements.Select(e => e.LigneSource).Should().Equal(17, 25);
+    }
+
+    [Fact]
+    public void Extract_ADroppedBlock_DoesNotShiftTheRowOfTheNextOne()
+    {
+        var cells = TwoBlocks();
+        cells["B20:E22"] = null;
+
+        var result = _sut.Extract(Reader(cells), Rule(), "MAD-OXO-");
+
+        result.Elements.Should().ContainSingle().Which.LigneSource.Should().Be(25);
+    }
+
     [Theory]
     [InlineData("Identification")]
     [InlineData("TypeElement")]

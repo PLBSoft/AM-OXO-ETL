@@ -93,7 +93,8 @@ public sealed class ElementSheetExtractionService(
                 fields.GetValueOrDefault(ElementFieldNames.PositionALaPose) ?? "",
                 localisation: "",
                 couleurEtiquette: couleurEtiquette,
-                sourceSheetName: sheet));
+                sourceSheetName: sheet,
+                ligneSource: block.StartRow));
 
             foreach (var colonneName in sheetRule.UnconditionalColonneNames)
             {
