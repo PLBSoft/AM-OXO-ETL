@@ -55,18 +55,33 @@ public class ImportPipelineOrchestratorLoggingIntegrationTests
     }
 
     [Fact]
-    public void Run_D8570Fixture_LogsVanneWarning_NotOnlyInImportResultErrors()
+    // Lot 085: D8570 is now rejected for duplicated repères, so the non-blocking-warning case moved to
+    // G4010A (one ISOLEMENT "PROLOCK" warning, no duplicate).
+    public void Run_G4010AFixture_LogsNoConditionalPointWarning_NotOnlyInImportResultErrors()
     {
-        var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+        var result = RunOnFixture("Dossier de MaD IDL -  G4010A.xlsx");
 
-        var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
-        result.Errors.Should().Contain(e =>
-            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == vanne.Repere);
+        var warning = result.Errors.Should().ContainSingle(e =>
+            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.Sheet == "ISOLEMENT").Which;
 
         _isolementLog.Entries.Should().Contain(e =>
             e.Level == LogLevel.Warning &&
             e.Message.Contains(nameof(ExtractionErrorCode.NoConditionalPointCreated)) &&
-            e.Message.Contains(vanne.Repere));
+            e.Message.Contains(warning.BlockIdentifier));
+    }
+
+    // Lot 085: a rejection for duplicated repères is visible in the logs, not only in ImportResult.
+    [Fact]
+    public void Run_D8570Fixture_LogsTheDuplicateRepereRejection()
+    {
+        RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+
+        _orchestratorLog.Entries.Should().Contain(e =>
+            e.Level == LogLevel.Warning && e.Message.Contains("6 element(s) with a duplicate repère"));
+        _orchestratorLog.Entries.Should().Contain(e =>
+            e.Level == LogLevel.Error && e.Message.Contains(nameof(ExtractionErrorCode.DuplicateRepere)) &&
+            e.Message.Contains("D8570-V4"));
+        _orchestratorLog.Entries.Should().NotContain(e => e.Message.StartsWith("Completed import pipeline run"));
     }
 
     private ImportResult RunOnFixture(string fileName)

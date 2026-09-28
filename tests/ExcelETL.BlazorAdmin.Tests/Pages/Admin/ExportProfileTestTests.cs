@@ -456,8 +456,10 @@ public class ExportProfileTestTests : BunitContext
             HeadingHierarchyAssertions.AssertNoHeadingLevelSkip(cut);
         });
 
+    // Lot 085: G4010A replaced D8570 (now rejected for duplicated repères) -- its warned ISOLEMENT
+    // "PROLOCK" isolement still lands in the generated Enfants sheet.
     [Fact]
-    public async Task Run_D8570Fixture_GeneratesWorkbook_DespiteNonBlockingVanneWarning() =>
+    public async Task Run_G4010AFixture_GeneratesWorkbook_DespiteNonBlockingWarning() =>
         await WithCultureAsync("en-US", async () =>
         {
             var importProfile = await SeedRealImportProfileAsync();
@@ -467,7 +469,7 @@ public class ExportProfileTestTests : BunitContext
             SelectImportProfile(cut, importProfile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
             cut.WaitForAssertion(() => cut.FindAll("#export-test-export-profile-select").Should().NotBeEmpty());
             cut.Markup.Should().NotContain("File rejected");
@@ -476,15 +478,35 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#generate-workbook-button").Click();
 
             cut.WaitForAssertion(() => cut.FindAll("#generated-sheet-Enfants-table").Should().NotBeEmpty());
-            cut.Find("#generated-sheet-Enfants-table").InnerHtml.Should().Contain("VANNE");
+            cut.Find("#generated-sheet-Enfants-table").InnerHtml.Should().Contain("PROLOCK");
         });
 
-    // Client-reported gap: a file badged "Warning" (BatchFileStatus.Warning, e.g. D8570's non-blocking
-    // "VANNE" NoConditionalPointCreated) showed no way to see what the warning actually was on this page,
+    // Lot 085.6 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): a file with a
+    // duplicated repère is rejected -- no generation is offered for it.
+    [Fact]
+    public async Task Run_LRS4504Fixture_IsRejected_AndOffersNoGeneration() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  LRS4504.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
+            cut.FindAll("#rejected li").Select(li => li.TextContent).Should().HaveCount(2)
+                .And.OnlyContain(text => text.Contains("Repère « LRS4504-LRS4504 » en double"));
+            cut.FindAll("#generate-workbook-button").Should().BeEmpty();
+        });
+
+    // Client-reported gap: a file badged "Warning" (BatchFileStatus.Warning, e.g. a non-blocking
+    // NoConditionalPointCreated) showed no way to see what the warning actually was on this page,
     // unlike ImportProfileTest.razor's own warnings table -- fixed by rendering the same
     // details/summary + table for ImportResult.Errors, right where the import page shows it.
     [Fact]
-    public async Task Run_D8570Fixture_ShowsWarningsDetails_WithSameShapeAsImportPage() =>
+    public async Task Run_G4010AFixture_ShowsWarningsDetails_WithSameShapeAsImportPage() =>
         await WithCultureAsync("en-US", async () =>
         {
             var importProfile = await SeedRealImportProfileAsync();
@@ -492,7 +514,7 @@ public class ExportProfileTestTests : BunitContext
             SelectImportProfile(cut, importProfile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("Non-blocking warnings"));
 
@@ -509,7 +531,7 @@ public class ExportProfileTestTests : BunitContext
             SelectImportProfile(cut, importProfile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
@@ -1071,7 +1093,7 @@ public class ExportProfileTestTests : BunitContext
             var fixtureNames = new[]
             {
                 "Dossier.de.MaD.IDL.-.C7401.xlsx",
-                "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx",
+                "Dossier de MaD IDL -  G4010A.xlsx",
                 "Dossier.de.MaD.IDL.-.G6306B.REV.xlsx"
             };
             var files = fixtureNames.Select(FixtureAsInputFile).ToArray();

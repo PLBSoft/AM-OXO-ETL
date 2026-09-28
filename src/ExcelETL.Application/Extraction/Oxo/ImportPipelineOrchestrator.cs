@@ -12,6 +12,7 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // PROCEDURE runs first: per model doc §3.1, an invalid Equipement rejects the whole file (returned
 // immediately, none of the other 5 services are even invoked -- not just "their output is discarded",
 // see the unit tests' Mock.Verify(..., Times.Never)).
+// Once every element sheet is read, two elements sharing a repère reject the file too (lot 085).
 //
 // Sheet roles are resolved from ImportProfile.SheetRules by matching SheetName against the 6 fixed
 // literal names below. This is a deliberate simplification: SheetExtractionRule has no explicit
@@ -83,6 +84,24 @@ public sealed class ImportPipelineOrchestrator(
                 isolements.AddRange(elementResults[name].Elements);
                 points.AddRange(elementResults[name].Points);
                 errors.AddRange(elementResults[name].Errors);
+            }
+
+            // Lot 085 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): two elements sharing a
+            // repère reject the whole file, with only the duplicate entries (D4) -- same shape as a
+            // PROCEDURE rejection, so the API, the archive and the test pages treat it the same way.
+            var duplicateErrors = DuplicateRepereDetector.Detect(isolements);
+            if (duplicateErrors.Count > 0)
+            {
+                logger.LogWarning(
+                    "Import pipeline run for profile {ProfileName} rejected the whole file after {ElapsedMs}ms: " +
+                    "{ErrorCount} element(s) with a duplicate repère",
+                    profile.Name, stopwatch.ElapsedMilliseconds, duplicateErrors.Count);
+                foreach (var error in duplicateErrors)
+                {
+                    ExtractionErrorLogging.Log(logger, error);
+                }
+
+                return new ImportResult(null, [], [], [], duplicateErrors);
             }
 
             BroadcastEquipementContext(isolements, loc1, profile, repereParent);

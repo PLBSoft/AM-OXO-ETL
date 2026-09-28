@@ -25,9 +25,11 @@ public class ImportSheetUsageTests
     private const string AutresJointsTouches = "AUTRES JOINTS TOUCHES";
     private const string Divers = "DIVERS";
 
-    // D8570 rather than C7401 (named in the ticket): C7401's ORIFICES CAPACITES, AUTRES JOINTS TOUCHES
+    // G6306B rather than C7401 (named in the ticket): C7401's ORIFICES CAPACITES, AUTRES JOINTS TOUCHES
     // and DIVERS sheets produce no element at all, which would make the drift guard vacuous there.
-    private const string FixtureFileName = "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx";
+    // D8570 was used until lot 085, which rejects it for duplicated repères; G6306B has elements on
+    // all five element sheets and none duplicated.
+    private const string FixtureFileName = "Dossier.de.MaD.IDL.-.G6306B.REV.xlsx";
     private const string TestColonneName = "COLONNE TEST 078";
 
     private static readonly SheetRuleMember[] ElementSheetMembers =

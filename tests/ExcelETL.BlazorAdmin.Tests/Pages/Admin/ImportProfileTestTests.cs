@@ -27,7 +27,7 @@ namespace ExcelETL.BlazorAdmin.Tests.Pages.Admin;
 
 // F2.1 covers the upload/render mechanics (no HTTP, unlike UploadTestTests -- the pipeline runs in
 // process against the uploaded stream). F2.2's per-fixture assertions (one test per real client
-// file, including D8570's "VANNE" non-blocking warning) live in this same class rather than a
+// file, including a non-blocking warning and, since lot 085, a duplicated-repère rejection) live in this same class rather than a
 // second file, since both need the identical DI wiring and fixture-path helper below.
 public class ImportProfileTestTests : BunitContext
 {
@@ -476,7 +476,36 @@ public class ImportProfileTestTests : BunitContext
         });
 
     [Fact]
-    public async Task Run_D8570Fixture_ShowsVanneAsNonBlockingWarning_NotAsFileRejection() =>
+    public async Task Run_G4010AFixture_ShowsWarningAsNonBlocking_NotAsFileRejection() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            // Lot 085: D8570 (used until then) is now rejected for duplicated repères.
+            var profile = await SeedRealProfileAsync();
+            var expected = RunOrchestratorDirectly(profile, "Dossier de MaD IDL -  G4010A.xlsx");
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            var inputFileComponent = cut.FindComponent<InputFile>();
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
+
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("771-G4010A"));
+
+            cut.Markup.Should().NotContain("File rejected");
+            cut.Find("#isolements-table").Should().NotBeNull();
+            cut.FindAll("#isolements-table tbody tr").Should().HaveCount(expected.Isolements.Count);
+            cut.Markup.Should().Contain("Non-blocking warnings");
+            cut.Markup.Should().Contain("NoConditionalPointCreated");
+
+            // Lot 031: section title now shows the element count, same "{0} ({1})"-shaped format as
+            // ExportProfileTest.razor's sheet titles (e.g. "Parents (1)").
+            cut.Find("#isolements-details-toggle").TextContent.Should()
+                .Contain($"Isolements ({expected.Isolements.Count})");
+        });
+
+    // Lot 085.6 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): a file with a
+    // duplicated repère shows as rejected, listing each duplicated row.
+    [Fact]
+    public async Task Run_LRS4504Fixture_ShowsDuplicatedRepereRowsAsFileRejection() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = await SeedRealProfileAsync();
@@ -484,19 +513,15 @@ public class ImportProfileTestTests : BunitContext
             SelectProfile(cut, profile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  LRS4504.xlsx"));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("644-D8570"));
-
-            cut.Markup.Should().NotContain("File rejected");
-            cut.Find("#isolements-table").Should().NotBeNull();
-            cut.FindAll("#isolements-table tbody tr").Should().HaveCount(67);
-            cut.Markup.Should().Contain("Non-blocking warnings");
-            cut.Markup.Should().Contain("NoConditionalPointCreated");
-
-            // Lot 031: section title now shows the element count, same "{0} ({1})"-shaped format as
-            // ExportProfileTest.razor's sheet titles (e.g. "Parents (1)").
-            cut.Find("#isolements-details-toggle").TextContent.Should().Contain("Isolements (67)");
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
+            cut.Markup.Should().NotContain("Non-blocking warnings");
+            cut.FindAll("#rejected li").Select(li => li.TextContent).Should().Equal(
+                "DIVERS / 9: Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
+                "chaque élément doit avoir une identification unique.",
+                "DIVERS / 12: Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
+                "chaque élément doit avoir une identification unique.");
         });
 
     // Lot 031: one test per remaining section (Equipement, Points, Taches multiples, Warnings),
@@ -529,10 +554,10 @@ public class ImportProfileTestTests : BunitContext
         });
 
     [Fact]
-    public async Task Run_D8570Fixture_WarningsSectionTitle_ShowsActualNonBlockingErrorCount() =>
+    public async Task Run_G4010AFixture_WarningsSectionTitle_ShowsActualNonBlockingErrorCount() =>
         await WithCultureAsync("en-US", async () =>
         {
-            const string fixtureFileName = "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx";
+            const string fixtureFileName = "Dossier de MaD IDL -  G4010A.xlsx";
             var profile = await SeedRealProfileAsync();
             var expected = RunOrchestratorDirectly(profile, fixtureFileName);
 
@@ -552,28 +577,29 @@ public class ImportProfileTestTests : BunitContext
 
     // Lot 055 §55.7: the context column shows the raw extracted value for NoConditionalPointCreated
     // entries, since there is no single block/repère to designate once no ConditionalPointRule
-    // matched. D8570 deduplicates to exactly 2 such entries (PROLOCK, VANNE) -- selection by the
-    // stable per-row id, never by text or position.
+    // matched. G4010A has exactly one such entry (PROLOCK) -- selection by the stable per-row id, never
+    // by text or position. (D8570, used until lot 085, is now rejected for duplicated repères; the
+    // two-distinct-values dedup it showed stays covered at the ISOLEMENT sheet level.)
     [Fact]
-    public async Task Run_D8570Fixture_WarningsTable_ShowsExtractedValueInContextColumn() =>
+    public async Task Run_G4010AFixture_WarningsTable_ShowsExtractedValueInContextColumn() =>
         await WithCultureAsync("en-US", async () =>
         {
             var profile = await SeedRealProfileAsync();
-            var expected = RunOrchestratorDirectly(profile, "Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
-            expected.Errors.Should().HaveCount(2)
-                .And.OnlyContain(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated);
+            var expected = RunOrchestratorDirectly(profile, "Dossier de MaD IDL -  G4010A.xlsx");
+            expected.Errors.Should().ContainSingle()
+                .Which.Code.Should().Be(ExtractionErrorCode.NoConditionalPointCreated);
 
             var cut = Render<ImportProfileTest>();
             SelectProfile(cut, profile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
             var contextValues = expected.Errors.Select((error, index) =>
                 cut.Find($"#warning-context-{index}").TextContent).ToList();
-            contextValues.Should().BeEquivalentTo(["PROLOCK", "VANNE"]);
+            contextValues.Should().Equal("PROLOCK");
         });
 
     // The context column must stay unchanged for every other code -- TacheMultipleTypeMismatch keeps
@@ -684,9 +710,9 @@ public class ImportProfileTestTests : BunitContext
             SelectProfile(cut, profile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("644-D8570"));
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("771-G4010A"));
 
             cut.Find("#isolements-details-toggle").Click();
 
@@ -706,9 +732,9 @@ public class ImportProfileTestTests : BunitContext
             SelectProfile(cut, profile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
-            cut.WaitForAssertion(() => cut.Markup.Should().Contain("644-D8570"));
+            cut.WaitForAssertion(() => cut.Markup.Should().Contain("771-G4010A"));
 
             foreach (var tableId in new[] { "equipement-table", "isolements-table", "points-table", "taches-multiples-table", "warnings-table" })
             {
@@ -727,7 +753,7 @@ public class ImportProfileTestTests : BunitContext
             SelectProfile(cut, profile.Id);
 
             var inputFileComponent = cut.FindComponent<InputFile>();
-            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+            inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"));
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("NoConditionalPointCreated"));
 
@@ -852,7 +878,7 @@ public class ImportProfileTestTests : BunitContext
             var files = new[]
             {
                 FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
-                FixtureAsInputFile("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"),
+                FixtureAsInputFile("Dossier de MaD IDL -  G4010A.xlsx"),
                 FixtureAsInputFile("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx")
             };
 
@@ -862,8 +888,9 @@ public class ImportProfileTestTests : BunitContext
             cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
 
             // All 3 real fixtures currently carry their own non-blocking warning (C7401: Lot 032
-            // TYPE-incoherence in PROCEDURE; D8570: the "VANNE" NoConditionalPointCreated; G6306B: the
-            // "POINT DE FEU"/"POINT FEU" DIVERS spelling mismatch) -- none is a plain OK today.
+            // TYPE-incoherence in PROCEDURE; G4010A: an ISOLEMENT "PROLOCK" NoConditionalPointCreated;
+            // G6306B: the same kind of ISOLEMENT warning) -- none is a plain OK today. G4010A replaced
+            // D8570 at lot 085 (D8570 is now rejected for duplicated repères).
             var summary = cut.Find("#batch-summary").TextContent;
             summary.Should().Contain("3 file(s) processed:");
             summary.Should().Contain("3 non-blocking warning(s)");
@@ -871,7 +898,7 @@ public class ImportProfileTestTests : BunitContext
 
             cut.FindAll(".batch-file-details").Should().HaveCount(3);
             cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.C7401.xlsx");
-            cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+            cut.Markup.Should().Contain("Dossier de MaD IDL -  G4010A.xlsx");
             cut.Markup.Should().Contain("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx");
         });
 

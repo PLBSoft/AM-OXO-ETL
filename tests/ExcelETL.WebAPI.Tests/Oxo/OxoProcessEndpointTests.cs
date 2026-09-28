@@ -223,11 +223,13 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
-    public async Task Process_WithD8570Fixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
+    // Lot 085: G4010A replaced D8570 (now rejected for duplicated repères); its warned ISOLEMENT
+    // "PROLOCK" isolement still lands as an ordinary Enfants row.
+    public async Task Process_WithG4010AFixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
     {
         var client = CreateAuthenticatedClient();
         var (importProfileId, exportProfileId) = await SeedProfilesAsync();
-        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
+        using var sourceStream = File.OpenRead(FixturePath("Dossier de MaD IDL -  G4010A.xlsx"));
         using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream);
 
         var response = await client.PostAsync("/api/oxo/process", content);
@@ -237,7 +239,46 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         var bytes = await response.Content.ReadAsByteArrayAsync();
         using var generated = new XLWorkbook(new MemoryStream(bytes));
         var enfants = generated.Worksheet("Enfants");
-        enfants.RowsUsed().Should().Contain(row => row.Cell(2).GetString() == "VANNE");
+        enfants.RowsUsed().Should().Contain(row => row.Cell(2).GetString() == "PROLOCK");
+    }
+
+    // Lot 085.5 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): the case of the request
+    // (LRSJ2M; LRS4504 holds the same two DIVERS rows) -- 422, one errors[] entry per duplicated row,
+    // no generated file, archived as Rejected with both entries.
+    [Fact]
+    public async Task Process_WithDuplicatedRepere_ReturnsUnprocessableEntityWithOneEntryPerRow_AndNoGeneratedFile()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier de MaD IDL -  LRS4504.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "LRS4504.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle("2");
+
+        using var body = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var errors = body.RootElement.GetProperty("errors").EnumerateArray()
+            .Select(e => (
+                Sheet: e.GetProperty("sheet").GetString(),
+                BlockIdentifier: e.GetProperty("blockIdentifier").GetString(),
+                Code: e.GetProperty("code").GetString(),
+                ExtractedValue: e.GetProperty("extractedValue").GetString(),
+                Message: e.GetProperty("message").GetString()))
+            .ToList();
+        errors.Select(e => (e.Sheet, e.BlockIdentifier, e.Code, e.ExtractedValue)).Should().Equal(
+            ("DIVERS", "9", "DuplicateRepere", "LRS4504-LRS4504"),
+            ("DIVERS", "12", "DuplicateRepere", "LRS4504-LRS4504"));
+        errors.Should().OnlyContain(e => e.Message ==
+            "Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
+            "chaque élément doit avoir une identification unique.");
+
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
+        record.TargetFilePath.Should().BeNull();
+        record.Warnings.Select(w => w.Code).Should().Equal("DuplicateRepere", "DuplicateRepere");
+        Directory.GetFiles(_generatedFilesArchiveRoot, "*_target_*", SearchOption.AllDirectories).Should().BeEmpty();
     }
 
     // Lot 034: the request/response contract is unchanged by any of the assertions above (still
@@ -293,12 +334,12 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
-    public async Task Process_WithD8570Fixture_PersistsNonBlockingWarningArchiveRecordWithBothFiles()
+    public async Task Process_WithG4010AFixture_PersistsNonBlockingWarningArchiveRecordWithBothFiles()
     {
         var client = CreateAuthenticatedClient();
         var (importProfileId, exportProfileId) = await SeedProfilesAsync();
-        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx"));
-        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "D8570.xlsx");
+        using var sourceStream = File.OpenRead(FixturePath("Dossier de MaD IDL -  G4010A.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "G4010A.xlsx");
 
         var response = await client.PostAsync("/api/oxo/process", content);
         response.StatusCode.Should().Be(HttpStatusCode.OK);

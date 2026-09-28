@@ -299,4 +299,46 @@ public class ImportPipelineOrchestratorTests
 
         result.TachesMultiples.Should().ContainSingle().Which.ColonneTravaux.Should().BeEmpty();
     }
+
+    // Lot 085.4 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): two elements sharing a
+    // repère reject the whole file; only the duplicate entries are returned (D4).
+    [Fact]
+    public void Run_WhenTwoSheetsProduceTheSameRepere_RejectsTheFileWithOnlyTheDuplicateErrors()
+    {
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
+            .Returns(ValidProcedureResult());
+        SetupEmptyElementSheets();
+        SetupSheet("ISOLEMENT",
+            [new IsolementPivot("C7401-V4", "Vanne", "VANNE", "FERMÉE", "", sourceSheetName: "ISOLEMENT", ligneSource: 116)],
+            [new PointPivot("PROLOCK VANNES", "C7401-V4")]);
+        SetupSheet("DIVERS",
+            [new IsolementPivot("c7401-v4 ", "Purge", "ZERO ENERGIE", "", "", sourceSheetName: "DIVERS", ligneSource: 30)],
+            [],
+            [new ExtractionError("DIVERS", "c7401-v4 ", ExtractionErrorCode.NoConditionalPointCreated, "warning")]);
+
+        var result = _sut.Run(Mock.Of<IWorkbookReader>(), CreateProfile());
+
+        result.Equipement.Should().BeNull();
+        result.Isolements.Should().BeEmpty();
+        result.Points.Should().BeEmpty();
+        result.TachesMultiples.Should().BeEmpty();
+        result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier)).Should().Equal(
+            (ExtractionErrorCode.DuplicateRepere, "ISOLEMENT", "116"),
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "30"));
+    }
+
+    [Fact]
+    public void Run_WhenProcedureFails_TheDuplicateCheckNeverRuns()
+    {
+        _procedureService
+            .Setup(s => s.Extract(
+                It.IsAny<IWorkbookReader>(), It.IsAny<SheetExtractionRule>(), ReperePrefix, EquipementTypeElementNom))
+            .Returns(RejectedProcedureResult());
+
+        var result = _sut.Run(Mock.Of<IWorkbookReader>(), CreateProfile());
+
+        result.Errors.Should().ContainSingle().Which.Code.Should().Be(ExtractionErrorCode.RequiredFieldMissing);
+    }
 }

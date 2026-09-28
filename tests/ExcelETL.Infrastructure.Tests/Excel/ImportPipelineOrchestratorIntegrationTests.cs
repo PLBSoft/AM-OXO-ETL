@@ -169,27 +169,22 @@ public class ImportPipelineOrchestratorIntegrationTests
     }
 
     [Fact]
-    public void Run_D8570Fixture_ExtractsVanneIsolementAlongsideEverythingElse()
+    // Lot 085 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): D8570 holds three
+    // duplicated repères -- V4 (ISOLEMENT and DIVERS), V7 (twice in DIVERS) and PT1 (two different
+    // platines) -- so the whole file is rejected. Its VANNE warning is still covered at the ISOLEMENT
+    // sheet level (IsolementExtractionServiceIntegrationTests).
+    public void Run_D8570Fixture_IsRejectedForItsThreeDuplicatedReperes()
     {
         var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
-        result.Equipement.Should().NotBeNull();
-        result.Equipement!.Repere.Should().Be("644-D8570");
-        result.Equipement.Designation.Should().Be("Rév 0 du 11/09/2025");
-        result.Equipement.Localisation.Should().Be("ZONE 4");
-        result.Equipement.Tableaux.Should().Equal("TRAVAUX COMPLET", "TRAVAUX DETAIL");
-        result.Equipement.Applications.Should().Equal("PROGRESS");
-
-        // ISOLEMENT(15, incl. VANNE) + PLATINES(21) + ORIFICES CAPACITES(5) + AUTRES JOINTS TOUCHES(13) + DIVERS(13)
-        result.Isolements.Should().HaveCount(67);
-        result.Isolements.Should().OnlyContain(i => i.Localisation == "ZONE 4");
-        result.Isolements.Should().OnlyContain(i => i.RepereParent == "644-D8570");
-        result.TachesMultiples.Should().NotBeEmpty();
-        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
-
-        var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
-        result.Errors.Should().Contain(e =>
-            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == vanne.Repere);
+        result.Equipement.Should().BeNull();
+        result.Isolements.Should().BeEmpty();
+        result.Errors.Should().OnlyContain(e => e.Code == ExtractionErrorCode.DuplicateRepere);
+        result.Errors.Select(e => (e.ExtractedValue, e.Sheet)).Should().Equal(
+            ("D8570-V4", "ISOLEMENT"), ("D8570-V4", "DIVERS"),
+            ("D8570-PT1", "PLATINES"), ("D8570-PT1", "PLATINES"),
+            ("D8570-V7", "DIVERS"), ("D8570-V7", "DIVERS"));
+        result.Errors.Select(e => (e.Sheet, e.BlockIdentifier)).Should().OnlyHaveUniqueItems();
     }
 
     [Fact]

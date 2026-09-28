@@ -82,21 +82,37 @@ public class DefaultProfileSeederPipelineIntegrationTests
     }
 
     [Fact]
-    public async Task Run_D8570Fixture_WithSeededProfile_ExtractsVanneIsolementAlongsideEverythingElse()
+    // Lot 085 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): D8570 holds three
+    // duplicated repères, so the seeded profile rejects it with one entry per duplicated row.
+    public async Task Run_D8570Fixture_WithSeededProfile_IsRejectedWithOneEntryPerDuplicatedRow()
     {
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
         var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx", importProfile);
 
-        result.Equipement.Should().NotBeNull();
-        result.Equipement!.Repere.Should().Be("644-D8570");
+        result.Equipement.Should().BeNull();
+        result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier, e.ExtractedValue)).Should().Equal(
+            (ExtractionErrorCode.DuplicateRepere, "ISOLEMENT", "117", "D8570-V4"),
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "9", "D8570-V4"),
+            (ExtractionErrorCode.DuplicateRepere, "PLATINES", "17", "D8570-PT1"),
+            (ExtractionErrorCode.DuplicateRepere, "PLATINES", "177", "D8570-PT1"),
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "15", "D8570-V7"),
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "18", "D8570-V7"));
+    }
 
-        // ISOLEMENT(15, incl. VANNE) + PLATINES(21) + ORIFICES CAPACITES(5) + AUTRES JOINTS TOUCHES(13) + DIVERS(13)
-        result.Isolements.Should().HaveCount(67);
-        result.Errors.Should().NotContain(e => e.Code == ExtractionErrorCode.RequiredFieldMissing);
+    // Lot 085.5: the case of the request (LRSJ2M, same two DIVERS rows as this fixture).
+    [Fact]
+    public async Task Run_LRS4504Fixture_WithSeededProfile_IsRejectedForItsTwoDiversRows()
+    {
+        var (importProfile, _) = await SeedAndFetchProfilesAsync();
+        var result = RunOnFixture("Dossier de MaD IDL -  LRS4504.xlsx", importProfile);
 
-        var vanne = result.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
-        result.Errors.Should().Contain(e =>
-            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.BlockIdentifier == vanne.Repere);
+        result.Equipement.Should().BeNull();
+        result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier, e.ExtractedValue)).Should().Equal(
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "9", "LRS4504-LRS4504"),
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "12", "LRS4504-LRS4504"));
+        result.Errors.Should().OnlyContain(e => e.Message ==
+            "Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
+            "chaque élément doit avoir une identification unique.");
     }
 
     [Fact]
@@ -133,21 +149,9 @@ public class DefaultProfileSeederPipelineIntegrationTests
         result.Isolements.Should().HaveCount(23);
     }
 
-    [Fact]
-    public async Task Run_D8570Fixture_WithSeededProfile_ProducesExactlyTwoNoConditionalPointCreatedWarnings()
-    {
-        var (importProfile, _) = await SeedAndFetchProfilesAsync();
-        var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx", importProfile);
-
-        var warnings = result.Errors.Where(e => e.Code == ExtractionErrorCode.NoConditionalPointCreated).ToList();
-        warnings.Should().HaveCount(2).And.OnlyContain(e => e.Sheet == "ISOLEMENT");
-        warnings.Select(e => e.ExtractedValue).Should().BeEquivalentTo(["PROLOCK", "VANNE"]);
-
-        // AUTRES JOINTS TOUCHES' 13 TUYAUTERIE isolements and DIVERS' 13 ZERO ENERGIE ones all
-        // legitimately match their sheet's own conditional rule -- confirmed absent above via
-        // OnlyContain(Sheet == "ISOLEMENT").
-        result.Isolements.Should().HaveCount(67);
-    }
+    // Lot 085: the former D8570 case (PROLOCK + VANNE, two warnings on ISOLEMENT) can't run through the
+    // pipeline any more -- D8570 is rejected for duplicated repères. The same two deduplicated warnings
+    // stay covered at the ISOLEMENT sheet level (IsolementExtractionServiceIntegrationTests).
 
     [Fact]
     public async Task Run_G6306BFixture_WithSeededProfile_ProducesExactlyTwoNoConditionalPointCreatedWarnings()
@@ -435,10 +439,13 @@ public class DefaultProfileSeederPipelineIntegrationTests
     // at least one data row per sheet with unmapped identity columns genuinely empty, and at least one
     // Point column correctly aggregated (66.3) onto Parents from a child isolement.
     [Fact]
-    public async Task Generate_D8570Fixture_WithSeededProfiles_ProducesCompleteHeadersAndAggregatedPoints()
+    //
+    // Lot 085: D8570 is now rejected for duplicated repères; G4010A has the same shape for this test
+    // (MAD tasks only, one DIVERS "ZERO ENERGIE" row aggregated onto Parents).
+    public async Task Generate_G4010AFixture_WithSeededProfiles_ProducesCompleteHeadersAndAggregatedPoints()
     {
         var (importResult, reread, parentsRule, enfantsRule) =
-            await GenerateForFixtureAsync("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+            await GenerateForFixtureAsync("Dossier de MaD IDL -  G4010A.xlsx");
 
         var expectedParentsHeaders = ExpectedHeaders(parentsRule);
         var parents = reread.Worksheet("Parents");
@@ -446,11 +453,11 @@ public class DefaultProfileSeederPipelineIntegrationTests
 
         int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
         parents.RowsUsed().Should().HaveCount(2); // header + 1 Equipement row
-        parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("644-D8570");
+        parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("771-G4010A");
         parents.Cell(2, ParentsCol("LOC2")).GetString().Should().Be("");
         parents.Cell(2, ParentsCol("COMMENTAIRES")).GetString().Should().Be("");
 
-        // Lot 083: D8570 has MAD tasks only -- "PROCÉDURE REL" stays empty, the other 5 are ticked.
+        // Lot 083: G4010A has MAD tasks only -- "PROCÉDURE REL" stays empty, the other 5 are ticked.
         parents.Cell(2, ParentsCol("PROCÉDURE REL")).GetString().Should().Be("");
         foreach (var colonne in new[]
         {
@@ -461,7 +468,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
             parents.Cell(2, ParentsCol(colonne)).GetString().Should().Be("X", colonne);
         }
 
-        // DIVERS' 13 "ZERO ENERGIE" isolements now target the same "(PS941)" Colonne as ISOLEMENT
+        // DIVERS' "ZERO ENERGIE" isolement now targets the same "(PS941)" Colonne as ISOLEMENT
         // (66.1's merge) -- none of them is ISOLEMENT's own repère, so this column is marked on
         // Parents only via aggregation, not via a direct Equipement-attached Point.
         parents.Cell(2, ParentsCol("ZÉRO ENERGIE EN PRESENCE EE (PS941)")).GetString().Should().Be("X");

@@ -215,19 +215,20 @@ public class GenerationPipelineIntegrationTests
     }
 
     [Fact]
-    public void GenerateFromD8570Fixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
+    // Lot 085: D8570 is now rejected for duplicated repères; G4010A's warned "PROLOCK" isolement plays
+    // the same role (a non-blocking warning still lands as an ordinary row).
+    public void GenerateFromG4010AFixture_KeepsNoConditionalPointCreatedIsolementAsNormalRow()
     {
-        var (importResult, generated) = RunPipeline("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
+        var (importResult, generated) = RunPipeline("Dossier de MaD IDL -  G4010A.xlsx");
 
-        var vanne = importResult.Isolements.Should().ContainSingle(i => i.TypeElementNom == "VANNE").Which;
+        var warning = importResult.Errors.Should().ContainSingle(e =>
+            e.Code == ExtractionErrorCode.NoConditionalPointCreated && e.Sheet == "ISOLEMENT").Which;
 
-        // Repere alone isn't a safe lookup key here: it's composed independently per source sheet
-        // (K6:T6-Identification), so a different sheet's row can coincidentally share the same
-        // Identification and land on the same composed Repere text -- disambiguate on Type too.
         var enfants = generated.Worksheet("Enfants");
-        var vanneRow = enfants.RowsUsed()
-            .Should().ContainSingle(row => row.Cell(1).GetString() == vanne.Repere && row.Cell(2).GetString() == "VANNE").Which;
-        vanneRow.Cell(5).GetString().Should().Be("ZONE 4");
+        var warnedRow = enfants.RowsUsed()
+            .Should().ContainSingle(row => row.Cell(1).GetString() == warning.BlockIdentifier).Which;
+        warnedRow.Cell(2).GetString().Should().Be("PROLOCK");
+        warnedRow.Cell(5).GetString().Should().Be("ZONE 4");
     }
 
     [Fact]
