@@ -267,4 +267,34 @@ public class EfGeneratedFileArchiveStoreTests
         summary.Count.Should().Be(3);
         summary.MostRecentGeneratedAtUtc.Should().Be(newest.GeneratedAtUtc);
     }
+    [Fact]
+    public async Task GetActivitySinceAsync_WithNoRecords_ReturnsEmptyList()
+    {
+        var store = CreateStore();
+
+        var activity = await store.GetActivitySinceAsync(new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        activity.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetActivitySinceAsync_ReturnsOnlyRecordsFromTheGivenInstant_WithTheirDateAndStatus()
+    {
+        var store = CreateStore();
+        var fromUtc = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc);
+        var before = CreateRecord(fromUtc.AddTicks(-1));
+        var atBoundary = CreateRecord(fromUtc, status: GeneratedFileArchiveStatus.Rejected);
+        var after = CreateRecord(fromUtc.AddDays(3), status: GeneratedFileArchiveStatus.NonBlockingWarning);
+        await store.SaveAsync(before);
+        await store.SaveAsync(atBoundary);
+        await store.SaveAsync(after);
+
+        var activity = await store.GetActivitySinceAsync(fromUtc);
+
+        activity.Should().BeEquivalentTo(
+        [
+            new GeneratedFileActivityEntry(atBoundary.GeneratedAtUtc, GeneratedFileArchiveStatus.Rejected),
+            new GeneratedFileActivityEntry(after.GeneratedAtUtc, GeneratedFileArchiveStatus.NonBlockingWarning),
+        ]);
+    }
 }

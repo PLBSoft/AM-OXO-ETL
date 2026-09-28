@@ -18,4 +18,9 @@ public interface IGeneratedFileArchiveStore
     // volume grows unboundedly (no purge policy). Implemented as a real SQL aggregate in
     // Infrastructure, never as an in-memory LINQ query over every row.
     Task<GeneratedFileArchiveSummary> GetSummaryAsync(CancellationToken cancellationToken = default);
+
+    // Lot 088 (088.1): date and status of every file archived from fromUtc (inclusive) onwards,
+    // projected in SQL -- the home page groups them into days itself, in the browser's time zone.
+    Task<IReadOnlyList<GeneratedFileActivityEntry>> GetActivitySinceAsync(
+        DateTime fromUtc, CancellationToken cancellationToken = default);
 }

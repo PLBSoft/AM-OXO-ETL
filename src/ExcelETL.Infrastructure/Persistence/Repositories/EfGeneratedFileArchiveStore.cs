@@ -57,4 +57,16 @@ public class EfGeneratedFileArchiveStore(IDbContextFactory<ExcelEtlDbContext> db
 
         return new GeneratedFileArchiveSummary(count, mostRecent);
     }
+
+    // Lot 088 (088.1): filtered and projected in SQL -- only the two columns the home page needs,
+    // over a bounded window, never every full row (same reasoning as GetSummaryAsync above).
+    public async Task<IReadOnlyList<GeneratedFileActivityEntry>> GetActivitySinceAsync(
+        DateTime fromUtc, CancellationToken cancellationToken = default)
+    {
+        await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.GeneratedFileRecords
+            .Where(r => r.GeneratedAtUtc >= fromUtc)
+            .Select(r => new GeneratedFileActivityEntry(r.GeneratedAtUtc, r.Status))
+            .ToListAsync(cancellationToken);
+    }
 }
