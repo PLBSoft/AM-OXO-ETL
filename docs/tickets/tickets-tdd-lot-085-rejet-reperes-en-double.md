@@ -3,7 +3,7 @@
 *Document vivant (pas de suffixe de date, voir `convention-nommage-documents.md`). Ouvert le 28/09 à partir
 de la demande de l'équipe AlphaMaintenance « Rejeter les repères d'isolement en double dans
 `POST /api/oxo/process` » (fichier reçu hors dépôt, résumé en §0). Investigation faite sans rien
-implémenter. **Les décisions du §3 sont à valider avant 085.1 ; D0 bloque tout le lot.***
+implémenter. **Décisions du §3 validées par Simon le 28/09 (D0 = A, D1-D7 comme proposé).***
 
 ---
 
@@ -115,11 +115,11 @@ dossiers D8570, E6431A, LRS4504 et RANGEE N°1, tels quels, seront refusés.
 
 ---
 
-## 3. Décisions (proposées, à valider)
+## 3. Décisions (validées par Simon le 28/09)
 
 | # | Question | Proposition |
 | :--- | :--- | :--- |
-| D0 | Rejet, fusion partielle ou fusion (§2) ? | A, rejet de tout doublon |
+| D0 | Rejet, fusion partielle ou fusion (§2) ? | **A, rejet de tout doublon** (validé) |
 | D1 | Nom du code | `ExtractionErrorCode.DuplicateRepere` |
 | D2 | Comparaison | `Trim` + `OrdinalIgnoreCase` (même effet que `Trim().ToLower()` côté AlphaMaintenance, sans dépendre de la culture) |
 | D3 | Contenu d'une entrée | `Sheet` = feuille de la ligne ; `BlockIdentifier` = ligne Excel de début de bloc (comme `RequiredFieldMissing`) ; `ExtractedValue` = le repère tel que généré pour cette ligne ; `Message` = « Repère « LRS4504-LRS4504 » en double (DIVERS ligne 18, DIVERS ligne 21) : chaque élément doit avoir une identification unique. », la liste citant toutes les lignes du groupe dans l'ordre de traitement |

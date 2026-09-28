@@ -29,6 +29,17 @@ public class ExtractionErrorTests
         error.ExtractedValue.Should().Be("PROLOCK");
     }
 
+    // Lot 085.1: blocking code for two elements of one file sharing the same generated repère.
+    [Fact]
+    public void Constructor_WithDuplicateRepereCode_KeepsTheDuplicatedRepereAsExtractedValue()
+    {
+        var error = new ExtractionError(
+            "DIVERS", "18", ExtractionErrorCode.DuplicateRepere, "Message", extractedValue: "LRS4504-LRS4504");
+
+        error.Code.Should().Be(ExtractionErrorCode.DuplicateRepere);
+        error.ExtractedValue.Should().Be("LRS4504-LRS4504");
+    }
+
     [Fact]
     public void Constructor_WithSameArguments_ProducesStructurallyEqualInstances()
     {

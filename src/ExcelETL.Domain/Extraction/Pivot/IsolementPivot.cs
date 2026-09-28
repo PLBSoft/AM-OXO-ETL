@@ -42,9 +42,14 @@ public sealed record IsolementPivot
     // construction time too -- the extraction service has the SheetExtractionRule.SheetName in hand.
     public string SourceSheetName { get; }
 
+    // Lot 085 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): Excel start row of the
+    // element's block, 0 when unknown. The duplicate-repère check runs after every sheet is aggregated
+    // and needs it to name each duplicated row.
+    public int LigneSource { get; }
+
     public IsolementPivot(
         string repere, string designation, string typeElementNom, string positionALaPose, string localisation,
-        string couleurEtiquette = "", string sourceSheetName = "")
+        string couleurEtiquette = "", string sourceSheetName = "", int ligneSource = 0)
     {
         if (string.IsNullOrWhiteSpace(repere))
         {
@@ -69,6 +74,7 @@ public sealed record IsolementPivot
         RepereParent = "";
         CouleurEtiquette = couleurEtiquette;
         SourceSheetName = sourceSheetName;
+        LigneSource = ligneSource;
     }
 
     // Tableaux/Applications are IReadOnlyList<string> -- default record equality compares collection
@@ -85,7 +91,8 @@ public sealed record IsolementPivot
         && Applications.SequenceEqual(other.Applications)
         && RepereParent == other.RepereParent
         && CouleurEtiquette == other.CouleurEtiquette
-        && SourceSheetName == other.SourceSheetName;
+        && SourceSheetName == other.SourceSheetName
+        && LigneSource == other.LigneSource;
 
     public override int GetHashCode()
     {
@@ -98,6 +105,7 @@ public sealed record IsolementPivot
         hash.Add(RepereParent);
         hash.Add(CouleurEtiquette);
         hash.Add(SourceSheetName);
+        hash.Add(LigneSource);
         foreach (var tableau in Tableaux)
         {
             hash.Add(tableau);

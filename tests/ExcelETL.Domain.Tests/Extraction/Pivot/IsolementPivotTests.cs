@@ -45,6 +45,35 @@ public class IsolementPivotTests
         first.GetHashCode().Should().NotBe(second.GetHashCode());
     }
 
+    // Lot 085.1: the element keeps the Excel row of its block, so a cross-sheet check (duplicate
+    // repères) can still name the row once every sheet's elements are aggregated.
+    [Fact]
+    public void Constructor_WithoutLigneSource_DefaultsToZero()
+    {
+        var isolement = new IsolementPivot("C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", "Zone A");
+
+        isolement.LigneSource.Should().Be(0);
+    }
+
+    [Fact]
+    public void Constructor_WithLigneSource_SetsIt()
+    {
+        var isolement = new IsolementPivot(
+            "C7401-ISO1", "Vanne principale", "ZERO ENERGIE", "FERMÉE", "Zone A", ligneSource: 18);
+
+        isolement.LigneSource.Should().Be(18);
+    }
+
+    [Fact]
+    public void Equals_WithDifferentLigneSource_AreNotStructurallyEqual()
+    {
+        var first = new IsolementPivot("C7401-ISO1", "Vanne", "ZERO ENERGIE", "FERMÉE", "Zone A", ligneSource: 18);
+        var second = new IsolementPivot("C7401-ISO1", "Vanne", "ZERO ENERGIE", "FERMÉE", "Zone A", ligneSource: 21);
+
+        first.Should().NotBe(second);
+        first.GetHashCode().Should().NotBe(second.GetHashCode());
+    }
+
     [Fact]
     public void Constructor_WithCouleurEtiquette_AssignsProperty()
     {

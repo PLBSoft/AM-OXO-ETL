@@ -9,5 +9,9 @@ public enum ExtractionErrorCode
     UnparsableValue,
     NoConditionalPointCreated,
     TacheMultipleTypeMismatch,
-    UnexpectedCouleurEtiquetteValue
+    UnexpectedCouleurEtiquetteValue,
+
+    // Lot 085: two elements of one file share the same generated repère (trimmed, case-insensitive).
+    // Blocking: the whole file is rejected.
+    DuplicateRepere
 }
