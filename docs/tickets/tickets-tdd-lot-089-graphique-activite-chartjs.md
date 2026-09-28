@@ -160,4 +160,5 @@ appliquées telles que proposées.
 - Clé supprimée : `Home_ActivityBarTooltip` (plus utilisée). Clés ajoutées : `Home_ActivityTotalSingular` /
   `Home_ActivityTotalPlural` (EN/FR réels).
 - `ExcelETL.BlazorAdmin.Tests` : 1661/1661.
-- **Non vérifié dans un vrai navigateur** : les quatre points du §5 restent à contrôler après publication.
+- **Publié et validé par Simon sur le site le 28/09** (« beaucoup mieux ») : le rendu Chart.js remplace le
+  graphique SVG jugé basique du lot 088.
