@@ -22,4 +22,10 @@ public interface ILocalTimeFormatter
     /// list of values (e.g. every row of a table), rather than one call per row.
     /// </summary>
     Task<IReadOnlyList<string>> FormatManyAsync(IReadOnlyList<DateTime> utcValues, string pattern);
+
+    /// <summary>
+    /// Lot 088 (088.4): the browser's own IANA time-zone id (e.g. <c>Pacific/Noumea</c>), or
+    /// <c>null</c> if it doesn't report one. Resolve it with <see cref="BrowserTimeZoneResolver"/>.
+    /// </summary>
+    Task<string?> GetBrowserTimeZoneIdAsync();
 }

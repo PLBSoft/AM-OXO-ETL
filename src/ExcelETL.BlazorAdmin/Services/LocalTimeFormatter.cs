@@ -14,6 +14,9 @@ public sealed class LocalTimeFormatter(IJSRuntime jsRuntime) : ILocalTimeFormatt
         return formatted;
     }
 
+    public Task<string?> GetBrowserTimeZoneIdAsync() =>
+        jsRuntime.InvokeAsync<string?>("amOxoLocalTime.timeZone").AsTask();
+
     // EF Core/plain-DateTime values arriving here are typically DateTimeKind.Unspecified even
     // though they are already known to hold UTC -- "o" only appends the "Z" suffix (required for
     // the browser's `new Date(...)` to interpret the string as UTC rather than local time) when

@@ -39,5 +39,11 @@ window.amOxoLocalTime = (function () {
         });
     }
 
-    return { format: format, formatMany: formatMany };
+    // Lot 088: the browser's own IANA time-zone id (e.g. "Pacific/Noumea"), resolved server-side
+    // by BrowserTimeZoneResolver to group files into the viewer's local days.
+    function timeZone() {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+    }
+
+    return { format: format, formatMany: formatMany, timeZone: timeZone };
 })();

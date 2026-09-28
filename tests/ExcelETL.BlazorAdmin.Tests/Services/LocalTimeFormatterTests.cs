@@ -69,4 +69,19 @@ public class LocalTimeFormatterTests
         jsRuntimeMock.Verify(
             js => js.InvokeAsync<string[]>("amOxoLocalTime.formatMany", It.IsAny<object[]>()), Times.Once);
     }
+
+    [Fact]
+    public async Task GetBrowserTimeZoneIdAsync_InvokesTheExpectedJsFunction_AndReturnsItsResult()
+    {
+        var jsRuntimeMock = new Mock<IJSRuntime>();
+        jsRuntimeMock
+            .Setup(js => js.InvokeAsync<string?>("amOxoLocalTime.timeZone", It.IsAny<object[]>()))
+            .Returns(new ValueTask<string?>("Pacific/Noumea"));
+
+        var formatter = new LocalTimeFormatter(jsRuntimeMock.Object);
+
+        var result = await formatter.GetBrowserTimeZoneIdAsync();
+
+        result.Should().Be("Pacific/Noumea");
+    }
 }
