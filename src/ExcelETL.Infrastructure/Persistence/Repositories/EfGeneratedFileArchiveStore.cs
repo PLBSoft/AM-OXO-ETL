@@ -52,8 +52,11 @@ public class EfGeneratedFileArchiveStore(IDbContextFactory<ExcelEtlDbContext> db
         await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         var count = await context.GeneratedFileRecords.CountAsync(cancellationToken);
         var mostRecent = count == 0
-            ? (DateTime?)null
-            : await context.GeneratedFileRecords.MaxAsync(r => r.GeneratedAtUtc, cancellationToken);
+            ? null
+            : await context.GeneratedFileRecords
+                .OrderByDescending(r => r.GeneratedAtUtc)
+                .Select(r => new LastGeneratedFile(r.GeneratedAtUtc, r.EquipementRepere, r.Username, r.Status))
+                .FirstOrDefaultAsync(cancellationToken);
 
         return new GeneratedFileArchiveSummary(count, mostRecent);
     }

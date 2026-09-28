@@ -59,9 +59,16 @@ public class HomeTests : BunitContext
         new(
             HomeIndicatorValue<int>.Known(importProfileCount),
             HomeIndicatorValue<int>.Known(exportProfileCount),
-            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc)),
+            HomeIndicatorValue<LastGeneratedFile?>.Known(LastGeneration(new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc))),
             HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known(
                 recentActivity ?? RecentActivity(success: 9, warning: 2, rejected: 1)));
+
+    private static LastGeneratedFile LastGeneration(
+        DateTime generatedAtUtc,
+        string? equipementRepere = "38-C7401",
+        string? username = "SLB",
+        GeneratedFileArchiveStatus status = GeneratedFileArchiveStatus.NonBlockingWarning) =>
+        new(generatedAtUtc, equipementRepere, username, status);
 
     // Every entry at noon UTC, two days ago: well inside the 30 local days whatever the time zone.
     private static IReadOnlyList<GeneratedFileActivityEntry> RecentActivity(int success, int warning, int rejected) =>
@@ -122,7 +129,7 @@ public class HomeTests : BunitContext
         var indicators = new HomeIndicators(
             HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<int>.Known(0),
-            HomeIndicatorValue<DateTime?>.Absent(),
+            HomeIndicatorValue<LastGeneratedFile?>.Absent(),
             HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
 
@@ -148,17 +155,77 @@ public class HomeTests : BunitContext
         cut.Find("#home-kpi-import-profiles").GetAttribute("href").Should().Be("import-profiles");
         cut.Find("#home-kpi-export-profiles").GetAttribute("href").Should().Be("export-profiles");
         cut.Find("#home-kpi-generated-files").GetAttribute("href").Should().Be("generated-files");
+        cut.Find("#home-kpi-last-generation").GetAttribute("href").Should().Be("generated-files");
     }
 
     [Fact]
-    public void LastGenerationTile_IsNotALink()
+    public void LastGenerationTile_IsALinkToTheGeneratedFilesPage()
     {
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
 
         var cut = Render<Home>();
         cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
 
-        cut.Find("#home-kpi-last-generation").TagName.Should().NotBe("A");
+        var tile = cut.Find("#home-kpi-last-generation");
+        tile.TagName.Should().Be("A");
+        tile.GetAttribute("href").Should().Be("generated-files");
+    }
+
+    [Fact]
+    public void LastGenerationTile_ShowsRepereUsernameAndStatus()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("fr-FR");
+        try
+        {
+            var cut = Render<Home>();
+            cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
+
+            cut.Find("#home-kpi-last-generation-repere").TextContent.Should().Be("38-C7401");
+            cut.Find("#home-kpi-last-generation-username").TextContent.Should().Be("SLB");
+            var status = cut.Find("#home-kpi-last-generation-status");
+            status.TextContent.Should().Be("Avertissement");
+            status.ClassList.Should().Contain("bg-warning");
+            cut.Find("#home-kpi-last-generation").TextContent.Should().Contain("Utilisateur :");
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    [Fact]
+    public void LastGenerationTile_RejectedFileWithoutRepereOrUser_ShowsDashes_AndARejectedBadge()
+    {
+        var indicators = KnownIndicators() with
+        {
+            LastGeneration = HomeIndicatorValue<LastGeneratedFile?>.Known(LastGeneration(
+                new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc),
+                equipementRepere: null, username: null, status: GeneratedFileArchiveStatus.Rejected)),
+        };
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
+
+        cut.Find("#home-kpi-last-generation-repere").TextContent.Should().Be("—");
+        cut.Find("#home-kpi-last-generation-username").TextContent.Should().Be("—");
+        cut.Find("#home-kpi-last-generation-status").ClassList.Should().Contain("bg-danger");
+    }
+
+    [Fact]
+    public void LastGenerationTile_WithoutAnyGeneratedFile_ShowsNoDetails()
+    {
+        var indicators = KnownIndicators() with { LastGeneration = HomeIndicatorValue<LastGeneratedFile?>.Absent() };
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
+
+        cut.FindAll("#home-kpi-last-generation-repere").Should().BeEmpty();
+        cut.FindAll("#home-kpi-last-generation-status").Should().BeEmpty();
     }
 
     [Fact]
@@ -167,7 +234,7 @@ public class HomeTests : BunitContext
         var indicators = new HomeIndicators(
             HomeIndicatorValue<int>.Known(3),
             HomeIndicatorValue<int>.Unavailable(),
-            HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc)),
+            HomeIndicatorValue<LastGeneratedFile?>.Known(LastGeneration(new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc))),
             HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known(RecentActivity(9, 2, 1)));
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
 
@@ -382,6 +449,7 @@ public class HomeTests : BunitContext
         cut.Find("#home-kpi-generated-files-warning").TextContent.Should().Contain("2");
         cut.Find("#home-kpi-generated-files-rejected").TextContent.Should().Contain("1");
         cut.Find("#home-kpi-generated-files").GetAttribute("href").Should().Be("generated-files");
+        cut.Find("#home-kpi-last-generation").GetAttribute("href").Should().Be("generated-files");
     }
 
     [Fact]

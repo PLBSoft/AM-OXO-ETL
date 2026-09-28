@@ -2,6 +2,7 @@
 @attribute [Authorize]
 
 @using ExcelETL.Application.Home
+@using ExcelETL.Domain.Archiving
 @using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.BlazorAdmin.Shared
 @using Microsoft.AspNetCore.Authorization
@@ -137,30 +138,48 @@ else
             </a>
         </div>
 
-        <!-- Not a link, per the ticket's own explicit spec (a date is not a navigable destination). -->
+        <!-- Links to the archive page (client request, 28/09), like the "30 derniers jours" tile. The
+             repère, user and status of the most recent file are read with its date (one query). -->
         <div class="col-12 col-sm-6 col-lg-3">
-            <div id="home-kpi-last-generation" class="card h-100">
+            <a id="home-kpi-last-generation" class="card h-100 text-decoration-none text-body" href="generated-files">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         @((MarkupString)AdminIconMarkup.Clock)
                         <span id="home-kpi-last-generation-label" class="text-muted">@Loc["Home_LastGenerationLabel"]</span>
                     </div>
                     <p class="fs-4 mb-0" id="home-kpi-last-generation-value" aria-labelledby="home-kpi-last-generation-label">
-                        @if (_indicators.LastGenerationAtUtc.State == HomeIndicatorState.Unavailable)
+                        @if (_indicators.LastGeneration.State == HomeIndicatorState.Unavailable)
                         {
                             <span class="text-danger">@Loc["Home_IndicatorUnavailable"]</span>
                         }
-                        else if (_indicators.LastGenerationAtUtc.Value is { } lastGenerationAtUtc)
+                        else if (_indicators.LastGeneration.Value is { } lastGeneration)
                         {
-                            @LocalTimestampOrFallback(lastGenerationAtUtc)
+                            @LocalTimestampOrFallback(lastGeneration.GeneratedAtUtc)
                         }
                         else
                         {
                             <span>@Loc["Home_NoGeneration"]</span>
                         }
                     </p>
+                    @if (_indicators.LastGeneration.Value is { } details)
+                    {
+                        <dl class="small mb-0 mt-2">
+                            <div class="d-flex gap-1">
+                                <dt class="fw-normal text-muted">@Loc["Home_LastGenerationDetailLabel", Loc["GeneratedFiles_EquipementRepereColumn"]]</dt>
+                                <dd id="home-kpi-last-generation-repere" class="mb-0 text-break">@(details.EquipementRepere ?? "—")</dd>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <dt class="fw-normal text-muted">@Loc["Home_LastGenerationDetailLabel", Loc["GeneratedFiles_UsernameColumn"]]</dt>
+                                <dd id="home-kpi-last-generation-username" class="mb-0 text-break">@(details.Username ?? "—")</dd>
+                            </div>
+                            <div class="d-flex gap-1 align-items-center">
+                                <dt class="fw-normal text-muted">@Loc["Home_LastGenerationDetailLabel", Loc["GeneratedFiles_StatusColumn"]]</dt>
+                                <dd class="mb-0"><span id="home-kpi-last-generation-status" class="badge @GetStatusBadgeClass(details.Status)">@GetStatusLabel(details.Status)</span></dd>
+                            </div>
+                        </dl>
+                    }
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
@@ -264,7 +283,7 @@ else
             }
         }
 
-        if (_indicators?.LastGenerationAtUtc.Value is { } lastGenerationAtUtc
+        if (_indicators?.LastGeneration.Value?.GeneratedAtUtc is { } lastGenerationAtUtc
             && _localLastGenerationComputedFor != lastGenerationAtUtc)
         {
             _localLastGenerationTimestamp = await LocalTimeFormatter.FormatAsync(lastGenerationAtUtc, LastGenerationTimestampPattern);
@@ -300,6 +319,23 @@ else
         _recentDays = _indicators?.RecentActivity is { State: HomeIndicatorState.Known, Value: { } entries }
             ? GenerationActivityBuilder.Build(entries, _timeZone, TimeProvider.GetUtcNow().UtcDateTime)
             : null;
+
+    // Same badge colours and labels as GeneratedFiles.razor, so a status reads the same on both pages.
+    private static string GetStatusBadgeClass(GeneratedFileArchiveStatus status) => status switch
+    {
+        GeneratedFileArchiveStatus.Success => "bg-success",
+        GeneratedFileArchiveStatus.NonBlockingWarning => "bg-warning text-dark",
+        GeneratedFileArchiveStatus.Rejected => "bg-danger",
+        _ => "bg-secondary",
+    };
+
+    private string GetStatusLabel(GeneratedFileArchiveStatus status) => status switch
+    {
+        GeneratedFileArchiveStatus.Success => Loc["GeneratedFiles_StatusSuccess"],
+        GeneratedFileArchiveStatus.NonBlockingWarning => Loc["GeneratedFiles_StatusNonBlockingWarning"],
+        GeneratedFileArchiveStatus.Rejected => Loc["GeneratedFiles_StatusRejected"],
+        _ => status.ToString(),
+    };
 
     private string LocalTimestampOrFallback(DateTime lastGenerationAtUtc) =>
         _localLastGenerationComputedFor == lastGenerationAtUtc && _localLastGenerationTimestamp is not null

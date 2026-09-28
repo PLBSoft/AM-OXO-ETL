@@ -39,6 +39,9 @@ public class HomeIndicatorsServiceTests
         public override DateTimeOffset GetUtcNow() => new(utcNow);
     }
 
+    private static LastGeneratedFile Last(DateTime generatedAtUtc) =>
+        new(generatedAtUtc, "38-C7401", "SLB", GeneratedFileArchiveStatus.Success);
+
     private static ImportProfile CreateImportProfile()
     {
         var locator = new RepeatingBlockLocator(
@@ -63,7 +66,7 @@ public class HomeIndicatorsServiceTests
             .ReturnsAsync([CreateExportProfile()]);
         var mostRecent = new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc);
         _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GeneratedFileArchiveSummary(5, mostRecent));
+            .ReturnsAsync(new GeneratedFileArchiveSummary(5, Last(mostRecent)));
 
         var indicators = await CreateService().GetIndicatorsAsync();
 
@@ -71,8 +74,8 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.Value.Should().Be(2);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(1);
-        indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Known);
-        indicators.LastGenerationAtUtc.Value.Should().Be(mostRecent);
+        indicators.LastGeneration.State.Should().Be(HomeIndicatorState.Known);
+        indicators.LastGeneration.Value.Should().Be(Last(mostRecent));
     }
 
     [Fact]
@@ -89,8 +92,8 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.Value.Should().Be(0);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(0);
-        indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Absent);
-        indicators.LastGenerationAtUtc.Value.Should().BeNull();
+        indicators.LastGeneration.State.Should().Be(HomeIndicatorState.Absent);
+        indicators.LastGeneration.Value.Should().BeNull();
     }
 
     [Fact]
@@ -100,14 +103,14 @@ public class HomeIndicatorsServiceTests
             .ThrowsAsync(new InvalidOperationException("boom"));
         _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateExportProfile()]);
         _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GeneratedFileArchiveSummary(3, DateTime.UtcNow));
+            .ReturnsAsync(new GeneratedFileArchiveSummary(3, Last(DateTime.UtcNow)));
 
         var indicators = await CreateService().GetIndicatorsAsync();
 
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Unavailable);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(1);
-        indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Known);
+        indicators.LastGeneration.State.Should().Be(HomeIndicatorState.Known);
     }
 
     [Fact]
@@ -124,7 +127,7 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ImportProfileCount.Value.Should().Be(1);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Unavailable);
-        indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Absent);
+        indicators.LastGeneration.State.Should().Be(HomeIndicatorState.Absent);
     }
 
     [Fact]
@@ -139,7 +142,7 @@ public class HomeIndicatorsServiceTests
 
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Unavailable);
+        indicators.LastGeneration.State.Should().Be(HomeIndicatorState.Unavailable);
     }
 
     [Fact]
@@ -152,11 +155,11 @@ public class HomeIndicatorsServiceTests
         _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([]);
         var actualMostRecent = new DateTime(2026, 7, 20, 8, 0, 0, DateTimeKind.Utc);
         _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GeneratedFileArchiveSummary(4, actualMostRecent));
+            .ReturnsAsync(new GeneratedFileArchiveSummary(4, Last(actualMostRecent)));
 
         var indicators = await CreateService().GetIndicatorsAsync();
 
-        indicators.LastGenerationAtUtc.Value.Should().Be(actualMostRecent);
+        indicators.LastGeneration.Value!.GeneratedAtUtc.Should().Be(actualMostRecent);
     }
     [Fact]
     public async Task GetIndicatorsAsync_ReadsRecentActivityOverThirtyDaysPlusOneDayOfMargin_AndReturnsItAsKnown()
@@ -191,7 +194,7 @@ public class HomeIndicatorsServiceTests
         _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateExportProfile()]);
         var mostRecent = new DateTime(2026, 9, 27, 10, 0, 0, DateTimeKind.Utc);
         _generatedFileArchiveStore.Setup(s => s.GetSummaryAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new GeneratedFileArchiveSummary(4, mostRecent));
+            .ReturnsAsync(new GeneratedFileArchiveSummary(4, Last(mostRecent)));
         _generatedFileArchiveStore
             .Setup(s => s.GetActivitySinceAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("boom"));
@@ -201,6 +204,6 @@ public class HomeIndicatorsServiceTests
         indicators.RecentActivity.State.Should().Be(HomeIndicatorState.Unavailable);
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.LastGenerationAtUtc.Value.Should().Be(mostRecent);
+        indicators.LastGeneration.Value!.GeneratedAtUtc.Should().Be(mostRecent);
     }
 }

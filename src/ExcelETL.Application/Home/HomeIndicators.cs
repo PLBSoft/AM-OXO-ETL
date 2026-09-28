@@ -10,5 +10,5 @@ namespace ExcelETL.Application.Home;
 public sealed record HomeIndicators(
     HomeIndicatorValue<int> ImportProfileCount,
     HomeIndicatorValue<int> ExportProfileCount,
-    HomeIndicatorValue<DateTime?> LastGenerationAtUtc,
+    HomeIndicatorValue<LastGeneratedFile?> LastGeneration,
     HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>> RecentActivity);

@@ -30,11 +30,11 @@ public class HomeIndicatorsService(
             "generated file summary",
             () => generatedFileArchiveStore.GetSummaryAsync(cancellationToken));
 
-        var lastGenerationAtUtc = summary.State == HomeIndicatorState.Unavailable
-            ? HomeIndicatorValue<DateTime?>.Unavailable()
-            : summary.Value!.MostRecentGeneratedAtUtc is { } mostRecent
-                ? HomeIndicatorValue<DateTime?>.Known(mostRecent)
-                : HomeIndicatorValue<DateTime?>.Absent();
+        var lastGeneration = summary.State == HomeIndicatorState.Unavailable
+            ? HomeIndicatorValue<LastGeneratedFile?>.Unavailable()
+            : summary.Value!.MostRecent is { } mostRecent
+                ? HomeIndicatorValue<LastGeneratedFile?>.Known(mostRecent)
+                : HomeIndicatorValue<LastGeneratedFile?>.Absent();
 
         // Lot 088 (088.3): one day beyond the displayed ones covers any browser time-zone offset
         // (up to 14 h); GenerationActivityBuilder drops what falls outside the local days afterwards.
@@ -45,7 +45,7 @@ public class HomeIndicatorsService(
             () => generatedFileArchiveStore.GetActivitySinceAsync(recentActivityFromUtc, cancellationToken));
 
         return new HomeIndicators(
-            importProfileCount, exportProfileCount, lastGenerationAtUtc, recentActivity);
+            importProfileCount, exportProfileCount, lastGeneration, recentActivity);
     }
 
     private async Task<int> ReadImportProfileCountAsync(CancellationToken cancellationToken) =>

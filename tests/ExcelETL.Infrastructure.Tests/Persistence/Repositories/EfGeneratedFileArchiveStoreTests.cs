@@ -247,6 +247,7 @@ public class EfGeneratedFileArchiveStoreTests
 
         summary.Count.Should().Be(0);
         summary.MostRecentGeneratedAtUtc.Should().BeNull();
+        summary.MostRecent.Should().BeNull();
     }
 
     [Fact]
@@ -266,6 +267,43 @@ public class EfGeneratedFileArchiveStoreTests
 
         summary.Count.Should().Be(3);
         summary.MostRecentGeneratedAtUtc.Should().Be(newest.GeneratedAtUtc);
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_MostRecent_CarriesTheNewestRecordsRepereUsernameAndStatus()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateRecord(
+            new DateTime(2026, 9, 27, 8, 0, 0, DateTimeKind.Utc), equipementRepere: "OLD", username: "OLDUSER"));
+        await store.SaveAsync(CreateRecord(
+            new DateTime(2026, 9, 28, 8, 0, 0, DateTimeKind.Utc),
+            equipementRepere: "38-C7401",
+            status: GeneratedFileArchiveStatus.NonBlockingWarning,
+            username: "SLB"));
+
+        var summary = await store.GetSummaryAsync();
+
+        summary.MostRecent.Should().Be(new LastGeneratedFile(
+            new DateTime(2026, 9, 28, 8, 0, 0, DateTimeKind.Utc), "38-C7401", "SLB",
+            GeneratedFileArchiveStatus.NonBlockingWarning));
+    }
+
+    [Fact]
+    public async Task GetSummaryAsync_MostRecentRejectedFile_HasNoRepereAndNoUsername()
+    {
+        var store = CreateStore();
+        await store.SaveAsync(CreateRecord(
+            new DateTime(2026, 9, 28, 8, 0, 0, DateTimeKind.Utc),
+            equipementRepere: null,
+            status: GeneratedFileArchiveStatus.Rejected,
+            targetFileName: null,
+            targetFilePath: null));
+
+        var summary = await store.GetSummaryAsync();
+
+        summary.MostRecent!.EquipementRepere.Should().BeNull();
+        summary.MostRecent.Username.Should().BeNull();
+        summary.MostRecent.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
     }
     [Fact]
     public async Task GetActivitySinceAsync_WithNoRecords_ReturnsEmptyList()
