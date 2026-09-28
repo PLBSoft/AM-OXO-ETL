@@ -201,3 +201,22 @@ Un commit par ticket. Tests filtrés sur la classe en cours ; en fin de lot, les
 - Filtre par statut sur `/generated-files` (le lien de la tuile ouvre la liste complète).
 - Rafraîchissement automatique de la page.
 - Suppression de `GeneratedFileArchiveSummary.Count` (encore utilisé par ses tests, sans coût).
+
+---
+
+## 7. Résultat (28/09)
+
+Fait en un commit par ticket (088.1 → 088.7), chaque test vu en échec avant son code (pour 088.5, les
+deux comportements clés — regroupement dans le fuseau du navigateur, rouge seulement s'il y a un rejet —
+ont été vérifiés en réintroduisant le défaut : les tests échouent).
+
+- Écart assumé : `GeneratedFileCount` retiré au 088.5 plutôt qu'au 088.3 (voir 088.3).
+- Clés de traduction : pluriel français de « rejeté » géré par deux clés
+  (`Home_RecentActivityRejectedSingular`/`Plural`) ; l'infobulle et le résumé accessible gardent « (s) ».
+- Graphique : SVG à l'échelle de la carte, plafonné à 900 px de large ; libellés des axes agrandis sous
+  576 px pour rester lisibles sur téléphone ; valeur maximale ancrée par le haut pour ne pas être coupée.
+- Suites complètes : Application 291 / Infrastructure 294 / BlazorAdmin 1643 / WebAPI 78, all green.
+- Non fait : le validateur de palette de la compétence dataviz demande Node, absent de ce poste (le
+  contraste de l'orange était déjà connu et accepté, D5).
+- **Non vérifié dans un vrai navigateur** : taille réelle du graphique, lisibilité des libellés sur
+  téléphone, thème sombre, infobulles au survol.
