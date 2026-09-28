@@ -144,3 +144,20 @@ Le rendu d'un canvas n'est pas vérifiable par les tests. À contrôler par Simo
 - redimensionnement de la fenêtre : le graphique suit la largeur, les textes gardent leur taille ;
 - bascule thème clair/sombre : couleurs mises à jour sans recharger ;
 - clic sur un statut de la légende : la série est masquée puis réaffichée.
+
+---
+
+## 6. Résultat (28/09)
+
+Fait en un commit par ticket (089.1 → 089.5), chaque test vu en échec avant son code. Décisions D1-D9
+appliquées telles que proposées.
+
+- Chart.js 4.5.1 copié tel quel depuis le paquet npm (empreinte vérifiée identique au fichier du paquet).
+- Le script `activityChart.js` ne peut pas être exécuté par les tests : il est vérifié comme texte, et son
+  analyse syntaxique a été contrôlée avec le moteur JScript de Windows (Node n'est pas installé sur ce poste).
+- Tests réécrits : `HomeActivityChartTests` et `HomeActivityChartCssTests` (le dessin SVG n'existe plus) ;
+  dans `HomeTests`, une seule assertion déplacée des barres SVG vers le canvas et le tableau caché.
+- Clé supprimée : `Home_ActivityBarTooltip` (plus utilisée). Clés ajoutées : `Home_ActivityTotalSingular` /
+  `Home_ActivityTotalPlural` (EN/FR réels).
+- `ExcelETL.BlazorAdmin.Tests` : 1661/1661.
+- **Non vérifié dans un vrai navigateur** : les quatre points du §5 restent à contrôler après publication.
