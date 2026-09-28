@@ -77,7 +77,7 @@ public class ImportPipelineOrchestratorLoggingIntegrationTests
         RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx");
 
         _orchestratorLog.Entries.Should().Contain(e =>
-            e.Level == LogLevel.Warning && e.Message.Contains("6 element(s) with a duplicate repère"));
+            e.Level == LogLevel.Warning && e.Message.Contains("3 duplicated repère(s)"));
         _orchestratorLog.Entries.Should().Contain(e =>
             e.Level == LogLevel.Error && e.Message.Contains(nameof(ExtractionErrorCode.DuplicateRepere)) &&
             e.Message.Contains("D8570-V4"));

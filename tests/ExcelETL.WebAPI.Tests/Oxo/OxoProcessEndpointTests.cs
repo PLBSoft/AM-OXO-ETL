@@ -243,10 +243,10 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     // Lot 085.5 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): the case of the request
-    // (LRSJ2M; LRS4504 holds the same two DIVERS rows) -- 422, one errors[] entry per duplicated row,
-    // no generated file, archived as Rejected with both entries.
+    // (LRSJ2M; LRS4504 holds the same two DIVERS rows) -- 422, one errors[] entry per duplicated repère
+    // located on its first row (lot 086), no generated file, archived as Rejected with that entry.
     [Fact]
-    public async Task Process_WithDuplicatedRepere_ReturnsUnprocessableEntityWithOneEntryPerRow_AndNoGeneratedFile()
+    public async Task Process_WithDuplicatedRepere_ReturnsUnprocessableEntityWithOneEntryPerRepere_AndNoGeneratedFile()
     {
         var client = CreateAuthenticatedClient();
         var (importProfileId, exportProfileId) = await SeedProfilesAsync();
@@ -256,7 +256,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         var response = await client.PostAsync("/api/oxo/process", content);
 
         response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
-        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle("2");
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle("1");
 
         using var body = System.Text.Json.JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var errors = body.RootElement.GetProperty("errors").EnumerateArray()
@@ -268,8 +268,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
                 Message: e.GetProperty("message").GetString()))
             .ToList();
         errors.Select(e => (e.Sheet, e.BlockIdentifier, e.Code, e.ExtractedValue)).Should().Equal(
-            ("DIVERS", "9", "DuplicateRepere", "LRS4504-LRS4504"),
-            ("DIVERS", "12", "DuplicateRepere", "LRS4504-LRS4504"));
+            ("DIVERS", "9", "DuplicateRepere", "LRS4504-LRS4504"));
         errors.Should().OnlyContain(e => e.Message ==
             "Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
             "chaque élément doit avoir une identification unique.");
@@ -277,7 +276,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
         record.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
         record.TargetFilePath.Should().BeNull();
-        record.Warnings.Select(w => w.Code).Should().Equal("DuplicateRepere", "DuplicateRepere");
+        record.Warnings.Select(w => w.Code).Should().Equal("DuplicateRepere");
         Directory.GetFiles(_generatedFilesArchiveRoot, "*_target_*", SearchOption.AllDirectories).Should().BeEmpty();
     }
 

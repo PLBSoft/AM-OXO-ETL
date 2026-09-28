@@ -9,21 +9,15 @@
 
 ## Tasks (0)
 
-## Errors (6)
-DuplicateRepere | DIVERS | D8570-V4
-DuplicateRepere | DIVERS | D8570-V7
+## Errors (3)
 DuplicateRepere | DIVERS | D8570-V7
 DuplicateRepere | ISOLEMENT | D8570-V4
-DuplicateRepere | PLATINES | D8570-PT1
 DuplicateRepere | PLATINES | D8570-PT1
 
 ## Error block identifiers and messages
 DuplicateRepere | DIVERS | 15 | Repère « D8570-V7 » en double (DIVERS ligne 15, DIVERS ligne 18) : chaque élément doit avoir une identification unique.
-DuplicateRepere | DIVERS | 18 | Repère « D8570-V7 » en double (DIVERS ligne 15, DIVERS ligne 18) : chaque élément doit avoir une identification unique.
-DuplicateRepere | DIVERS | 9 | Repère « D8570-V4 » en double (ISOLEMENT ligne 117, DIVERS ligne 9) : chaque élément doit avoir une identification unique.
 DuplicateRepere | ISOLEMENT | 117 | Repère « D8570-V4 » en double (ISOLEMENT ligne 117, DIVERS ligne 9) : chaque élément doit avoir une identification unique.
 DuplicateRepere | PLATINES | 17 | Repère « D8570-PT1 » en double (PLATINES ligne 17, PLATINES ligne 177) : chaque élément doit avoir une identification unique.
-DuplicateRepere | PLATINES | 177 | Repère « D8570-PT1 » en double (PLATINES ligne 17, PLATINES ligne 177) : chaque élément doit avoir une identification unique.
 
 ## Generated workbook
 

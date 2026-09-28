@@ -9,15 +9,11 @@
 
 ## Tasks (0)
 
-## Errors (4)
-DuplicateRepere | DIVERS | E6431A-P1
-DuplicateRepere | DIVERS | E6431A-P2
+## Errors (2)
 DuplicateRepere | PLATINES | E6431A-P1
 DuplicateRepere | PLATINES | E6431A-P2
 
 ## Error block identifiers and messages
-DuplicateRepere | DIVERS | 12 | Repère « E6431A-P2 » en double (PLATINES ligne 25, DIVERS ligne 12) : chaque élément doit avoir une identification unique.
-DuplicateRepere | DIVERS | 9 | Repère « E6431A-P1 » en double (PLATINES ligne 17, DIVERS ligne 9) : chaque élément doit avoir une identification unique.
 DuplicateRepere | PLATINES | 17 | Repère « E6431A-P1 » en double (PLATINES ligne 17, DIVERS ligne 9) : chaque élément doit avoir une identification unique.
 DuplicateRepere | PLATINES | 25 | Repère « E6431A-P2 » en double (PLATINES ligne 25, DIVERS ligne 12) : chaque élément doit avoir une identification unique.
 

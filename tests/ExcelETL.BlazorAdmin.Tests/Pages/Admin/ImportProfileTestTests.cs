@@ -503,7 +503,7 @@ public class ImportProfileTestTests : BunitContext
         });
 
     // Lot 085.6 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): a file with a
-    // duplicated repère shows as rejected, listing each duplicated row.
+    // duplicated repère shows as rejected, one line per duplicated repère naming every row (lot 086).
     [Fact]
     public async Task Run_LRS4504Fixture_ShowsDuplicatedRepereRowsAsFileRejection() =>
         await WithCultureAsync("en-US", async () =>
@@ -519,8 +519,6 @@ public class ImportProfileTestTests : BunitContext
             cut.Markup.Should().NotContain("Non-blocking warnings");
             cut.FindAll("#rejected li").Select(li => li.TextContent).Should().Equal(
                 "DIVERS / 9: Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
-                "chaque élément doit avoir une identification unique.",
-                "DIVERS / 12: Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
                 "chaque élément doit avoir une identification unique.");
         });
 

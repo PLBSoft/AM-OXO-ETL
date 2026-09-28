@@ -94,7 +94,7 @@ public sealed class ImportPipelineOrchestrator(
             {
                 logger.LogWarning(
                     "Import pipeline run for profile {ProfileName} rejected the whole file after {ElapsedMs}ms: " +
-                    "{ErrorCount} element(s) with a duplicate repère",
+                    "{DuplicateCount} duplicated repère(s)",
                     profile.Name, stopwatch.ElapsedMilliseconds, duplicateErrors.Count);
                 foreach (var error in duplicateErrors)
                 {

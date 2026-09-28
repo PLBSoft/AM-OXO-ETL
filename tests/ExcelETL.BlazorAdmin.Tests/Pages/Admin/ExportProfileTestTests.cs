@@ -496,8 +496,8 @@ public class ExportProfileTestTests : BunitContext
             inputFileComponent.UploadFiles(FixtureAsInputFile("Dossier de MaD IDL -  LRS4504.xlsx"));
 
             cut.WaitForAssertion(() => cut.Markup.Should().Contain("File rejected"));
-            cut.FindAll("#rejected li").Select(li => li.TextContent).Should().HaveCount(2)
-                .And.OnlyContain(text => text.Contains("Repère « LRS4504-LRS4504 » en double"));
+            cut.FindAll("#rejected li").Should().ContainSingle()
+                .Which.TextContent.Should().Contain("Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12)");
             cut.FindAll("#generate-workbook-button").Should().BeEmpty();
         });
 

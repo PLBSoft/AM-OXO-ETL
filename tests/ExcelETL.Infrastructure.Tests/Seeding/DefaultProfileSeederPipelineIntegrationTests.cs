@@ -83,8 +83,9 @@ public class DefaultProfileSeederPipelineIntegrationTests
 
     [Fact]
     // Lot 085 (docs/tickets/tickets-tdd-lot-085-rejet-reperes-en-double.md): D8570 holds three
-    // duplicated repères, so the seeded profile rejects it with one entry per duplicated row.
-    public async Task Run_D8570Fixture_WithSeededProfile_IsRejectedWithOneEntryPerDuplicatedRow()
+    // duplicated repères, so the seeded profile rejects it with one entry per duplicated repère, located
+    // on its first row (lot 086).
+    public async Task Run_D8570Fixture_WithSeededProfile_IsRejectedWithOneEntryPerDuplicatedRepere()
     {
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
         var result = RunOnFixture("Dossier.de.MaD.IDL.-.D8570.chgt.plateaux.xlsx", importProfile);
@@ -92,24 +93,24 @@ public class DefaultProfileSeederPipelineIntegrationTests
         result.Equipement.Should().BeNull();
         result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier, e.ExtractedValue)).Should().Equal(
             (ExtractionErrorCode.DuplicateRepere, "ISOLEMENT", "117", "D8570-V4"),
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "9", "D8570-V4"),
             (ExtractionErrorCode.DuplicateRepere, "PLATINES", "17", "D8570-PT1"),
-            (ExtractionErrorCode.DuplicateRepere, "PLATINES", "177", "D8570-PT1"),
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "15", "D8570-V7"),
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "18", "D8570-V7"));
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "15", "D8570-V7"));
+        result.Errors.Select(e => e.Message).Should().Equal(
+            "Repère « D8570-V4 » en double (ISOLEMENT ligne 117, DIVERS ligne 9) : chaque élément doit avoir une identification unique.",
+            "Repère « D8570-PT1 » en double (PLATINES ligne 17, PLATINES ligne 177) : chaque élément doit avoir une identification unique.",
+            "Repère « D8570-V7 » en double (DIVERS ligne 15, DIVERS ligne 18) : chaque élément doit avoir une identification unique.");
     }
 
     // Lot 085.5: the case of the request (LRSJ2M, same two DIVERS rows as this fixture).
     [Fact]
-    public async Task Run_LRS4504Fixture_WithSeededProfile_IsRejectedForItsTwoDiversRows()
+    public async Task Run_LRS4504Fixture_WithSeededProfile_IsRejectedWithOneEntryForItsTwoDiversRows()
     {
         var (importProfile, _) = await SeedAndFetchProfilesAsync();
         var result = RunOnFixture("Dossier de MaD IDL -  LRS4504.xlsx", importProfile);
 
         result.Equipement.Should().BeNull();
         result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier, e.ExtractedValue)).Should().Equal(
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "9", "LRS4504-LRS4504"),
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "12", "LRS4504-LRS4504"));
+            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "9", "LRS4504-LRS4504"));
         result.Errors.Should().OnlyContain(e => e.Message ==
             "Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : " +
             "chaque élément doit avoir une identification unique.");

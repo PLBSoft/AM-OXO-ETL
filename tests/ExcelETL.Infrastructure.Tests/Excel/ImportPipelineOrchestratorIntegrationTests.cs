@@ -181,10 +181,7 @@ public class ImportPipelineOrchestratorIntegrationTests
         result.Isolements.Should().BeEmpty();
         result.Errors.Should().OnlyContain(e => e.Code == ExtractionErrorCode.DuplicateRepere);
         result.Errors.Select(e => (e.ExtractedValue, e.Sheet)).Should().Equal(
-            ("D8570-V4", "ISOLEMENT"), ("D8570-V4", "DIVERS"),
-            ("D8570-PT1", "PLATINES"), ("D8570-PT1", "PLATINES"),
-            ("D8570-V7", "DIVERS"), ("D8570-V7", "DIVERS"));
-        result.Errors.Select(e => (e.Sheet, e.BlockIdentifier)).Should().OnlyHaveUniqueItems();
+            ("D8570-V4", "ISOLEMENT"), ("D8570-PT1", "PLATINES"), ("D8570-V7", "DIVERS"));
     }
 
     [Fact]

@@ -9,13 +9,11 @@
 
 ## Tasks (0)
 
-## Errors (2)
-DuplicateRepere | PLATINES | RANGEE N°1-PT5
+## Errors (1)
 DuplicateRepere | PLATINES | RANGEE N°1-PT5
 
 ## Error block identifiers and messages
 DuplicateRepere | PLATINES | 49 | Repère « RANGEE N°1-PT5 » en double (PLATINES ligne 49, PLATINES ligne 57) : chaque élément doit avoir une identification unique.
-DuplicateRepere | PLATINES | 57 | Repère « RANGEE N°1-PT5 » en double (PLATINES ligne 49, PLATINES ligne 57) : chaque élément doit avoir une identification unique.
 
 ## Generated workbook
 

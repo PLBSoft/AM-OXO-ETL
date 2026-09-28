@@ -9,12 +9,10 @@
 
 ## Tasks (0)
 
-## Errors (2)
-DuplicateRepere | DIVERS | LRS4504-LRS4504
+## Errors (1)
 DuplicateRepere | DIVERS | LRS4504-LRS4504
 
 ## Error block identifiers and messages
-DuplicateRepere | DIVERS | 12 | Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : chaque élément doit avoir une identification unique.
 DuplicateRepere | DIVERS | 9 | Repère « LRS4504-LRS4504 » en double (DIVERS ligne 9, DIVERS ligne 12) : chaque élément doit avoir une identification unique.
 
 ## Generated workbook

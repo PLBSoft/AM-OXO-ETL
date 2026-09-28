@@ -324,9 +324,9 @@ public class ImportPipelineOrchestratorTests
         result.Isolements.Should().BeEmpty();
         result.Points.Should().BeEmpty();
         result.TachesMultiples.Should().BeEmpty();
+        // Lot 086: one entry per duplicated repère, located on its first row.
         result.Errors.Select(e => (e.Code, e.Sheet, e.BlockIdentifier)).Should().Equal(
-            (ExtractionErrorCode.DuplicateRepere, "ISOLEMENT", "116"),
-            (ExtractionErrorCode.DuplicateRepere, "DIVERS", "30"));
+            (ExtractionErrorCode.DuplicateRepere, "ISOLEMENT", "116"));
     }
 
     [Fact]

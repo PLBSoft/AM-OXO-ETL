@@ -4,7 +4,7 @@
 de la demande complémentaire de l'équipe AlphaMaintenance « `DuplicateRepere` : une seule entrée par repère
 en double » (fichier reçu hors dépôt, résumé en §0). Suite directe du lot 085
 (`tickets-tdd-lot-085-rejet-reperes-en-double.md`), dont il modifie les décisions D3 et D7. Investigation
-faite sans rien implémenter. **La décision D1 du §2 est à valider avant 086.1.***
+faite sans rien implémenter. **Décisions du §2 validées par Simon le 28/09.***
 
 ---
 
@@ -59,7 +59,7 @@ Effet sur les fixtures (profil standard) :
 
 ---
 
-## 2. Décisions
+## 2. Décisions (validées par Simon le 28/09)
 
 | # | Question | Proposition |
 | :--- | :--- | :--- |
