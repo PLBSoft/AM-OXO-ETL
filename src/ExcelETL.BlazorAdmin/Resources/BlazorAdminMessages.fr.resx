@@ -1474,6 +1474,12 @@
   <data name="Home_NoRecentActivity" xml:space="preserve">
     <value>Aucun fichier traité ces 30 derniers jours.</value>
   </data>
+  <data name="Home_ActivityTotalSingular" xml:space="preserve">
+    <value>{0} fichier</value>
+  </data>
+  <data name="Home_ActivityTotalPlural" xml:space="preserve">
+    <value>{0} fichiers</value>
+  </data>
   <data name="ImportProfileDetails_GeneralSectionTitle" xml:space="preserve">
     <value>Paramètres généraux</value>
   </data>

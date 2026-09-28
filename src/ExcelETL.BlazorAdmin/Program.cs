@@ -48,6 +48,8 @@ builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
 // Lot 064: browser-local timestamp display (Logs/GeneratedFiles/Home/NavMenu) -- Scoped, since
 // it wraps the per-circuit IJSRuntime.
 builder.Services.AddScoped<ILocalTimeFormatter, LocalTimeFormatter>();
+// Lot 089: draws the home page's activity chart through wwwroot/js/activityChart.js (Chart.js).
+builder.Services.AddScoped<IActivityChartInterop, ActivityChartInterop>();
 
 // AddEntityFrameworkStores<ApplicationIdentityDbContext>() below needs a directly-injectable
 // scoped ApplicationIdentityDbContext, so that registration is kept. IUserRepository is the only
