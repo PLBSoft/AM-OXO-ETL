@@ -3,6 +3,7 @@ using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Home;
 using ExcelETL.BlazorAdmin.Components.Pages;
 using ExcelETL.BlazorAdmin.Services;
+using ExcelETL.Domain.Archiving;
 using FluentAssertions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,9 +28,18 @@ public class HomeTests : BunitContext
     private Func<ApplicationBuildInfo> _buildInfoFactory =
         () => new ApplicationBuildInfo(System.Reflection.Assembly.GetExecutingAssembly());
 
+    // Lot 088: the page groups RecentActivity into the 30 days ending on this "today".
+    private static readonly DateTime NowUtc = new(2026, 9, 28, 10, 0, 0, DateTimeKind.Utc);
+
+    private sealed class FixedTimeProvider(DateTime utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => new(utcNow);
+    }
+
     public HomeTests()
     {
         Services.AddSingleton(_serviceMock.Object);
+        Services.AddSingleton<TimeProvider>(new FixedTimeProvider(NowUtc));
         Services.AddSingleton(_localTimeFormatterMock.Object);
         Services.AddLocalization();
         // Follow-up (post-062): Home.razor now also injects ApplicationBuildInfo for its mobile-only
@@ -41,13 +51,23 @@ public class HomeTests : BunitContext
     }
 
     private static HomeIndicators KnownIndicators(
-        int importProfileCount = 3, int exportProfileCount = 2, int generatedFileCount = 12) =>
+        int importProfileCount = 3,
+        int exportProfileCount = 2,
+        IReadOnlyList<GeneratedFileActivityEntry>? recentActivity = null) =>
         new(
             HomeIndicatorValue<int>.Known(importProfileCount),
             HomeIndicatorValue<int>.Known(exportProfileCount),
-            HomeIndicatorValue<int>.Known(generatedFileCount),
             HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 30, 0, DateTimeKind.Utc)),
-            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
+            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known(
+                recentActivity ?? RecentActivity(success: 9, warning: 2, rejected: 1)));
+
+    // Every entry at noon UTC, two days ago: well inside the 30 local days whatever the time zone.
+    private static IReadOnlyList<GeneratedFileActivityEntry> RecentActivity(int success, int warning, int rejected) =>
+        Enumerable.Repeat(GeneratedFileArchiveStatus.Success, success)
+            .Concat(Enumerable.Repeat(GeneratedFileArchiveStatus.NonBlockingWarning, warning))
+            .Concat(Enumerable.Repeat(GeneratedFileArchiveStatus.Rejected, rejected))
+            .Select(status => new GeneratedFileActivityEntry(new DateTime(2026, 9, 26, 12, 0, 0, DateTimeKind.Utc), status))
+            .ToList();
 
     [Fact]
     public void WhileLoading_ShowsLoadingIndicator_NoTilesRendered()
@@ -83,7 +103,7 @@ public class HomeTests : BunitContext
     public void KnownValues_DisplaysFourTilesWithTheirValues()
     {
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(KnownIndicators(importProfileCount: 3, exportProfileCount: 2, generatedFileCount: 12));
+            .ReturnsAsync(KnownIndicators(importProfileCount: 3, exportProfileCount: 2));
 
         var cut = Render<Home>();
         cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
@@ -98,7 +118,6 @@ public class HomeTests : BunitContext
     public void ZeroCountersAndAbsentLastGeneration_ShowsZeroAndAnExplicitNoGenerationState()
     {
         var indicators = new HomeIndicators(
-            HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<int>.Known(0),
             HomeIndicatorValue<DateTime?>.Absent(),
@@ -146,9 +165,8 @@ public class HomeTests : BunitContext
         var indicators = new HomeIndicators(
             HomeIndicatorValue<int>.Known(3),
             HomeIndicatorValue<int>.Unavailable(),
-            HomeIndicatorValue<int>.Known(12),
             HomeIndicatorValue<DateTime?>.Known(new DateTime(2026, 7, 28, 10, 0, 0, DateTimeKind.Utc)),
-            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known([]));
+            HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Known(RecentActivity(9, 2, 1)));
         _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
 
         var cut = Render<Home>();
@@ -346,5 +364,164 @@ public class HomeTests : BunitContext
 
         tcs.SetResult(KnownIndicators());
         cut.WaitForState(() => cut.FindAll("#home-kpi-import-profiles").Count == 1);
+    }
+    // --- Lot 088 (088.5): the "last 30 days" tile replaces the all-time total. -----------------------
+
+    [Fact]
+    public void RecentActivityTile_ShowsTheThirtyDayTotal_AndItsBreakdownPerStatus()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        cut.Find("#home-kpi-generated-files-total").TextContent.Trim().Should().Be("12");
+        cut.Find("#home-kpi-generated-files-success").TextContent.Should().Contain("9");
+        cut.Find("#home-kpi-generated-files-warning").TextContent.Should().Contain("2");
+        cut.Find("#home-kpi-generated-files-rejected").TextContent.Should().Contain("1");
+        cut.Find("#home-kpi-generated-files").GetAttribute("href").Should().Be("generated-files");
+    }
+
+    [Fact]
+    public void RecentActivityTile_InFrench_IsLabelledThirtyLastDays_WithFrenchStatusWords()
+    {
+        var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("fr-FR");
+        try
+        {
+            _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(KnownIndicators(recentActivity: RecentActivity(success: 3, warning: 1, rejected: 2)));
+
+            var cut = Render<Home>();
+            cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+            cut.Find("#home-kpi-generated-files-label").TextContent.Should().Be("30 derniers jours");
+            cut.Find("#home-kpi-generated-files-success").TextContent.Trim().Should().Be("3 succès");
+            cut.Find("#home-kpi-generated-files-warning").TextContent.Trim().Should().Be("1 avec avertissements");
+            cut.Find("#home-kpi-generated-files-rejected").TextContent.Trim().Should().Be("2 rejetés");
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    [Fact]
+    public void RecentActivityTile_InFrench_UsesTheSingularForOneRejection()
+    {
+        var originalCulture = System.Globalization.CultureInfo.CurrentUICulture;
+        System.Globalization.CultureInfo.CurrentUICulture = new System.Globalization.CultureInfo("fr-FR");
+        try
+        {
+            _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(KnownIndicators(recentActivity: RecentActivity(success: 0, warning: 0, rejected: 1)));
+
+            var cut = Render<Home>();
+            cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+            cut.Find("#home-kpi-generated-files-rejected").TextContent.Trim().Should().Be("1 rejeté");
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentUICulture = originalCulture;
+        }
+    }
+
+    [Fact]
+    public void RecentActivityTile_WithoutRejection_StillShowsZeroRejected_NotInDanger()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(KnownIndicators(recentActivity: RecentActivity(success: 4, warning: 0, rejected: 0)));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        var rejected = cut.Find("#home-kpi-generated-files-rejected");
+        rejected.TextContent.Should().Contain("0");
+        rejected.ClassList.Should().NotContain("text-danger");
+    }
+
+    [Fact]
+    public void RecentActivityTile_WithRejections_ShowsThemInDanger()
+    {
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(KnownIndicators());
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        cut.Find("#home-kpi-generated-files-rejected").ClassList.Should().Contain("text-danger");
+    }
+
+    [Fact]
+    public void RecentActivityTile_WhenUnavailable_ShowsTheDegradedState_WithoutBreakdown()
+    {
+        var indicators = KnownIndicators() with
+        {
+            RecentActivity = HomeIndicatorValue<IReadOnlyList<GeneratedFileActivityEntry>>.Unavailable(),
+        };
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(indicators);
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        cut.FindAll("#home-kpi-generated-files span.text-danger").Should().HaveCount(1);
+        cut.FindAll("#home-kpi-generated-files-total").Should().BeEmpty();
+        cut.FindAll("#home-kpi-generated-files-success").Should().BeEmpty();
+    }
+
+    [Fact]
+    public void RecentActivityTile_IgnoresFilesOlderThanThirtyDays_EvenIfTheServiceReturnedThem()
+    {
+        // The service reads one extra day of margin; files outside the 30 local days never count.
+        IReadOnlyList<GeneratedFileActivityEntry> entries =
+        [
+            new(new DateTime(2026, 8, 29, 12, 0, 0, DateTimeKind.Utc), GeneratedFileArchiveStatus.Success),
+            new(new DateTime(2026, 9, 27, 12, 0, 0, DateTimeKind.Utc), GeneratedFileArchiveStatus.Success),
+        ];
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(KnownIndicators(recentActivity: entries));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        cut.Find("#home-kpi-generated-files-total").TextContent.Trim().Should().Be("1");
+    }
+
+    [Fact]
+    public void RecentActivityTile_BeforeTheBrowsersTimeZoneIsKnown_GroupsInUtc()
+    {
+        // 29/08 20:00 UTC: 29/08 in UTC, outside the 30 days ending 28/09.
+        IReadOnlyList<GeneratedFileActivityEntry> entries =
+        [
+            new(new DateTime(2026, 8, 29, 20, 0, 0, DateTimeKind.Utc), GeneratedFileArchiveStatus.Success),
+        ];
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(KnownIndicators(recentActivity: entries));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files").Count == 1);
+
+        cut.Find("#home-kpi-generated-files-total").TextContent.Trim().Should().Be("0");
+        _localTimeFormatterMock.Verify(f => f.GetBrowserTimeZoneIdAsync(), Times.Never);
+    }
+
+    [Fact]
+    public void RecentActivityTile_RegroupsInTheBrowsersTimeZone_OnceInteractive()
+    {
+        // Same file: 30/08 07:00 in Noumea, inside the 30 days.
+        IReadOnlyList<GeneratedFileActivityEntry> entries =
+        [
+            new(new DateTime(2026, 8, 29, 20, 0, 0, DateTimeKind.Utc), GeneratedFileArchiveStatus.Success),
+        ];
+        _serviceMock.Setup(s => s.GetIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(KnownIndicators(recentActivity: entries));
+        _localTimeFormatterMock.Setup(f => f.GetBrowserTimeZoneIdAsync()).ReturnsAsync("Pacific/Noumea");
+        SetRendererInfo(new RendererInfo("Server", isInteractive: true));
+
+        var cut = Render<Home>();
+        cut.WaitForState(() => cut.FindAll("#home-kpi-generated-files-total").Count == 1
+            && cut.Find("#home-kpi-generated-files-total").TextContent.Trim() == "1");
+
+        _localTimeFormatterMock.Verify(f => f.GetBrowserTimeZoneIdAsync(), Times.Once);
     }
 }

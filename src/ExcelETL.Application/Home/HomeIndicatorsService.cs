@@ -26,19 +26,13 @@ public class HomeIndicatorsService(
             "export profile count",
             () => ReadExportProfileCountAsync(cancellationToken));
 
-        // Both the generated-file count and the last-generation date come from one store call: a
-        // GeneratedFileArchiveStore failure marks both indicators unavailable together, rather than
-        // querying the store twice for two independent indicators backed by the same aggregate.
-        GeneratedFileArchiveSummary? summary = null;
-        var generatedFileCount = await ReadAsync("generated file count", async () =>
-        {
-            summary = await generatedFileArchiveStore.GetSummaryAsync(cancellationToken);
-            return summary.Count;
-        });
+        var summary = await ReadAsync(
+            "generated file summary",
+            () => generatedFileArchiveStore.GetSummaryAsync(cancellationToken));
 
-        var lastGenerationAtUtc = generatedFileCount.State == HomeIndicatorState.Unavailable
+        var lastGenerationAtUtc = summary.State == HomeIndicatorState.Unavailable
             ? HomeIndicatorValue<DateTime?>.Unavailable()
-            : summary!.MostRecentGeneratedAtUtc is { } mostRecent
+            : summary.Value!.MostRecentGeneratedAtUtc is { } mostRecent
                 ? HomeIndicatorValue<DateTime?>.Known(mostRecent)
                 : HomeIndicatorValue<DateTime?>.Absent();
 
@@ -51,7 +45,7 @@ public class HomeIndicatorsService(
             () => generatedFileArchiveStore.GetActivitySinceAsync(recentActivityFromUtc, cancellationToken));
 
         return new HomeIndicators(
-            importProfileCount, exportProfileCount, generatedFileCount, lastGenerationAtUtc, recentActivity);
+            importProfileCount, exportProfileCount, lastGenerationAtUtc, recentActivity);
     }
 
     private async Task<int> ReadImportProfileCountAsync(CancellationToken cancellationToken) =>

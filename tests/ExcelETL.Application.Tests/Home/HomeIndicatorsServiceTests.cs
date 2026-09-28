@@ -55,7 +55,7 @@ public class HomeIndicatorsServiceTests
     }
 
     [Fact]
-    public async Task GetIndicatorsAsync_WhenEveryStoreSucceeds_ReturnsAllFourValuesAsKnown()
+    public async Task GetIndicatorsAsync_WhenEveryStoreSucceeds_ReturnsTheValuesAsKnown()
     {
         _importProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync([CreateImportProfile(), CreateImportProfile()]);
@@ -71,8 +71,6 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.Value.Should().Be(2);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(1);
-        indicators.GeneratedFileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.GeneratedFileCount.Value.Should().Be(5);
         indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Known);
         indicators.LastGenerationAtUtc.Value.Should().Be(mostRecent);
     }
@@ -91,8 +89,6 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.Value.Should().Be(0);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(0);
-        indicators.GeneratedFileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.GeneratedFileCount.Value.Should().Be(0);
         indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Absent);
         indicators.LastGenerationAtUtc.Value.Should().BeNull();
     }
@@ -111,8 +107,6 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Unavailable);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.Value.Should().Be(1);
-        indicators.GeneratedFileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.GeneratedFileCount.Value.Should().Be(3);
         indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Known);
     }
 
@@ -130,12 +124,11 @@ public class HomeIndicatorsServiceTests
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ImportProfileCount.Value.Should().Be(1);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Unavailable);
-        indicators.GeneratedFileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Absent);
     }
 
     [Fact]
-    public async Task GetIndicatorsAsync_WhenGeneratedFileArchiveStoreThrows_MarksCountAndLastGenerationUnavailable_OthersRemainKnown()
+    public async Task GetIndicatorsAsync_WhenGeneratedFileSummaryReadThrows_MarksLastGenerationUnavailable_OthersRemainKnown()
     {
         _importProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateImportProfile()]);
         _exportProfileStore.Setup(s => s.GetAllAsync(It.IsAny<CancellationToken>())).ReturnsAsync([CreateExportProfile()]);
@@ -146,7 +139,6 @@ public class HomeIndicatorsServiceTests
 
         indicators.ImportProfileCount.State.Should().Be(HomeIndicatorState.Known);
         indicators.ExportProfileCount.State.Should().Be(HomeIndicatorState.Known);
-        indicators.GeneratedFileCount.State.Should().Be(HomeIndicatorState.Unavailable);
         indicators.LastGenerationAtUtc.State.Should().Be(HomeIndicatorState.Unavailable);
     }
 

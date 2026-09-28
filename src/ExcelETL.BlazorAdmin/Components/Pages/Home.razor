@@ -5,11 +5,13 @@
 @using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.BlazorAdmin.Shared
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
 
 @inject IHomeIndicatorsService HomeIndicatorsService
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject ApplicationBuildInfo BuildInfo
 @inject ILocalTimeFormatter LocalTimeFormatter
+@inject TimeProvider TimeProvider
 
 <PageTitle>@Loc["Home_PageTitle"]</PageTitle>
 
@@ -99,23 +101,38 @@ else
             </a>
         </div>
 
+        <!-- Lot 088 (088.5): the last 30 local days (browser time zone once known, UTC before that),
+             replacing the all-time total -- same id, same link. The total is the sum of the activity
+             chart's bars, so the two can never disagree. -->
         <div class="col-12 col-sm-6 col-lg-3">
             <a id="home-kpi-generated-files" class="card h-100 text-decoration-none text-body" href="generated-files">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         @((MarkupString)AdminIconMarkup.Archive)
-                        <span id="home-kpi-generated-files-label" class="text-muted">@Loc["NavMenu_GeneratedFiles"]</span>
+                        <span id="home-kpi-generated-files-label" class="text-muted">@Loc["Home_RecentActivityLabel"]</span>
                     </div>
-                    <p class="display-6 mb-0" aria-labelledby="home-kpi-generated-files-label">
-                        @if (_indicators.GeneratedFileCount.State == HomeIndicatorState.Unavailable)
-                        {
+                    @if (_recentDays is null)
+                    {
+                        <p class="display-6 mb-0" aria-labelledby="home-kpi-generated-files-label">
                             <span class="text-danger fs-5">@Loc["Home_IndicatorUnavailable"]</span>
-                        }
-                        else
-                        {
-                            @_indicators.GeneratedFileCount.Value
-                        }
-                    </p>
+                        </p>
+                    }
+                    else
+                    {
+                        var success = _recentDays.Sum(d => d.Success);
+                        var warning = _recentDays.Sum(d => d.Warning);
+                        var rejected = _recentDays.Sum(d => d.Rejected);
+                        <p id="home-kpi-generated-files-total" class="display-6 mb-0" aria-labelledby="home-kpi-generated-files-label">
+                            @(success + warning + rejected)
+                        </p>
+                        <p class="small mb-0">
+                            <span id="home-kpi-generated-files-success">@Loc["Home_RecentActivitySuccess", success]</span>
+                            <span aria-hidden="true"> · </span>
+                            <span id="home-kpi-generated-files-warning">@Loc["Home_RecentActivityWarning", warning]</span>
+                            <span aria-hidden="true"> · </span>
+                            <span id="home-kpi-generated-files-rejected" class="@(rejected > 0 ? "text-danger fw-semibold" : null)">@Loc[rejected > 1 ? "Home_RecentActivityRejectedPlural" : "Home_RecentActivityRejectedSingular", rejected]</span>
+                        </p>
+                    }
                 </div>
             </a>
         </div>
@@ -154,6 +171,13 @@ else
 
     private HomeIndicators? _indicators;
     private bool _loadError;
+
+    // Lot 088: RecentActivity grouped into the last 30 local days -- null when it couldn't be read.
+    // Grouped in UTC first (prerendering, or before the circuit is interactive), then again in the
+    // browser's own time zone once JS interop can report it (D7, same principle as lot 064).
+    private IReadOnlyList<DailyGenerationActivity>? _recentDays;
+    private TimeZoneInfo _timeZone = TimeZoneInfo.Utc;
+    private bool _timeZoneResolved;
     private string? _localLastGenerationTimestamp;
     private DateTime? _localLastGenerationComputedFor;
 
@@ -178,6 +202,7 @@ else
         try
         {
             _indicators = await HomeIndicatorsService.GetIndicatorsAsync();
+            GroupRecentActivity();
         }
         catch
         {
@@ -200,6 +225,25 @@ else
         }
 
         var didUpdate = false;
+
+        if (!_timeZoneResolved && _indicators is not null)
+        {
+            _timeZoneResolved = true;
+            try
+            {
+                _timeZone = BrowserTimeZoneResolver.Resolve(await LocalTimeFormatter.GetBrowserTimeZoneIdAsync());
+            }
+            catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException)
+            {
+                // Keep the UTC grouping: an approximate day is better than a failed home page.
+            }
+
+            if (_timeZone != TimeZoneInfo.Utc)
+            {
+                GroupRecentActivity();
+                didUpdate = true;
+            }
+        }
 
         if (_indicators?.LastGenerationAtUtc.Value is { } lastGenerationAtUtc
             && _localLastGenerationComputedFor != lastGenerationAtUtc)
@@ -232,6 +276,11 @@ else
             StateHasChanged();
         }
     }
+
+    private void GroupRecentActivity() =>
+        _recentDays = _indicators?.RecentActivity is { State: HomeIndicatorState.Known, Value: { } entries }
+            ? GenerationActivityBuilder.Build(entries, _timeZone, TimeProvider.GetUtcNow().UtcDateTime)
+            : null;
 
     private string LocalTimestampOrFallback(DateTime lastGenerationAtUtc) =>
         _localLastGenerationComputedFor == lastGenerationAtUtc && _localLastGenerationTimestamp is not null
