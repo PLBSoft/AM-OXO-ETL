@@ -18,7 +18,16 @@ public sealed class ClosedXmlWorkbookReader : IWorkbookReader, IDisposable
     public ClosedXmlWorkbookReader(Stream excelFileStream)
     {
         ArgumentNullException.ThrowIfNull(excelFileStream);
-        _workbook = new XLWorkbook(WithoutCellComments(excelFileStream));
+        try
+        {
+            _workbook = new XLWorkbook(WithoutCellComments(excelFileStream));
+        }
+        catch (Exception exception) when (exception is not FileFormatException)
+        {
+            // A real .xlsx package ClosedXML can't load: reported to the user as a rejected file
+            // (ProcessOxoFileService). Not an Excel package at all stays FileFormatException (400).
+            throw new UnreadableWorkbookException(exception);
+        }
     }
 
     // ClosedXML 0.105.1 throws "Sequence contains no matching element" while loading a note whose

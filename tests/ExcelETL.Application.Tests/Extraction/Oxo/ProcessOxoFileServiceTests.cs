@@ -26,6 +26,7 @@ public class ProcessOxoFileServiceTests
     private readonly Mock<IWorkbookWriter> _workbookWriter = new();
     private readonly Mock<IGeneratedFileWriter> _generatedFileWriter = new();
     private readonly Mock<IGeneratedFileArchiveStore> _generatedFileArchiveStore = new();
+    private readonly Mock<IWorkbookReaderFactory> _workbookReaderFactory = new();
     private readonly ProcessOxoFileService _sut;
 
     public ProcessOxoFileServiceTests()
@@ -45,6 +46,7 @@ public class ProcessOxoFileServiceTests
             _workbookWriter.Object,
             _generatedFileWriter.Object,
             _generatedFileArchiveStore.Object,
+            _workbookReaderFactory.Object,
             NullLogger<ProcessOxoFileService>.Instance);
     }
 
@@ -92,10 +94,86 @@ public class ProcessOxoFileServiceTests
         null, [], [], [],
         [new ExtractionError("PROCEDURE", "M2:O2", ExtractionErrorCode.RequiredFieldMissing, "vide")]);
 
-    private static ProcessOxoFileCommand CreateCommand(
+    // The service opens the workbook itself (IWorkbookReaderFactory); each test hands the reader the
+    // factory must return for the command's source bytes.
+    private ProcessOxoFileCommand CreateCommand(
         Guid importProfileId, Guid exportProfileId, IWorkbookReader workbookReader, string sourceFileName = "source.xlsx",
-        string? username = null) =>
-        new(importProfileId, exportProfileId, workbookReader, sourceFileName, SampleSourceContent, username);
+        string? username = null)
+    {
+        _workbookReaderFactory.Setup(f => f.Open(SampleSourceContent)).Returns(workbookReader);
+        return new(importProfileId, exportProfileId, sourceFileName, SampleSourceContent, username);
+    }
+
+    private ProcessOxoFileCommand CreateUnreadableCommand(Guid importProfileId, Guid exportProfileId, Exception loadFailure)
+    {
+        _workbookReaderFactory.Setup(f => f.Open(SampleSourceContent)).Throws(loadFailure);
+        return new(importProfileId, exportProfileId, "illisible.xlsx", SampleSourceContent);
+    }
+
+    private (Guid ImportProfileId, Guid ExportProfileId) SetUpBothProfiles()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(CreateImportProfile());
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(CreateExportProfile());
+        return (importProfileId, exportProfileId);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenWorkbookCannotBeLoaded_RejectsTheFileWithAnUnreadableWorkbookError()
+    {
+        var (importProfileId, exportProfileId) = SetUpBothProfiles();
+        var command = CreateUnreadableCommand(
+            importProfileId, exportProfileId,
+            new UnreadableWorkbookException(new InvalidOperationException("Sequence contains no matching element")));
+
+        var result = await _sut.ProcessAsync(command);
+
+        result.ImportResult.Equipement.Should().BeNull();
+        result.GeneratedFileStream.Should().BeNull();
+        var error = result.ImportResult.Errors.Should().ContainSingle().Subject;
+        error.Code.Should().Be(ExtractionErrorCode.UnreadableWorkbook);
+        error.BlockIdentifier.Should().Be("illisible.xlsx");
+        error.Message.Should().Contain("n'a pas pu être lu").And.Contain("Sequence contains no matching element");
+        _orchestrator.Verify(o => o.Run(It.IsAny<IWorkbookReader>(), It.IsAny<ImportProfile>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenWorkbookCannotBeLoaded_ArchivesTheSourceAsRejectedWithTheReason()
+    {
+        var (importProfileId, exportProfileId) = SetUpBothProfiles();
+        GeneratedFileRecord? saved = null;
+        _generatedFileArchiveStore
+            .Setup(s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()))
+            .Callback<GeneratedFileRecord, CancellationToken>((r, _) => saved = r);
+        var command = CreateUnreadableCommand(
+            importProfileId, exportProfileId, new UnreadableWorkbookException(new InvalidOperationException("boom")));
+
+        var result = await _sut.ProcessAsync(command);
+
+        saved.Should().NotBeNull();
+        saved!.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
+        saved.SourceFileName.Should().Be("illisible.xlsx");
+        saved.TargetFilePath.Should().BeNull();
+        saved.Warnings.Should().ContainSingle().Which.Code.Should().Be(nameof(ExtractionErrorCode.UnreadableWorkbook));
+        result.ArchivedRecordId.Should().Be(saved.Id);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenOpeningFailsWithAnyOtherException_LetsItPropagate_AndArchivesNothing()
+    {
+        // A non-Excel file (FileFormatException from the Infrastructure factory) must still reach the
+        // controller, which answers 400 (Lot 036.2). InvalidDataException stands in for it here: the
+        // Application layer has no reference to System.IO.Packaging.
+        var (importProfileId, exportProfileId) = SetUpBothProfiles();
+        var command = CreateUnreadableCommand(importProfileId, exportProfileId, new InvalidDataException("corrupted"));
+
+        var act = () => _sut.ProcessAsync(command);
+
+        await act.Should().ThrowAsync<InvalidDataException>();
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(It.IsAny<GeneratedFileRecord>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
 
     [Fact]
     public async Task ProcessAsync_WithAcceptedFile_GeneratesArchivesAndReturnsStream()

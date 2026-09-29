@@ -1,7 +1,6 @@
 using System.Globalization;
 using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Resources;
-using ExcelETL.Infrastructure.Excel;
 using ExcelETL.WebAPI.Contracts;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
@@ -71,17 +70,22 @@ public class OxoController(
         await fileStream.CopyToAsync(bufferedContent, cancellationToken);
         var sourceFileContent = bufferedContent.ToArray();
 
+        // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
+        // exception are not caught here: GlobalExceptionHandler translates them into a localized
+        // ProblemDetails response. A real .xlsx the Excel library can't load comes back as a
+        // rejection (422, ExtractionErrorCode.UnreadableWorkbook, archived), not an exception.
+        //
         // Lot 036.2: a non-Excel/corrupted byte stream makes XLWorkbook's own constructor throw
-        // System.IO.FileFormatException -- a bare BCL type, not an IHasDomainErrorCode/
-        // IHasApplicationErrorCode exception, so GlobalExceptionHandler's BusinessExceptionLocalizer
-        // would never pick it up (TryLocalize returns null for it, same as any unrecognized
-        // exception, falling through to the framework's default 500). Caught explicitly here
-        // instead, at the same controller level as the pre-existing empty-file check, and
-        // translated into a 400 rather than an unqualified 500.
-        ClosedXmlWorkbookReader workbookReader;
+        // System.IO.FileFormatException -- a bare BCL type GlobalExceptionHandler would map to a 500.
+        // Only the workbook opening inside ProcessAsync throws it, so it is translated into a 400 here.
+        ProcessOxoFileResult result;
         try
         {
-            workbookReader = new ClosedXmlWorkbookReader(new MemoryStream(sourceFileContent));
+            result = await processOxoFileService.ProcessAsync(
+                new ProcessOxoFileCommand(
+                    request.ImportProfileId.Value, request.ExportProfileId.Value, request.File.FileName,
+                    sourceFileContent, request.Username),
+                cancellationToken);
         }
         catch (FileFormatException)
         {
@@ -91,16 +95,6 @@ public class OxoController(
                 Detail = localizer["InvalidExcelFileFormat"]
             });
         }
-
-        using var _ = workbookReader;
-        var command = new ProcessOxoFileCommand(
-            request.ImportProfileId.Value, request.ExportProfileId.Value, workbookReader, request.File.FileName,
-            sourceFileContent, request.Username);
-
-        // ImportProfileNotFoundException/ExportProfileNotFoundException and any other business
-        // exception are not caught here: GlobalExceptionHandler translates them into a localized
-        // ProblemDetails response.
-        var result = await processOxoFileService.ProcessAsync(command, cancellationToken);
 
         // Lot 072: posed on both outcomes below, regardless of status -- a caller (legacy) has one
         // single, systematic mechanism to check for non-blocking warnings and, when it needs the

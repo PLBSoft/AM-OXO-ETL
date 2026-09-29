@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 using ClosedXML.Excel;
+using ExcelETL.Application.Extraction.Oxo;
 using DocumentFormat.OpenXml.Packaging;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Infrastructure.Excel;
@@ -66,6 +67,59 @@ public class ClosedXmlWorkbookReaderTests
         using var sut = new ClosedXmlWorkbookReader(stream);
 
         sut.ReadCellValue("Sheet", "B2").Should().Be("Acme Corp");
+    }
+
+    [Fact]
+    public void Constructor_WhenClosedXmlFailsToLoadAValidPackage_ThrowsUnreadableWorkbookException()
+    {
+        using var stream = BuildWorkbookWithSheetPartMissing();
+
+        var act = () => new ClosedXmlWorkbookReader(stream);
+
+        act.Should().Throw<UnreadableWorkbookException>().Which.InnerException.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Constructor_WithBytesThatAreNotAnExcelPackage_StillThrowsFileFormatException()
+    {
+        using var stream = new MemoryStream("not an excel file"u8.ToArray());
+
+        var act = () => new ClosedXmlWorkbookReader(stream);
+
+        act.Should().Throw<FileFormatException>();
+    }
+
+    [Fact]
+    public void Factory_OpensTheBytesAsAReader()
+    {
+        using var stream = BuildWorkbook(ws => ws.Cell("B2").Value = "Acme Corp");
+
+        var reader = new ClosedXmlWorkbookReaderFactory().Open(stream.ToArray());
+
+        reader.ReadCellValue("Sheet", "B2").Should().Be("Acme Corp");
+        ((IDisposable)reader).Dispose();
+    }
+
+    // A second sheet is declared in workbook.xml but its part is gone: a valid package ClosedXML
+    // can't load.
+    private static MemoryStream BuildWorkbookWithSheetPartMissing()
+    {
+        var stream = new MemoryStream();
+        using (var workbook = new XLWorkbook())
+        {
+            workbook.Worksheets.Add("Sheet");
+            workbook.Worksheets.Add("Other");
+            workbook.SaveAs(stream);
+        }
+
+        using (var document = SpreadsheetDocument.Open(stream, isEditable: true))
+        {
+            var workbookPart = document.WorkbookPart!;
+            workbookPart.DeletePart(workbookPart.WorksheetParts.Last());
+        }
+
+        stream.Position = 0;
+        return stream;
     }
 
     private static MemoryStream BuildWorkbookWithCommentShapeWithoutClientData()

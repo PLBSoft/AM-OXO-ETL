@@ -94,6 +94,7 @@ builder.Services.AddSingleton<IElementSheetExtractionService, ElementSheetExtrac
 builder.Services.AddSingleton<IImportPipelineOrchestrator, ImportPipelineOrchestrator>();
 builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
 builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
+builder.Services.AddSingleton<IWorkbookReaderFactory, ClosedXmlWorkbookReaderFactory>();
 builder.Services.AddScoped<IProcessOxoFileService, ProcessOxoFileService>();
 // Singleton: GlobalExceptionHandler is registered as a singleton by AddExceptionHandler<T>(), and
 // this has no state of its own beyond the two singleton IStringLocalizer<T> it wraps.

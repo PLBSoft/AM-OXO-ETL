@@ -13,5 +13,9 @@ public enum ExtractionErrorCode
 
     // Lot 085: two elements of one file share the same generated repère (trimmed, case-insensitive).
     // Blocking: the whole file is rejected.
-    DuplicateRepere
+    DuplicateRepere,
+
+    // The file is a genuine .xlsx package but ClosedXML fails while loading it (an internal structure
+    // it doesn't support). Blocking: the whole file is rejected, reported like any other rejection.
+    UnreadableWorkbook
 }

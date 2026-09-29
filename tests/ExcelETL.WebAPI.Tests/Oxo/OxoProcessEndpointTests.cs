@@ -1,5 +1,6 @@
 using ExcelETL.Application.Exceptions;
 using ExcelETL.Application.Extraction.Oxo.Elements;
+using System.Text.Json;
 using System.Net;
 using System.Net.Http.Headers;
 using ClosedXML.Excel;
@@ -200,6 +201,55 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var body = await response.Content.ReadAsStringAsync();
         body.Should().Contain("The uploaded file is not a valid Excel workbook or is corrupted.");
+    }
+
+    // A real .xlsx package the Excel library can't load (seen in production: ClosedXML's "Sequence
+    // contains no matching element") is a rejected file, not a 500: 422 with the reason in errors[],
+    // archived as Rejected so it shows in the processing report and GET /api/generated-files/{id}.
+    [Fact]
+    public async Task Process_WithWorkbookTheExcelLibraryCannotLoad_ReturnsUnprocessableEntityWithTheReason_AndArchivesIt()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var unreadableWorkbook = BuildWorkbookWithSheetPartMissing();
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, unreadableWorkbook, "illisible.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var error = body.RootElement.GetProperty("errors").EnumerateArray().Should().ContainSingle().Subject;
+        error.GetProperty("code").GetString().Should().Be("UnreadableWorkbook");
+        error.GetProperty("blockIdentifier").GetString().Should().Be("illisible.xlsx");
+        error.GetProperty("message").GetString().Should().Contain("n'a pas pu être lu");
+        response.Headers.GetValues("X-Warning-Count").Should().ContainSingle().Which.Should().Be("1");
+
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Status.Should().Be(GeneratedFileArchiveStatus.Rejected);
+        record.Warnings.Should().ContainSingle().Which.Code.Should().Be("UnreadableWorkbook");
+        response.Headers.GetValues("X-Generated-File-Id").Should().ContainSingle().Which.Should().Be(record.Id.ToString());
+    }
+
+    // A second sheet is declared in workbook.xml but its part is gone: a valid package ClosedXML
+    // can't load.
+    private static MemoryStream BuildWorkbookWithSheetPartMissing()
+    {
+        var stream = new MemoryStream();
+        using (var workbook = new XLWorkbook())
+        {
+            workbook.Worksheets.Add("PROCEDURE");
+            workbook.Worksheets.Add("ISOLEMENT");
+            workbook.SaveAs(stream);
+        }
+
+        using (var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(stream, isEditable: true))
+        {
+            var workbookPart = document.WorkbookPart!;
+            workbookPart.DeletePart(workbookPart.WorksheetParts.Last());
+        }
+
+        stream.Position = 0;
+        return stream;
     }
 
     [Fact]
