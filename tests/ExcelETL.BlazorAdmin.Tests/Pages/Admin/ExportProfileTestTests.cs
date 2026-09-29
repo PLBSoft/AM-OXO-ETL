@@ -1169,6 +1169,33 @@ public class ExportProfileTestTests : BunitContext
         });
 
     [Fact]
+    public async Task BatchWithOneWorkbookTheExcelLibraryCannotLoad_ShowsItAsRejectedWithTheReason_OthersGeneratedNormally() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var importProfile = await SeedRealImportProfileAsync();
+            var exportProfile = await SeedRealExportProfileAsync();
+            var cut = Render<ExportProfileTest>();
+            SelectImportProfile(cut, importProfile.Id);
+
+            cut.FindComponent<InputFile>().UploadFiles(
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                UnreadableWorkbookAsInputFile("illisible.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("1 rejected");
+            summary.Should().NotContain("technical error");
+
+            SelectExportProfile(cut, exportProfile.Id);
+            cut.Find("#generate-workbook-button").Click();
+            cut.Find("#file-details-toggle-0").Click();
+            cut.Find("#file-details-toggle-1").Click();
+
+            cut.Find("#rejected-1").TextContent.Should().Contain("n'a pas pu être lu");
+            cut.FindAll("a[id^='download-generated-workbook-link']").Should().HaveCount(1);
+        });
+
+    [Fact]
     public async Task BatchWithOneCorruptedFile_ShowsTechnicalError_OthersGeneratedNormally() =>
         await WithCultureAsync("en-US", async () =>
         {
@@ -1241,4 +1268,25 @@ public class ExportProfileTestTests : BunitContext
             cut.Find("#file-details-toggle-0").ParentElement!.HasAttribute("open").Should().BeFalse();
             cut.Find("#file-details-toggle-1").ParentElement!.HasAttribute("open").Should().BeFalse();
         });
+
+    // A second sheet is declared in workbook.xml but its part is gone: a valid package ClosedXML
+    // can't load (same class of failure as the production "Sequence contains no matching element").
+    private static InputFileContent UnreadableWorkbookAsInputFile(string fileName)
+    {
+        using var stream = new MemoryStream();
+        using (var workbook = new ClosedXML.Excel.XLWorkbook())
+        {
+            workbook.Worksheets.Add("PROCEDURE");
+            workbook.Worksheets.Add("ISOLEMENT");
+            workbook.SaveAs(stream);
+        }
+
+        using (var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(stream, isEditable: true))
+        {
+            var workbookPart = document.WorkbookPart!;
+            workbookPart.DeletePart(workbookPart.WorksheetParts.Last());
+        }
+
+        return InputFileContent.CreateFromBinary(stream.ToArray(), fileName);
+    }
 }

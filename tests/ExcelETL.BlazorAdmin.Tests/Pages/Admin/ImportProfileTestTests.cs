@@ -982,6 +982,30 @@ public class ImportProfileTestTests : BunitContext
         });
 
     [Fact]
+    public async Task BatchWithOneWorkbookTheExcelLibraryCannotLoad_ShowsItAsRejectedWithTheReason_OthersProcessNormally() =>
+        await WithCultureAsync("en-US", async () =>
+        {
+            var profile = await SeedRealProfileAsync();
+            var cut = Render<ImportProfileTest>();
+            SelectProfile(cut, profile.Id);
+
+            cut.FindComponent<InputFile>().UploadFiles(
+                FixtureAsInputFile("Dossier.de.MaD.IDL.-.C7401.xlsx"),
+                UnreadableWorkbookAsInputFile("illisible.xlsx"));
+
+            cut.WaitForAssertion(() => cut.FindAll("#batch-summary").Should().NotBeEmpty());
+            var summary = cut.Find("#batch-summary").TextContent;
+            summary.Should().Contain("1 rejected");
+            summary.Should().NotContain("technical error");
+
+            cut.Find("#file-details-toggle-1").Click();
+            var rejected = cut.Find("#rejected-1").TextContent;
+            rejected.Should().Contain("Classeur / illisible.xlsx");
+            rejected.Should().Contain("n'a pas pu être lu");
+            cut.FindAll("#technical-error-1").Should().BeEmpty();
+        });
+
+    [Fact]
     public async Task BatchWithOneCorruptedFile_ShowsTechnicalError_OthersProcessNormally() =>
         await WithCultureAsync("en-US", async () =>
         {
@@ -1026,4 +1050,25 @@ public class ImportProfileTestTests : BunitContext
 
         cut.Find("#test-file-input").HasAttribute("multiple").Should().BeTrue();
     });
+
+    // A second sheet is declared in workbook.xml but its part is gone: a valid package ClosedXML
+    // can't load (same class of failure as the production "Sequence contains no matching element").
+    private static InputFileContent UnreadableWorkbookAsInputFile(string fileName)
+    {
+        using var stream = new MemoryStream();
+        using (var workbook = new ClosedXML.Excel.XLWorkbook())
+        {
+            workbook.Worksheets.Add("PROCEDURE");
+            workbook.Worksheets.Add("ISOLEMENT");
+            workbook.SaveAs(stream);
+        }
+
+        using (var document = DocumentFormat.OpenXml.Packaging.SpreadsheetDocument.Open(stream, isEditable: true))
+        {
+            var workbookPart = document.WorkbookPart!;
+            workbookPart.DeletePart(workbookPart.WorksheetParts.Last());
+        }
+
+        return InputFileContent.CreateFromBinary(stream.ToArray(), fileName);
+    }
 }

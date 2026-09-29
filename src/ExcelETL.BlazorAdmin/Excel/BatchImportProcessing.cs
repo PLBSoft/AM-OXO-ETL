@@ -42,6 +42,12 @@ public static class BatchImportProcessing
 
             return new Result(file.Name, status, result, null);
         }
+        catch (UnreadableWorkbookException ex)
+        {
+            // A real .xlsx the Excel library can't load is a rejected file, reported with its reason
+            // -- same rejection and wording as POST /api/oxo/process.
+            return new Result(file.Name, BatchFileStatus.Rejected, ex.ToRejectedImportResult(file.Name), null);
+        }
         catch (Exception ex)
         {
             return new Result(file.Name, BatchFileStatus.TechnicalError, null, localizer.TryLocalize(ex) ?? ex.Message);

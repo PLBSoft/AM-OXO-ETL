@@ -55,7 +55,7 @@ public sealed class ProcessOxoFileService(
                 ex, "OXO processing rejected source file {SourceFileName}: the workbook could not be loaded",
                 command.SourceFileName);
 
-            var unreadableResult = new ImportResult(null, [], [], [], [UnreadableWorkbookError(command.SourceFileName, ex)]);
+            var unreadableResult = ex.ToRejectedImportResult(command.SourceFileName);
             var unreadableRecordId = await TryArchiveAsync(
                 command, importProfile.Id, exportProfile.Id, unreadableResult, null, null, DateTime.UtcNow, cancellationToken);
 
@@ -106,17 +106,6 @@ public sealed class ProcessOxoFileService(
             throw;
         }
     }
-
-    // Shown to the end user (legacy app, /generated-files): what to do first, the library's own
-    // message last for support.
-    private static ExtractionError UnreadableWorkbookError(string sourceFileName, UnreadableWorkbookException exception) =>
-        new(
-            "Classeur",
-            sourceFileName,
-            ExtractionErrorCode.UnreadableWorkbook,
-            "Le fichier n'a pas pu être lu : il contient un élément que le service ne sait pas ouvrir. " +
-            "Ouvrez-le dans Excel, enregistrez-le de nouveau au format .xlsx puis relancez l'import. " +
-            $"Détail technique : {exception.InnerException?.Message ?? exception.Message}");
 
     // Best-effort, deliberately isolated from the main try/catch above: a disk-full or database-down
     // failure here must never fail the HTTP response that already has a valid result to return (see
