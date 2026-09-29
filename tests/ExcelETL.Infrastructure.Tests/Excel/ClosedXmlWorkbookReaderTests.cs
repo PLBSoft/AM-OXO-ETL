@@ -1,4 +1,6 @@
+using System.Xml.Linq;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Infrastructure.Excel;
 using FluentAssertions;
@@ -49,6 +51,49 @@ public class ClosedXmlWorkbookReaderTests
 
         act.Should().Throw<WorksheetNotFoundInWorkbookException>()
             .Which.SheetName.Should().Be("MISSING");
+    }
+
+    [Fact]
+    public void Constructor_WithCommentShapeClosedXmlCannotLoad_StillReadsCellValues()
+    {
+        // A note whose VML shape has no x:ClientData element (files saved by some non-Excel tools):
+        // ClosedXML 0.105.1 throws "Sequence contains no matching element" while loading it. The
+        // extraction never reads comments, so the reader must open the file anyway.
+        using var stream = BuildWorkbookWithCommentShapeWithoutClientData();
+        var loadWithClosedXmlAlone = () => new XLWorkbook(new MemoryStream(stream.ToArray()));
+        loadWithClosedXmlAlone.Should().Throw<InvalidOperationException>();
+
+        using var sut = new ClosedXmlWorkbookReader(stream);
+
+        sut.ReadCellValue("Sheet", "B2").Should().Be("Acme Corp");
+    }
+
+    private static MemoryStream BuildWorkbookWithCommentShapeWithoutClientData()
+    {
+        var stream = BuildWorkbook(ws =>
+        {
+            ws.Cell("B2").Value = "Acme Corp";
+            ws.Cell("B2").CreateComment().AddText("Note");
+        });
+
+        using (var document = SpreadsheetDocument.Open(stream, isEditable: true))
+        {
+            foreach (var vmlPart in document.WorkbookPart!.WorksheetParts.SelectMany(p => p.VmlDrawingParts))
+            {
+                XDocument vml;
+                using (var read = vmlPart.GetStream(FileMode.Open))
+                {
+                    vml = XDocument.Load(read);
+                }
+
+                vml.Descendants().Where(e => e.Name.LocalName == "ClientData").ToList().ForEach(e => e.Remove());
+                using var write = vmlPart.GetStream(FileMode.Create);
+                vml.Save(write);
+            }
+        }
+
+        stream.Position = 0;
+        return stream;
     }
 
     private static MemoryStream BuildWorkbook(Action<IXLWorksheet> configureSheet)

@@ -1,5 +1,6 @@
 using System.Globalization;
 using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Packaging;
 using ExcelETL.Application.Extraction;
 using ExcelETL.Application.Extraction.Oxo;
 
@@ -17,7 +18,54 @@ public sealed class ClosedXmlWorkbookReader : IWorkbookReader, IDisposable
     public ClosedXmlWorkbookReader(Stream excelFileStream)
     {
         ArgumentNullException.ThrowIfNull(excelFileStream);
-        _workbook = new XLWorkbook(excelFileStream);
+        _workbook = new XLWorkbook(WithoutCellComments(excelFileStream));
+    }
+
+    // ClosedXML 0.105.1 throws "Sequence contains no matching element" while loading a note whose
+    // VML shape has no x:ClientData or v:textbox element (files saved by some non-Excel tools) --
+    // seen in production on POST /api/oxo/process. The extraction never reads comments, so their
+    // part is removed from a copy of the file before ClosedXML opens it. The caller's stream (and
+    // the archived source file) is left untouched.
+    private static MemoryStream WithoutCellComments(Stream excelFileStream)
+    {
+        var copy = new MemoryStream();
+        excelFileStream.CopyTo(copy);
+        copy.Position = 0;
+
+        if (HasCellComments(copy))
+        {
+            using var document = SpreadsheetDocument.Open(copy, isEditable: true);
+            foreach (var worksheetPart in document.WorkbookPart!.WorksheetParts)
+            {
+                if (worksheetPart.WorksheetCommentsPart is { } commentsPart)
+                {
+                    worksheetPart.DeletePart(commentsPart);
+                }
+            }
+        }
+
+        copy.Position = 0;
+        return copy;
+    }
+
+    // Opened read-only first so a file without comments (the usual case) is never rewritten. A
+    // stream that isn't a valid package is left for XLWorkbook to reject with its own exception
+    // (FileFormatException, translated to a 400 by OxoController).
+    private static bool HasCellComments(MemoryStream copy)
+    {
+        try
+        {
+            using var document = SpreadsheetDocument.Open(copy, isEditable: false);
+            return document.WorkbookPart?.WorksheetParts.Any(p => p.WorksheetCommentsPart is not null) ?? false;
+        }
+        catch (Exception exception) when (exception is FileFormatException or OpenXmlPackageException or InvalidDataException)
+        {
+            return false;
+        }
+        finally
+        {
+            copy.Position = 0;
+        }
     }
 
     public string? ReadCellValue(string sheet, string range)
