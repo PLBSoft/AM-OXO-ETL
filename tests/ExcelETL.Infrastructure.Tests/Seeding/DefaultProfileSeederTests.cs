@@ -328,18 +328,14 @@ public class DefaultProfileSeederTests
         // Follow-up (2026-09-07): "CRITERE" moved from a constant to a real ColumnDefinition sourced
         // from PivotFieldRef.TacheMultipleCritere (conditional on Ordre presence -- see
         // PivotFieldResolver); "AVANCEMENT" was removed from the default profile entirely.
-        tachesMultiples.ColumnDefinitions.Should().HaveCount(17);
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(13);
         tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
         {
             ("GUID", null),
             ("TYPE TACHE", PivotFieldRef.TacheMultipleTypeTacheMultipleCode),
             ("Repère TM", PivotFieldRef.TacheMultipleRepere),
             ("ZONE", PivotFieldRef.TacheMultipleLocalisation),
-            ("LOC2", null),
-            ("LOC3", null),
             ("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
-            ("LOT", null),
-            ("Ressource", null),
             ("Ligne", PivotFieldRef.TacheMultipleLigneSource),
             ("Ordre", PivotFieldRef.TacheMultipleOrdre),
             ("Action", PivotFieldRef.TacheMultipleAction),
@@ -353,30 +349,26 @@ public class DefaultProfileSeederTests
         tachesMultiples.ConstantColumnDefinitions.Should().Contain(c => c.Header == "SUPPRESSION" && c.Value == "N");
     }
 
-    // Lot 066, 66.2: unmapped identity ColumnDefinitions (decision 6) -- Source = null, a legitimately
-    // empty cell reserving a slot in the target workbook's known schema.
+    // 2026-09-30: the always-empty unmapped identity columns (Source = null) are gone -- the legacy app
+    // reads by header name and ignores unknown columns, so they only added noise. "GUID" stays on the
+    // TM sheets: legacy reads it by position (column A) and it must be present, empty.
     [Fact]
-    public async Task SeedAsync_CreatesExportProfile_WithExpectedUnmappedIdentityColumns()
+    public async Task SeedAsync_CreatesExportProfile_WithoutAlwaysEmptyUnmappedColumns()
     {
         var seeder = CreateSeeder(out _, out var exportProfileStore);
         await seeder.SeedAsync();
 
         var profile = await exportProfileStore.GetByIdAsync(DefaultProfileSeeder.ExportProfileId);
 
-        var parents = profile!.SheetRules.Single(r => r.SheetName == "Parents");
-        string[] expectedParentsUnmappedHeaders = ["LOC2", "LOC3", "FLUIDE", "RECURRENT", "SUPPRESSION", "ADR Email", "COMMENTAIRES"];
-        parents.ColumnDefinitions.Where(c => expectedParentsUnmappedHeaders.Contains(c.Header))
-            .Should().HaveCount(expectedParentsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
+        foreach (var rule in profile!.SheetRules.Where(r => r.SheetName is "Parents" or "Enfants"))
+        {
+            rule.ColumnDefinitions.Should().OnlyContain(c => c.Source != null, rule.SheetName);
+        }
 
-        var enfants = profile.SheetRules.Single(r => r.SheetName == "Enfants");
-        // "ETIQUETTE" removed from this list at Lot 068 -- now mapped, see the dedicated test below.
-        string[] expectedEnfantsUnmappedHeaders =
-        [
-            "LOC2", "LOC3", "PHASE PROCESS", "REMARQUES", "DIAMETRE INCH", "SERIE LBS",
-            "NATURE JOINT", "BESOIN ECHAF", "SUPPRESSION", "POSITION A LA DEPOSE"
-        ];
-        enfants.ColumnDefinitions.Where(c => expectedEnfantsUnmappedHeaders.Contains(c.Header))
-            .Should().HaveCount(expectedEnfantsUnmappedHeaders.Length).And.OnlyContain(c => c.Source == null);
+        var tachesMultiples = profile.SheetRules.Single(r => r.SheetName == "Tâches multiples");
+        tachesMultiples.ColumnDefinitions.Where(c => c.Source == null).Select(c => c.Header)
+            .Should().Equal("GUID");
+        tachesMultiples.ColumnDefinitions.First().Header.Should().Be("GUID");
     }
 
     // Lot 068 (couleur d'étiquette, client remark): the "ETIQUETTE" column -- unmapped since Lot 066 --
@@ -535,18 +527,14 @@ public class DefaultProfileSeederTests
         tachesMultiples.PointColumnDefinitions.Should().BeEmpty();
         // Lot 069: the migration path shares BuildTacheMultipleSheetRule with the nominal seed path, so
         // it gains the same columns automatically. Order-independent, same caveat as above.
-        tachesMultiples.ColumnDefinitions.Should().HaveCount(17);
+        tachesMultiples.ColumnDefinitions.Should().HaveCount(13);
         tachesMultiples.ColumnDefinitions.Select(c => (c.Header, c.Source)).Should().BeEquivalentTo(new (string Header, PivotFieldRef? Source)[]
         {
             ("GUID", null),
             ("TYPE TACHE", PivotFieldRef.TacheMultipleTypeTacheMultipleCode),
             ("Repère TM", PivotFieldRef.TacheMultipleRepere),
             ("ZONE", PivotFieldRef.TacheMultipleLocalisation),
-            ("LOC2", null),
-            ("LOC3", null),
             ("TYPE ELEMENT CODE", PivotFieldRef.TacheMultipleTypeElementNom),
-            ("LOT", null),
-            ("Ressource", null),
             ("Ligne", PivotFieldRef.TacheMultipleLigneSource),
             ("Ordre", PivotFieldRef.TacheMultipleOrdre),
             ("Action", PivotFieldRef.TacheMultipleAction),

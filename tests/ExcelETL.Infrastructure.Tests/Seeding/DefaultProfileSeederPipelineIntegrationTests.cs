@@ -271,11 +271,7 @@ public class DefaultProfileSeederPipelineIntegrationTests
                 row.Cell(Col("TYPE TACHE")).GetString().Should().Be(sheetName);
                 row.Cell(Col("Repère TM")).GetString().Should().Be(expectedRepere);
                 row.Cell(Col("ZONE")).GetString().Should().Be(expectedZone);
-                row.Cell(Col("LOC2")).GetString().Should().BeEmpty();
-                row.Cell(Col("LOC3")).GetString().Should().BeEmpty();
                 row.Cell(Col("TYPE ELEMENT CODE")).GetString().Should().Be("MAD");
-                row.Cell(Col("LOT")).GetString().Should().BeEmpty();
-                row.Cell(Col("Ressource")).GetString().Should().BeEmpty();
                 row.Cell(Col("Ligne")).GetValue<int>().Should().BePositive();
                 row.Cell(Col("Colonne Travaux")).GetString().Should().Be(expectedColonneTravaux);
                 var hasOrdre = !string.IsNullOrEmpty(row.Cell(Col("Ordre")).GetString());
@@ -426,8 +422,6 @@ public class DefaultProfileSeederPipelineIntegrationTests
         int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
         parents.RowsUsed().Should().HaveCount(2); // header + 1 Equipement row
         parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("771-G4010A");
-        parents.Cell(2, ParentsCol("LOC2")).GetString().Should().Be("");
-        parents.Cell(2, ParentsCol("COMMENTAIRES")).GetString().Should().Be("");
 
         // Lot 083: G4010A has MAD tasks only -- "PROCÉDURE REL" stays empty, the other 5 are ticked.
         parents.Cell(2, ParentsCol("PROCÉDURE REL")).GetString().Should().Be("");
@@ -451,8 +445,6 @@ public class DefaultProfileSeederPipelineIntegrationTests
         enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
 
         int EnfantsCol(string header) => expectedEnfantsHeaders.IndexOf(header) + 1;
-        enfants.Cell(2, EnfantsCol("REMARQUES")).GetString().Should().Be("");
-        enfants.Cell(2, EnfantsCol("POSITION A LA DEPOSE")).GetString().Should().Be("");
     }
 
     [Fact]
@@ -468,7 +460,6 @@ public class DefaultProfileSeederPipelineIntegrationTests
         int ParentsCol(string header) => expectedParentsHeaders.IndexOf(header) + 1;
         parents.RowsUsed().Should().HaveCount(2);
         parents.Cell(2, ParentsCol("Repère")).GetString().Should().Be("602-G6306B");
-        parents.Cell(2, ParentsCol("FLUIDE")).GetString().Should().Be("");
 
         // DIVERS' one matching "INSTRUMENTATION" isolement marks this column on Parents purely via
         // aggregation -- no Point is ever attached to the Equipement itself for this Colonne.
@@ -486,7 +477,6 @@ public class DefaultProfileSeederPipelineIntegrationTests
         enfants.RowsUsed().Should().HaveCount(1 + importResult.Isolements.Count);
 
         int EnfantsCol(string header) => expectedEnfantsHeaders.IndexOf(header) + 1;
-        enfants.Cell(2, EnfantsCol("NATURE JOINT")).GetString().Should().Be("");
     }
 
     private static List<string> ExpectedHeaders(SheetGenerationRule rule) => rule.ColumnDefinitions.Select(c => c.Header)
