@@ -19,6 +19,14 @@ public interface IGeneratedFileArchiveStore
     // Infrastructure, never as an in-memory LINQ query over every row.
     Task<GeneratedFileArchiveSummary> GetSummaryAsync(CancellationToken cancellationToken = default);
 
+    // Lot 090: records whose files were never purged and that were generated before cutoffUtc.
+    Task<IReadOnlyList<GeneratedFileRecord>> GetRecordsWithFilesOlderThanAsync(
+        DateTime cutoffUtc, CancellationToken cancellationToken = default);
+
+    // Lot 090: the only mutation this store allows -- records that their files were purged. The
+    // record itself stays as history; unknown id is a no-op.
+    Task MarkFilesPurgedAsync(Guid id, DateTime purgedAtUtc, CancellationToken cancellationToken = default);
+
     // Lot 088 (088.1): date and status of every file archived from fromUtc (inclusive) onwards,
     // projected in SQL -- the home page groups them into days itself, in the browser's time zone.
     Task<IReadOnlyList<GeneratedFileActivityEntry>> GetActivitySinceAsync(

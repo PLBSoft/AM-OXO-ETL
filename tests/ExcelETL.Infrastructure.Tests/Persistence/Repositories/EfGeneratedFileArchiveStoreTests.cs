@@ -335,4 +335,47 @@ public class EfGeneratedFileArchiveStoreTests
             new GeneratedFileActivityEntry(after.GeneratedAtUtc, GeneratedFileArchiveStatus.NonBlockingWarning),
         ]);
     }
+
+    [Fact]
+    public async Task GetRecordsWithFilesOlderThanAsync_ReturnsOnlyOldRecordsNotYetPurged()
+    {
+        var cutoff = new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc);
+        var old = CreateRecord(cutoff.AddDays(-1));
+        var recent = CreateRecord(cutoff.AddDays(1));
+        var alreadyPurged = CreateRecord(cutoff.AddDays(-10));
+        alreadyPurged.MarkFilesPurged(cutoff);
+        var store = CreateStore();
+        foreach (var r in new[] { old, recent, alreadyPurged })
+        {
+            await store.SaveAsync(r);
+        }
+
+        var result = await store.GetRecordsWithFilesOlderThanAsync(cutoff);
+
+        result.Select(r => r.Id).Should().BeEquivalentTo([old.Id]);
+    }
+
+    [Fact]
+    public async Task MarkFilesPurgedAsync_PersistsTheDate_AndKeepsTheRecord()
+    {
+        var record = CreateRecord(new DateTime(2026, 7, 1, 0, 0, 0, DateTimeKind.Utc), warnings:
+            [new GeneratedFileWarning("S", "B", "C", "M")]);
+        var store = CreateStore();
+        await store.SaveAsync(record);
+        var purgedAt = new DateTime(2026, 10, 1, 9, 0, 0, DateTimeKind.Utc);
+
+        await store.MarkFilesPurgedAsync(record.Id, purgedAt);
+
+        var reloaded = await store.GetByIdAsync(record.Id);
+        reloaded!.FilesPurgedAtUtc.Should().Be(purgedAt);
+        reloaded.Warnings.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task MarkFilesPurgedAsync_WithUnknownId_IsANoOp()
+    {
+        var act = () => CreateStore().MarkFilesPurgedAsync(Guid.NewGuid(), DateTime.UtcNow);
+
+        await act.Should().NotThrowAsync();
+    }
 }

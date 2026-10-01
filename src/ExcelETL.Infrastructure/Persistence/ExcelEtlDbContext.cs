@@ -11,6 +11,8 @@ public class ExcelEtlDbContext(DbContextOptions<ExcelEtlDbContext> options) : Db
     public DbSet<ExportProfile> ExportProfiles => Set<ExportProfile>();
     public DbSet<GeneratedFileRecord> GeneratedFileRecords => Set<GeneratedFileRecord>();
 
+    public DbSet<ArchiveRetentionSetting> ArchiveRetentionSettings => Set<ArchiveRetentionSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ExcelEtlDbContext).Assembly);

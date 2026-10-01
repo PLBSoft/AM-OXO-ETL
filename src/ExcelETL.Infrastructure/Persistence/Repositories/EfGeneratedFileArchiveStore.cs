@@ -45,6 +45,29 @@ public class EfGeneratedFileArchiveStore(IDbContextFactory<ExcelEtlDbContext> db
         return await context.GeneratedFileRecords.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
+    // Lot 090: filtered in SQL (a plain date/null comparison, no string translation involved).
+    public async Task<IReadOnlyList<GeneratedFileRecord>> GetRecordsWithFilesOlderThanAsync(
+        DateTime cutoffUtc, CancellationToken cancellationToken = default)
+    {
+        await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        return await context.GeneratedFileRecords
+            .Where(r => r.FilesPurgedAtUtc == null && r.GeneratedAtUtc < cutoffUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task MarkFilesPurgedAsync(Guid id, DateTime purgedAtUtc, CancellationToken cancellationToken = default)
+    {
+        await using var context = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        var record = await context.GeneratedFileRecords.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+        if (record is null)
+        {
+            return;
+        }
+
+        record.MarkFilesPurged(purgedAtUtc);
+        await context.SaveChangesAsync(cancellationToken);
+    }
+
     // Lot 054 (54.2): a real aggregate query, not SearchAsync(null).Count -- this table has no purge
     // policy and its volume is expected to grow, unlike ImportProfile/ExportProfile's few dozen rows.
     public async Task<GeneratedFileArchiveSummary> GetSummaryAsync(CancellationToken cancellationToken = default)

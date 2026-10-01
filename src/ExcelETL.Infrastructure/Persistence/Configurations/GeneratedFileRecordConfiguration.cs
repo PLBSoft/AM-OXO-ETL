@@ -29,6 +29,7 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
         builder.Property(r => r.PointCount).IsRequired();
         builder.Property(r => r.TacheMultipleCount).IsRequired();
 
+        builder.Property(r => r.FilesPurgedAtUtc);
         builder.Property(r => r.Status).HasConversion<string>().HasMaxLength(32);
 
         // ImportProfileId/ExportProfileId are plain denormalized Guid values (no EF relationship,
