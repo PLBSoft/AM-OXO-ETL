@@ -75,6 +75,13 @@ public sealed class GeneratedFileRecord
     // note); GeneratedFileRecord needs a private parameterless constructor below for the same
     // reason RepeatingBlockLocator.Fields/SheetExtractionRule.PointRules/ImportProfile.SheetRules
     // already do.
+    // Retention (Lot 090): set once the retention purge has deleted this record's files on disk -- the
+    // record itself (metadata, warnings) is deliberately kept as history. Null means the files were
+    // never purged; it does not guarantee they still exist (a file can also be missing for other reasons).
+    public DateTime? FilesPurgedAtUtc { get; private set; }
+
+    public void MarkFilesPurged(DateTime purgedAtUtc) => FilesPurgedAtUtc = purgedAtUtc;
+
     private readonly List<GeneratedFileWarning> _warnings;
     public IReadOnlyList<GeneratedFileWarning> Warnings => _warnings;
 

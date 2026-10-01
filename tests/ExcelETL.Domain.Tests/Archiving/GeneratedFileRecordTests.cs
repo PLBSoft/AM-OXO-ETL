@@ -198,4 +198,20 @@ public class GeneratedFileRecordTests
 
         record.Warnings.Should().HaveCount(1);
     }
+
+    [Fact]
+    public void MarkFilesPurged_SetsTheDate_AndKeepsTheRestOfTheRecord()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, "38-C7401", "source.xlsx", "path",
+            "target.xlsx", "path2", Guid.NewGuid(), Guid.NewGuid(), GeneratedFileArchiveStatus.Success);
+        record.FilesPurgedAtUtc.Should().BeNull();
+
+        var purgedAt = new DateTime(2026, 10, 1, 8, 0, 0, DateTimeKind.Utc);
+        record.MarkFilesPurged(purgedAt);
+
+        record.FilesPurgedAtUtc.Should().Be(purgedAt);
+        record.EquipementRepere.Should().Be("38-C7401");
+        record.SourceFileName.Should().Be("source.xlsx");
+    }
 }

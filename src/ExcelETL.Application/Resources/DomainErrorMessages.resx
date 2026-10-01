@@ -211,4 +211,7 @@
   <data name="SheetExtractionRule_PointRuleReferencesUnknownBlockField" xml:space="preserve">
     <value>Point rule for Colonne '{0}' reads '{1}', which is not a field of this sheet's block.</value>
   </data>
+  <data name="ArchiveRetentionSetting_DaysOutOfRange" xml:space="preserve">
+    <value>Retention days must be between {0} and {1}.</value>
+  </data>
 </root>

@@ -75,5 +75,6 @@ public enum DomainErrorCode
     ApplicationColumnDefinition_EmptyHeader,
     ApplicationColumnDefinition_EmptyMarkValue,
     ConstantColumnDefinition_EmptyHeader,
-    ConstantColumnDefinition_EmptyValue
+    ConstantColumnDefinition_EmptyValue,
+    ArchiveRetentionSetting_DaysOutOfRange
 }
