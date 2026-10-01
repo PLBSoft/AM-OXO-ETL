@@ -2,10 +2,13 @@
 @attribute [Authorize]
 
 @using ExcelETL.Application.Archiving
+@using ExcelETL.BlazorAdmin.Shared
+@using ExcelETL.Infrastructure.Identity
 @using ExcelETL.BlazorAdmin.Services
 @using ExcelETL.Domain.Archiving
 @using ExcelETL.Infrastructure.Archiving
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.Extensions.Options
 
@@ -13,6 +16,9 @@
 @inject IOptions<GeneratedFilesArchiveOptions> ArchiveOptions
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 @inject ILocalTimeFormatter LocalTimeFormatter
+@inject IArchiveRetentionSettingsStore RetentionSettingsStore
+@inject IGeneratedFilePurger GeneratedFilePurger
+@inject TimeProvider TimeProvider
 
 <PageTitle>@Loc["GeneratedFiles_PageTitle"]</PageTitle>
 
@@ -21,6 +27,72 @@
 <div class="alert alert-info small" role="alert" id="generated-files-scope-note">
     @Loc["GeneratedFiles_ScopeNote"]
 </div>
+
+@if (_isAdmin)
+{
+    <section id="archive-retention-panel" class="card bg-light mb-3">
+        <div class="card-body">
+            <h2 class="h5">@Loc["GeneratedFiles_RetentionHeading"]</h2>
+            <p class="small text-muted">@Loc["GeneratedFiles_RetentionHelp"]</p>
+
+            <div class="row g-2 align-items-start">
+                <div class="col-12 col-md">
+                    <div class="form-floating">
+                        <input id="retention-days-input" type="number" min="0" max="@ArchiveRetentionSetting.MaxRetentionDays"
+                               class="form-control" placeholder="@Loc["GeneratedFiles_RetentionDaysLabel"]"
+                               @bind="_retentionInput" @bind:event="oninput" />
+                        <label for="retention-days-input">@Loc["GeneratedFiles_RetentionDaysLabel"]</label>
+                    </div>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button id="save-retention-days-button" type="button"
+                            class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-1"
+                            @onclick="SaveRetentionAsync">
+                        @((MarkupString)AdminIconMarkup.Check) @Loc["GeneratedFiles_RetentionSaveButton"]
+                    </button>
+                </div>
+            </div>
+
+            @if (_retentionError is not null)
+            {
+                <div id="retention-error" class="alert alert-danger mt-3 mb-0" role="alert">@_retentionError</div>
+            }
+
+            <div class="right-aligned-actions mt-3">
+                @if (_purgeConfirmationOpen)
+                {
+                    <div id="purge-now-confirm" class="right-aligned-actions" role="alert">
+                        <span class="text-danger me-auto">@Loc["GeneratedFiles_PurgeNowConfirmMessage", _savedRetentionDays]</span>
+                        <button id="confirm-purge-now-button" type="button" class="btn btn-sm btn-danger"
+                                @onclick="ConfirmPurgeNowAsync">
+                            @Loc["GeneratedFiles_PurgeNowConfirmButton"]
+                        </button>
+                        <button id="cancel-purge-now-button" type="button"
+                                class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+                                @onclick="CancelPurgeNow">
+                            @((MarkupString)AdminIconMarkup.X) @Loc["GeneratedFiles_PurgeCancelButton"]
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <button id="purge-now-button" type="button"
+                            class="btn btn-outline-danger d-flex align-items-center justify-content-center gap-1"
+                            disabled="@(_savedRetentionDays == 0)"
+                            title="@(_savedRetentionDays == 0 ? Loc["GeneratedFiles_PurgeDisabledHint"] : Loc["GeneratedFiles_PurgeNowButton"])"
+                            @onclick="OpenPurgeNow">
+                        @((MarkupString)AdminIconMarkup.Trash) @Loc["GeneratedFiles_PurgeNowButton"]
+                    </button>
+                }
+            </div>
+
+            @if (_purgeMessage is not null)
+            {
+                <div id="purge-result" class="alert alert-success mt-3 mb-0" role="status">@_purgeMessage</div>
+            }
+        </div>
+    </section>
+}
 
 <div class="mb-3">
     <label class="form-label" for="generated-files-search-input">@Loc["GeneratedFiles_SearchLabel"]</label>
@@ -85,7 +157,11 @@ else
                 }
             </TemplateColumn>
             <TemplateColumn Title="@Loc["GeneratedFiles_SourceFileColumn"]">
-                @if (_sourceDownloadHrefs.TryGetValue(context.Id, out var sourceHref))
+                @if (context.FilesPurgedAtUtc is not null)
+                {
+                    <span id="@($"source-expired-{context.Id}")" class="text-muted">@Loc["GeneratedFiles_FilesExpired"]</span>
+                }
+                else if (_sourceDownloadHrefs.TryGetValue(context.Id, out var sourceHref))
                 {
                     <a id="@($"download-source-link-{context.Id}")" class="btn btn-outline-secondary btn-sm"
                        href="@sourceHref" download="@context.SourceFileName">
@@ -105,6 +181,10 @@ else
                 @if (context.TargetFilePath is null)
                 {
                     <span class="text-muted">—</span>
+                }
+                else if (context.FilesPurgedAtUtc is not null)
+                {
+                    <span id="@($"target-expired-{context.Id}")" class="text-muted">@Loc["GeneratedFiles_FilesExpired"]</span>
                 }
                 else if (_targetDownloadHrefs.TryGetValue(context.Id, out var targetHref))
                 {
@@ -163,7 +243,11 @@ else
                         }
                     </p>
                     <div class="d-flex gap-2">
-                        @if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
+                        @if (record.FilesPurgedAtUtc is not null)
+                        {
+                            <span id="@($"source-expired-card-{record.Id}")" class="text-muted">@Loc["GeneratedFiles_FilesExpired"]</span>
+                        }
+                        else if (_sourceDownloadHrefs.TryGetValue(record.Id, out var sourceHrefCard))
                         {
                             <a id="@($"download-source-link-card-{record.Id}")" class="btn btn-outline-secondary btn-sm"
                                href="@sourceHrefCard" download="@record.SourceFileName">
@@ -182,6 +266,10 @@ else
                         @if (record.TargetFilePath is null)
                         {
                             <span class="text-muted">—</span>
+                        }
+                        else if (record.FilesPurgedAtUtc is not null)
+                        {
+                            <span id="@($"target-expired-card-{record.Id}")" class="text-muted">@Loc["GeneratedFiles_FilesExpired"]</span>
                         }
                         else if (_targetDownloadHrefs.TryGetValue(record.Id, out var targetHrefCard))
                         {
@@ -253,7 +341,80 @@ else
     private readonly Dictionary<Guid, string> _localTimestamps = new();
     private HashSet<Guid>? _localTimestampsComputedForIds;
 
-    protected override async Task OnInitializedAsync() => await LoadRecordsAsync();
+    // Lot 090: retention settings and manual purge, admin only. Hidden (and refused in the handlers
+    // below) for any other authenticated account -- this page itself stays open to every account.
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private bool _isAdmin;
+    private int _savedRetentionDays;
+    private int _retentionInput;
+    private string? _retentionError;
+    private string? _purgeMessage;
+    private bool _purgeConfirmationOpen;
+
+    private async Task LoadRetentionAsync()
+    {
+        var authState = AuthState is null ? null : await AuthState;
+        _isAdmin = authState?.User.IsInRole(IdentitySeeder.AdminRoleName) == true;
+        if (!_isAdmin)
+        {
+            return;
+        }
+
+        _savedRetentionDays = await RetentionSettingsStore.GetRetentionDaysAsync();
+        _retentionInput = _savedRetentionDays;
+    }
+
+    private async Task SaveRetentionAsync()
+    {
+        if (!_isAdmin)
+        {
+            return;
+        }
+
+        _retentionError = null;
+        _purgeMessage = null;
+        if (_retentionInput is < 0 or > ArchiveRetentionSetting.MaxRetentionDays)
+        {
+            _retentionError = Loc["GeneratedFiles_RetentionInvalid", 0, ArchiveRetentionSetting.MaxRetentionDays];
+            return;
+        }
+
+        await RetentionSettingsStore.SaveRetentionDaysAsync(_retentionInput);
+        _savedRetentionDays = _retentionInput;
+        _purgeMessage = Loc["GeneratedFiles_RetentionSaved", _savedRetentionDays];
+    }
+
+    private void OpenPurgeNow()
+    {
+        if (_isAdmin && _savedRetentionDays > 0)
+        {
+            _purgeMessage = null;
+            _purgeConfirmationOpen = true;
+        }
+    }
+
+    private void CancelPurgeNow() => _purgeConfirmationOpen = false;
+
+    private async Task ConfirmPurgeNowAsync()
+    {
+        _purgeConfirmationOpen = false;
+        if (!_isAdmin)
+        {
+            return;
+        }
+
+        var result = await GeneratedFilePurger.PurgeExpiredAsync(TimeProvider.GetUtcNow().UtcDateTime);
+        _purgeMessage = Loc["GeneratedFiles_PurgeResult", result.RecordsPurged, result.FilesDeleted,
+            (result.BytesFreed / 1024.0 / 1024.0).ToString("0.0", System.Globalization.CultureInfo.CurrentUICulture)];
+        await LoadRecordsAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRetentionAsync();
+        await LoadRecordsAsync();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

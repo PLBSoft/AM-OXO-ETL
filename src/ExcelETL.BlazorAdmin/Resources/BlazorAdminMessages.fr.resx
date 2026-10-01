@@ -1993,4 +1993,43 @@
   <data name="ImportProfileDetails_BlockFieldAtOptional" xml:space="preserve">
     <value>{0} en {1} (facultatif)</value>
   </data>
+  <data name="GeneratedFiles_RetentionHeading" xml:space="preserve">
+    <value>Conservation des fichiers archivés</value>
+  </data>
+  <data name="GeneratedFiles_RetentionHelp" xml:space="preserve">
+    <value>Les fichiers archivés plus anciens que cette durée sont supprimés automatiquement à chaque import. Les entrées d'historique sont conservées. 0 désactive la purge.</value>
+  </data>
+  <data name="GeneratedFiles_RetentionDaysLabel" xml:space="preserve">
+    <value>Durée de conservation (jours)</value>
+  </data>
+  <data name="GeneratedFiles_RetentionSaveButton" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="GeneratedFiles_RetentionSaved" xml:space="preserve">
+    <value>Durée enregistrée : {0} jour(s).</value>
+  </data>
+  <data name="GeneratedFiles_RetentionInvalid" xml:space="preserve">
+    <value>Saisissez un nombre entier de jours compris entre {0} et {1}.</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowButton" xml:space="preserve">
+    <value>Purger maintenant</value>
+  </data>
+  <data name="GeneratedFiles_PurgeDisabledHint" xml:space="preserve">
+    <value>La purge est désactivée (0 jour).</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowConfirmMessage" xml:space="preserve">
+    <value>Supprimer les fichiers archivés de plus de {0} jour(s) ? Action irréversible. Les entrées d'historique sont conservées.</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowConfirmButton" xml:space="preserve">
+    <value>Purger</value>
+  </data>
+  <data name="GeneratedFiles_PurgeCancelButton" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="GeneratedFiles_PurgeResult" xml:space="preserve">
+    <value>Purge terminée : {0} entrée(s), {1} fichier(s) supprimé(s), {2} Mo libérés.</value>
+  </data>
+  <data name="GeneratedFiles_FilesExpired" xml:space="preserve">
+    <value>Fichier expiré</value>
+  </data>
 </root>

@@ -1993,4 +1993,43 @@
   <data name="ImportProfileDetails_BlockFieldAtOptional" xml:space="preserve">
     <value>{0} en {1} (facultatif)</value>
   </data>
+  <data name="GeneratedFiles_RetentionHeading" xml:space="preserve">
+    <value>Retention of archived files</value>
+  </data>
+  <data name="GeneratedFiles_RetentionHelp" xml:space="preserve">
+    <value>Archived files older than this duration are deleted automatically at each import. History entries are kept. 0 disables the purge.</value>
+  </data>
+  <data name="GeneratedFiles_RetentionDaysLabel" xml:space="preserve">
+    <value>Retention (days)</value>
+  </data>
+  <data name="GeneratedFiles_RetentionSaveButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="GeneratedFiles_RetentionSaved" xml:space="preserve">
+    <value>Retention saved: {0} day(s).</value>
+  </data>
+  <data name="GeneratedFiles_RetentionInvalid" xml:space="preserve">
+    <value>Enter a whole number of days between {0} and {1}.</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowButton" xml:space="preserve">
+    <value>Purge now</value>
+  </data>
+  <data name="GeneratedFiles_PurgeDisabledHint" xml:space="preserve">
+    <value>The purge is disabled (0 days).</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowConfirmMessage" xml:space="preserve">
+    <value>Delete the archived files older than {0} day(s)? This cannot be undone. History entries are kept.</value>
+  </data>
+  <data name="GeneratedFiles_PurgeNowConfirmButton" xml:space="preserve">
+    <value>Purge</value>
+  </data>
+  <data name="GeneratedFiles_PurgeCancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="GeneratedFiles_PurgeResult" xml:space="preserve">
+    <value>Purge done: {0} record(s), {1} file(s) deleted, {2} MB freed.</value>
+  </data>
+  <data name="GeneratedFiles_FilesExpired" xml:space="preserve">
+    <value>File expired</value>
+  </data>
 </root>

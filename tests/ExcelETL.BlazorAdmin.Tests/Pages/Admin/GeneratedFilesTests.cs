@@ -27,6 +27,9 @@ public class GeneratedFilesTests : BunitContext
     {
         Services.AddSingleton(_archiveStoreMock.Object);
         Services.AddSingleton(_localTimeFormatterMock.Object);
+        Services.AddSingleton(Mock.Of<IArchiveRetentionSettingsStore>());
+        Services.AddSingleton(Mock.Of<IGeneratedFilePurger>());
+        Services.AddSingleton(TimeProvider.System);
         Services.AddSingleton<IOptions<GeneratedFilesArchiveOptions>>(
             Options.Create(new GeneratedFilesArchiveOptions { RootPath = _archiveRoot }));
         Services.AddLocalization();
