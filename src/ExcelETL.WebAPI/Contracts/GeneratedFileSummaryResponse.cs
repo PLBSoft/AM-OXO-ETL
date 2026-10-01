@@ -37,4 +37,10 @@ public sealed record GeneratedFileSummaryResponse(
     int PointCount,
     int TacheMultipleCount,
     int WarningCount,
-    IReadOnlyList<GeneratedFileWarningResponse> Warnings);
+    IReadOnlyList<GeneratedFileWarningResponse> Warnings,
+    bool SourceFileAvailable,
+    bool TargetFileAvailable);
+
+// SourceFileAvailable/TargetFileAvailable (Lot 090): false once the retention purge removed the
+// files (the entry itself stays as history), or when the file is otherwise missing on disk; the
+// matching download route then answers 404. TargetFileAvailable is also false for a Rejected record.

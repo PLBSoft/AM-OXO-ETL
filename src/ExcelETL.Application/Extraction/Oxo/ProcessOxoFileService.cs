@@ -27,11 +27,14 @@ public sealed class ProcessOxoFileService(
     IGeneratedFileWriter generatedFileWriter,
     IGeneratedFileArchiveStore generatedFileArchiveStore,
     IWorkbookReaderFactory workbookReaderFactory,
+    IGeneratedFilePurger generatedFilePurger,
     ILogger<ProcessOxoFileService> logger) : IProcessOxoFileService
 {
     public async Task<ProcessOxoFileResult> ProcessAsync(
         ProcessOxoFileCommand command, CancellationToken cancellationToken = default)
     {
+        await TryPurgeExpiredFilesAsync(cancellationToken);
+
         var importProfile = await importProfileStore.GetByIdAsync(command.ImportProfileId, cancellationToken)
             ?? throw new ImportProfileNotFoundException(command.ImportProfileId);
         var exportProfile = await exportProfileStore.GetByIdAsync(command.ExportProfileId, cancellationToken)
@@ -177,6 +180,20 @@ public sealed class ProcessOxoFileService(
                 ex, "Failed to archive generated files for source file {SourceFileName} -- best-effort, HTTP " +
                 "response unaffected", command.SourceFileName);
             return null;
+        }
+    }
+
+    // Lot 090: runs at the start of every import, like the legacy app's own purge. Best-effort -- a
+    // purge failure is logged and never blocks (or fails) the import it happens to ride on.
+    private async Task TryPurgeExpiredFilesAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await generatedFilePurger.PurgeExpiredAsync(DateTime.UtcNow, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Archive retention purge failed -- skipped, import unaffected");
         }
     }
 }

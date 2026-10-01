@@ -74,6 +74,9 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddSingleton<IGeneratedFileWriter, FileSystemGeneratedFileWriter>();
+builder.Services.AddSingleton<IGeneratedFileDeleter, FileSystemGeneratedFileDeleter>();
+builder.Services.AddScoped<IArchiveRetentionSettingsStore, EfArchiveRetentionSettingsStore>();
+builder.Services.AddScoped<IGeneratedFilePurger, GeneratedFilePurger>();
 builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveStore>();
 
 // OXO pipeline (Lot K1/K2) -- since Lot K4's removal of the old ExtractionConfig/ProcessExcelFile

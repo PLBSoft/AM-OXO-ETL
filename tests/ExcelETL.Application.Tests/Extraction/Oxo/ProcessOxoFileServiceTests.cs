@@ -27,6 +27,7 @@ public class ProcessOxoFileServiceTests
     private readonly Mock<IGeneratedFileWriter> _generatedFileWriter = new();
     private readonly Mock<IGeneratedFileArchiveStore> _generatedFileArchiveStore = new();
     private readonly Mock<IWorkbookReaderFactory> _workbookReaderFactory = new();
+    private readonly Mock<IGeneratedFilePurger> _generatedFilePurger = new();
     private readonly ProcessOxoFileService _sut;
 
     public ProcessOxoFileServiceTests()
@@ -47,6 +48,7 @@ public class ProcessOxoFileServiceTests
             _generatedFileWriter.Object,
             _generatedFileArchiveStore.Object,
             _workbookReaderFactory.Object,
+            _generatedFilePurger.Object,
             NullLogger<ProcessOxoFileService>.Instance);
     }
 
@@ -202,6 +204,37 @@ public class ProcessOxoFileServiceTests
         result.GeneratedFileName.Should().StartWith("MAD_38-C7401_").And.EndWith(".xlsx");
 
         _workbookWriter.Verify(w => w.Write(generatedWorkbook, It.IsAny<Stream>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_RunsTheRetentionPurgeFirst_EvenWhenTheImportProfileIsUnknown()
+    {
+        var importProfileId = Guid.NewGuid();
+        _importProfileStore
+            .Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportProfile?)null);
+
+        var act = async () => await _sut.ProcessAsync(CreateCommand(importProfileId, Guid.NewGuid(), Mock.Of<IWorkbookReader>()));
+
+        await act.Should().ThrowAsync<ImportProfileNotFoundException>();
+        _generatedFilePurger.Verify(p => p.PurgeExpiredAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenThePurgeFails_TheImportIsNotAffected()
+    {
+        _generatedFilePurger
+            .Setup(p => p.PurgeExpiredAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new IOException("disk"));
+        var importProfileId = Guid.NewGuid();
+        _importProfileStore
+            .Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((ImportProfile?)null);
+
+        var act = async () => await _sut.ProcessAsync(CreateCommand(importProfileId, Guid.NewGuid(), Mock.Of<IWorkbookReader>()));
+
+        // The purge's IOException must not surface: the only exception is the business one that follows.
+        await act.Should().ThrowAsync<ImportProfileNotFoundException>();
     }
 
     [Fact]

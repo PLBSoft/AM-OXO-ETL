@@ -92,6 +92,9 @@ builder.Services.AddSingleton<ApplicationBuildInfo>();
 // the host that actually writes to this archive via POST /api/oxo/process.
 builder.Services.Configure<GeneratedFilesArchiveOptions>(builder.Configuration.GetSection("GeneratedFilesArchive"));
 builder.Services.AddSingleton<IGeneratedFileWriter, FileSystemGeneratedFileWriter>();
+builder.Services.AddSingleton<IGeneratedFileDeleter, FileSystemGeneratedFileDeleter>();
+builder.Services.AddScoped<IArchiveRetentionSettingsStore, EfArchiveRetentionSettingsStore>();
+builder.Services.AddScoped<IGeneratedFilePurger, GeneratedFilePurger>();
 builder.Services.AddScoped<IGeneratedFileArchiveStore, EfGeneratedFileArchiveStore>();
 
 // The OXO extraction pipeline (Lot A-D), wired here so the /import-profiles/test admin page can run

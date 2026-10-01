@@ -447,4 +447,68 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         await SeedAsync(record);
         return record;
     }
+
+    [Fact]
+    public async Task GetById_WithFilesPresent_ReportsBothFilesAvailable()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync();
+
+        var body = await client.GetFromJsonAsync<GeneratedFileSummaryResponse>($"/api/generated-files/{record.Id}");
+
+        body!.SourceFileAvailable.Should().BeTrue();
+        body.TargetFileAvailable.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetById_AfterTheRetentionPurge_ReportsFilesUnavailable_KeepsTheEntry_AndDownloadsAre404()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync();
+        File.Delete(Path.Combine(_archiveRoot, record.SourceFilePath));
+        File.Delete(Path.Combine(_archiveRoot, record.TargetFilePath!));
+        using (var scope = _factory.Services.CreateScope())
+        {
+            await scope.ServiceProvider.GetRequiredService<IGeneratedFileArchiveStore>()
+                .MarkFilesPurgedAsync(record.Id, DateTime.UtcNow);
+        }
+
+        var body = await client.GetFromJsonAsync<GeneratedFileSummaryResponse>($"/api/generated-files/{record.Id}");
+
+        body!.Id.Should().Be(record.Id);
+        body.EquipementRepere.Should().Be("38-C7401");
+        body.SourceFileAvailable.Should().BeFalse();
+        body.TargetFileAvailable.Should().BeFalse();
+        (await client.GetAsync($"/api/generated-files/{record.Id}/source")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.GetAsync($"/api/generated-files/{record.Id}/target")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetById_WithRejectedRecord_ReportsSourceAvailableAndTargetUnavailable()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "rejected-source.xlsx", WriteFile("rejected-source.xlsx"),
+            null, null, Guid.NewGuid(), Guid.NewGuid(), GeneratedFileArchiveStatus.Rejected);
+        await SeedAsync(record);
+
+        var body = await client.GetFromJsonAsync<GeneratedFileSummaryResponse>($"/api/generated-files/{record.Id}");
+
+        body!.SourceFileAvailable.Should().BeTrue();
+        body.TargetFileAvailable.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Search_ReportsAvailabilityPerRecord()
+    {
+        var client = CreateAuthenticatedClient();
+        var present = await SeedRecordAsync(equipementRepere: "PRESENT");
+        var missing = await SeedRecordAsync(equipementRepere: "MISSING");
+        File.Delete(Path.Combine(_archiveRoot, missing.SourceFilePath));
+
+        var list = await client.GetFromJsonAsync<List<GeneratedFileSummaryResponse>>("/api/generated-files");
+
+        list!.Single(r => r.Id == present.Id).SourceFileAvailable.Should().BeTrue();
+        list!.Single(r => r.Id == missing.Id).SourceFileAvailable.Should().BeFalse();
+    }
 }

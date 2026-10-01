@@ -81,7 +81,14 @@ public class GeneratedFilesController(
         return new FileStreamResult(stream, WorkbookContentType) { FileDownloadName = fileName };
     }
 
-    private static GeneratedFileSummaryResponse ToSummary(GeneratedFileRecord record) => new(
+    // Lot 090: a file is available when the retention purge has not removed it AND it is still on disk
+    // (it can also vanish for other reasons) -- same existence check the download routes make.
+    private bool IsAvailable(GeneratedFileRecord record, string? relativePath) =>
+        record.FilesPurgedAtUtc is null
+        && relativePath is not null
+        && System.IO.File.Exists(Path.Combine(archiveOptions.Value.RootPath, relativePath));
+
+    private GeneratedFileSummaryResponse ToSummary(GeneratedFileRecord record) => new(
         record.Id,
         record.GeneratedAtUtc,
         record.EquipementRepere,
@@ -99,5 +106,7 @@ public class GeneratedFilesController(
         record.Warnings.Count,
         record.Warnings
             .Select(w => new GeneratedFileWarningResponse(w.Sheet, w.BlockIdentifier, w.Code, w.Message, w.ExtractedValue))
-            .ToList());
+            .ToList(),
+        IsAvailable(record, record.SourceFilePath),
+        IsAvailable(record, record.TargetFilePath));
 }
