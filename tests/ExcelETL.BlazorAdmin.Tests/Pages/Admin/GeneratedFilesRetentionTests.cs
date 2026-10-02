@@ -72,6 +72,30 @@ public class GeneratedFilesRetentionTests : BunitContext
     }
 
     [Fact]
+    public void Panel_FieldAndButtons_ShareOneCompactRow_WithPlainBootstrapControls()
+    {
+        Arrange(admin: true);
+
+        var cut = Render<GeneratedFiles>();
+
+        // A plain form-control (not form-floating) has the same height as a plain btn, so the field and
+        // both buttons line up; all three sit in the same grid row, Purge pushed to the right from md up.
+        var input = cut.Find("#retention-days-input");
+        input.ClassList.Should().Contain("form-control");
+        input.Closest(".form-floating").Should().BeNull();
+        cut.Find("label[for='retention-days-input']").Should().NotBeNull();
+
+        var row = input.Closest(".row")!;
+        row.QuerySelector("#save-retention-days-button").Should().NotBeNull();
+        row.QuerySelector("#purge-now-button").Should().NotBeNull();
+
+        input.ParentElement!.ClassList.Should().Contain(["col-4", "col-md-2", "col-xxl-1"]);
+        cut.Find("#purge-now-button").ParentElement!.ClassList.Should().Contain("ms-md-auto");
+        cut.Find("#save-retention-days-button").ClassList.Should().NotContain("btn-sm");
+        cut.Find("#purge-now-button").ClassList.Should().NotContain("btn-sm");
+    }
+
+    [Fact]
     public void Panel_ForANonAdminAccount_IsAbsentFromTheDom_AndTheSettingIsNeverRead()
     {
         Arrange(admin: false);

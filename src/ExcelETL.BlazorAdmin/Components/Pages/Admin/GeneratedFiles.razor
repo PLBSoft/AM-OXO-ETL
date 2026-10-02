@@ -32,17 +32,21 @@
 {
     <section id="archive-retention-panel" class="card bg-light mb-3">
         <div class="card-body">
-            <h2 class="h5">@Loc["GeneratedFiles_RetentionHeading"]</h2>
-            <p class="small text-muted">@Loc["GeneratedFiles_RetentionHelp"]</p>
+            <h2 class="h5 mb-1">@Loc["GeneratedFiles_RetentionHeading"]</h2>
+            <p class="small text-muted mb-2">@Loc["GeneratedFiles_RetentionHelp"]</p>
 
-            <div class="row g-2 align-items-start">
-                <div class="col-12 col-md">
-                    <div class="form-floating">
-                        <input id="retention-days-input" type="number" min="0" max="@ArchiveRetentionSetting.MaxRetentionDays"
-                               class="form-control" placeholder="@Loc["GeneratedFiles_RetentionDaysLabel"]"
-                               @bind="_retentionInput" @bind:event="oninput" />
-                        <label for="retention-days-input">@Loc["GeneratedFiles_RetentionDaysLabel"]</label>
-                    </div>
+            @* One compact row when the width allows it: label, a 3-digit-wide field, Save, then Purge pushed
+               to the right. A plain form-control and a plain btn share Bootstrap's own height, so the field
+               and the buttons line up without any custom CSS. The field's width comes from the grid only.
+               Below md each button takes its own full-width line. *@
+            <div class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label for="retention-days-input" class="col-form-label">@Loc["GeneratedFiles_RetentionDaysLabel"]</label>
+                </div>
+                <div class="col-4 col-sm-3 col-md-2 col-xxl-1">
+                    <input id="retention-days-input" type="number" min="0" max="@ArchiveRetentionSetting.MaxRetentionDays"
+                           class="form-control"
+                           @bind="_retentionInput" @bind:event="oninput" />
                 </div>
                 <div class="col-12 col-md-auto">
                     <button id="save-retention-days-button" type="button"
@@ -51,44 +55,44 @@
                         @((MarkupString)AdminIconMarkup.Check) @Loc["GeneratedFiles_RetentionSaveButton"]
                     </button>
                 </div>
-            </div>
-
-            @if (_retentionError is not null)
-            {
-                <div id="retention-error" class="alert alert-danger mt-3 mb-0" role="alert">@_retentionError</div>
-            }
-
-            <div class="right-aligned-actions mt-3">
-                @if (_purgeConfirmationOpen)
+                @if (!_purgeConfirmationOpen)
                 {
-                    <div id="purge-now-confirm" class="right-aligned-actions" role="alert">
-                        <span class="text-danger me-auto">@Loc["GeneratedFiles_PurgeNowConfirmMessage", _savedRetentionDays]</span>
-                        <button id="confirm-purge-now-button" type="button" class="btn btn-sm btn-danger"
-                                @onclick="ConfirmPurgeNowAsync">
-                            @Loc["GeneratedFiles_PurgeNowConfirmButton"]
-                        </button>
-                        <button id="cancel-purge-now-button" type="button"
-                                class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
-                                @onclick="CancelPurgeNow">
-                            @((MarkupString)AdminIconMarkup.X) @Loc["GeneratedFiles_PurgeCancelButton"]
+                    <div class="col-12 col-md-auto ms-md-auto">
+                        <button id="purge-now-button" type="button"
+                                class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center gap-1"
+                                disabled="@(_savedRetentionDays == 0)"
+                                title="@(_savedRetentionDays == 0 ? Loc["GeneratedFiles_PurgeDisabledHint"] : Loc["GeneratedFiles_PurgeNowButton"])"
+                                @onclick="OpenPurgeNow">
+                            @((MarkupString)AdminIconMarkup.Trash) @Loc["GeneratedFiles_PurgeNowButton"]
                         </button>
                     </div>
                 }
-                else
-                {
-                    <button id="purge-now-button" type="button"
-                            class="btn btn-outline-danger d-flex align-items-center justify-content-center gap-1"
-                            disabled="@(_savedRetentionDays == 0)"
-                            title="@(_savedRetentionDays == 0 ? Loc["GeneratedFiles_PurgeDisabledHint"] : Loc["GeneratedFiles_PurgeNowButton"])"
-                            @onclick="OpenPurgeNow">
-                        @((MarkupString)AdminIconMarkup.Trash) @Loc["GeneratedFiles_PurgeNowButton"]
-                    </button>
-                }
             </div>
+
+            @if (_purgeConfirmationOpen)
+            {
+                <div id="purge-now-confirm" class="right-aligned-actions align-items-center flex-wrap mt-2" role="alert">
+                    <span class="text-danger me-auto">@Loc["GeneratedFiles_PurgeNowConfirmMessage", _savedRetentionDays]</span>
+                    <button id="confirm-purge-now-button" type="button" class="btn btn-sm btn-danger"
+                            @onclick="ConfirmPurgeNowAsync">
+                        @Loc["GeneratedFiles_PurgeNowConfirmButton"]
+                    </button>
+                    <button id="cancel-purge-now-button" type="button"
+                            class="btn btn-sm btn-outline-secondary d-flex align-items-center justify-content-center gap-1"
+                            @onclick="CancelPurgeNow">
+                        @((MarkupString)AdminIconMarkup.X) @Loc["GeneratedFiles_PurgeCancelButton"]
+                    </button>
+                </div>
+            }
+
+            @if (_retentionError is not null)
+            {
+                <div id="retention-error" class="alert alert-danger py-2 mt-2 mb-0" role="alert">@_retentionError</div>
+            }
 
             @if (_purgeMessage is not null)
             {
-                <div id="purge-result" class="alert alert-success mt-3 mb-0" role="status">@_purgeMessage</div>
+                <div id="purge-result" class="alert alert-success py-2 mt-2 mb-0" role="status">@_purgeMessage</div>
             }
         </div>
     </section>
