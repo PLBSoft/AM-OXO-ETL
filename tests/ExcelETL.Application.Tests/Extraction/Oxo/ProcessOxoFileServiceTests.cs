@@ -100,10 +100,10 @@ public class ProcessOxoFileServiceTests
     // factory must return for the command's source bytes.
     private ProcessOxoFileCommand CreateCommand(
         Guid importProfileId, Guid exportProfileId, IWorkbookReader workbookReader, string sourceFileName = "source.xlsx",
-        string? username = null)
+        string? username = null, string? origin = null)
     {
         _workbookReaderFactory.Setup(f => f.Open(SampleSourceContent)).Returns(workbookReader);
-        return new(importProfileId, exportProfileId, sourceFileName, SampleSourceContent, username);
+        return new(importProfileId, exportProfileId, sourceFileName, SampleSourceContent, username, origin);
     }
 
     private ProcessOxoFileCommand CreateUnreadableCommand(Guid importProfileId, Guid exportProfileId, Exception loadFailure)
@@ -448,6 +448,54 @@ public class ProcessOxoFileServiceTests
 
         _generatedFileArchiveStore.Verify(
             s => s.SaveAsync(It.Is<GeneratedFileRecord>(r => r.Username == null), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WithOriginOnCommand_ArchivesItOnTheRecord()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var importResult = AcceptedImportResult();
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(importResult);
+        _generationEngine.Setup(e => e.Generate(importResult, exportProfile)).Returns(new GeneratedWorkbook([]));
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader, origin: "https://oxo.alphamaintenance.fr");
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(It.Is<GeneratedFileRecord>(r => r.Origin == "https://oxo.alphamaintenance.fr"), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_WhenRejectedWithOriginOnCommand_StillArchivesTheOrigin()
+    {
+        var importProfileId = Guid.NewGuid();
+        var exportProfileId = Guid.NewGuid();
+        var importProfile = CreateImportProfile();
+        var exportProfile = CreateExportProfile();
+        _importProfileStore.Setup(s => s.GetByIdAsync(importProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(importProfile);
+        _exportProfileStore.Setup(s => s.GetByIdAsync(exportProfileId, It.IsAny<CancellationToken>())).ReturnsAsync(exportProfile);
+
+        var workbookReader = Mock.Of<IWorkbookReader>();
+        _orchestrator.Setup(o => o.Run(workbookReader, importProfile)).Returns(RejectedImportResult());
+
+        var command = CreateCommand(importProfileId, exportProfileId, workbookReader, origin: "https://mt.alphamaintenance-dev.ovh");
+
+        await _sut.ProcessAsync(command);
+
+        _generatedFileArchiveStore.Verify(
+            s => s.SaveAsync(It.Is<GeneratedFileRecord>(r =>
+                r.Status == GeneratedFileArchiveStatus.Rejected && r.Origin == "https://mt.alphamaintenance-dev.ovh"),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

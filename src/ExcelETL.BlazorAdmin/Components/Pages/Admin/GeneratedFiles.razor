@@ -133,6 +133,9 @@ else
             <TemplateColumn Title="@Loc["GeneratedFiles_UsernameColumn"]" Sortable="true" SortBy="@UsernameSort">
                 @(context.Username ?? "—")
             </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_OriginColumn"]" Sortable="true" SortBy="@OriginSort">
+                <span id="@($"generated-file-origin-{context.Id}")" class="text-break">@(context.Origin ?? "—")</span>
+            </TemplateColumn>
             <TemplateColumn Title="@Loc["GeneratedFiles_StatusColumn"]" Sortable="true" SortBy="@StatusSort">
                 <span class="badge @GetStatusBadgeClass(context.Status)">@GetStatusLabel(context.Status)</span>
             </TemplateColumn>
@@ -220,6 +223,7 @@ else
                     <h2 class="card-title h5">@(record.EquipementRepere ?? "—")</h2>
                     <p class="card-text mb-1" id="generated-file-date-card-@record.Id">@LocalTimestampOrFallback(record)</p>
                     <p class="card-text mb-1">@Loc["GeneratedFiles_UsernameColumn"]: @(record.Username ?? "—")</p>
+                    <p class="card-text mb-1 text-break" id="generated-file-origin-card-@record.Id">@Loc["GeneratedFiles_OriginColumn"]: @(record.Origin ?? "—")</p>
                     <p class="card-text mb-2"><span class="badge @GetStatusBadgeClass(record.Status)">@GetStatusLabel(record.Status)</span></p>
                     <p class="card-text mb-2">
                         @Loc["GeneratedFiles_WarningsColumn"]:
@@ -314,6 +318,8 @@ else
         GridSort<GeneratedFileRecord>.ByAscending(r => r.EquipementRepere);
     private static readonly GridSort<GeneratedFileRecord> UsernameSort =
         GridSort<GeneratedFileRecord>.ByAscending(r => r.Username);
+    private static readonly GridSort<GeneratedFileRecord> OriginSort =
+        GridSort<GeneratedFileRecord>.ByAscending(r => r.Origin);
     private static readonly GridSort<GeneratedFileRecord> StatusSort =
         GridSort<GeneratedFileRecord>.ByAscending(r => r.Status);
     private static readonly GridSort<GeneratedFileRecord> WarningCountSort =

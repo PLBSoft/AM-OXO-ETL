@@ -51,6 +51,15 @@ public sealed class GeneratedFileRecord
     // one source of truth for the two places (Domain, EF configuration) that must agree on it.
     public const int MaxUsernameLength = 200;
 
+    // The calling environment, when the M2M caller chooses to supply one (e.g. the legacy app's own
+    // base URL, "https://oxo.alphamaintenance.fr") -- lets an admin tell apart files sent by
+    // several environments sharing this API without searching the logs. Free text declared by the
+    // caller, never verified: same best-effort treatment as Username (optional and last, null when
+    // not supplied, truncated rather than rejected at MaxOriginLength).
+    public string? Origin { get; }
+
+    public const int MaxOriginLength = 200;
+
     // How many Isolements/Points/TachesMultiples the run this record archives actually produced --
     // read straight off ImportResult's own collections at archiving time (ProcessOxoFileService).
     // Always known, never null: ImportResult's constructor guards Isolements/Points/TachesMultiples
@@ -100,7 +109,8 @@ public sealed class GeneratedFileRecord
         int isolementCount = 0,
         int pointCount = 0,
         int tacheMultipleCount = 0,
-        IReadOnlyList<GeneratedFileWarning>? warnings = null)
+        IReadOnlyList<GeneratedFileWarning>? warnings = null,
+        string? origin = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
@@ -116,6 +126,7 @@ public sealed class GeneratedFileRecord
         ExportProfileId = exportProfileId;
         Status = status;
         Username = username is { Length: > MaxUsernameLength } ? username[..MaxUsernameLength] : username;
+        Origin = origin is { Length: > MaxOriginLength } ? origin[..MaxOriginLength] : origin;
         IsolementCount = isolementCount;
         PointCount = pointCount;
         TacheMultipleCount = tacheMultipleCount;

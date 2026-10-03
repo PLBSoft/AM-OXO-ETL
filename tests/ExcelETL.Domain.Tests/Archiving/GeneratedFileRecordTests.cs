@@ -126,6 +126,41 @@ public class GeneratedFileRecordTests
         record.Username.Should().BeNull();
     }
 
+    // Origin: the calling environment (e.g. the legacy app's own base URL), same best-effort
+    // treatment as Username -- optional, null when not supplied, truncated rather than rejected.
+    [Fact]
+    public void Constructor_WithOrigin_AssignsItUnchanged()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected,
+            origin: "https://mt.alphamaintenance-dev.ovh");
+
+        record.Origin.Should().Be("https://mt.alphamaintenance-dev.ovh");
+    }
+
+    [Fact]
+    public void Constructor_WithOriginLongerThanMaxLength_TruncatesIt()
+    {
+        var oversizedOrigin = new string('o', GeneratedFileRecord.MaxOriginLength + 50);
+
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected, origin: oversizedOrigin);
+
+        record.Origin.Should().Be(oversizedOrigin[..GeneratedFileRecord.MaxOriginLength]);
+    }
+
+    [Fact]
+    public void Constructor_WithoutOrigin_LeavesItNull()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, null, "source.xlsx", "path",
+            null, null, Guid.NewGuid(), null, GeneratedFileArchiveStatus.Rejected);
+
+        record.Origin.Should().BeNull();
+    }
+
     [Fact]
     public void Constructor_WithoutElementCounts_LeavesThemAtZero()
     {

@@ -25,7 +25,8 @@ public class EfGeneratedFileArchiveStoreTests
         int isolementCount = 0,
         int pointCount = 0,
         int tacheMultipleCount = 0,
-        IReadOnlyList<GeneratedFileWarning>? warnings = null) => new(
+        IReadOnlyList<GeneratedFileWarning>? warnings = null,
+        string? origin = null) => new(
         Guid.NewGuid(),
         generatedAtUtc,
         equipementRepere,
@@ -40,7 +41,8 @@ public class EfGeneratedFileArchiveStoreTests
         isolementCount,
         pointCount,
         tacheMultipleCount,
-        warnings);
+        warnings,
+        origin);
 
     [Fact]
     public async Task SaveAsync_ThenGetByIdAsync_RoundTripsAllPropertiesIdentically()
@@ -167,6 +169,30 @@ public class EfGeneratedFileArchiveStoreTests
         var reloaded = await store.GetByIdAsync(record.Id);
 
         reloaded!.Username.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithOriginSupplied_RoundTripsItIdentically()
+    {
+        var record = CreateRecord(DateTime.UtcNow, origin: "https://mt.alphamaintenance-dev.ovh");
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Origin.Should().Be("https://mt.alphamaintenance-dev.ovh");
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithoutOrigin_RoundTripsAsNull()
+    {
+        var record = CreateRecord(DateTime.UtcNow);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Origin.Should().BeNull();
     }
 
     [Fact]

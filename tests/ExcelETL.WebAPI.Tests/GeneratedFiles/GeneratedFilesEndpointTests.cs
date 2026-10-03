@@ -151,6 +151,7 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         body.SourceDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/source");
         body.TargetDownloadUrl.Should().Be($"/api/generated-files/{record.Id}/target");
         body.Username.Should().BeNull();
+        body.Origin.Should().BeNull();
     }
 
     [Fact]
@@ -164,6 +165,19 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
         body!.Username.Should().Be("jdupont");
+    }
+
+    [Fact]
+    public async Task GetById_WithOriginSupplied_ReturnsIt()
+    {
+        var client = CreateAuthenticatedClient();
+        var record = await SeedRecordAsync(origin: "https://oxo.alphamaintenance.fr");
+
+        var response = await client.GetAsync($"/api/generated-files/{record.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<GeneratedFileSummaryResponse>();
+        body!.Origin.Should().Be("https://oxo.alphamaintenance.fr");
     }
 
     // -- Lot 071: element counts --
@@ -425,7 +439,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
         int isolementCount = 0,
         int pointCount = 0,
         int tacheMultipleCount = 0,
-        IReadOnlyList<GeneratedFileWarning>? warnings = null)
+        IReadOnlyList<GeneratedFileWarning>? warnings = null,
+        string? origin = null)
     {
         var id = Guid.NewGuid();
         var record = new GeneratedFileRecord(
@@ -443,7 +458,8 @@ public class GeneratedFilesEndpointTests : IClassFixture<WebApplicationFactory<P
             isolementCount: isolementCount,
             pointCount: pointCount,
             tacheMultipleCount: tacheMultipleCount,
-            warnings: warnings);
+            warnings: warnings,
+            origin: origin);
         await SeedAsync(record);
         return record;
     }

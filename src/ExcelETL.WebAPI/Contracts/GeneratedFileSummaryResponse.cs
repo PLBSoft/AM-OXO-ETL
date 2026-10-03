@@ -39,8 +39,12 @@ public sealed record GeneratedFileSummaryResponse(
     int WarningCount,
     IReadOnlyList<GeneratedFileWarningResponse> Warnings,
     bool SourceFileAvailable,
-    bool TargetFileAvailable);
+    bool TargetFileAvailable,
+    string? Origin);
 
 // SourceFileAvailable/TargetFileAvailable (Lot 090): false once the retention purge removed the
 // files (the entry itself stays as history), or when the file is otherwise missing on disk; the
 // matching download route then answers 404. TargetFileAvailable is also false for a Rejected record.
+//
+// Origin: the calling environment the caller declared at processing time (e.g.
+// "https://oxo.alphamaintenance.fr"), null when it sent none -- same treatment as Username.

@@ -169,7 +169,8 @@ public sealed class ProcessOxoFileService(
                 isolementCount: importResult.Isolements.Count,
                 pointCount: importResult.Points.Count,
                 tacheMultipleCount: importResult.TachesMultiples.Count,
-                warnings: warnings);
+                warnings: warnings,
+                origin: command.Origin);
 
             await generatedFileArchiveStore.SaveAsync(record, cancellationToken);
             return record.Id;

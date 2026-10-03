@@ -1291,6 +1291,9 @@
   <data name="GeneratedFiles_UsernameColumn" xml:space="preserve">
     <value>Utilisateur</value>
   </data>
+  <data name="GeneratedFiles_OriginColumn" xml:space="preserve">
+    <value>Origine</value>
+  </data>
   <data name="GeneratedFiles_StatusColumn" xml:space="preserve">
     <value>Statut</value>
   </data>

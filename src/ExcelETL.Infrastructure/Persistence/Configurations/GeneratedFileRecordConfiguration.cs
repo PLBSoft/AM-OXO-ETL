@@ -18,6 +18,7 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
         builder.Property(r => r.TargetFileName).HasMaxLength(260);
         builder.Property(r => r.TargetFilePath).HasMaxLength(1024);
         builder.Property(r => r.Username).HasMaxLength(GeneratedFileRecord.MaxUsernameLength);
+        builder.Property(r => r.Origin).HasMaxLength(GeneratedFileRecord.MaxOriginLength);
 
         // Plain non-nullable int scalars -- EF Core maps them NOT NULL by convention with no extra
         // configuration needed for storage, but constructor-binding materialization (Id/GeneratedAtUtc/

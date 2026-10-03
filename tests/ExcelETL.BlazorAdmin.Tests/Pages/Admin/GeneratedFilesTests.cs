@@ -67,7 +67,8 @@ public class GeneratedFilesTests : BunitContext
         byte[]? targetBytes = null,
         string? username = null,
         DateTime? generatedAtUtc = null,
-        IReadOnlyList<GeneratedFileWarning>? warnings = null)
+        IReadOnlyList<GeneratedFileWarning>? warnings = null,
+        string? origin = null)
     {
         Directory.CreateDirectory(_archiveRoot);
         var sourceRelativePath = $"{Guid.NewGuid()}_source.xlsx";
@@ -94,7 +95,8 @@ public class GeneratedFilesTests : BunitContext
             Guid.NewGuid(),
             status,
             username,
-            warnings: warnings);
+            warnings: warnings,
+            origin: origin);
     }
 
     [Fact]
@@ -332,6 +334,36 @@ public class GeneratedFilesTests : BunitContext
 
         cut.Find("table.table tbody").TextContent.Should().Contain("J.DUPONT");
         cut.Find("div.d-md-none .card").TextContent.Should().Contain("J.DUPONT");
+    });
+
+    [Fact]
+    public void GeneratedFiles_OriginColumn_DisplaysHeaderAndValueInTableAndCard() => WithCulture("en-US", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "C7401", GeneratedFileArchiveStatus.Success, withTarget: true, origin: "https://mt.alphamaintenance-dev.ovh");
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        cut.Find("table.table thead").TextContent.Should().Contain("Origin");
+        cut.Find($"#generated-file-origin-{record.Id}").TextContent.Should().Be("https://mt.alphamaintenance-dev.ovh");
+        cut.Find($"#generated-file-origin-card-{record.Id}").TextContent.Should().Contain("https://mt.alphamaintenance-dev.ovh");
+    });
+
+    [Fact]
+    public void GeneratedFiles_OriginColumn_ShowsPlaceholder_WhenNull() => WithCulture("fr-FR", () =>
+    {
+        var record = WriteRecordWithRealFiles(
+            "C7401", GeneratedFileArchiveStatus.Success, withTarget: true, origin: null);
+        _archiveStoreMock.Setup(s => s.SearchAsync(null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyList<GeneratedFileRecord>)[record]);
+
+        var cut = Render<GeneratedFiles>();
+
+        cut.Find("table.table thead").TextContent.Should().Contain("Origine");
+        cut.Find($"#generated-file-origin-{record.Id}").TextContent.Should().Be("—");
+        cut.Find($"#generated-file-origin-card-{record.Id}").TextContent.Should().Contain("—");
     });
 
     [Fact]

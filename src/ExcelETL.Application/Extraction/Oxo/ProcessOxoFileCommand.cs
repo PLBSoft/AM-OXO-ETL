@@ -7,10 +7,11 @@ namespace ExcelETL.Application.Extraction.Oxo;
 // as-is.
 // Username (optional, last): the M2M caller's own end-user, when supplied -- see
 // GeneratedFileRecord.Username for the full rationale (best-effort traceability, not a business
-// invariant).
+// invariant). Origin (optional, last): the calling environment, same treatment -- see
+// GeneratedFileRecord.Origin.
 public sealed record ProcessOxoFileCommand(
     Guid ImportProfileId, Guid ExportProfileId, string SourceFileName,
-    byte[] SourceFileContent, string? Username = null);
+    byte[] SourceFileContent, string? Username = null, string? Origin = null);
 
 // GeneratedFileStream/GeneratedFileName are null exactly when ImportResult.Equipement is null --
 // the whole-file-rejection case (model doc §3.1). No generation is attempted in that case.

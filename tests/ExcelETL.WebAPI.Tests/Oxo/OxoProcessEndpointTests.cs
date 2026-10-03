@@ -383,6 +383,37 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
+    public async Task Process_WithOriginField_PersistsItOnTheArchiveRecord()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(
+            importProfileId, exportProfileId, sourceStream, "C7401.xlsx", origin: "https://mt.alphamaintenance-dev.ovh");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Origin.Should().Be("https://mt.alphamaintenance-dev.ovh");
+    }
+
+    [Fact]
+    public async Task Process_WithoutOriginField_StillSucceeds_AndArchivesANullOrigin()
+    {
+        var client = CreateAuthenticatedClient();
+        var (importProfileId, exportProfileId) = await SeedProfilesAsync();
+        using var sourceStream = File.OpenRead(FixturePath("Dossier.de.MaD.IDL.-.C7401.xlsx"));
+        using var content = BuildMultipartContent(importProfileId, exportProfileId, sourceStream, "C7401.xlsx");
+
+        var response = await client.PostAsync("/api/oxo/process", content);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var record = (await SearchArchiveAsync()).Should().ContainSingle().Which;
+        record.Origin.Should().BeNull();
+    }
+
+    [Fact]
     public async Task Process_WithG4010AFixture_PersistsNonBlockingWarningArchiveRecordWithBothFiles()
     {
         var client = CreateAuthenticatedClient();
@@ -1077,7 +1108,7 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
 
     private static MultipartFormDataContent BuildMultipartContent(
         Guid importProfileId, Guid exportProfileId, Stream fileStream, string fileName = "source.xlsx",
-        string? username = null)
+        string? username = null, string? origin = null)
     {
         var fileContent = new StreamContent(fileStream);
         fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
@@ -1092,6 +1123,11 @@ public class OxoProcessEndpointTests : IClassFixture<WebApplicationFactory<Progr
         if (username is not null)
         {
             content.Add(new StringContent(username), "Username");
+        }
+
+        if (origin is not null)
+        {
+            content.Add(new StringContent(origin), "Origin");
         }
 
         return content;

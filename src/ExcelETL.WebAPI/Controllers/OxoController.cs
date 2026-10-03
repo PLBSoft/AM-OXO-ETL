@@ -84,7 +84,7 @@ public class OxoController(
             result = await processOxoFileService.ProcessAsync(
                 new ProcessOxoFileCommand(
                     request.ImportProfileId.Value, request.ExportProfileId.Value, request.File.FileName,
-                    sourceFileContent, request.Username),
+                    sourceFileContent, request.Username, request.Origin),
                 cancellationToken);
         }
         catch (FileFormatException)

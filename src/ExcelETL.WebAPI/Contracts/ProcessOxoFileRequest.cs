@@ -17,4 +17,9 @@ public sealed class ProcessOxoFileRequest
     // authenticated username) -- never validated/required, absence is not an error. See
     // GeneratedFileRecord.Username for the full rationale.
     public string? Username { get; set; }
+
+    // Optional, best-effort: the calling environment (e.g. the legacy app's own base URL), so an
+    // admin can tell which environment sent each archived file. Never validated, absence is not an
+    // error. See GeneratedFileRecord.Origin.
+    public string? Origin { get; set; }
 }

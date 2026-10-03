@@ -108,5 +108,6 @@ public class GeneratedFilesController(
             .Select(w => new GeneratedFileWarningResponse(w.Sheet, w.BlockIdentifier, w.Code, w.Message, w.ExtractedValue))
             .ToList(),
         IsAvailable(record, record.SourceFilePath),
-        IsAvailable(record, record.TargetFilePath));
+        IsAvailable(record, record.TargetFilePath),
+        record.Origin);
 }
