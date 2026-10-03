@@ -1393,6 +1393,12 @@
   <data name="ApiTest_UsernameHelp" xml:space="preserve">
     <value>Enregistré à titre de traçabilité avec le fichier archivé -- pré-rempli avec votre propre nom d'utilisateur, librement modifiable.</value>
   </data>
+  <data name="ApiTest_OriginLabel" xml:space="preserve">
+    <value>Origine (optionnel)</value>
+  </data>
+  <data name="ApiTest_OriginHelp" xml:space="preserve">
+    <value>Enregistrée avec le fichier archivé pour savoir quel environnement l'a envoyé -- pré-remplie avec l'adresse de cette application, librement modifiable.</value>
+  </data>
   <data name="ApiTest_Processing" xml:space="preserve">
     <value>Appel du Web API en cours -- cela peut prendre du temps pour les fichiers volumineux...</value>
   </data>

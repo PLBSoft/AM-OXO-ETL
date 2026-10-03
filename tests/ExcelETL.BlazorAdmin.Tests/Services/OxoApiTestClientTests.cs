@@ -366,6 +366,34 @@ public class OxoApiTestClientTests
     }
 
     [Fact]
+    public async Task ProcessAsync_WithOrigin_IncludesItInTheMultipartRequest()
+    {
+        var (client, handler) = CreateClient(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        await client.ProcessAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new MemoryStream([1, 2, 3]), "source.xlsx", CancellationToken.None,
+            origin: "https://oxo.alphamaintenance.fr");
+
+        handler.LastRequestBody.Should().Contain("name=Origin").And.Contain("https://oxo.alphamaintenance.fr");
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public async Task ProcessAsync_WithoutOrigin_OmitsTheFieldEntirely(string? origin)
+    {
+        var (client, handler) = CreateClient(_ =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)));
+
+        await client.ProcessAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new MemoryStream([1, 2, 3]), "source.xlsx", CancellationToken.None,
+            origin: origin);
+
+        handler.LastRequestBody.Should().NotContain("name=Origin");
+    }
+
+    [Fact]
     public async Task ProcessAsync_BuildsMultipartRequestWithExpectedFieldNames()
     {
         var (client, handler) = CreateClient(_ =>

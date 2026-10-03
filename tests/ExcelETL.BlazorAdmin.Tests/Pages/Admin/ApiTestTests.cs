@@ -227,7 +227,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), "custom-user"))
+            .Setup(c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), "custom-user", It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.Success(new MemoryStream([1, 2, 3]), "MAD_38-C7401_20260101120000.xlsx"));
 
         var cut = Render<ApiTest>();
@@ -239,7 +239,40 @@ public class ApiTestTests : BunitContext
         cut.Find("#process-button").Click();
 
         _oxoApiTestClientMock.Verify(
-            c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), "custom-user"),
+            c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), "custom-user", It.IsAny<string?>()),
+            Times.Once);
+    }));
+
+    // Pre-filled with this BlazorAdmin's own base URL (trailing slash trimmed) -- the call really
+    // comes from here, and it tells /generated-files entries sent from /api-test apart from the
+    // legacy environments' own.
+    [Fact]
+    public void OriginInput_OnLoad_IsPreFilledWithThisApplicationsBaseUrl() => WithCulture("en-US", () =>
+    {
+        var cut = Render<ApiTest>();
+
+        cut.Find("#origin-input").GetAttribute("value").Should().Be("http://localhost");
+        cut.Find("label[for='origin-input']").TextContent.Should().NotBeNullOrWhiteSpace();
+    });
+
+    [Fact]
+    public void ProcessButton_Click_PassesOriginInputValueToProcessAsync() => WithCulture("en-US", () => RunAsync(async () =>
+    {
+        var (importProfile, exportProfile) = await SeedProfilesAsync();
+        _oxoApiTestClientMock
+            .Setup(c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), It.IsAny<string?>(), "https://mt.alphamaintenance-dev.ovh"))
+            .ReturnsAsync(OxoApiTestResult.Success(new MemoryStream([1, 2, 3]), "MAD_38-C7401_20260101120000.xlsx"));
+
+        var cut = Render<ApiTest>();
+        cut.Find("#import-profile-select").Change(importProfile.Id.ToString());
+        cut.Find("#export-profile-select").Change(exportProfile.Id.ToString());
+        SelectFile(cut);
+        cut.Find("#origin-input").Change("https://mt.alphamaintenance-dev.ovh");
+
+        cut.Find("#process-button").Click();
+
+        _oxoApiTestClientMock.Verify(
+            c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), It.IsAny<string?>(), "https://mt.alphamaintenance-dev.ovh"),
             Times.Once);
     }));
 
@@ -248,7 +281,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(importProfile.Id, exportProfile.Id, It.IsAny<Stream>(), "source.xlsx", It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.Success(new MemoryStream([1, 2, 3]), "MAD_38-C7401_20260101120000.xlsx"));
 
         var cut = Render<ApiTest>();
@@ -269,7 +302,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.BusinessRejection(
                 [new OxoApiTestRejectionError("PROCEDURE", "M2:O2", "RequiredFieldMissing", "Repere is required.")]));
 
@@ -292,7 +325,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.BusinessRejection([], "The import profile does not declare the field 'repereEcho'."));
 
         var cut = Render<ApiTest>();
@@ -313,7 +346,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.BusinessRejection(
                 [new OxoApiTestRejectionError("PROCEDURE", "M2:O2", "RequiredFieldMissing", "Repere is required.")]));
 
@@ -332,7 +365,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.ProfileNotFound("Import profile 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' was not found."));
 
         var cut = Render<ApiTest>();
@@ -350,7 +383,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.Unauthorized());
 
         var cut = Render<ApiTest>();
@@ -368,7 +401,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.TechnicalError(500));
 
         var cut = Render<ApiTest>();
@@ -391,7 +424,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.TechnicalError(
                 500, "UnknownFieldReferenceException", "Field 'HasZeroEnergie' was not found among the already-extracted fields."));
 
@@ -412,7 +445,7 @@ public class ApiTestTests : BunitContext
     {
         var (importProfile, exportProfile) = await SeedProfilesAsync();
         _oxoApiTestClientMock
-            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>()))
+            .Setup(c => c.ProcessAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<CancellationToken>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(OxoApiTestResult.ConnectionError());
 
         var cut = Render<ApiTest>();

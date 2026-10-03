@@ -14,6 +14,7 @@
 @inject IImportProfileStore ImportProfileStore
 @inject IExportProfileStore ExportProfileStore
 @inject IOxoApiTestClient OxoApiTestClient
+@inject NavigationManager NavigationManager
 @inject IStringLocalizer<BlazorAdminMessages> Loc
 
 <PageTitle>@Loc["ApiTest_PageTitle"]</PageTitle>
@@ -97,6 +98,12 @@ else
         <label class="form-label" for="username-input">@Loc["ApiTest_UsernameLabel"]</label>
         <input id="username-input" type="text" class="form-control form-control-lg" maxlength="200" @bind="_username" disabled="@_processing" />
         <div class="form-text">@Loc["ApiTest_UsernameHelp"]</div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="origin-input">@Loc["ApiTest_OriginLabel"]</label>
+        <input id="origin-input" type="text" class="form-control form-control-lg" maxlength="200" @bind="_origin" disabled="@_processing" />
+        <div class="form-text">@Loc["ApiTest_OriginHelp"]</div>
     </div>
 
     <div class="right-aligned-actions">
@@ -187,6 +194,7 @@ else
     private List<ExportProfile>? _exportProfiles;
     private OxoApiHealthResult? _health;
     private string? _username;
+    private string? _origin;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthState { get; set; } = default!;
@@ -221,6 +229,11 @@ else
         // legacy-side user), not necessarily whoever is logged into BlazorAdmin.
         var authState = await AuthState;
         _username = authState.User.Identity?.Name;
+
+        // Pre-filled with this application's own base URL -- the call really comes from here, which
+        // tells /generated-files entries sent from /api-test apart from the legacy environments'
+        // own. Freely editable, to simulate a given environment.
+        _origin = NavigationManager.BaseUri.TrimEnd('/');
 
         await CheckHealthAsync();
     }
@@ -261,7 +274,7 @@ else
         await using var stream = _selectedFile!.OpenReadStream(MaxFileSizeBytes);
         var result = await OxoApiTestClient.ProcessAsync(
             _selectedImportProfileId!.Value, _selectedExportProfileId!.Value, stream, _selectedFile.Name,
-            CancellationToken.None, _username);
+            CancellationToken.None, _username, _origin);
 
         if (result.Status == OxoApiTestResultStatus.Success)
         {

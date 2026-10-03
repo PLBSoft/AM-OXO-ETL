@@ -23,6 +23,7 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
     private const string ExportProfileIdFieldName = "ExportProfileId";
     private const string FileFieldName = "File";
     private const string UsernameFieldName = "Username";
+    private const string OriginFieldName = "Origin";
 
     // GET api/health is a lightweight diagnostic, not the several-minute extraction call
     // ProcessAsync makes -- bounded well below the HttpClient's own 6-minute Timeout (Program.cs)
@@ -36,7 +37,7 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
 
     public async Task<OxoApiTestResult> ProcessAsync(
         Guid importProfileId, Guid exportProfileId, Stream fileContent, string fileName,
-        CancellationToken cancellationToken, string? username = null)
+        CancellationToken cancellationToken, string? username = null, string? origin = null)
     {
         using var content = new MultipartFormDataContent
         {
@@ -49,6 +50,11 @@ public sealed class OxoApiTestClient(HttpClient httpClient, IOptions<OxoApiTestC
         if (!string.IsNullOrWhiteSpace(username))
         {
             content.Add(new StringContent(username), UsernameFieldName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(origin))
+        {
+            content.Add(new StringContent(origin), OriginFieldName);
         }
 
         var fileStreamContent = new StreamContent(fileContent);
