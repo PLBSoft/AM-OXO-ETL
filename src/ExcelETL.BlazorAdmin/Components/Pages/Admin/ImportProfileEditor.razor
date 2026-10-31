@@ -452,6 +452,99 @@ else
     </div>
 </div>
 
+<!-- Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, 091.2): the plan sheets printed
+     to PDF -- same root-level in-line list as Tableaux/Applications. -->
+<h2 class="h3">@Loc["ImportProfileEditor_PlanSheetNamesHeading"]</h2>
+<div class="card bg-light mb-3">
+    <div class="card-body">
+        <p id="plan-sheet-names-help" class="text-muted small">@Loc["ImportProfileEditor_PlanSheetNamesHelp"]</p>
+        @if (_draft.PlanSheetNames.Count > 0)
+        {
+            <ul id="plan-sheet-names-list" class="block-field-list">
+                @for (var j = 0; j < _draft.PlanSheetNames.Count; j++)
+                {
+                    var itemIndex = j;
+                    var planSheet = _draft.PlanSheetNames[itemIndex];
+                    @if (_planSheetEdit.IsOpen(itemIndex))
+                    {
+                        <li class="block-field-item-editing">
+                            @if (!string.IsNullOrEmpty(planSheet.Error))
+                            {
+                                <div class="alert alert-danger" role="alert">@planSheet.Error</div>
+                            }
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <input id="@($"plan-sheet-name-edit-input-{itemIndex}")" class="form-control"
+                                           @bind="planSheet.Value" @bind:after="MarkAsChanged" />
+                                </div>
+                                <div class="col-auto block-field-actions">
+                                    <button id="@($"save-plan-sheet-name-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            title="@Loc["ImportProfileEditor_SaveChangesButton"]"
+                                            @onclick="() => SubmitPlanSheetName(itemIndex)">
+                                        @((MarkupString)AdminIconMarkup.Check)
+                                    </button>
+                                    <button id="@($"cancel-plan-sheet-name-edit-button-{itemIndex}")" type="button"
+                                            class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                            aria-label="@Loc["ImportProfileEditor_CancelButton"]"
+                                            title="@Loc["ImportProfileEditor_CancelButton"]"
+                                            @onclick="() => _planSheetEdit.Cancel(_draft.PlanSheetNames)">
+                                        @((MarkupString)AdminIconMarkup.X)
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="block-field-item">
+                            <div class="block-field-info">
+                                <span class="block-field-name">@planSheet.Value</span>
+                            </div>
+                            <div class="block-field-actions">
+                                <button id="@($"edit-plan-sheet-name-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-secondary block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        title="@Loc["ImportProfileEditor_ModifyButton"]"
+                                        @onclick="() => _planSheetEdit.Open(_draft.PlanSheetNames, itemIndex)">
+                                    @((MarkupString)AdminIconMarkup.Pencil)
+                                </button>
+                                <button id="@($"delete-plan-sheet-name-button-{itemIndex}")" type="button"
+                                        class="btn btn-sm btn-outline-danger block-field-icon-btn"
+                                        aria-label="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        title="@Loc["ImportProfileEditor_DeleteButton"]"
+                                        @onclick="() => Delete(_draft.PlanSheetNames, itemIndex, _planSheetEdit)">
+                                    @((MarkupString)AdminIconMarkup.Trash)
+                                </button>
+                            </div>
+                        </li>
+                    }
+                }
+            </ul>
+        }
+        @if (!string.IsNullOrEmpty(_draft.PendingPlanSheetName.Error))
+        {
+            <div class="alert alert-danger" role="alert">@_draft.PendingPlanSheetName.Error</div>
+        }
+        <div class="row g-2">
+            <div class="col-12 col-md-8">
+                <div class="form-floating">
+                    <input id="plan-sheet-name-input" class="form-control" maxlength="@ExcelETL.Domain.Generation.Profile.ExcelSheetName.MaxLength"
+                           @bind="_draft.PendingPlanSheetName.Value" @bind:after="() => MarkPendingRowChanged(_draft.PendingPlanSheetName)"
+                           placeholder="@Loc["ImportProfileEditor_PlanSheetNamePlaceholder"]" />
+                    <label for="plan-sheet-name-input">@Loc["ImportProfileEditor_PlanSheetNameLabel"]</label>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <button id="add-plan-sheet-name-button" class="btn btn-secondary w-100 field-inline-action d-flex align-items-center justify-content-center gap-1" @onclick="() => SubmitPlanSheetName(null)">
+                    @((MarkupString)AdminIconMarkup.Plus) @Loc["ImportProfileEditor_AddPlanSheetNameButton"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h2 class="h3">@Loc["ImportProfileEditor_SheetRulesHeading"]</h2>
 
 @if (_draft.SheetRules.Count == 0)
@@ -662,6 +755,7 @@ else
     private readonly ListItemEditState<StringItemDraft> _tableauEdit = new();
     private readonly ListItemEditState<StringItemDraft> _applicationEdit = new();
     private readonly ListItemEditState<TacheMultipleTypeLabelDraft> _labelEdit = new();
+    private readonly ListItemEditState<StringItemDraft> _planSheetEdit = new();
 
     private int? _pendingDeleteIndex;
     private readonly HashSet<int> _expandedSheetRuleDetails = [];
@@ -762,6 +856,16 @@ else
         var list = _draft.TacheMultipleTypeLabels;
         if (DraftListActions.Submit(list, index, _draft.PendingTacheMultipleTypeLabel, p => _draft.PendingTacheMultipleTypeLabel = p, _labelEdit,
                 d => ImportProfileDraftMapper.ConvertTacheMultipleTypeLabel(d, list.Where(o => !ReferenceEquals(o, d))), Localize))
+        {
+            MarkAsChanged();
+        }
+    }
+
+    private void SubmitPlanSheetName(int? index)
+    {
+        var list = _draft.PlanSheetNames;
+        if (DraftListActions.Submit(list, index, _draft.PendingPlanSheetName, p => _draft.PendingPlanSheetName = p, _planSheetEdit,
+                d => ImportProfileDraftMapper.ConvertPlanSheetName(d, list.Where(o => !ReferenceEquals(o, d))), Localize))
         {
             MarkAsChanged();
         }

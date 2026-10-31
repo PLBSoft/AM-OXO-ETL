@@ -225,6 +225,7 @@ facultatifs, la phrase d'avertissement suit la case de chaque feuille.*
 - L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».
 - Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».
 - Une tâche de type « TM_PROC_REL » est écrite dans la colonne travaux « Procédure REL ».
+- Chaque page des 3 onglets « PLANS ISOLEMENT (Portrait) », « PLANS ISOLEMENT (Paysage) », « PLANS PLATINAGE & JOINTS » est imprimée dans un fichier PDF joint à l'équipement ; les pages sans plan sont ignorées. *(lot 091)*
 
 **Feuille PROCEDURE**
 - En-tête : le repère de l'équipement (« nomMAD ») est lu en M2:O2, préfixe « OXO- » retiré.

@@ -23,6 +23,9 @@ public class ImportProfileDescriptionBuilderSeededProfileTests
                 ("L'équipement et tous ses éléments sont rattachés à l'application « PROGRESS ».", false),
                 ("Une tâche de type « TM_PROC_MAD » est écrite dans la colonne travaux « Procédure MAD ».", false),
                 ("Une tâche de type « TM_PROC_REL » est écrite dans la colonne travaux « Procédure REL ».", false),
+                ("Chaque page des 3 onglets « PLANS ISOLEMENT (Portrait) », « PLANS ISOLEMENT (Paysage) », " +
+                 "« PLANS PLATINAGE & JOINTS » est imprimée dans un fichier PDF joint à l'équipement ; " +
+                 "les pages sans plan sont ignorées.", false),
             ]),
         ("Feuille PROCEDURE",
             [

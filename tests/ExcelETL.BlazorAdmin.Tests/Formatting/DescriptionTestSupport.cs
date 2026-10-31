@@ -111,10 +111,12 @@ internal static class DescriptionTestSupport
         string equipementTypeElementNom = "MAD TRAVAUX",
         IReadOnlyList<string>? defaultTableaux = null,
         IReadOnlyList<string>? defaultApplicationNames = null,
-        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null) =>
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null,
+        IReadOnlyList<string>? planSheetNames = null) =>
         new(
             "Profil de test", reperePrefix, equipementTypeElementNom,
             defaultTableaux ?? [], defaultApplicationNames ?? [],
             sheetRules ?? [Rule("MA FEUILLE")],
-            tacheMultipleTypeLabels);
+            tacheMultipleTypeLabels,
+            planSheetNames);
 }

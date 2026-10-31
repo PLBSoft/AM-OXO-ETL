@@ -75,11 +75,29 @@ public class ImportProfileDescriptionBuilderGeneralTests
     [Fact]
     public void Sentences_FollowTheCatalogueOrder() =>
         GeneralTexts(Profile(defaultTableaux: ["T"], defaultApplicationNames: ["A"],
-            tacheMultipleTypeLabels: [new TacheMultipleTypeLabel("C", "L")])).Should().HaveCount(5)
+            tacheMultipleTypeLabels: [new TacheMultipleTypeLabel("C", "L")], planSheetNames: ["P"])).Should().HaveCount(6)
             .And.SatisfyRespectively(
                 t => t.Should().StartWith("Le repère de l'équipement"),
                 t => t.Should().StartWith("L'équipement est créé"),
                 t => t.Should().StartWith("L'équipement et tous ses éléments sont rattachés au tableau"),
                 t => t.Should().Contain("application"),
-                t => t.Should().StartWith("Une tâche"));
+                t => t.Should().StartWith("Une tâche"),
+                t => t.Should().StartWith("Chaque page de l'onglet"));
+
+    // Lot 091: plan sheets printed to PDF.
+    [Fact]
+    public void NoPlanSheet_SaysSo() =>
+        GeneralTexts(Profile(planSheetNames: [])).Should().Contain("Aucun onglet de plans n'est imprimé en PDF.");
+
+    [Fact]
+    public void OnePlanSheet_UsesTheSingular() =>
+        GeneralTexts(Profile(planSheetNames: ["PLANS ISOLEMENT (Paysage)"])).Should().Contain(
+            "Chaque page de l'onglet « PLANS ISOLEMENT (Paysage) » est imprimée dans un fichier PDF joint à l'équipement ; " +
+            "les pages sans plan sont ignorées.");
+
+    [Fact]
+    public void SeveralPlanSheets_UseThePlural() =>
+        GeneralTexts(Profile(planSheetNames: ["PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS"])).Should().Contain(
+            "Chaque page des 2 onglets « PLANS ISOLEMENT (Paysage) », « PLANS PLATINAGE & JOINTS » est imprimée dans un " +
+            "fichier PDF joint à l'équipement ; les pages sans plan sont ignorées.");
 }

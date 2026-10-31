@@ -637,6 +637,21 @@
   <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
     <value>Ajouter l'application</value>
   </data>
+  <data name="ImportProfileEditor_PlanSheetNamesHeading" xml:space="preserve">
+    <value>Onglets de plans imprimés en PDF</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNamesHelp" xml:space="preserve">
+    <value>Chaque page de ces onglets devient un fichier PDF, joint à l'équipement parent. Laisser la liste vide pour n'imprimer aucun plan.</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNameLabel" xml:space="preserve">
+    <value>Nom de l'onglet</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNamePlaceholder" xml:space="preserve">
+    <value>Nom de l'onglet</value>
+  </data>
+  <data name="ImportProfileEditor_AddPlanSheetNameButton" xml:space="preserve">
+    <value>Ajouter l'onglet</value>
+  </data>
   <data name="ImportProfileEditor_TacheMultipleTypeLabelsHeading" xml:space="preserve">
     <value>Libellés de type de tâche</value>
   </data>
@@ -1521,6 +1536,15 @@
   </data>
   <data name="ImportProfileDetails_GeneralTacheMultipleTypeLabel" xml:space="preserve">
     <value>Une tâche de type {0} est écrite dans la colonne travaux {1}.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralNoPlanSheet" xml:space="preserve">
+    <value>Aucun onglet de plans n'est imprimé en PDF.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralOnePlanSheet" xml:space="preserve">
+    <value>Chaque page de l'onglet {0} est imprimée dans un fichier PDF joint à l'équipement ; les pages sans plan sont ignorées.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralSeveralPlanSheets" xml:space="preserve">
+    <value>Chaque page des {0} onglets {1} est imprimée dans un fichier PDF joint à l'équipement ; les pages sans plan sont ignorées.</value>
   </data>
   <data name="ImportProfileDetails_SheetSectionTitle" xml:space="preserve">
     <value>Feuille {0}</value>
