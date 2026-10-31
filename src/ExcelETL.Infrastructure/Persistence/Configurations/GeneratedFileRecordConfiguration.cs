@@ -68,5 +68,20 @@ public class GeneratedFileRecordConfiguration : IEntityTypeConfiguration<Generat
             warnings.Property(w => w.Message).IsRequired().HasMaxLength(1000);
             warnings.Property(w => w.ExtractedValue).HasMaxLength(500);
         });
+
+        // Lot 091: one row per plan page printed to PDF, same owned-table convention as Warnings.
+        builder.OwnsMany(r => r.Plans, plans =>
+        {
+            plans.ToTable("GeneratedFileRecordPlans");
+            plans.WithOwner().HasForeignKey("GeneratedFileRecordId");
+            plans.Property<int>("Id");
+            plans.HasKey("Id");
+
+            plans.Property(p => p.SheetName).IsRequired().HasMaxLength(100);
+            plans.Property(p => p.PageNumber).IsRequired();
+            plans.Property(p => p.FileName).IsRequired().HasMaxLength(400);
+            plans.Property(p => p.FilePath).IsRequired().HasMaxLength(1024);
+            plans.Property(p => p.SizeBytes).IsRequired();
+        });
     }
 }

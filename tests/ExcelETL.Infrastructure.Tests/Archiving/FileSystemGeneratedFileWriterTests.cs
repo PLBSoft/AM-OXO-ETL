@@ -39,6 +39,20 @@ public class FileSystemGeneratedFileWriterTests : IDisposable
         (await File.ReadAllBytesAsync(fullPath)).Should().Equal(9, 8, 7);
     }
 
+    // Lot 091: plan pages printed to PDF, archived next to the target.
+    [Fact]
+    public async Task WritePlanAsync_WritesFilePhysicallyAtReturnedPath_WithIdenticalContent()
+    {
+        var writer = CreateWriter();
+        var timestampUtc = new DateTime(2026, 10, 31, 9, 5, 7, 9, DateTimeKind.Utc);
+        using var content = new MemoryStream([4, 2]);
+
+        var relativePath = await writer.WritePlanAsync(content, "MAD_C7401_PLANS PLATINAGE & JOINTS_p1.pdf", timestampUtc);
+
+        relativePath.Should().Be(Path.Combine("2026", "10", "20261031-090507-009_plan_MAD_C7401_PLANS PLATINAGE & JOINTS_p1.pdf"));
+        (await File.ReadAllBytesAsync(Path.Combine(_rootPath, relativePath))).Should().Equal(4, 2);
+    }
+
     [Fact]
     public async Task WriteSourceAsync_CalledTwiceAtSameMillisecondWithDifferentOriginalNames_ProducesTwoDistinctFiles()
     {

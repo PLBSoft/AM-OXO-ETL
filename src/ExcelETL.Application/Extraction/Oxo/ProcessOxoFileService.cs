@@ -1,5 +1,6 @@
 using ExcelETL.Application.Archiving;
 using ExcelETL.Application.Generation;
+using ExcelETL.Application.Plans;
 using ExcelETL.Domain.Archiving;
 using ExcelETL.Domain.Extraction.Pivot;
 using Microsoft.Extensions.Logging;
@@ -28,6 +29,7 @@ public sealed class ProcessOxoFileService(
     IGeneratedFileArchiveStore generatedFileArchiveStore,
     IWorkbookReaderFactory workbookReaderFactory,
     IGeneratedFilePurger generatedFilePurger,
+    IPlanSheetPdfRenderer planSheetPdfRenderer,
     ILogger<ProcessOxoFileService> logger) : IProcessOxoFileService
 {
     public async Task<ProcessOxoFileResult> ProcessAsync(
@@ -96,9 +98,11 @@ public sealed class ProcessOxoFileService(
                 "Completed OXO processing for source file {SourceFileName}: generated {GeneratedFileName}",
                 command.SourceFileName, generatedFileName);
 
+            var plans = await RenderPlansAsync(command, importProfile.PlanSheetNames, cancellationToken);
+
             var archivedRecordId = await TryArchiveAsync(
                 command, importProfile.Id, exportProfile.Id, importResult, generatedStream, generatedFileName,
-                archivedAtUtc, cancellationToken);
+                archivedAtUtc, cancellationToken, plans);
             generatedStream.Position = 0;
 
             return new ProcessOxoFileResult(importResult, generatedStream, generatedFileName, archivedRecordId);
@@ -124,7 +128,8 @@ public sealed class ProcessOxoFileService(
         Stream? generatedContent,
         string? generatedFileName,
         DateTime timestampUtc,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyList<RenderedPlanSheet>? plans = null)
     {
         try
         {
@@ -142,6 +147,25 @@ public sealed class ProcessOxoFileService(
                 targetFilePath = await generatedFileWriter.WriteTargetAsync(
                     generatedContent, command.SourceFileName, timestampUtc, cancellationToken);
                 generatedContent.Position = 0;
+            }
+
+            var archivedPlans = new List<GeneratedFilePlan>();
+            if (plans is not null && generatedFileName is not null)
+            {
+                var baseName = Path.GetFileNameWithoutExtension(generatedFileName);
+                foreach (var sheet in plans)
+                {
+                    for (var i = 0; i < sheet.Pages.Count; i++)
+                    {
+                        var pageNumber = i + 1;
+                        var planFileName = $"{baseName}_{sheet.SheetName.Trim()}_p{pageNumber}.pdf";
+                        using var planStream = new MemoryStream(sheet.Pages[i]);
+                        var planFilePath = await generatedFileWriter.WritePlanAsync(
+                            planStream, planFileName, timestampUtc, cancellationToken);
+                        archivedPlans.Add(new GeneratedFilePlan(
+                            sheet.SheetName.Trim(), pageNumber, planFileName, planFilePath, sheet.Pages[i].LongLength));
+                    }
+                }
             }
 
             var status = importResult.Equipement is null
@@ -170,7 +194,8 @@ public sealed class ProcessOxoFileService(
                 pointCount: importResult.Points.Count,
                 tacheMultipleCount: importResult.TachesMultiples.Count,
                 warnings: warnings,
-                origin: command.Origin);
+                origin: command.Origin,
+                plans: archivedPlans);
 
             await generatedFileArchiveStore.SaveAsync(record, cancellationToken);
             return record.Id;
@@ -182,6 +207,34 @@ public sealed class ProcessOxoFileService(
                 "response unaffected", command.SourceFileName);
             return null;
         }
+    }
+
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, D11): prints the profile's plan
+    // sheets to PDF, one PDF per page, for an accepted file only. Best-effort, sheet by sheet: a sheet
+    // that fails is logged and skipped, the generated workbook is returned anyway.
+    private async Task<IReadOnlyList<RenderedPlanSheet>> RenderPlansAsync(
+        ProcessOxoFileCommand command, IReadOnlyList<string> planSheetNames, CancellationToken cancellationToken)
+    {
+        var rendered = new List<RenderedPlanSheet>();
+        foreach (var planSheetName in planSheetNames)
+        {
+            try
+            {
+                var sheet = await planSheetPdfRenderer.RenderAsync(command.SourceFileContent, planSheetName, cancellationToken);
+                if (sheet is { Pages.Count: > 0 })
+                {
+                    rendered.Add(sheet);
+                }
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                logger.LogError(
+                    ex, "Failed to print plan sheet {PlanSheetName} of source file {SourceFileName} to PDF -- " +
+                    "skipped, generated workbook unaffected", planSheetName, command.SourceFileName);
+            }
+        }
+
+        return rendered;
     }
 
     // Lot 090: runs at the start of every import, like the legacy app's own purge. Best-effort -- a

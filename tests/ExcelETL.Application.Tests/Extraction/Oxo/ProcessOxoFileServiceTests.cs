@@ -49,6 +49,7 @@ public class ProcessOxoFileServiceTests
             _generatedFileArchiveStore.Object,
             _workbookReaderFactory.Object,
             _generatedFilePurger.Object,
+            Mock.Of<ExcelETL.Application.Plans.IPlanSheetPdfRenderer>(),
             NullLogger<ProcessOxoFileService>.Instance);
     }
 

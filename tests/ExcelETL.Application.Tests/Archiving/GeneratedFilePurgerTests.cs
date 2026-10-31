@@ -62,6 +62,26 @@ public class GeneratedFilePurgerTests
         _store.Verify(s => s.MarkFilesPurgedAsync(record.Id, NowUtc, It.IsAny<CancellationToken>()));
     }
 
+    // Lot 091: the plan PDFs are purged with the other files.
+    [Fact]
+    public async Task PurgeExpiredAsync_AlsoDeletesThePlanPdfs()
+    {
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), NowUtc.AddDays(-100), "C7401", "s.xlsx", "s-path", "t.xlsx", "t.xlsx", Guid.NewGuid(),
+            Guid.NewGuid(), GeneratedFileArchiveStatus.Success,
+            plans: [new GeneratedFilePlan("PLANS", 1, "p1.pdf", "p1-path", 30), new GeneratedFilePlan("PLANS", 2, "p2.pdf", "p2-path", 40)]);
+        _settings.Setup(s => s.GetRetentionDaysAsync(It.IsAny<CancellationToken>())).ReturnsAsync(90);
+        _store.Setup(s => s.GetRecordsWithFilesOlderThanAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([record]);
+        _deleter.Setup(d => d.Delete(It.IsAny<string>())).Returns(10);
+
+        var result = await CreateSut().PurgeExpiredAsync(NowUtc);
+
+        result.FilesDeleted.Should().Be(4);
+        _deleter.Verify(d => d.Delete("p1-path"));
+        _deleter.Verify(d => d.Delete("p2-path"));
+    }
+
     [Fact]
     public async Task PurgeExpiredAsync_RejectedRecordWithoutTarget_OnlyDeletesTheSource()
     {

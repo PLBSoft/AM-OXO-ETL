@@ -4,11 +4,13 @@ using ExcelETL.Application.Extraction.Oxo;
 using ExcelETL.Application.Extraction.Oxo.Elements;
 using ExcelETL.Application.Extraction.Oxo.Procedure;
 using ExcelETL.Application.Generation;
+using ExcelETL.Application.Plans;
 using ExcelETL.Hosting;
 using ExcelETL.Infrastructure.Archiving;
 using ExcelETL.Infrastructure.Excel;
 using ExcelETL.Infrastructure.Persistence;
 using ExcelETL.Infrastructure.Persistence.Repositories;
+using ExcelETL.Infrastructure.Plans;
 using ExcelETL.WebAPI;
 using ExcelETL.WebAPI.Authentication;
 using ExcelETL.WebAPI.Correlation;
@@ -99,6 +101,10 @@ builder.Services.AddSingleton<ISheetGenerationEngine, SheetGenerationEngine>();
 builder.Services.AddSingleton<IWorkbookWriter, ClosedXmlWorkbookWriter>();
 builder.Services.AddSingleton<IWorkbookReaderFactory, ClosedXmlWorkbookReaderFactory>();
 builder.Services.AddScoped<IProcessOxoFileService, ProcessOxoFileService>();
+// Lot 091: plan sheets printed to PDF by LibreOffice (PlanRendering:SofficePath). Singleton: the
+// renderer serializes its own conversions.
+builder.Services.Configure<PlanRenderingOptions>(builder.Configuration.GetSection(PlanRenderingOptions.SectionName));
+builder.Services.AddSingleton<IPlanSheetPdfRenderer, LibreOfficePlanSheetPdfRenderer>();
 // Singleton: GlobalExceptionHandler is registered as a singleton by AddExceptionHandler<T>(), and
 // this has no state of its own beyond the two singleton IStringLocalizer<T> it wraps.
 builder.Services.AddSingleton<BusinessExceptionLocalizer>();
