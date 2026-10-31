@@ -24,8 +24,12 @@ public sealed class LibreOfficePlanSheetPdfRendererTests : IDisposable
         try { Directory.Delete(_scratch, recursive: true); } catch (IOException) { }
     }
 
-    private static LibreOfficePlanSheetPdfRenderer CreateRenderer(string sofficePath, int timeoutSeconds = 60) =>
-        new(Options.Create(new PlanRenderingOptions { SofficePath = sofficePath, TimeoutSeconds = timeoutSeconds }),
+    private static LibreOfficePlanSheetPdfRenderer CreateRenderer(
+        string sofficePath, int timeoutSeconds = 60, string? profileDirectory = null) =>
+        new(Options.Create(new PlanRenderingOptions
+            {
+                SofficePath = sofficePath, TimeoutSeconds = timeoutSeconds, ProfileDirectory = profileDirectory,
+            }),
             NullLogger<LibreOfficePlanSheetPdfRenderer>.Instance);
 
     private string FakeSoffice(string body)
@@ -97,6 +101,20 @@ public sealed class LibreOfficePlanSheetPdfRendererTests : IDisposable
 
         (await act.Should().ThrowAsync<PlanRenderingException>()).Which.Message.Should().Contain("within 1 s");
         stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(15));
+    }
+
+    // Another process converting with the same LibreOffice profile holds the lock file: wait, then give up.
+    [Fact]
+    public async Task ProfileLockedByAnotherProcess_WaitsThenThrows()
+    {
+        var profileDirectory = Path.Combine(_scratch, "profile");
+        var renderer = CreateRenderer(FakeSoffice("exit /b 0"), timeoutSeconds: 1, profileDirectory: profileDirectory);
+        await using var otherProcessLock = new FileStream(
+            profileDirectory + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+        var act = () => renderer.RenderAsync(Fixture("Dossier.de.MaD.IDL.-.G6306B.REV.xlsx"), Platinage);
+
+        (await act.Should().ThrowAsync<PlanRenderingException>()).Which.Message.Should().Contain("busy");
     }
 
     [Theory]

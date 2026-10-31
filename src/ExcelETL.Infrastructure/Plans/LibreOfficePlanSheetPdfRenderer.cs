@@ -10,8 +10,10 @@ namespace ExcelETL.Infrastructure.Plans;
 // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, 091.5, decisions D7/D10/D12): prepares
 // the sheet (OpenXmlPlanWorkbookPreparer), prints it once with LibreOffice in headless mode, then splits
 // the PDF page by page with PDFsharp (launching LibreOffice is most of the cost, so one launch per sheet,
-// not per page). One conversion at a time across the whole process: LibreOffice instances sharing a
-// profile would collide, and the server is not sized for several in parallel.
+// not per page). One conversion at a time per profile, across processes too: two LibreOffice instances
+// sharing a profile collide (the second hands its job to the first and exits without a PDF). That
+// happens when IIS overlaps two worker processes during a recycle, or when two test projects run at
+// once -- hence a lock file next to the profile, on top of the in-process semaphore.
 public sealed class LibreOfficePlanSheetPdfRenderer(
     IOptions<PlanRenderingOptions> options,
     ILogger<LibreOfficePlanSheetPdfRenderer> logger) : IPlanSheetPdfRenderer
@@ -70,6 +72,9 @@ public sealed class LibreOfficePlanSheetPdfRenderer(
         await OneConversionAtATime.WaitAsync(cancellationToken);
         try
         {
+            await using var profileLock = await AcquireProfileLockAsync(
+                profileDirectory, TimeSpan.FromSeconds(2 * settings.TimeoutSeconds), cancellationToken);
+
             var inputPath = Path.Combine(workDirectory, InputFileName);
             await File.WriteAllBytesAsync(inputPath, preparedWorkbook, cancellationToken);
 
@@ -139,6 +144,29 @@ public sealed class LibreOfficePlanSheetPdfRenderer(
         {
             throw new PlanRenderingException(
                 $"LibreOffice failed (exit code {process.ExitCode}): {(await standardError).Trim()}");
+        }
+    }
+
+    private static async Task<FileStream> AcquireProfileLockAsync(
+        string profileDirectory, TimeSpan timeout, CancellationToken cancellationToken)
+    {
+        var lockPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(profileDirectory)) + ".lock";
+        Directory.CreateDirectory(Path.GetDirectoryName(lockPath)!);
+        var deadline = DateTime.UtcNow + timeout;
+        while (true)
+        {
+            try
+            {
+                return new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (IOException) when (DateTime.UtcNow < deadline)
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+            }
+            catch (IOException ex)
+            {
+                throw new PlanRenderingException("LibreOffice is busy with another process for too long.", ex);
+            }
         }
     }
 
