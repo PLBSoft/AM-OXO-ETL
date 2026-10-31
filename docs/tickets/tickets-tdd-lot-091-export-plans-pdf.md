@@ -4,8 +4,8 @@
 l'étude des images des fichiers clients et un POC LibreOffice sur les 14 fichiers de `tests/Fixtures`.
 Ticket GitHub : [PLBSoft/AM-OXO-ETL#3](https://github.com/PLBSoft/AM-OXO-ETL/issues/3) (texte destiné
 au client). **Travail dans la branche `3-export-plans-pdf`, jamais sur `main`.** Choix D1-D5 et D10 tranchés par Simon et le client
-les 12 et 13/10, D7 le 31/10 ; les autres sont des propositions à valider avant 091.1. Demande validée par le
-client (ticket officiel) le 31/10.*
+les 12 et 13/10, D7 le 31/10 ; propositions D6, D8, D9, D11-D14 validées par Simon le 31/10. Demande validée par
+le client (ticket officiel) le 31/10. **Lot livré le 31/10 (091.1 à 091.9), voir §5.***
 
 ---
 
@@ -80,15 +80,15 @@ sur une page presque vide. D'où l'étape 4.
 | D3 | Rattachement | **BE parent** = l'équipement du dossier (client, 12/10). Fait côté legacy. |
 | D4 | Mise en page | **1 page en largeur**, une page du client = une page PDF, pages vides retirées (client, 12/10 ; découpage précisé par le POC). |
 | D5 | Onglets imprimés | **Les 3 onglets** : `PLANS ISOLEMENT (Portrait)`, `PLANS ISOLEMENT (Paysage)`, `PLANS PLATINAGE & JOINTS` (client, 13/10 : Portrait ajouté). Rendu de Portrait vérifié le 13/10 : 10 pages pour 5 dossiers ; LRS4504 Portrait identique à la capture d'aperçu Excel transmise par le client. Les 14 dossiers produisent au moins un PDF (47 pages). |
-| D6 | Paramétrage | *Proposition* : **une seule liste dans le profil d'import**, `PlanSheetNames` (noms d'onglets à imprimer, comparés sans espaces de début/fin ni casse). Liste vide = fonction désactivée. Profil standard : les 2 onglets de D5. Le reste (détection des pages, mise en page, retrait des pages vides) est **fixe dans le code** : un seul modèle de dossier connu, rien ne justifie de le paramétrer (YAGNI). À rouvrir si un client a une autre mise en page. |
+| D6 | Paramétrage | **Validé (31/10)** : **une seule liste dans le profil d'import**, `PlanSheetNames` (noms d'onglets à imprimer, comparés sans espaces de début/fin ni casse). Liste vide = fonction désactivée. Profil standard : les 3 onglets de D5. Le reste (détection des pages, mise en page, retrait des pages vides) est **fixe dans le code** : un seul modèle de dossier connu, rien ne justifie de le paramétrer (YAGNI). À rouvrir si un client a une autre mise en page. |
 | D7 | Moteur de rendu | **LibreOffice en ligne de commande** (Simon, 31/10 : comparaison avec Excel satisfaisante, licence MPL 2.0 acceptée) derrière une interface Application `IPlanSheetPdfRenderer`. Remplaçable par Syncfusion XlsIO (licence du client) si besoin un jour, sans toucher au reste. Écartés : PDFsharp seul (ne sait pas imprimer un onglet, D2) ; piloter Excel sur le serveur (non pris en charge par Microsoft sans utilisateur, blocages sur boîte de dialogue, dépend d'une imprimante, licence floue). |
-| D8 | Préparation du classeur | *Proposition* : modification directe du XML avec le SDK OpenXML (`DocumentFormat.OpenXml`, MIT, déjà présent par ClosedXML, à référencer explicitement), jamais par un réenregistrement ClosedXML (risque de perte des formes, non vérifié). |
-| D9 | Détection des pages | *Proposition* : une page commence à chaque image **identique** (même contenu) à celle ancrée dans les 4 premières lignes de l'onglet (le logo de la cartouche). Une page est non vide si une image autre que ce logo ou une forme y est ancrée. Sans répétition détectée : l'onglet entier forme une seule page s'il a du contenu. Le critère « image de 3 568 o » du POC n'est pas retenu (fragile). |
-| D10 | Découpage en fichiers | **Un PDF par page** (client, 13/10). *Proposition de mise en œuvre* : un seul rendu par onglet (le lancement de LibreOffice coûte l'essentiel des 3 s), puis découpage du PDF page par page avec PDFsharp (MIT, 6.2.4, cible `net10.0`). Écarté : un rendu par page (47 lancements au lieu de 26 sur les fichiers de test). Nom proposé : `{nom du classeur généré}_{onglet}_p{n}.pdf`. |
-| D11 | Quand générer | *Proposition* : **pendant `POST /api/oxo/process`**, après la génération du classeur, en best-effort : un échec est journalisé (Error) et le classeur est renvoyé normalement. Pas de PDF pour un fichier rejeté (pas de BE parent). Coût : environ 3 s par onglet. Écarté : génération à la demande (le legacy les demande juste après de toute façon, et le fichier source peut avoir été purgé, lot 090). |
-| D12 | Exécutions simultanées | *Proposition* : une conversion à la fois (verrou dans l'implémentation), délai maximal de 60 s par onglet, profil LibreOffice dans un dossier temporaire propre au service. |
-| D13 | Archivage | *Proposition* : PDF écrits dans l'arborescence d'archive à côté du fichier cible, listés dans `GeneratedFileRecord.Plans` (collection détenue, nouvelle table). Supprimés par la purge du lot 090 comme les autres fichiers. |
-| D14 | Exposition | *Proposition* : `GET api/generated-files/{id}/plans` (liste : onglet, nom de fichier, nombre de pages, taille, disponibilité) et `GET api/generated-files/{id}/plans/{index}` (`application/pdf`, 404 si purgé ou absent). Pas de changement de la réponse de `POST /api/oxo/process`. Téléchargement aussi depuis `/generated-files` dans BlazorAdmin. |
+| D8 | Préparation du classeur | **Validé (31/10)** : modification directe du XML avec le SDK OpenXML (`DocumentFormat.OpenXml`, MIT, déjà présent par ClosedXML, à référencer explicitement), jamais par un réenregistrement ClosedXML (risque de perte des formes, non vérifié). |
+| D9 | Détection des pages | **Validé (31/10)** : une page commence à chaque image **identique** (même contenu) à celle ancrée dans les 4 premières lignes de l'onglet (le logo de la cartouche). Une page est non vide si une image autre que ce logo ou une forme y est ancrée. Sans répétition détectée : l'onglet entier forme une seule page s'il a du contenu. Le critère « image de 3 568 o » du POC n'est pas retenu (fragile). |
+| D10 | Découpage en fichiers | **Un PDF par page** (client, 13/10). Mise en œuvre : un seul rendu par onglet (le lancement de LibreOffice coûte l'essentiel des 3 s), puis découpage du PDF page par page avec PDFsharp (MIT, 6.2.4, cible `net10.0`). Écarté : un rendu par page (47 lancements au lieu de 26 sur les fichiers de test). Nom proposé : `{nom du classeur généré}_{onglet}_p{n}.pdf`. |
+| D11 | Quand générer | **Validé (31/10)** : **pendant `POST /api/oxo/process`**, après la génération du classeur, en best-effort : un échec est journalisé (Error) et le classeur est renvoyé normalement. Pas de PDF pour un fichier rejeté (pas de BE parent). Coût : environ 3 s par onglet. Écarté : génération à la demande (le legacy les demande juste après de toute façon, et le fichier source peut avoir été purgé, lot 090). |
+| D12 | Exécutions simultanées | **Validé (31/10)** : une conversion à la fois (verrou dans l'implémentation), délai maximal de 60 s par onglet, profil LibreOffice dans un dossier temporaire propre au service. |
+| D13 | Archivage | **Validé (31/10)** : PDF écrits dans l'arborescence d'archive à côté du fichier cible, listés dans `GeneratedFileRecord.Plans` (collection détenue, nouvelle table). Supprimés par la purge du lot 090 comme les autres fichiers. |
+| D14 | Exposition | **Validé (31/10)** : `GET api/generated-files/{id}/plans` (liste : onglet, nom de fichier, nombre de pages, taille, disponibilité) et `GET api/generated-files/{id}/plans/{index}` (`application/pdf`, 404 si purgé ou absent). Pas de changement de la réponse de `POST /api/oxo/process`. Téléchargement aussi depuis `/generated-files` dans BlazorAdmin. |
 
 ---
 
@@ -193,3 +193,51 @@ projets touchés.
   fichier).
 - Extraction des images brutes.
 - Rejet d'un fichier sans plans : un dossier sans plan reste valide.
+
+---
+
+## 5. Résultat (31/10)
+
+Un commit par ticket sur `3-export-plans-pdf` : 091.1 `74a907f`, 091.2 `71fc28e`, 091.3 `12c257a`,
+091.4 `583d34e`, 091.5 `b43352f`, 091.6 `8ec69b6`, 091.7 `5099800`, 091.8 `8ab6c6a`, correctif `2423e85`,
+091.9 (ce document, CLAUDE.md, guide de déploiement).
+
+- **Correctif (D12)** : deux processus utilisant le même profil LibreOffice entrent en conflit (le second
+  confie sa conversion au premier et se termine sans PDF). Vu en lançant toute la solution (tests
+  Infrastructure et WebAPI en parallèle) ; même risque en production pendant un recyclage IIS avec
+  chevauchement des processus. Un fichier verrou à côté du profil sérialise les conversions entre
+  processus (attente bornée à 2 × `TimeoutSeconds`).
+
+- **Pages** : la règle D9 (logo identifié par son contenu, pas sa taille) redonne exactement les pages du
+  POC sur les 14 fichiers (47 pages). Les dessins enveloppés dans `mc:AlternateContent` sont lus une
+  seule fois (la copie `mc:Fallback` est ignorée), ce que le POC ne faisait pas.
+- **Classeur préparé** : seuls `workbook.xml` et l'onglet sont réécrits ; tous les autres éléments du
+  fichier (dessins, images) sont identiques octet pour octet, vérifié sur 3 fichiers.
+- **Rendu réel** vérifié par les tests : G6306B Platinage 2 PDF, D8570 Paysage 7, LRS4504 Portrait 1,
+  chaque PDF d'une page ; de bout en bout par une vraie requête HTTP (G6306B avec les profils standard :
+  3 PDF).
+- **Index des plans (D14)** : position dans la liste, à partir de 0, ordre onglet puis page (les lignes
+  d'une collection détenue n'ont pas d'ordre propre). Le legacy n'a pas à le calculer : il suit
+  `DownloadUrl`.
+- **Écart avec le ticket 091.6** : `GeneratedFilePlan` porte le numéro de page plutôt qu'un « nombre de
+  pages » (toujours 1 avec un PDF par page).
+- **Constaté en passant, corrigé en 091.1** : dupliquer un profil d'import perdait ses libellés de
+  tâches multiples (lot 067).
+- **Tests à LibreOffice** : catégorie `LibreOffice` (4 tests) ; ils échouent avec un message clair sur un
+  poste sans LibreOffice. Pour les exclure : `dotnet test --filter "Category!=LibreOffice"`.
+
+## 6. Consigne pour la session legacy
+
+À transmettre à la session Claude Code du dépôt legacy (application MVC5) :
+
+> L'API OXO ETL imprime désormais les plans des dossiers en PDF (une page = un PDF) pour chaque fichier
+> accepté par `POST /api/oxo/process`. Aucun changement de la requête ni de la réponse de cette route.
+> Après un traitement réussi, lire l'en-tête `X-Generated-File-Id`, puis appeler
+> `GET api/generated-files/{id}/plans` (même clé `X-Api-Key`). Réponse : un tableau
+> `[{ index, sheetName, pageNumber, fileName, sizeBytes, available, downloadUrl }]`, éventuellement vide
+> (dossier sans plan, profil sans onglet de plans, ou échec d'impression côté API, non bloquant).
+> Pour chaque élément `available = true`, télécharger `downloadUrl` (relatif à l'URL de base de l'API,
+> `application/pdf`, nom de fichier dans `fileName`) et le charger comme **média du BE parent**
+> (l'équipement créé à partir du classeur). La même liste figure dans `plans` de
+> `GET api/generated-files/{id}`. Une page purgée (rétention, lot 090) répond 404 et
+> `available = false`. Prévoir un délai : le traitement prend environ 3 s de plus par onglet de plans.

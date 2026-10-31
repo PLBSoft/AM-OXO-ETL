@@ -38,6 +38,10 @@
 - [ ] Certificat du site WebAPI également approuvé **sur le serveur lui-même**, sinon l'appel
   interne BlazorAdmin → WebAPI (`OxoApiTestClient`, page `/api-test`) échouera en validation TLS
 - [ ] Ports ouverts dans le pare-feu (443, 80 en redirection si besoin)
+- [ ] **LibreOffice** (version stable, installeur MSI officiel, licence MPL 2.0) installé sur le
+  serveur, pour l'impression des plans en PDF (lot 091). Chemin par défaut attendu :
+  `C:\Program Files\LibreOffice\program\soffice.exe` ; sinon, renseigner
+  `PlanRendering:SofficePath` (voir §6). Seule la WebAPI l'utilise.
 
 ---
 
@@ -230,6 +234,19 @@ jamais l'inverse (nettoyer sans roter laisse la valeur déjà exposée toujours 
 - [ ] `SystemLogs` reçoit bien des entrées (confirme le sink Serilog MSSqlServer)
 - [ ] Page « Journaux » (`/logs`) : l'heure affichée correspond à l'heure locale du poste client,
   pas à celle du serveur (Lot 064 — conversion navigateur, non testable automatiquement)
+- [ ] **Plans en PDF (lot 091)** : envoyer un dossier qui a des plans (ex. G6306B) par `/api-test`
+  avec les profils standard, puis vérifier dans `/generated-files` la colonne « Plans » (G6306B :
+  3 PDF) et ouvrir un PDF. Sans PDF : chercher dans `SystemLogs` le message
+  « Failed to print plan sheet » (le classeur Excel est quand même renvoyé, l'échec n'est pas
+  bloquant).
+  - Réglages (section `PlanRendering`, `appsettings.json` de la WebAPI, pas un secret) :
+    `SofficePath` (chemin de `soffice.exe`), `TimeoutSeconds` (60 par défaut, par onglet),
+    `ProfileDirectory` (profil LibreOffice du service ; par défaut un dossier du répertoire
+    temporaire de l'identité du pool).
+  - L'identité du pool IIS de la WebAPI doit pouvoir écrire dans son répertoire temporaire (ou dans
+    `ProfileDirectory` s'il est renseigné) : sinon LibreOffice ne démarre pas. Le premier PDF après
+    un redémarrage prend une dizaine de secondes (création du profil), les suivants environ 3 s par
+    onglet.
 
 ---
 
@@ -242,6 +259,7 @@ jamais l'inverse (nettoyer sans roter laisse la valeur déjà exposée toujours 
   de blocage navigateur ni d'échec d'appel interne BlazorAdmin → WebAPI)
 - [ ] WebSockets activé dans IIS
 - [ ] Dossier d'archivage créé avec droits d'écriture
+- [ ] LibreOffice installé et un dossier avec plans traité de bout en bout (§6, lot 091)
 - [ ] Test desktop uniquement pour ce jalon — accessibilité clavier en cours de finalisation,
   non bloquante
 
