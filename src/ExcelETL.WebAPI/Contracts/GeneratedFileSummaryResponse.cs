@@ -40,7 +40,8 @@ public sealed record GeneratedFileSummaryResponse(
     IReadOnlyList<GeneratedFileWarningResponse> Warnings,
     bool SourceFileAvailable,
     bool TargetFileAvailable,
-    string? Origin);
+    string? Origin,
+    IReadOnlyList<GeneratedFilePlanResponse> Plans);
 
 // SourceFileAvailable/TargetFileAvailable (Lot 090): false once the retention purge removed the
 // files (the entry itself stays as history), or when the file is otherwise missing on disk; the
@@ -48,3 +49,6 @@ public sealed record GeneratedFileSummaryResponse(
 //
 // Origin: the calling environment the caller declared at processing time (e.g.
 // "https://oxo.alphamaintenance.fr"), null when it sent none -- same treatment as Username.
+//
+// Plans (lot 091): the plan pages printed to PDF for this run, one PDF per page; empty for a rejected
+// file or a profile without plan sheets. Same list as GET /api/generated-files/{id}/plans.
