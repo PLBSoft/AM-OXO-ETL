@@ -209,6 +209,9 @@ else
                     </button>
                 }
             </TemplateColumn>
+            <TemplateColumn Title="@Loc["GeneratedFiles_PlansColumn"]">
+                @PlansCell(context, "")
+            </TemplateColumn>
         </QuickGrid>
         <div id="generated-files-paginator">
             <Paginator State="@_pagination" />
@@ -294,6 +297,9 @@ else
                                 @Loc["GeneratedFiles_DownloadTargetButton"]
                             </button>
                         }
+                    </div>
+                    <div class="card-text mt-2">
+                        @Loc["GeneratedFiles_PlansColumn"]: @PlansCell(record, "card-")
                     </div>
                 </div>
             </div>
@@ -502,8 +508,78 @@ else
         return Task.CompletedTask;
     }
 
-    private static string BuildDataUrl(byte[] bytes) =>
-        $"data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{Convert.ToBase64String(bytes)}";
+    private static string BuildDataUrl(byte[] bytes, string contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") =>
+        $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, 091.8): the plan pages printed to PDF,
+    // collapsed behind a count like the warnings, each downloaded the same lazy way as source/target.
+    // Same order as the Web API's plan list (sheet name, then page).
+    private readonly HashSet<Guid> _expandedPlanIds = [];
+    private readonly Dictionary<string, string> _planDownloadHrefs = new();
+
+    private static List<GeneratedFilePlan> OrderedPlans(GeneratedFileRecord record) =>
+        [.. record.Plans.OrderBy(p => p.SheetName, StringComparer.Ordinal).ThenBy(p => p.PageNumber)];
+
+    private void TogglePlans(Guid id)
+    {
+        if (!_expandedPlanIds.Add(id))
+        {
+            _expandedPlanIds.Remove(id);
+        }
+    }
+
+    private Task PreparePlanDownloadAsync(GeneratedFileRecord record, int index)
+    {
+        var plan = OrderedPlans(record)[index];
+        var bytes = File.ReadAllBytes(Path.Combine(ArchiveOptions.Value.RootPath, plan.FilePath));
+        _planDownloadHrefs[$"{record.Id}:{index}"] = BuildDataUrl(bytes, "application/pdf");
+        return Task.CompletedTask;
+    }
+
+    private RenderFragment PlansCell(GeneratedFileRecord record, string idPrefix) => __builder =>
+    {
+        if (record.Plans.Count == 0)
+        {
+            <span id="@($"plans-none-{idPrefix}{record.Id}")" class="text-muted">—</span>
+        }
+        else if (record.FilesPurgedAtUtc is not null)
+        {
+            <span id="@($"plans-expired-{idPrefix}{record.Id}")" class="text-muted">@Loc["GeneratedFiles_FilesExpired"]</span>
+        }
+        else
+        {
+            var plans = OrderedPlans(record);
+            <details id="@($"plans-details-{idPrefix}{record.Id}")" open="@_expandedPlanIds.Contains(record.Id)">
+                <summary id="@($"plans-toggle-{idPrefix}{record.Id}")"
+                         @onclick="() => TogglePlans(record.Id)" @onclick:preventDefault="true">
+                    <span class="badge bg-secondary">@plans.Count</span>
+                </summary>
+                @if (_expandedPlanIds.Contains(record.Id))
+                {
+                    <ul class="list-unstyled mb-0" id="@($"plans-list-{idPrefix}{record.Id}")">
+                        @for (var i = 0; i < plans.Count; i++)
+                        {
+                            var index = i;
+                            var label = Loc["GeneratedFiles_PlanLabel", plans[index].SheetName, plans[index].PageNumber].Value;
+                            <li class="mb-1">
+                                @if (_planDownloadHrefs.TryGetValue($"{record.Id}:{index}", out var planHref))
+                                {
+                                    <a id="@($"download-plan-link-{idPrefix}{record.Id}-{index}")" class="btn btn-outline-secondary btn-sm"
+                                       href="@planHref" download="@plans[index].FileName">@label</a>
+                                }
+                                else
+                                {
+                                    <button id="@($"prepare-download-plan-button-{idPrefix}{record.Id}-{index}")" type="button"
+                                            class="btn btn-outline-secondary btn-sm"
+                                            @onclick="() => PreparePlanDownloadAsync(record, index)">@label</button>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </details>
+        }
+    };
 
     private static string GetStatusBadgeClass(GeneratedFileArchiveStatus status) => status switch
     {

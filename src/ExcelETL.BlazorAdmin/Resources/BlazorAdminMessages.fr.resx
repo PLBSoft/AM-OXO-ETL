@@ -2065,4 +2065,10 @@
   <data name="GeneratedFiles_FilesExpired" xml:space="preserve">
     <value>Fichier expiré</value>
   </data>
+  <data name="GeneratedFiles_PlansColumn" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="GeneratedFiles_PlanLabel" xml:space="preserve">
+    <value>{0} - page {1}</value>
+  </data>
 </root>
