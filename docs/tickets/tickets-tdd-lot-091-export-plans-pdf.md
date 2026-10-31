@@ -4,7 +4,8 @@
 l'étude des images des fichiers clients et un POC LibreOffice sur les 14 fichiers de `tests/Fixtures`.
 Ticket GitHub : [PLBSoft/AM-OXO-ETL#3](https://github.com/PLBSoft/AM-OXO-ETL/issues/3) (texte destiné
 au client). **Travail dans la branche `3-export-plans-pdf`, jamais sur `main`.** Choix D1-D5 et D10 tranchés par Simon et le client
-les 12 et 13/10 ; les autres sont des propositions à valider avec le ticket.*
+les 12 et 13/10, D7 le 31/10 ; les autres sont des propositions à valider avant 091.1. Demande validée par le
+client (ticket officiel) le 31/10.*
 
 ---
 
@@ -80,7 +81,7 @@ sur une page presque vide. D'où l'étape 4.
 | D4 | Mise en page | **1 page en largeur**, une page du client = une page PDF, pages vides retirées (client, 12/10 ; découpage précisé par le POC). |
 | D5 | Onglets imprimés | **Les 3 onglets** : `PLANS ISOLEMENT (Portrait)`, `PLANS ISOLEMENT (Paysage)`, `PLANS PLATINAGE & JOINTS` (client, 13/10 : Portrait ajouté). Rendu de Portrait vérifié le 13/10 : 10 pages pour 5 dossiers ; LRS4504 Portrait identique à la capture d'aperçu Excel transmise par le client. Les 14 dossiers produisent au moins un PDF (47 pages). |
 | D6 | Paramétrage | *Proposition* : **une seule liste dans le profil d'import**, `PlanSheetNames` (noms d'onglets à imprimer, comparés sans espaces de début/fin ni casse). Liste vide = fonction désactivée. Profil standard : les 2 onglets de D5. Le reste (détection des pages, mise en page, retrait des pages vides) est **fixe dans le code** : un seul modèle de dossier connu, rien ne justifie de le paramétrer (YAGNI). À rouvrir si un client a une autre mise en page. |
-| D7 | Moteur de rendu | *Proposition* : **LibreOffice en ligne de commande** derrière une interface Application `IPlanSheetPdfRenderer`. Remplaçable par Syncfusion XlsIO (licence du client) sans toucher au reste. Écartés : PDFsharp seul (ne sait pas imprimer un onglet, D2) ; piloter Excel sur le serveur (non pris en charge par Microsoft sans utilisateur, blocages sur boîte de dialogue, dépend d'une imprimante, licence floue). **Prérequis 091.0.** |
+| D7 | Moteur de rendu | **LibreOffice en ligne de commande** (Simon, 31/10 : comparaison avec Excel satisfaisante, licence MPL 2.0 acceptée) derrière une interface Application `IPlanSheetPdfRenderer`. Remplaçable par Syncfusion XlsIO (licence du client) si besoin un jour, sans toucher au reste. Écartés : PDFsharp seul (ne sait pas imprimer un onglet, D2) ; piloter Excel sur le serveur (non pris en charge par Microsoft sans utilisateur, blocages sur boîte de dialogue, dépend d'une imprimante, licence floue). |
 | D8 | Préparation du classeur | *Proposition* : modification directe du XML avec le SDK OpenXML (`DocumentFormat.OpenXml`, MIT, déjà présent par ClosedXML, à référencer explicitement), jamais par un réenregistrement ClosedXML (risque de perte des formes, non vérifié). |
 | D9 | Détection des pages | *Proposition* : une page commence à chaque image **identique** (même contenu) à celle ancrée dans les 4 premières lignes de l'onglet (le logo de la cartouche). Une page est non vide si une image autre que ce logo ou une forme y est ancrée. Sans répétition détectée : l'onglet entier forme une seule page s'il a du contenu. Le critère « image de 3 568 o » du POC n'est pas retenu (fragile). |
 | D10 | Découpage en fichiers | **Un PDF par page** (client, 13/10). *Proposition de mise en œuvre* : un seul rendu par onglet (le lancement de LibreOffice coûte l'essentiel des 3 s), puis découpage du PDF page par page avec PDFsharp (MIT, 6.2.4, cible `net10.0`). Écarté : un rendu par page (47 lancements au lieu de 26 sur les fichiers de test). Nom proposé : `{nom du classeur généré}_{onglet}_p{n}.pdf`. |
@@ -96,11 +97,11 @@ sur une page presque vide. D'où l'étape 4.
 Un commit par ticket, dans la branche du lot. Tests filtrés sur la classe en cours ; en fin de lot, les
 projets touchés.
 
-### 091.0 — Prérequis (aucun code)
+### 091.0 — Prérequis (aucun code) — **fait le 31/10**
 
-- Comparer les PDF du POC à un export PDF fait depuis Excel avec la même mise en page (PSA B Paysage,
-  RANGEE N°1 Platinage, C7401 Paysage). Si l'écart est inacceptable : D7 bascule sur Syncfusion.
-- Valider la licence MPL 2.0 de LibreOffice (programme appelé, pas intégré au code).
+- Comparaison des PDF d'essai avec un export Excel : satisfaisante (Simon).
+- Licence MPL 2.0 de LibreOffice : acceptée (programme appelé, pas intégré au code).
+- Demande validée par le client.
 
 ### 091.1 — Onglets de plans dans le profil d'import (Domain + Infrastructure)
 
