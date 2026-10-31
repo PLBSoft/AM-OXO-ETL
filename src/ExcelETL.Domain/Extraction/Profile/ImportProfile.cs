@@ -1,5 +1,6 @@
 using ExcelETL.Domain.Common;
 using ExcelETL.Domain.Exceptions;
+using ExcelETL.Domain.Generation.Profile;
 
 namespace ExcelETL.Domain.Extraction.Profile;
 
@@ -50,16 +51,22 @@ public sealed class ImportProfile : Entity
     // pre-existing call sites for no safety benefit. See the ticket doc's decision 5.
     public IReadOnlyList<TacheMultipleTypeLabel> TacheMultipleTypeLabels => _tacheMultipleTypeLabels;
 
+    // Lot 091: the source sheets printed to PDF (one PDF per page) and attached to the parent BE by the
+    // legacy app. Matched against the workbook's sheet names ignoring case and leading/trailing spaces.
+    // Optional, empty by default: an empty list disables plan printing for this profile.
+    public IReadOnlyList<string> PlanSheetNames { get; }
+
     public IReadOnlyList<SheetExtractionRule> SheetRules => _sheetRules;
 
     public ImportProfile(
         string name, string equipementTypeElementNom,
         IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
         IReadOnlyList<SheetExtractionRule> sheetRules,
-        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null,
+        IReadOnlyList<string>? planSheetNames = null)
         : this(
             name, DefaultReperePrefix, equipementTypeElementNom, defaultTableaux, defaultApplicationNames, sheetRules,
-            tacheMultipleTypeLabels)
+            tacheMultipleTypeLabels, planSheetNames)
     {
     }
 
@@ -67,10 +74,11 @@ public sealed class ImportProfile : Entity
         string name, string reperePrefix, string equipementTypeElementNom,
         IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
         IReadOnlyList<SheetExtractionRule> sheetRules,
-        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null,
+        IReadOnlyList<string>? planSheetNames = null)
         : this(
             Guid.NewGuid(), name, reperePrefix, equipementTypeElementNom, defaultTableaux, defaultApplicationNames, sheetRules,
-            tacheMultipleTypeLabels)
+            tacheMultipleTypeLabels, planSheetNames)
     {
     }
 
@@ -82,7 +90,8 @@ public sealed class ImportProfile : Entity
         Guid id, string name, string reperePrefix, string equipementTypeElementNom,
         IReadOnlyList<string> defaultTableaux, IReadOnlyList<string> defaultApplicationNames,
         IReadOnlyList<SheetExtractionRule> sheetRules,
-        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null,
+        IReadOnlyList<string>? planSheetNames = null)
         : base(id)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -143,6 +152,13 @@ public sealed class ImportProfile : Entity
             trimmedTacheMultipleTypeLabels.Add(new TacheMultipleTypeLabel(label.Code.Trim(), label.Label.Trim()));
         }
 
+        var trimmedPlanSheetNames = new List<string>();
+        foreach (var planSheetName in planSheetNames ?? [])
+        {
+            ValidatePlanSheetName(planSheetName, trimmedPlanSheetNames);
+            trimmedPlanSheetNames.Add(planSheetName.Trim());
+        }
+
         Name = name;
         ReperePrefix = reperePrefix;
         EquipementTypeElementNom = equipementTypeElementNom;
@@ -150,6 +166,7 @@ public sealed class ImportProfile : Entity
         DefaultApplicationNames = trimmedApplicationNames;
         _sheetRules = [.. sheetRules];
         _tacheMultipleTypeLabels = trimmedTacheMultipleTypeLabels;
+        PlanSheetNames = trimmedPlanSheetNames;
     }
 
     // The single validation path for one candidate Tableau name against the (already-trimmed) names
@@ -189,9 +206,20 @@ public sealed class ImportProfile : Entity
         }
     }
 
+    // Lot 091: same single validation path, reused by the editor. A sheet name is at most 31
+    // characters in Excel (ExcelSheetName.MaxLength), so a longer name could never match a sheet.
+    public static void ValidatePlanSheetName(string candidate, IReadOnlyList<string> existing) =>
+        ValidateListItemName(
+            candidate, existing,
+            DomainErrorCode.ImportProfile_EmptyPlanSheetName,
+            DomainErrorCode.ImportProfile_PlanSheetNameTooLong,
+            DomainErrorCode.ImportProfile_DuplicatePlanSheetName,
+            ExcelSheetName.MaxLength);
+
     private static void ValidateListItemName(
         string candidate, IReadOnlyList<string> existing,
-        DomainErrorCode emptyCode, DomainErrorCode tooLongCode, DomainErrorCode duplicateCode)
+        DomainErrorCode emptyCode, DomainErrorCode tooLongCode, DomainErrorCode duplicateCode,
+        int maxLength = MaxListItemNameLength)
     {
         if (string.IsNullOrWhiteSpace(candidate))
         {
@@ -200,11 +228,10 @@ public sealed class ImportProfile : Entity
 
         var trimmed = candidate.Trim();
 
-        if (trimmed.Length > MaxListItemNameLength)
+        if (trimmed.Length > maxLength)
         {
             throw new DomainValidationException(
-                $"Name must not exceed {MaxListItemNameLength} characters.", nameof(candidate), tooLongCode,
-                MaxListItemNameLength);
+                $"Name must not exceed {maxLength} characters.", nameof(candidate), tooLongCode, maxLength);
         }
 
         if (existing.Any(e => string.Equals(e.Trim(), trimmed, StringComparison.OrdinalIgnoreCase)))
@@ -223,5 +250,6 @@ public sealed class ImportProfile : Entity
         EquipementTypeElementNom = string.Empty;
         DefaultTableaux = [];
         DefaultApplicationNames = [];
+        PlanSheetNames = [];
     }
 }

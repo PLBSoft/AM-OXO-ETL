@@ -378,7 +378,17 @@ public class DefaultProfileSeeder(
         [
             new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"),
             new TacheMultipleTypeLabel("TM_PROC_REL", "Procédure REL")
-        ]);
+        ],
+        // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, D5): the 3 plan sheets the
+        // client wants printed to PDF.
+        PlanSheetNames);
+
+    public static readonly IReadOnlyList<string> PlanSheetNames =
+    [
+        "PLANS ISOLEMENT (Portrait)",
+        "PLANS ISOLEMENT (Paysage)",
+        "PLANS PLATINAGE & JOINTS"
+    ];
 
     // Minimal by design (ticket's "Décision actée" §3, client-confirmed): only the descriptive fields
     // BuildDefaultImportProfile's pivot already produces, plus every Point Colonne that profile

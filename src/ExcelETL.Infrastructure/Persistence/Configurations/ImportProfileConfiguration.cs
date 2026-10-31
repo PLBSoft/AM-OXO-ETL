@@ -45,6 +45,10 @@ public class ImportProfileConfiguration : IEntityTypeConfiguration<ImportProfile
         builder.Property(p => p.DefaultApplicationNames)
             .IsRequired();
 
+        // Lot 091: same primitive-collection mapping.
+        builder.Property(p => p.PlanSheetNames)
+            .IsRequired();
+
         // Lot 067: TacheMultipleTypeLabel is a Code+Label pair, not a primitive scalar -- unlike
         // DefaultTableaux/DefaultApplicationNames above, this needs a real owned-entity mapping (same
         // shadow-Id-key convention as SheetRules below), not an EF Core primitive collection.

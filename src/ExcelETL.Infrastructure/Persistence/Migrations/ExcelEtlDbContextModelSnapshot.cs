@@ -130,6 +130,10 @@ namespace ExcelETL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
 
+                    b.PrimitiveCollection<string>("PlanSheetNames")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ReperePrefix")
                         .IsRequired()
                         .HasMaxLength(50)

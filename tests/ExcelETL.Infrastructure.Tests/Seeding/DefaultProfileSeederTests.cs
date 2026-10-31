@@ -92,6 +92,19 @@ public class DefaultProfileSeederTests
         reloaded!.Name.Should().Be("Renamed by an admin");
     }
 
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, D5): the 3 plan sheets printed to PDF.
+    [Fact]
+    public async Task SeedAsync_CreatesImportProfile_WithTheThreePlanSheets()
+    {
+        var seeder = CreateSeeder(out var importProfileStore, out _);
+        await seeder.SeedAsync();
+
+        var profile = await importProfileStore.GetByIdAsync(DefaultProfileSeeder.ImportProfileId);
+
+        profile!.PlanSheetNames.Should().Equal(
+            "PLANS ISOLEMENT (Portrait)", "PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS");
+    }
+
     [Fact]
     public async Task SeedAsync_CreatesImportProfile_WithExpectedRootFieldsAndAllSixSheetRules()
     {
