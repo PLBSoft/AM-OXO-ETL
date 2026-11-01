@@ -15,11 +15,13 @@ public sealed class ImportProfileDraft : IDraftWithError
     public List<StringItemDraft> DefaultTableaux { get; set; } = [];
     public List<StringItemDraft> DefaultApplicationNames { get; set; } = [];
     public List<TacheMultipleTypeLabelDraft> TacheMultipleTypeLabels { get; set; } = [];
+    public List<StringItemDraft> PlanSheetNames { get; set; } = [];
     public List<SheetExtractionRuleDraft> SheetRules { get; set; } = [];
 
     public StringItemDraft PendingDefaultTableau { get; set; } = new();
     public StringItemDraft PendingDefaultApplicationName { get; set; } = new();
     public TacheMultipleTypeLabelDraft PendingTacheMultipleTypeLabel { get; set; } = new();
+    public StringItemDraft PendingPlanSheetName { get; set; } = new();
     public SheetExtractionRuleDraft PendingSheetRule { get; set; } = new();
 
     [JsonIgnore]

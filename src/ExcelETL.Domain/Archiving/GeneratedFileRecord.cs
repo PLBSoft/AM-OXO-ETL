@@ -94,6 +94,11 @@ public sealed class GeneratedFileRecord
     private readonly List<GeneratedFileWarning> _warnings;
     public IReadOnlyList<GeneratedFileWarning> Warnings => _warnings;
 
+    // Lot 091: the plan pages printed to PDF for this run (empty for a rejected file, a profile without
+    // plan sheets, or when printing failed -- best-effort). Same owned-collection treatment as Warnings.
+    private readonly List<GeneratedFilePlan> _plans;
+    public IReadOnlyList<GeneratedFilePlan> Plans => _plans;
+
     public GeneratedFileRecord(
         Guid id,
         DateTime generatedAtUtc,
@@ -110,7 +115,8 @@ public sealed class GeneratedFileRecord
         int pointCount = 0,
         int tacheMultipleCount = 0,
         IReadOnlyList<GeneratedFileWarning>? warnings = null,
-        string? origin = null)
+        string? origin = null,
+        IReadOnlyList<GeneratedFilePlan>? plans = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFileName);
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceFilePath);
@@ -131,6 +137,7 @@ public sealed class GeneratedFileRecord
         PointCount = pointCount;
         TacheMultipleCount = tacheMultipleCount;
         _warnings = warnings is null ? [] : [.. warnings];
+        _plans = plans is null ? [] : [.. plans];
     }
 
     // EF Core materialization only -- see the Warnings property's own comment above. Scalar
@@ -142,5 +149,6 @@ public sealed class GeneratedFileRecord
         SourceFileName = string.Empty;
         SourceFilePath = string.Empty;
         _warnings = [];
+        _plans = [];
     }
 }

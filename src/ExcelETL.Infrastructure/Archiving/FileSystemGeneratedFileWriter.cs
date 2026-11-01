@@ -21,6 +21,10 @@ public class FileSystemGeneratedFileWriter(IOptions<GeneratedFilesArchiveOptions
         Stream content, string originalFileName, DateTime timestampUtc, CancellationToken cancellationToken = default) =>
         WriteAsync(content, originalFileName, timestampUtc, "target", cancellationToken);
 
+    public Task<string> WritePlanAsync(
+        Stream content, string fileName, DateTime timestampUtc, CancellationToken cancellationToken = default) =>
+        WriteAsync(content, fileName, timestampUtc, "plan", cancellationToken);
+
     private async Task<string> WriteAsync(
         Stream content, string originalFileName, DateTime timestampUtc, string kind, CancellationToken cancellationToken)
     {

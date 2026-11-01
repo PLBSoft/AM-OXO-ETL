@@ -31,6 +31,7 @@ public static class ImportProfileDraftMapper
         DefaultApplicationNames = [.. profile.DefaultApplicationNames.Select(v => new StringItemDraft { Value = v })],
         TacheMultipleTypeLabels =
             [.. profile.TacheMultipleTypeLabels.Select(l => new TacheMultipleTypeLabelDraft { Code = l.Code, Label = l.Label })],
+        PlanSheetNames = [.. profile.PlanSheetNames.Select(v => new StringItemDraft { Value = v })],
         SheetRules = [.. profile.SheetRules.Select(FromDomainRule)],
     };
 
@@ -85,6 +86,8 @@ public static class ImportProfileDraftMapper
             () => { draft.DefaultApplicationNames.Add(draft.PendingDefaultApplicationName); draft.PendingDefaultApplicationName = new StringItemDraft(); });
         var labels = ConvertUniqueList(draft.TacheMultipleTypeLabels, draft.PendingTacheMultipleTypeLabel, ConvertTacheMultipleTypeLabel, errors,
             () => { draft.TacheMultipleTypeLabels.Add(draft.PendingTacheMultipleTypeLabel); draft.PendingTacheMultipleTypeLabel = new TacheMultipleTypeLabelDraft(); });
+        var planSheetNames = ConvertUniqueList(draft.PlanSheetNames, draft.PendingPlanSheetName, ConvertPlanSheetName, errors,
+            () => { draft.PlanSheetNames.Add(draft.PendingPlanSheetName); draft.PendingPlanSheetName = new StringItemDraft(); });
 
         var rules = ConvertList(draft.SheetRules, ConvertSheetRule, errors);
         PromoteIfNonPristineAndValid(draft.PendingSheetRule, ConvertSheetRule, rules, errors,
@@ -98,8 +101,8 @@ public static class ImportProfileDraftMapper
         try
         {
             var profile = draft.Id is { } id
-                ? new ImportProfile(id, draft.Name, draft.ReperePrefix, draft.EquipementTypeElementNom, tableaux, applicationNames, rules, labels)
-                : new ImportProfile(draft.Name, draft.ReperePrefix, draft.EquipementTypeElementNom, tableaux, applicationNames, rules, labels);
+                ? new ImportProfile(id, draft.Name, draft.ReperePrefix, draft.EquipementTypeElementNom, tableaux, applicationNames, rules, labels, planSheetNames)
+                : new ImportProfile(draft.Name, draft.ReperePrefix, draft.EquipementTypeElementNom, tableaux, applicationNames, rules, labels, planSheetNames);
             return ConversionResult<ImportProfile>.Success(profile);
         }
         catch (DomainValidationException ex)
@@ -116,6 +119,9 @@ public static class ImportProfileDraftMapper
 
     public static ConversionResult<string> ConvertDefaultApplicationName(StringItemDraft draft, IEnumerable<StringItemDraft> others) =>
         ConvertListItemName(draft, others, ImportProfile.ValidateDefaultApplicationName);
+
+    public static ConversionResult<string> ConvertPlanSheetName(StringItemDraft draft, IEnumerable<StringItemDraft> others) =>
+        ConvertListItemName(draft, others, ImportProfile.ValidatePlanSheetName);
 
     public static ConversionResult<TacheMultipleTypeLabel> ConvertTacheMultipleTypeLabel(
         TacheMultipleTypeLabelDraft draft, IEnumerable<TacheMultipleTypeLabelDraft> others)

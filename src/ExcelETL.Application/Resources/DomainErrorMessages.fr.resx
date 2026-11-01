@@ -94,6 +94,15 @@
   <data name="ImportProfile_DuplicateTacheMultipleTypeLabelCode" xml:space="preserve">
     <value>Le code '{0}' existe déjà.</value>
   </data>
+  <data name="ImportProfile_EmptyPlanSheetName" xml:space="preserve">
+    <value>Le nom de l'onglet de plans ne doit pas être vide.</value>
+  </data>
+  <data name="ImportProfile_PlanSheetNameTooLong" xml:space="preserve">
+    <value>Le nom de l'onglet de plans ne doit pas dépasser {0} caractères.</value>
+  </data>
+  <data name="ImportProfile_DuplicatePlanSheetName" xml:space="preserve">
+    <value>L'onglet de plans '{0}' est déjà dans la liste.</value>
+  </data>
   <data name="TacheMultipleTypeLabel_EmptyCode" xml:space="preserve">
     <value>Le code ne doit pas être vide.</value>
   </data>

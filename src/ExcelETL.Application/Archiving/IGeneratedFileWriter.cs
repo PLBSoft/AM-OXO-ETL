@@ -12,4 +12,8 @@ public interface IGeneratedFileWriter
 
     Task<string> WriteTargetAsync(
         Stream content, string originalFileName, DateTime timestampUtc, CancellationToken cancellationToken = default);
+
+    // Lot 091: one plan page printed to PDF; fileName is the PDF's own name (D10).
+    Task<string> WritePlanAsync(
+        Stream content, string fileName, DateTime timestampUtc, CancellationToken cancellationToken = default);
 }

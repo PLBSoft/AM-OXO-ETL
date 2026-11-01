@@ -50,7 +50,8 @@ public class ImportProfileDraftMapperTests
             warnWhenNoConditionalPoint: true);
         return new ImportProfile(
             "Profil fait main", "MAD-OXO-", "MAD TRAVAUX", ["TRAVAUX COMPLET"], ["PROGRESS"], [rule],
-            [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD")]);
+            [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD")],
+            ["PLANS ISOLEMENT (Paysage)"]);
     }
 
     private static ImportProfileDraft MinimalValidDraft() => new()
@@ -100,6 +101,40 @@ public class ImportProfileDraftMapperTests
 
         result.IsSuccess.Should().BeTrue();
         ShouldBeEquivalentProfile(result.Value!, original);
+    }
+
+    // Lot 091: plan sheet names (D6).
+    [Fact]
+    public void ToDomain_ValidPendingPlanSheetName_IsPromotedTrimmed()
+    {
+        var draft = MinimalValidDraft();
+        draft.PlanSheetNames = [new StringItemDraft { Value = "PLANS ISOLEMENT (Paysage)" }];
+        draft.PendingPlanSheetName.Value = "  PLANS PLATINAGE & JOINTS ";
+
+        var result = ImportProfileDraftMapper.ToDomain(draft);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.PlanSheetNames.Should().Equal("PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS");
+        DraftJson.IsPristine(draft.PendingPlanSheetName).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ToDomain_DuplicatePlanSheetName_AttachesTheErrorToTheSecondOccurrence()
+    {
+        var draft = MinimalValidDraft();
+        draft.PlanSheetNames =
+        [
+            new StringItemDraft { Value = "PLANS ISOLEMENT (Paysage)" },
+            new StringItemDraft { Value = " plans isolement (paysage)" },
+        ];
+
+        var result = ImportProfileDraftMapper.ToDomain(draft);
+
+        result.IsSuccess.Should().BeFalse();
+        var error = result.Errors.Should().ContainSingle().Which;
+        error.Draft.Should().BeSameAs(draft.PlanSheetNames[1]);
+        error.Exception.Should().BeOfType<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicatePlanSheetName);
     }
 
     [Fact]

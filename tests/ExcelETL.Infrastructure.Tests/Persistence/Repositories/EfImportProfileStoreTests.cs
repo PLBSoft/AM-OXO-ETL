@@ -19,7 +19,8 @@ public class EfImportProfileStoreTests
     private static ImportProfile CreateSampleProfile(
         string name = "MAD OXO", string equipementTypeElementNom = "MAD TRAVAUX",
         IReadOnlyList<string>? defaultTableaux = null, IReadOnlyList<string>? defaultApplicationNames = null,
-        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null)
+        IReadOnlyList<TacheMultipleTypeLabel>? tacheMultipleTypeLabels = null,
+        IReadOnlyList<string>? planSheetNames = null)
     {
         var locator = new RepeatingBlockLocator(
             firstBlockStartRow: 9,
@@ -43,7 +44,7 @@ public class EfImportProfileStoreTests
         return new ImportProfile(
             name, "MAD-OXO-", equipementTypeElementNom,
             defaultTableaux ?? ["TRAVAUX COMPLET", "TRAVAUX DETAIL"], defaultApplicationNames ?? ["PROGRESS"], [sheetRule],
-            tacheMultipleTypeLabels);
+            tacheMultipleTypeLabels, planSheetNames);
     }
 
     [Fact]
@@ -134,6 +135,31 @@ public class EfImportProfileStoreTests
         var reloaded = await store.GetByIdAsync(profile.Id);
 
         reloaded!.TacheMultipleTypeLabels.Should().BeEmpty();
+    }
+
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md).
+    [Fact]
+    public async Task SaveAsync_WithPlanSheetNames_PersistsAndReloadsThemInOrder()
+    {
+        var profile = CreateSampleProfile(planSheetNames: ["PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS"]);
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.PlanSheetNames.Should().Equal("PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithoutPlanSheetNames_PersistsAndReloadsAsEmpty()
+    {
+        var profile = CreateSampleProfile();
+        var store = CreateStore();
+
+        await store.SaveAsync(profile);
+        var reloaded = await store.GetByIdAsync(profile.Id);
+
+        reloaded!.PlanSheetNames.Should().BeEmpty();
     }
 
     [Fact]

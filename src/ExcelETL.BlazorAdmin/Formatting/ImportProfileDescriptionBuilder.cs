@@ -356,6 +356,11 @@ public static class ImportProfileDescriptionBuilder
         sentences.AddRange(profile.TacheMultipleTypeLabels.Select(label => new ProfileDescriptionSentence(
             loc["ImportProfileDetails_GeneralTacheMultipleTypeLabel", Quote(label.Code, loc), Quote(label.Label, loc)])));
 
+        // Lot 091: plan sheets printed to PDF.
+        sentences.Add(new ProfileDescriptionSentence(CountedSentence(
+            profile.PlanSheetNames, loc, "ImportProfileDetails_GeneralNoPlanSheet",
+            "ImportProfileDetails_GeneralOnePlanSheet", "ImportProfileDetails_GeneralSeveralPlanSheets")));
+
         // ImportPipelineOrchestrator.FindRule requires all 6 sheets: a missing one makes the import fail.
         var blocking = ImportSheetUsage.KnownSheetNames
             .Where(sheetName => profile.SheetRules.All(r => r.SheetName != sheetName))

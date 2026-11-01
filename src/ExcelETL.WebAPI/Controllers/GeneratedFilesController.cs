@@ -19,6 +19,8 @@ public class GeneratedFilesController(
     private const string WorkbookContentType =
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
+    private const string PdfContentType = "application/pdf";
+
     [HttpGet]
     public async Task<IActionResult> Search(
         [FromQuery] string? equipementRepere, CancellationToken cancellationToken)
@@ -59,6 +61,40 @@ public class GeneratedFilesController(
         return DownloadFile(record.TargetFilePath, record.TargetFileName);
     }
 
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md, D14): the plan pages printed to PDF,
+    // one PDF per page, to be attached to the parent equipment by the caller.
+    [HttpGet("{id:guid}/plans")]
+    public async Task<IActionResult> ListPlans(Guid id, CancellationToken cancellationToken)
+    {
+        var record = await archiveStore.GetByIdAsync(id, cancellationToken);
+        return record is null ? NotFound() : Ok(ToPlanResponses(record));
+    }
+
+    // index: the plan's position in the list returned above (0-based). 404 for an unknown index, or once
+    // the retention purge has removed the file.
+    [HttpGet("{id:guid}/plans/{index:int}")]
+    public async Task<IActionResult> DownloadPlan(Guid id, int index, CancellationToken cancellationToken)
+    {
+        var record = await archiveStore.GetByIdAsync(id, cancellationToken);
+        List<GeneratedFilePlan> plans = record is null ? [] : OrderedPlans(record);
+        if (index < 0 || index >= plans.Count)
+        {
+            return NotFound();
+        }
+
+        return DownloadFile(plans[index].FilePath, plans[index].FileName, PdfContentType);
+    }
+
+    // Owned rows carry no position of their own: a fixed order keeps an index stable between the list
+    // and the download.
+    private static List<GeneratedFilePlan> OrderedPlans(GeneratedFileRecord record) =>
+        [.. record.Plans.OrderBy(p => p.SheetName, StringComparer.Ordinal).ThenBy(p => p.PageNumber)];
+
+    private List<GeneratedFilePlanResponse> ToPlanResponses(GeneratedFileRecord record) =>
+        [.. OrderedPlans(record).Select((p, i) => new GeneratedFilePlanResponse(
+            i, p.SheetName, p.PageNumber, p.FileName, p.SizeBytes, IsAvailable(record, p.FilePath),
+            $"/api/generated-files/{record.Id}/plans/{i}"))];
+
     // The archive has no purge policy today, but a file could still be missing on disk (manual
     // cleanup, moved storage, etc.) -- treated as a plain 404 rather than an unqualified 500, same
     // "expected absence, not a server error" reasoning as the Rejected-record case above.
@@ -69,7 +105,7 @@ public class GeneratedFilesController(
     // filesystem, same as BlazorAdmin's GeneratedFiles.razor already does -- File.Exists/OpenRead
     // on the bare relative path resolves against the process's working directory, not the archive
     // root, and would silently 404 every real download.
-    private IActionResult DownloadFile(string relativePath, string fileName)
+    private IActionResult DownloadFile(string relativePath, string fileName, string contentType = WorkbookContentType)
     {
         var fullPath = Path.Combine(archiveOptions.Value.RootPath, relativePath);
         if (!System.IO.File.Exists(fullPath))
@@ -78,7 +114,7 @@ public class GeneratedFilesController(
         }
 
         var stream = System.IO.File.OpenRead(fullPath);
-        return new FileStreamResult(stream, WorkbookContentType) { FileDownloadName = fileName };
+        return new FileStreamResult(stream, contentType) { FileDownloadName = fileName };
     }
 
     // Lot 090: a file is available when the retention purge has not removed it AND it is still on disk
@@ -109,5 +145,6 @@ public class GeneratedFilesController(
             .ToList(),
         IsAvailable(record, record.SourceFilePath),
         IsAvailable(record, record.TargetFilePath),
-        record.Origin);
+        record.Origin,
+        ToPlanResponses(record));
 }

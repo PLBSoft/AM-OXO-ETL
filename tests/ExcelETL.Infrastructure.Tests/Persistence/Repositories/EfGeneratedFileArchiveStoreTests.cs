@@ -128,6 +128,39 @@ public class EfGeneratedFileArchiveStoreTests
         reloaded!.Warnings.Should().BeEmpty();
     }
 
+    // -- Lot 091: plan pages printed to PDF --
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithPlans_RoundTripsThemIdentically()
+    {
+        var plans = new List<GeneratedFilePlan>
+        {
+            new("PLANS ISOLEMENT (Paysage)", 1, "MAD_C7401_PLANS ISOLEMENT (Paysage)_p1.pdf", @"2026\10\a_plan_p1.pdf", 1234),
+            new("PLANS PLATINAGE & JOINTS", 2, "MAD_C7401_PLANS PLATINAGE & JOINTS_p2.pdf", @"2026\10\a_plan_p2.pdf", 5678),
+        };
+        var record = new GeneratedFileRecord(
+            Guid.NewGuid(), DateTime.UtcNow, "C7401", "source.xlsx", "s", "t.xlsx", "t", Guid.NewGuid(), Guid.NewGuid(),
+            GeneratedFileArchiveStatus.Success, plans: plans);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Plans.Should().BeEquivalentTo(plans);
+    }
+
+    [Fact]
+    public async Task SaveAsync_ThenGetByIdAsync_WithoutPlans_RoundTripsAsEmptyList()
+    {
+        var record = CreateRecord(DateTime.UtcNow);
+        var store = CreateStore();
+
+        await store.SaveAsync(record);
+        var reloaded = await store.GetByIdAsync(record.Id);
+
+        reloaded!.Plans.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task SaveAsync_ThenSearchAsync_WithMultipleRecordsEachCarryingWarnings_DoesNotMixThem()
     {

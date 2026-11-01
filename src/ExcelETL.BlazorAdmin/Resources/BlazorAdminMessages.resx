@@ -637,6 +637,21 @@
   <data name="ImportProfileEditor_AddApplicationButton" xml:space="preserve">
     <value>Add application</value>
   </data>
+  <data name="ImportProfileEditor_PlanSheetNamesHeading" xml:space="preserve">
+    <value>Plan sheets printed to PDF</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNamesHelp" xml:space="preserve">
+    <value>Each page of these sheets becomes a PDF file, attached to the parent equipment. Leave the list empty to print no plan.</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNameLabel" xml:space="preserve">
+    <value>Sheet name</value>
+  </data>
+  <data name="ImportProfileEditor_PlanSheetNamePlaceholder" xml:space="preserve">
+    <value>Sheet name</value>
+  </data>
+  <data name="ImportProfileEditor_AddPlanSheetNameButton" xml:space="preserve">
+    <value>Add sheet</value>
+  </data>
   <data name="ImportProfileEditor_TacheMultipleTypeLabelsHeading" xml:space="preserve">
     <value>Task type labels</value>
   </data>
@@ -1522,6 +1537,15 @@
   <data name="ImportProfileDetails_GeneralTacheMultipleTypeLabel" xml:space="preserve">
     <value>Une tâche de type {0} est écrite dans la colonne travaux {1}.</value>
   </data>
+  <data name="ImportProfileDetails_GeneralNoPlanSheet" xml:space="preserve">
+    <value>Aucun onglet de plans n'est imprimé en PDF.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralOnePlanSheet" xml:space="preserve">
+    <value>Chaque page de l'onglet {0} est imprimée dans un fichier PDF joint à l'équipement ; les pages sans plan sont ignorées.</value>
+  </data>
+  <data name="ImportProfileDetails_GeneralSeveralPlanSheets" xml:space="preserve">
+    <value>Chaque page des {0} onglets {1} est imprimée dans un fichier PDF joint à l'équipement ; les pages sans plan sont ignorées.</value>
+  </data>
   <data name="ImportProfileDetails_SheetSectionTitle" xml:space="preserve">
     <value>Feuille {0}</value>
   </data>
@@ -2040,5 +2064,11 @@
   </data>
   <data name="GeneratedFiles_FilesExpired" xml:space="preserve">
     <value>File expired</value>
+  </data>
+  <data name="GeneratedFiles_PlansColumn" xml:space="preserve">
+    <value>Plans</value>
+  </data>
+  <data name="GeneratedFiles_PlanLabel" xml:space="preserve">
+    <value>{0} - page {1}</value>
   </data>
 </root>

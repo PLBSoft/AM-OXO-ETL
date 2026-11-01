@@ -130,6 +130,10 @@ namespace ExcelETL.Infrastructure.Persistence.Migrations
                         .HasMaxLength(60)
                         .HasColumnType("nvarchar(60)");
 
+                    b.PrimitiveCollection<string>("PlanSheetNames")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ReperePrefix")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -164,6 +168,48 @@ namespace ExcelETL.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ExcelETL.Domain.Archiving.GeneratedFileRecord", b =>
                 {
+                    b.OwnsMany("ExcelETL.Domain.Archiving.GeneratedFilePlan", "Plans", b1 =>
+                        {
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("int");
+
+                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+
+                            b1.Property<string>("FileName")
+                                .IsRequired()
+                                .HasMaxLength(400)
+                                .HasColumnType("nvarchar(400)");
+
+                            b1.Property<string>("FilePath")
+                                .IsRequired()
+                                .HasMaxLength(1024)
+                                .HasColumnType("nvarchar(1024)");
+
+                            b1.Property<Guid>("GeneratedFileRecordId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<int>("PageNumber")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("SheetName")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("nvarchar(100)");
+
+                            b1.Property<long>("SizeBytes")
+                                .HasColumnType("bigint");
+
+                            b1.HasKey("Id");
+
+                            b1.HasIndex("GeneratedFileRecordId");
+
+                            b1.ToTable("GeneratedFileRecordPlans", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("GeneratedFileRecordId");
+                        });
+
                     b.OwnsMany("ExcelETL.Domain.Archiving.GeneratedFileWarning", "Warnings", b1 =>
                         {
                             b1.Property<int>("Id")
@@ -208,6 +254,8 @@ namespace ExcelETL.Infrastructure.Persistence.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("GeneratedFileRecordId");
                         });
+
+                    b.Navigation("Plans");
 
                     b.Navigation("Warnings");
                 });

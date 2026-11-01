@@ -412,4 +412,69 @@ public class ImportProfileTests
 
         profile.TacheMultipleTypeLabels.Should().HaveCount(2);
     }
+
+    // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md): plan sheets printed to PDF.
+    [Fact]
+    public void Constructor_WithoutPlanSheetNames_DefaultsToEmptyList()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()]);
+
+        profile.PlanSheetNames.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_WithPlanSheetNames_StoresThemTrimmed_InOrder()
+    {
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [],
+            [" PLANS ISOLEMENT (Paysage) ", "PLANS PLATINAGE & JOINTS"]);
+
+        profile.PlanSheetNames.Should().Equal("PLANS ISOLEMENT (Paysage)", "PLANS PLATINAGE & JOINTS");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WithEmptyPlanSheetName_ThrowsDomainValidationException(string invalidName)
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], [invalidName]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_EmptyPlanSheetName);
+    }
+
+    [Fact]
+    public void Constructor_WithPlanSheetNameOfExactly31Characters_CreatesImportProfile()
+    {
+        var name = new string('A', 31);
+
+        var profile = new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], [$"  {name}  "]);
+
+        profile.PlanSheetNames.Should().Equal(name);
+    }
+
+    [Fact]
+    public void Constructor_WithPlanSheetNameOf32Characters_ThrowsDomainValidationException_WithTheExcelLimit()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], [new string('A', 32)]);
+
+        var exception = act.Should().Throw<DomainValidationException>().Which;
+        exception.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_PlanSheetNameTooLong);
+        exception.Args.Should().Equal(31);
+    }
+
+    [Fact]
+    public void Constructor_WithDuplicatePlanSheetNamesDifferingOnlyByCaseAndWhitespace_ThrowsDomainValidationException()
+    {
+        var act = () => new ImportProfile(
+            "Profil OXO standard", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [],
+            ["PLANS ISOLEMENT (Paysage)", " plans isolement (paysage) "]);
+
+        act.Should().Throw<DomainValidationException>()
+            .Which.ErrorCode.Should().Be(DomainErrorCode.ImportProfile_DuplicatePlanSheetName);
+    }
 }

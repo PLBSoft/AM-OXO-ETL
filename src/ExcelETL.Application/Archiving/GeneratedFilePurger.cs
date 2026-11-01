@@ -26,7 +26,8 @@ public sealed class GeneratedFilePurger(
         {
             try
             {
-                foreach (var path in new[] { record.SourceFilePath, record.TargetFilePath })
+                // Lot 091: the plan PDFs go with the other files.
+                foreach (var path in new[] { record.SourceFilePath, record.TargetFilePath }.Concat(record.Plans.Select(p => p.FilePath)))
                 {
                     if (path is null)
                     {

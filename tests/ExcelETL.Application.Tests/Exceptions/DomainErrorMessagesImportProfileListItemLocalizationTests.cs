@@ -107,6 +107,24 @@ public class DomainErrorMessagesImportProfileListItemLocalizationTests
                 "Profil", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()],
                 [new TacheMultipleTypeLabel("TM_PROC_MAD", "Procédure MAD"), new TacheMultipleTypeLabel("tm_proc_mad", "Autre")]),
         ];
+        // Lot 091 (docs/tickets/tickets-tdd-lot-091-export-plans-pdf.md).
+        yield return
+        [
+            "ImportProfile_EmptyPlanSheetName",
+            () => new ImportProfile("Profil", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], [""]),
+        ];
+        yield return
+        [
+            "ImportProfile_PlanSheetNameTooLong",
+            () => new ImportProfile(
+                "Profil", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], [new string('A', 32)]),
+        ];
+        yield return
+        [
+            "ImportProfile_DuplicatePlanSheetName",
+            () => new ImportProfile(
+                "Profil", "MAD-OXO-", EquipementTypeElementNom, [], [], [ValidRule()], [], ["PLANS", "plans"]),
+        ];
     }
 
     [Theory]

@@ -301,7 +301,9 @@ else
             profile.EquipementTypeElementNom,
             profile.DefaultTableaux,
             profile.DefaultApplicationNames,
-            profile.SheetRules);
+            profile.SheetRules,
+            profile.TacheMultipleTypeLabels,
+            profile.PlanSheetNames);
 
         await ImportProfileStore.SaveAsync(duplicate);
         await LoadProfilesAsync();
