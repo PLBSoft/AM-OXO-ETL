@@ -10,6 +10,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="10.0.0" />
+    <!-- Security pin: Microsoft.Data.SqlClient (through the SQL Server sink) pulls System.Security.Cryptography.Pkcs 9.0.13, affected by DoS advisories GHSA-846f-f764-76mx and GHSA-2fmv-rv2c-59x7. Remove once it requires a patched version. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
 </Project>
